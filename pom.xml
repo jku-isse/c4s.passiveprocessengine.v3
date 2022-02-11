@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>JKU.ISSE</groupId>
+    <artifactId>c4s.passiveprocessengine.v3</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+
+    <distributionManagement>
+    	<repository>
+        	<id>JKU.ISSE</id>
+        	<url>http://3.66.206.6:9999/snapshots</url>
+    	</repository>
+    </distributionManagement>
+
+    <properties>
+        <lombok.version>1.18.0</lombok.version>
+        <java.version>11</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
+    </properties>
+
+    <repositories>
+        <!-- The order of definitions matters. Explicitly defining central here to make sure it has the highest priority. -->
+        <!-- Main Maven repository -->
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <!-- own ones -->
+        <repository>
+            <id>JKU.ISSE</id>
+            <url>http://3.66.206.6:9999/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <dependencies>
+    	<dependency>
+			<groupId>JKU.ISSE</groupId>
+			<artifactId>c4s.artifact.api</artifactId>
+			<version>4.1.5-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+            <groupId>at.jku.isse.designspace.sdk</groupId>
+            <artifactId>main</artifactId>
+            <version>4.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>5.2.3.RELEASE</version>
+            <scope>compile</scope>
+        </dependency>
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+        </dependency>
+        <!-- Statemachine -->
+        <dependency>
+            <groupId>com.github.oxo42</groupId>
+            <artifactId>stateless4j</artifactId>
+            <version>2.5.0</version>
+        </dependency>
+        <!-- Inject -->
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+            <version>4.2.3</version>
+        </dependency>
+        <!-- JSON -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.8.6</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+        			<plugin> 
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-install-plugin</artifactId>
+				<version>2.5.2</version>
+				<executions>
+					<execution>
+						<id>install-external</id>
+						<phase>initialize</phase>
+						<configuration>
+							<file>${basedir}/libs/main-4.0-jar-with-dependencies_new.jar</file>
+							<repositoryLayout>default</repositoryLayout>
+							<groupId>at.jku.isse.designspace.sdk</groupId>
+                            <artifactId>main</artifactId>
+                            <version>4.0</version>
+							<packaging>jar</packaging>
+							<generatePom>true</generatePom>
+						</configuration>
+						<goals>
+							<goal>install-file</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin> 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>11</source>
+                    <target>11</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+
+</project>
