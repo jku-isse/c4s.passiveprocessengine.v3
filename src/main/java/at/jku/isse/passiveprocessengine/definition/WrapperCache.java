@@ -1,12 +1,12 @@
-package at.jku.isse.passiveprocessengine;
+package at.jku.isse.passiveprocessengine.definition;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
-import at.jku.isse.designspace.sdk.core.model.Id;
-import at.jku.isse.designspace.sdk.core.model.Instance;
+import at.jku.isse.designspace.core.model.Id;
+import at.jku.isse.designspace.core.model.Instance;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

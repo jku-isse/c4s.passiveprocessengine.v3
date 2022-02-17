@@ -5,15 +5,15 @@ import java.util.UUID;
 
 import com.github.oxo42.stateless4j.StateMachine;
 
-import at.jku.isse.designspace.sdk.core.model.Cardinality;
-import at.jku.isse.designspace.sdk.core.model.Instance;
-import at.jku.isse.designspace.sdk.core.model.InstanceType;
-import at.jku.isse.designspace.sdk.core.model.Workspace;
-import at.jku.isse.passiveprocessengine.InstanceWrapper;
-import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.designspace.core.model.Cardinality;
+import at.jku.isse.designspace.core.model.Instance;
+import at.jku.isse.designspace.core.model.InstanceType;
+import at.jku.isse.designspace.core.model.Workspace;
+import at.jku.isse.passiveprocessengine.IdentifiableElement;
 import at.jku.isse.passiveprocessengine.definition.IStepDefinition;
-import at.jku.isse.passiveprocessengine.definition.IdentifiableElement;
+import at.jku.isse.passiveprocessengine.definition.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.WrapperCache;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 
 public class ProcessStep implements IdentifiableElement, InstanceWrapper{
@@ -38,18 +38,18 @@ public class ProcessStep implements IdentifiableElement, InstanceWrapper{
 	
 	private void initLifecycleStates() {
 		
-		String actState = (String) instance.propertyAsValueOrNull(CoreProperties.actualLifecycleState.toString());
+		String actState = (String) instance.getPropertyAsValueOrNull(CoreProperties.actualLifecycleState.toString());
 		if (actState == null) {
 			actualSM = StepLifecycle.buildActualStatemachineInState(State.AVAILABLE);
-			instance.propertyAsSingle(CoreProperties.actualLifecycleState.toString()).set(actualSM.getState().toString());
+			instance.getPropertyAsSingle(CoreProperties.actualLifecycleState.toString()).set(actualSM.getState().toString());
 		} else { // state already set, now just init FSM
 			actualSM = StepLifecycle.buildActualStatemachineInState(State.valueOf(actState));
 		}
 		
-		String expState = (String) instance.propertyAsValueOrNull(CoreProperties.expectedLifecycleState.toString());
+		String expState = (String) instance.getPropertyAsValueOrNull(CoreProperties.expectedLifecycleState.toString());
 		if (expState == null) {
 			expectedSM = StepLifecycle.buildExpectedStatemachineInState(State.AVAILABLE);
-			instance.propertyAsSingle(CoreProperties.expectedLifecycleState.toString()).set(expectedSM.getState().toString());
+			instance.getPropertyAsSingle(CoreProperties.expectedLifecycleState.toString()).set(expectedSM.getState().toString());
 		} else { // state already set, now just init FSM
 			expectedSM = StepLifecycle.buildExpectedStatemachineInState(State.valueOf(expState));
 		}
@@ -67,7 +67,7 @@ public class ProcessStep implements IdentifiableElement, InstanceWrapper{
 
 	public State getExpectedLifecycleState() {
 		// TODO Auto-generated method stub
-		return null;
+		return expectedSM.getState();
 	}
 	
 	@Override
@@ -82,9 +82,9 @@ public class ProcessStep implements IdentifiableElement, InstanceWrapper{
 		if (thisType.isPresent())
 			return thisType.get();
 		else {
-			InstanceType typeStep = ws.createInstanceType(ProcessStep.designspaceTypeId);
-			typeStep.createPropertyType(CoreProperties.actualLifecycleState.toString(), Cardinality.SINGLE, ws.STRING);
-			typeStep.createPropertyType(CoreProperties.expectedLifecycleState.toString(), Cardinality.SINGLE, ws.STRING);
+			InstanceType typeStep = ws.createInstanceType(ProcessStep.designspaceTypeId, ws.TYPES_FOLDER);
+			typeStep.createPropertyType(CoreProperties.actualLifecycleState.toString(), Cardinality.SINGLE, Workspace.STRING);
+			typeStep.createPropertyType(CoreProperties.expectedLifecycleState.toString(), Cardinality.SINGLE, Workspace.STRING);
 			return typeStep;
 		}
 	}
@@ -101,11 +101,11 @@ public class ProcessStep implements IdentifiableElement, InstanceWrapper{
 			InstanceType typeStep = ws.createInstanceType(designspaceTypeId+td.getId(), ws.TYPES_FOLDER, superType);
 			td.getExpectedInput().entrySet().stream()
 				.forEach(entry -> {
-						typeStep.createPropertyType("in."+entry.getKey(), Cardinality.LIST, entry.getValue());
+						typeStep.createPropertyType("in_"+entry.getKey(), Cardinality.LIST, entry.getValue());
 				});
 			td.getExpectedOutput().entrySet().stream()
 			.forEach(entry -> {
-					typeStep.createPropertyType("out."+entry.getKey(), Cardinality.LIST, entry.getValue());
+					typeStep.createPropertyType("out_"+entry.getKey(), Cardinality.LIST, entry.getValue());
 			});
 			//TODO: instantiate all of pre/post/activation/cancelation rules
 			//TODO: instantiate all of input to output mapping rules (incl repairs, i.e., the actual mapping logic)
@@ -114,7 +114,7 @@ public class ProcessStep implements IdentifiableElement, InstanceWrapper{
 	}
 
 	public static ProcessStep getInstance(Workspace ws, StepDefinition sd) {
-		Instance instance = ws.createInstance(sd.getId()+UUID.randomUUID(), getOrCreateDesignSpaceInstanceType(ws, sd));
+		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getId()+UUID.randomUUID());
 		return WrapperCache.getWrappedInstance(ProcessStep.class, instance);
 	}
 

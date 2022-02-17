@@ -2,12 +2,10 @@ package at.jku.isse.passiveprocessengine.definition;
 
 import java.util.Optional;
 
-import at.jku.isse.designspace.sdk.core.model.Cardinality;
-import at.jku.isse.designspace.sdk.core.model.Instance;
-import at.jku.isse.designspace.sdk.core.model.InstanceType;
-import at.jku.isse.designspace.sdk.core.model.Workspace;
-import at.jku.isse.passiveprocessengine.InstanceWrapper;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep;
+import at.jku.isse.designspace.core.model.Cardinality;
+import at.jku.isse.designspace.core.model.Instance;
+import at.jku.isse.designspace.core.model.InstanceType;
+import at.jku.isse.designspace.core.model.Workspace;
 
 public class QAConstraintSpec implements InstanceWrapper{
 
@@ -19,9 +17,9 @@ public class QAConstraintSpec implements InstanceWrapper{
 
 	public QAConstraintSpec(String qaConstraintId, String qaConstraintSpec, String humanReadableDescription, Workspace ws) {
 		super();
-		this.instance = ws.createInstance(qaConstraintId, getOrCreateDesignSpaceCoreSchema(ws));
-		instance.propertyAsSingle(CoreProperties.qaConstraintSpec.toString()).set(qaConstraintSpec);
-		instance.propertyAsSingle(CoreProperties.humanReadableDescription.toString()).set(humanReadableDescription);
+		this.instance = ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), qaConstraintId);
+		instance.getPropertyAsSingle(CoreProperties.qaConstraintSpec.toString()).set(qaConstraintSpec);
+		instance.getPropertyAsSingle(CoreProperties.humanReadableDescription.toString()).set(humanReadableDescription);
 	}
 	
 	public QAConstraintSpec(Instance instance) {
@@ -33,11 +31,11 @@ public class QAConstraintSpec implements InstanceWrapper{
 	}
 
 	public String getQaConstraintSpec() {
-		return (String) instance.propertyAsValue(CoreProperties.qaConstraintSpec.toString());
+		return (String) instance.getPropertyAsValue(CoreProperties.qaConstraintSpec.toString());
 	}
 
 	public String getHumanReadableDescription() {
-		return (String) instance.propertyAsValue(CoreProperties.humanReadableDescription.toString());
+		return (String) instance.getPropertyAsValue(CoreProperties.humanReadableDescription.toString());
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
@@ -47,10 +45,10 @@ public class QAConstraintSpec implements InstanceWrapper{
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
-				InstanceType typeStep = ws.createInstanceType(designspaceTypeId);
+				InstanceType typeStep = ws.createInstanceType(designspaceTypeId, ws.ROOT_FOLDER);
 				// constraintId maps to Instance name property
-				typeStep.createPropertyType(CoreProperties.qaConstraintSpec.toString(), Cardinality.SINGLE, ws.STRING);
-				typeStep.createPropertyType(CoreProperties.humanReadableDescription.toString(), Cardinality.SINGLE, ws.STRING);
+				typeStep.createPropertyType(CoreProperties.qaConstraintSpec.toString(), Cardinality.SINGLE, Workspace.STRING);
+				typeStep.createPropertyType(CoreProperties.humanReadableDescription.toString(), Cardinality.SINGLE, Workspace.STRING);
 				return typeStep;
 			}
 	}

@@ -1,7 +1,9 @@
-package at.jku.isse.passiveprocessengine.definition;
+package at.jku.isse.passiveprocessengine;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
 
 public class DecisionNodeDefinition {
 

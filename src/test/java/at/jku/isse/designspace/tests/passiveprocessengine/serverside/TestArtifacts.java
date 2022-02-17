@@ -1,9 +1,9 @@
-package c4s.passiveprocessengine.v3;
+package at.jku.isse.designspace.tests.passiveprocessengine.serverside;
 
 import java.util.Optional;
 
-import at.jku.isse.designspace.sdk.core.model.InstanceType;
-import at.jku.isse.designspace.sdk.core.model.Workspace;
+import at.jku.isse.designspace.core.model.InstanceType;
+import at.jku.isse.designspace.core.model.Workspace;
 
 public class TestArtifacts {
 
@@ -16,7 +16,7 @@ public class TestArtifacts {
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
-				InstanceType typeStep = ws.createInstanceType(JIRATYPE);
+				InstanceType typeStep = ws.createInstanceType(JIRATYPE, ws.TYPES_FOLDER);
 				
 				return typeStep;
 			}

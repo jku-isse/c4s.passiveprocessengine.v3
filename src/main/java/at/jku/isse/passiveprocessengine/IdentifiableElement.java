@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.definition;
+package at.jku.isse.passiveprocessengine;
 
 public interface IdentifiableElement {
 	public String getId();
