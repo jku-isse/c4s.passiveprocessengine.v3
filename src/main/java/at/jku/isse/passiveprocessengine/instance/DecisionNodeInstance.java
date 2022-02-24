@@ -1,59 +1,37 @@
-//package at.jku.isse.passiveprocessengine.instance;
-//
-//import artifactapi.ArtifactIdentifier;
-//import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
-//
-//import com.github.oxo42.stateless4j.StateMachine;
-//import lombok.extern.slf4j.Slf4j;
-//import passiveprocessengine.definition.DecisionNodeDefinition;
-//import passiveprocessengine.definition.DecisionNodeDefinition.Events;
-//import passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
-//import passiveprocessengine.definition.DecisionNodeDefinition.States;
-//import passiveprocessengine.definition.IWorkflowTask;
-//import passiveprocessengine.definition.MappingDefinition;
-//import passiveprocessengine.instance.ExecutedMapping.DIR;
-//import passiveprocessengine.instance.events.DNIUpdateEvent;
-//import passiveprocessengine.instance.events.TaskArtifactEvent;
-//import passiveprocessengine.instance.events.ProcessChangeEvent;
-//import passiveprocessengine.instance.events.ProcessChangeEvent.ChangeType;
-//
-//import static passiveprocessengine.instance.events.ProcessChangeEvent.ChangeType.*;
-//
-//import java.util.*;
-//import java.util.stream.Collectors;
-//
-//@Slf4j
-//public class DecisionNodeInstance  {
-//
-//	
-//	private DecisionNodeDefinition ofType;
-//	
-////	boolean taskCompletionConditionsFullfilled = false;
-//	
-////	boolean taskActivationConditionsFullfilled = false;
-//	
-//	boolean inflowFulfilled = false;
-//		
-//	boolean activationPropagationCompleted = false;
-//
-//	private HashMap<String, Progress> inTaskStatus = new HashMap<>();
-//
-//	private enum Progress {
-//		WAITING, ENABLED, DISABLED, USED
-//	}
-//	
-//	private List<ExecutedMapping> mappings = new LinkedList<>();
-//
-//	public List<ExecutedMapping> getExecutedMappings() {
-//		return mappings;
-//	}
-//	
-//	
-//	@Deprecated
-//	public DecisionNodeInstance() {
-//		super();
-//	}
-//	
+package at.jku.isse.passiveprocessengine.instance;
+
+import at.jku.isse.designspace.core.model.Cardinality;
+import at.jku.isse.designspace.core.model.Instance;
+import at.jku.isse.designspace.core.model.InstanceType;
+import at.jku.isse.designspace.core.model.Workspace;
+import at.jku.isse.passiveprocessengine.ProcessScopedElement;
+import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
+import java.util.*;
+
+public class DecisionNodeInstance extends ProcessScopedElement {
+
+	public static enum CoreProperties {isInflowFulfilled, hasPropagated};
+	public static final String designspaceTypeId = ProcessInstance.class.getSimpleName();
+	
+	public DecisionNodeInstance(Instance instance) {
+		super(instance);
+	}
+	
+	
+	private DecisionNodeDefinition ofType;
+
+	private HashMap<String, Progress> inTaskStatus = new HashMap<>();
+	private enum Progress {
+		WAITING, ENABLED, DISABLED, USED
+	}
+
+	private List<ExecutedMapping> mappings = new LinkedList<>();
+
+	public List<ExecutedMapping> getExecutedMappings() {
+		return mappings;
+	}
+	
+	
 //	public DecisionNodeInstance(DecisionNodeDefinition ofType, WorkflowInstance workflow) {
 //		//super(ofType.getId()+"#"+UUID.randomUUID().toString(), workflow);
 //		super(ofType.getId()+"#"+workflow.getId().toString(), workflow);
@@ -68,7 +46,7 @@
 //	public DecisionNodeDefinition getDefinition() {
 //		return ofType;
 //	}
-//	
+	
 //	private Progress mapInitialStatus(WorkflowTask task) {
 //		if (task.getExpectedLifecycleState().equals(State.COMPLETED))
 //			return Progress.ENABLED;
@@ -219,39 +197,7 @@
 //				awos.addAll(this.setTaskCompletionConditionsFullfilled(cause));
 //				return awos;
 //			}		
-////			if (inBranches.stream()
-////					//.filter(b -> b.getState()!=BranchState.Disabled) // we ignore those
-////					.anyMatch(b -> b.getState()==BranchState.TransitionEnabled)) {
-////					Optional<IBranchInstance> selectedB = inBranches.stream()
-////						.filter(b -> b.getState()==BranchState.TransitionEnabled)
-////						.findAny() 
-////						.map(b -> {
-////							b.setBranchUsedForProgress();
-////							return b;
-////						});
-////					if (selectedB.isPresent()) {
-////						// we need to mark other branch tasks as: disabled (if they are available or active), or canceled otherwise 
-////						inBranches.stream()
-////						    .filter(b -> b.getState()!=BranchState.Disabled) // we ignore those	
-////						    .filter(b -> b.getState()!=BranchState.TransitionPassed) // filter out the branch we just tagged as used
-////							.map(b -> b.getTask()) // we dont change other branch states to be able to detect when another step is ready but should not have been executed
-////							.forEach(t -> { 
-////								t.signalEvent(TaskLifecycle.Triggers.IGNORE_FOR_PROGRESS);
-//////								switch(t.getLifecycleState()) {
-//////								case AVAILABLE:
-//////								case ENABLED:
-//////									t.setLifecycleState(TaskLifecycle.State.DISABLED);
-//////									break;
-//////								case DISABLED:
-//////								case CANCELED:
-//////									break;
-//////								default:
-//////									t.setLifecycleState(TaskLifecycle.State.CANCELED);
-//////									break;
-//////								}
-////							}); 
-////						return this.setTaskCompletionConditionsFullfilled();
-////					}
+//
 //			break;
 //		default:
 //			break;
@@ -305,16 +251,7 @@
 //			return changes;
 //		}
 //	}
-//	
-////	public Set<AbstractWorkflowInstanceObject> setTaskCompletionConditionsNoLongerHold() {
-////		// set externally from Rule Engine, or internally once in branches signal sufficient
-////			//this.taskCompletionConditionsFullfilled = false;
-////			// advance state machine
-////			fireIfPossible(Events.INCONDITIONS_NO_LONGER_HOLD);
-////			// TODO: check what needs to be done
-////			//return tryContextConditionsFullfilled();
-////			return Collections.emptySet();
-////		}
+//
 //
 //	public List<ProcessChangeEvent> tryContextConditionsFullfilled(ProcessChangeEvent cause) {
 //		if (isContextConditionsFullfilled() || !ofType.hasExternalContextRules) {// if context conditions already evaluated to true, OR DND claims there are no external rules
@@ -323,16 +260,7 @@
 //		return Collections.emptyList();
 //	}
 //	
-////	public boolean isTaskCompletionConditionsFullfilled() {
-////		return taskCompletionConditionsFullfilled;
-////	}
 //
-//	
-//	
-////	public void setOutConditionsFullfilled() {
-////		outBranches.values().stream()
-////			.forEach(b -> b.setConditionsFulfilled());
-////	}
 //	
 //	public boolean isActivationPropagationCompleted() {
 //		return activationPropagationCompleted;
@@ -367,142 +295,11 @@
 //	}
 //	
 //	public List<ProcessChangeEvent> tryOutConditionsFullfilled(ProcessChangeEvent cause) {
-////		switch(ofType.getOutBranchingType()) {
-////		case SYNC: 
-////			if (outBranches.stream()
-////					.filter(b -> b.getState()!=BranchState.Disabled) // we ignore those
-////					.allMatch(b -> b.getState()==BranchState.TransitionEnabled || // either we are enabled, or we are waiting for a never active activation conditions
-////									(b.getState()==BranchState.Waiting && !b.getBranchDefinition().hasActivationCondition()) ) ) {
-////				// this will only be called once, as either all steps are used for progress or none
-////				//this.taskActivationConditionsFullfilled = true;
-////				fireIfPossible(Events.OUTBRANCHES_FULFILLED);
-////				return tryActivationPropagation();
-////			}
-////			break;
-////		case ASYNC:
-////			if (outBranches.stream()
-////					.filter(b -> b.getState()!=BranchState.Disabled )
-////					.anyMatch(b -> b.getState()==BranchState.TransitionEnabled || // either we are enabled, or we are waiting for a never active activation conditions
-////							(b.getState()==BranchState.Waiting && !b.getBranchDefinition().hasActivationCondition()) ) ) {
-////				this.taskActivationConditionsFullfilled = true;
-////				fireIfPossible(Events.OUTBRANCHES_FULFILLED);
-////				return tryActivationPropagation();
-////				// this enables all Steps that are ready at this state, later available steps need to be supported as well
-////			}
-////			break;
-////		}
-//		//return Collections.emptySet();
-//		
-////		CURRENTLY THERE IS NO WAY TO CHECK IF THE PRECONDITION OF A STEP ARE FULFILLED, so allow for SYNCED start, thus we async everything
-//		// we would need to different DNI that allow this, e.g. for a if/else, 
+//
 //		return tryActivationPropagation(cause);
 //		
 //	}
 //	
-////	public boolean isTaskActivationConditionsFullfilled() {
-////		return taskActivationConditionsFullfilled;
-////	}
-//
-////	public Set<AbstractWorkflowInstanceObject> activateOutBranch(String branchId) {
-////		//outBranches.getOrDefault(branchId, dummy).setConditionsFulfilled();
-////		outBranches.stream()
-////		.filter(b -> b.getBranchDefinition().getName().equals(branchId))
-////		.findAny()
-////		.ifPresent(b -> b.setConditionsFulfilled());
-////		return tryOutConditionsFullfilled();
-////	}
-////	
-////	public Set<AbstractWorkflowInstanceObject> activateOutBranches(String... branchIds) {
-////		for (String id : branchIds) {
-////			outBranches.stream()
-////			.filter(b -> b.getBranchDefinition().getName().equals(id))
-////			.findAny()
-////			.ifPresent(b -> b.setConditionsFulfilled());
-////		}
-////		return tryOutConditionsFullfilled();
-////	}
-//	
-////	public Set<AbstractWorkflowInstanceObject> activateInBranch(String branchId) {
-////		//inBranches.getOrDefault(branchId, dummy).setConditionsFulfilled();
-////		inBranches.stream()
-////		.filter(b -> b.getBranchDefinition().getName().equals(branchId))
-////		.findAny()
-////		.ifPresent(b -> b.setConditionsFulfilled());
-////		switch(sm.getState()) {
-////		case AVAILABLE:
-////			return tryInConditionsFullfilled();
-////		case PASSED_INBRANCH_CONDITIONS: // we have an OR, have now additional branches active, but context not yet ok
-////			return tryContextConditionsFullfilled();	
-////		case PASSED_CONTEXT_CONDITIONS: // we have context ok, but not outbranch conditions fulfilled, typically a SYNC start
-////			return tryOutConditionsFullfilled();
-////		case PASSED_OUTBRANCH_CONDITIONS: // we have activated a few out steps already, lets see if we can map some more output data, with automated data mapping, we dont remain here, but progress to progressed out branches
-////			return tryActivationPropagation();
-////		case PROGRESSED_OUTBRANCHES: // we have also mapped some data, 
-////			return tryActivationPropagation();
-////		default:
-////			log.warn(String.format("Decision node %s in unsupported state %s to process inflow activation event for branch %s", this.getId(), sm.getState(), branchId));
-////		
-////		}
-////		
-////		return tryInConditionsFullfilled();
-////	}
-//	
-//	// used for initial instntiation of steps
-////	public Map<IBranchInstance, WorkflowTask> calculatePossibleActivationPropagationUponWorkflowInstantiation() {
-////		// checks whether output tasks can be activated
-////		// can only activate tasks but not provide dataflow
-////		if (inBranches.stream()
-////			.allMatch(b -> b.getState() == BranchState.TransitionEnabled)
-////			&& this.contextConditionsFullfilled) { // only if input and context conditions fulfilled
-////			return outBranches.stream() // return for each enabled outbranch the respective workflow task passiveprocessengine.instance (not part of process yet)
-////				.filter(b -> b.getState() == BranchState.TransitionEnabled && !b.hasTask() ) // && !b.getBranchDefinition().hasDataFlow()
-////				.collect(Collectors.toMap(b -> b, b -> workflow.prepareTask(b.getBranchDefinition().getTask())));
-////		}
-////		return Collections.emptyMap();	
-////	}
-//	
-////	public Set<AbstractWorkflowInstanceObject> tryActivationPropagation() {
-////		// checks whether output tasks can be activated
-////		if ((sm.isInState(States.PASSED_OUTBRANCH_CONDITIONS) || sm.isInState(States.PROGRESSED_OUTBRANCHES) ))// &&  // only if input, context, and activation conditions fulfilled
-////			// THIS ACTIVATES ALL TASKS ON ENABLED BRANCHES, EVEN FOR XOR: the user can then choose what to execute, thus deactivation needs to happen upon activation/work output by user
-////			// WHILE NO USER WORKS/ACTIVATES, remaining branches might still be activated
-////			//outBranches.stream()
-////			//		.anyMatch(b -> b.getState() == BranchState.TransitionEnabled && !b.hasTask())
-////					//.allMatch(b -> !b.getBranchDefinition().hasDataFlow())
-////		    //) 
-////		{		
-////			Set<AbstractWorkflowInstanceObject> awfos =
-////				outBranches.stream() // return for each enabled outbranch the respective workflow task passiveprocessengine.instance (not part of process yet)
-////				.filter(b -> ( b.getState() == BranchState.TransitionEnabled || // either we are enabled, or we are waiting for a never active activation conditions
-////						(b.getState()==BranchState.Waiting && !b.getBranchDefinition().hasActivationCondition()) )
-////							&& !b.hasTask() ) // WE NO LONGER CHECK IF HAS DATAFLOW &&  !b.getBranchDefinition().hasDataFlow())
-////				.flatMap(b -> { List<AbstractWorkflowInstanceObject> awos = new ArrayList<>();
-////								WorkflowTask wft = workflow.instantiateTask(b.getBranchDefinition().getTask());
-////								if (wft == null) return Stream.empty();
-////								awos.add(wft);
-////								awos.addAll(workflow.activateDecisionNodesFromTask(wft));
-////								consumeTaskForUnconnectedInBranch(wft);
-////								b.setBranchUsedForProgress(); // because we activate now, regardless whether datamapping successful
-////								return awos.stream();
-////					})
-////				.collect(Collectors.toSet());
-////			if (!awfos.isEmpty()) {
-////				executeSimpleDataflow(false);
-////				if (!areAnyBranchesExceptDisabledOrTransitionCompletedLeft()) {
-////					this.activationPropagationCompleted = true; //alternatively we have triggered progress, but some outbranches are still waiting and could fire later
-////				}
-////				fireIfPossible(Events.PROGRESS_TRIGGERED);
-////				return awfos;
-////			} // special case if this is the last/ending DNI
-////			else if (this.getWorkflow().getType().getTasksFlowingOutOf(this.getDefinition()).size() == 0 ) {
-////				// then we are done with this workflow and execute any final mappings into the workflows output
-////				executeEndOfProcessDataflow();
-////				fireIfPossible(Events.PROGRESS_TRIGGERED);
-////				return Collections.emptySet();
-////			}
-////		}
-////		return Collections.emptySet();	
-////	}
 //	
 //	public List<ProcessChangeEvent> tryActivationPropagation(ProcessChangeEvent cause) {
 //		// if not yet progressed,
@@ -573,147 +370,7 @@
 //				.filter(Objects::nonNull)
 //				.collect(Collectors.toList());
 //	}
-//	
-////	private boolean areAnyBranchesExceptDisabledOrTransitionCompletedLeft() {
-////		return outBranches.stream() 
-////		.filter(b -> b.getState() != BranchState.Disabled)
-////		.filter(b -> b.getState() != BranchState.TransitionPassed)
-////		.count() > 0;
-////	}
-//	
-////	public void completedDataflowInvolvingActivationPropagation() {
-////		outBranches.stream()
-////			.forEach(IBranchInstance::setBranchUsedForProgress); // TODO do we need to filter for deactivated ones?
-////		// not necessary for outbranches as we set them via task assignment --> no we dont
-////		activationPropagationCompleted = true;
-////		fireIfPossible(Events.PROGRESS_TRIGGERED);
 //
-////		inBranches.values().stream()
-////			.filter(b -> b.getState() != BranchState.Disabled)
-////			.forEach(b -> b.setBranchUsedForProgress());
-//		// not necessary as inbranches progress set when checking inbranch conditions
-////	}
-//	
-////	public boolean acceptsTaskForUnconnectedInBranch(WorkflowTask wti) {
-////		// checks if any inBranch yet has not an associated Task,
-////		// this check is specific to the DecisionNodeDefinition or the DecisionNodeInstance,
-////		// for now we only assume one tasktype per branch, and fixed branch number
-////		Optional<AbstractBranchInstance> branch = inBranches.values().stream()
-////			.filter(b -> b.hasTask())
-////			.filter(b -> b.bd.getTask().equals(wti.getTaskType()))
-////			.findFirst();
-////		return branch.isPresent();
-////	}
-//	
-////	public DecisionNodeInstance consumeTaskForUnconnectedInBranch(WorkflowTask wti) {
-////		// checks if any inBranch yet has not an associated Task,
-////		// this check is specific to the DecisionNodeDefinition or the DecisionNodeInstance,
-////		// for now we only assume one tasktype per branch, and fixed branch number
-////		Optional<IBranchInstance> branch = inBranches.stream()
-////			.filter(b -> !b.hasTask())
-////			.filter(b -> b.getBranchDefinition().getTask().equals(wti.getType()))
-////			.findFirst();
-////		branch.ifPresent(b -> { b.setTask(wti); 
-////								this.getWorkflow().registerTaskAsInToDNI(this, wti); 
-////							  });
-////		// REQUIRES CHANGE LISTENER TO LET THE RULE ENGINE KNOW, WE UPDATEd THE BRANCH
-////		if (branch.isPresent())
-////			return this;
-////		else
-////			return null;
-////	}
-////	
-////	public DecisionNodeInstance consumeTaskForUnconnectedOutBranch(WorkflowTask wti) {
-////		Optional<IBranchInstance> branch = outBranches.stream()
-////				.filter(b -> b.getState() != BranchState.Disabled)
-////				.filter(b -> !b.hasTask())
-////				.filter(b -> b.getBranchDefinition().getTask().getId().equals(wti.getType().getId()))
-////				.findFirst();
-////			branch.ifPresent(b -> { 
-////					b.setTask(wti);
-////					//b.setBranchUsedForProgress(); 
-////					this.getWorkflow().registerTaskAsOutOfDNI(this, wti);
-////				});
-////			// REQUIRES CHANGE LISTENER TO LET THE RULE ENGINE KNOW, WE UPDATEd THE BRANCH
-////			if (branch.isPresent())
-////				return this;
-////			else
-////				return null;
-////	}
-//	
-////	public void defineInBranch(String branchName, WorkflowTask wft) {
-////		inBranches.put(branchName, new Branch(branchName, wft));
-////	}
-////	
-////	public void defineOutBranch(String branchName, WorkflowTask wft) {
-////		outBranches.put(branchName, new Branch(branchName, wft));
-////	}
-//	
-////	public List<TaskDefinition> getTaskDefinitionsForNonDisabledOutBranchesWithUnresolvedTasks() {
-////		return outBranches.stream()
-////				.filter(b -> b.getState()!=BranchState.Disabled)				
-////				.filter(b -> b.getTask() == null)
-////				.map(b -> b.getBranchDefinition().getTask())
-////				.filter(td -> td != null)
-////				.collect(Collectors.toList());
-////	}
-////
-////	public List<TaskDefinition> getTaskDefinitionsForFulfilledOutBranchesWithUnresolvedTasks() {
-////		List<TaskDefinition> tds = outBranches.stream()
-////				.filter(b -> b.getState()==BranchState.TransitionPassed)
-////				.filter(b -> b.getTask() == null)
-////				.map(b -> b.getBranchDefinition().getTask())
-////				.filter(td -> td != null)
-////				.collect(Collectors.toList());
-////		return tds;
-////	}
-////	
-////	public List<WorkflowTask> getNonDisabledTasksByInBranchName(String branchName) {
-////		return inBranches.stream()
-////				.filter(b -> b.getState()!=BranchState.Disabled)
-////				.filter(b -> b.getBranchDefinition().getName().equals(branchName))
-////				.filter(b -> b.hasTask())
-////				.map(b -> b.getTask())
-////				.collect(Collectors.toList());
-////	}
-////	
-////	public List<WorkflowTask> getNonDisabledTasksByOutBranchName(String branchName) {
-////		return outBranches.stream()
-////				.filter(b -> b.getState()!=BranchState.Disabled)
-////				.filter(b -> b.getBranchDefinition().getName().equals(branchName))
-////				.filter(b -> b.hasTask())
-////				.map(b -> b.getTask())
-////				.collect(Collectors.toList());
-////	}
-////	
-////	public String getInBranchIdForWorkflowTask(IWorkflowTask task) {
-////		Optional<IBranchInstance> branch = inBranches.stream()
-////				.filter(b -> b.getTask() != null)
-////				.filter(b -> b.getTask().equals(task))
-////				.findFirst();
-////		return branch.isPresent() ? branch.get().getBranchDefinition().getName() : null;
-////	}
-////	
-////	public String getOutBranchIdForWorkflowTask(IWorkflowTask task) {
-////		Optional<IBranchInstance> branch = outBranches.stream()
-////			.filter(b -> b.getTask().equals(task))
-////			.findFirst();
-////		return branch.isPresent() ? branch.get().getBranchDefinition().getName() : null;
-////	}
-////
-////	public IBranchInstance getInBranchForWorkflowTask(IWorkflowTask task) {
-////		Optional<IBranchInstance> branch = inBranches.stream()
-////				.filter(b -> b.getTask().equals(task))
-////				.findFirst();
-////		return branch.orElse(null);
-////	}
-////
-////	public IBranchInstance getOutBranchForWorkflowTask(IWorkflowTask task) {
-////		Optional<IBranchInstance> branch = outBranches.stream()
-////				.filter(b -> b.getTask().equals(task))
-////				.findFirst();
-////		return branch.orElse(null);
-////	}
 //	
 //	protected boolean isWorkExpected(IWorkflowTask task) {
 //		if (this.ofType.getInBranchingType().equals(InFlowType.XOR)) {
@@ -763,46 +420,7 @@
 //		return Collections.emptySet();
 //	}
 //	
-////	private AbstractWorkflowInstanceObject mapAsOutput(String asRole, Set<IArtifact> fromArt, IWorkflowTask toTask) {
-////		// check if not yet exists:
-////		if (toTask.getAnyOneOutputByRole(asRole) == null) {
-////			toTask.addOutput(new ArtifactOutput(fromArt, asRole));
-////			return (AbstractWorkflowInstanceObject) toTask;
-////		}  else {
-////			Set<ArtifactIdentifier> existingArt = toTask.getAllOutputsByRole(asRole).stream().map(art -> art.getArtifactIdentifier()).collect(Collectors.toSet());
-////			Set<IArtifact> newArt = fromArt.stream().filter(art -> !existingArt.contains(art.getArtifactIdentifier()) ).collect(Collectors.toSet());
-////			if (newArt.isEmpty())
-////				return null;
-////			else {
-////				toTask.getOutput().stream()
-////			                .filter(o -> o.getRole().equals(asRole))
-////			                .findAny().ifPresent(output ->  
-////			                	newArt.stream().forEach(art -> output.addOrReplaceArtifact(art) ) );
-////			    return (AbstractWorkflowInstanceObject) toTask;
-////			}	
-////		}
-////	}
-//	
-////	private AbstractWorkflowInstanceObject mapAsInput(String asRole, Set<IArtifact> fromArt, IWorkflowTask toTask) {
-////		// check if not yet exists:
-////		if (toTask.getAnyOneInputByRole(asRole)==null) {
-////			// then map as new Input
-////			toTask.addInput(new ArtifactInput(fromArt, asRole)); 
-////			return (AbstractWorkflowInstanceObject) toTask;
-////		} else {
-////			Set<ArtifactIdentifier> existingArt = toTask.getAllInputsByRole(asRole).stream().map(art -> art.getArtifactIdentifier()).collect(Collectors.toSet());
-////			Set<IArtifact> newArt = fromArt.stream().filter(art -> !existingArt.contains(art.getArtifactIdentifier()) ).collect(Collectors.toSet());
-////			if (newArt.isEmpty())
-////				return null;
-////			else {
-////				toTask.getInput().stream()
-////			                .filter(o -> o.getRole().equals(asRole))
-////			                .findAny().ifPresent(output ->  
-////			                	newArt.stream().forEach(art -> output.addOrReplaceArtifact(art) ) );
-////				return (AbstractWorkflowInstanceObject) toTask;
-////			}
-////		}
-////	}
+//
 //	
 //	private boolean shouldBeMapped(ExecutedMapping em) {
 //		// check if not yet exists:
@@ -999,6 +617,20 @@
 //			} while (true);																		 			
 //		}		
 //	}
-//	
-//	
-//}
+	
+	
+	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
+		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
+			.filter(it -> it.name().equals(DecisionNodeInstance.designspaceTypeId))
+			.findAny();
+		if (thisType.isPresent())
+			return thisType.get();
+		else {
+			InstanceType typeStep = ws.createInstanceType(ProcessStep.designspaceTypeId, ws.TYPES_FOLDER, ProcessScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
+			typeStep.createPropertyType(CoreProperties.isInflowFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
+			typeStep.createPropertyType(CoreProperties.hasPropagated.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
+			return typeStep;
+		}
+	}
+	
+}

@@ -6,24 +6,22 @@ import at.jku.isse.designspace.core.model.Cardinality;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
+import at.jku.isse.passiveprocessengine.InstanceWrapper;
 
-public class QAConstraintSpec implements InstanceWrapper{
+public class QAConstraintSpec extends InstanceWrapper{
 
 	
 	public static enum CoreProperties {qaConstraintSpec, humanReadableDescription};
 	public static final String designspaceTypeId = QAConstraintSpec.class.getSimpleName();
-	
-	private transient Instance instance;
 
 	public QAConstraintSpec(String qaConstraintId, String qaConstraintSpec, String humanReadableDescription, Workspace ws) {
-		super();
-		this.instance = ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), qaConstraintId);
+		super(ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), qaConstraintId));
 		instance.getPropertyAsSingle(CoreProperties.qaConstraintSpec.toString()).set(qaConstraintSpec);
 		instance.getPropertyAsSingle(CoreProperties.humanReadableDescription.toString()).set(humanReadableDescription);
 	}
 	
 	public QAConstraintSpec(Instance instance) {
-		this.instance = instance;
+		super(instance);
 	}
 
 	public String getQaConstraintId() {
@@ -53,8 +51,4 @@ public class QAConstraintSpec implements InstanceWrapper{
 			}
 	}
 
-	@Override
-	public Instance getInstance() {
-		return instance;
-	}
 }

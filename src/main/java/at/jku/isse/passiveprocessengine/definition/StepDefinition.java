@@ -13,24 +13,21 @@ import at.jku.isse.designspace.core.model.MapProperty;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.DecisionNodeDefinition;
+import at.jku.isse.passiveprocessengine.InstanceWrapper;
+import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
-public class StepDefinition implements InstanceWrapper, IStepDefinition {
+public class StepDefinition extends InstanceWrapper implements IStepDefinition {
 
 	public static enum CoreProperties {expectedInput, expectedOutput, ioMappingRules, 
-							preCondition, postCondition, activationCondition, cancelationCondition,
+							conditions,
 							qaConstraints};
 	
 	public static final String designspaceTypeId = StepDefinition.class.getSimpleName();
 	
-	private transient Instance instance;
 	
 	public StepDefinition(Instance instance) {
-		this.instance = instance;
-	}
-	
-
-	public String getId() {
-		return instance.name();
+		super(instance);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -56,9 +53,13 @@ public class StepDefinition implements InstanceWrapper, IStepDefinition {
 		return Collections.emptyMap();
 	}
 
-	public Optional<String> getPreconditionRule() {
-		// TODO Auto-generated method stub
-		return Optional.empty();
+	public Optional<String> getCondition(Conditions condition) {
+		String rule = (String)instance.getPropertyAsMap(CoreProperties.conditions.toString()).get(condition.toString());
+		return Optional.ofNullable(rule);
+	}
+	
+	public void setCondition(Conditions condition, String ruleAsString) {
+		instance.getPropertyAsMap(CoreProperties.conditions.toString()).put(condition.toString(), ruleAsString);
 	}
 
 	public Optional<String> getPostconditionRule() {
@@ -100,10 +101,6 @@ public class StepDefinition implements InstanceWrapper, IStepDefinition {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
-	public Instance getInstance() {
-		return instance;
-	}
 
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
 		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
@@ -115,6 +112,7 @@ public class StepDefinition implements InstanceWrapper, IStepDefinition {
 				InstanceType typeStep = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER);
 				typeStep.createPropertyType(CoreProperties.qaConstraints.toString(), Cardinality.SET, QAConstraintSpec.getOrCreateDesignSpaceCoreSchema(ws));
 				typeStep.createPropertyType(CoreProperties.expectedInput.toString(), Cardinality.MAP, ws.META_INSTANCE_TYPE);
+				typeStep.createPropertyType(CoreProperties.conditions.toString(), Cardinality.MAP, Workspace.STRING);
 				return typeStep;
 			}
 	}

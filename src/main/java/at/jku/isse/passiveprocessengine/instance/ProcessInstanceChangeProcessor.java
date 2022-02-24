@@ -3,6 +3,7 @@ package at.jku.isse.passiveprocessengine.instance;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -14,34 +15,56 @@ import at.jku.isse.designspace.core.events.PropertyUpdateRemove;
 import at.jku.isse.designspace.core.events.PropertyUpdateSet;
 import at.jku.isse.designspace.core.model.Element;
 import at.jku.isse.designspace.core.model.Id;
+import at.jku.isse.designspace.core.model.Instance;
+import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.ServiceListener;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.model.WorkspaceListener;
 import at.jku.isse.designspace.core.service.WorkspaceService;
+import at.jku.isse.designspace.rule.model.ConsistencyRule;
+import at.jku.isse.passiveprocessengine.WrapperCache;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Service
-public class ProcessInstanceChangeProcessor implements WorkspaceListener {// ServiceListener {
+//@Service
+public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 
 	Workspace ws;
 	// refactor this out later into a schema cache
-	Map<Id, String> typeIndex = new HashMap<>();
+	//Map<Id, String> typeIndex = new HashMap<>();
 	Map<Id, String> instanceIndex = new HashMap<>();
 	
 	
-	public ProcessInstanceChangeProcessor(WorkspaceService workspaceService) {
+//	public ProcessInstanceChangeProcessor(WorkspaceService workspaceService) {
+//		//ws.addListener(this);
+//		this.ws = WorkspaceService.PUBLIC_WORKSPACE;
+//		
+//		// init typeIndex
+//		ws.debugInstanceTypes().stream()
+//			.forEach(it -> typeIndex.put(it.id(), it.name()));
+//		//Workspace.serviceListeners.add(this);
+//		WorkspaceService.subscribeToWorkspace(ws, this);
+//	}
+	
+	public ProcessInstanceChangeProcessor(Workspace ws) {
 		//ws.addListener(this);
-		this.ws = WorkspaceService.PUBLIC_WORKSPACE;
+		this.ws = ws;
+		
 		// init typeIndex
-		ws.debugInstanceTypes().stream()
-			.forEach(it -> typeIndex.put(it.id(), it.name()));
+		//ws.debugInstanceTypes().stream()
+		//	.forEach(it -> typeIndex.put(it.id(), it.name()));
 		//Workspace.serviceListeners.add(this);
-		WorkspaceService.subscribeToWorkspace(ws, this);
+		ws.workspaceListeners.add( this);
 	}
 
 	private boolean isOfStepType(Id id) {
+		if (id == null) return false;
 		return instanceIndex.getOrDefault(id, "NOTFOUND").startsWith(ProcessStep.designspaceTypeId);
+	}
+	
+	private boolean isOfCRDType(Id id) {
+		if (id == null) return false;
+		return instanceIndex.getOrDefault(id, "NOTFOUND").startsWith("crd"); //FIXME better approach than naming
 	}
 	
 	private void processElementCreate(ElementCreate op, Element element) {
@@ -50,21 +73,34 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {// Ser
 		// check if new type, if so update typeIndex
 		if (element.getInstanceType().id().value() == 2l) {
 			// new type
-			typeIndex.put(element.id(), element.getPropertyAsSingle("name").value.toString());
+			//typeIndex.put(element.id(), element.getPropertyAsSingle("name").value.toString());
 		} else if (element.getInstanceType().id().value() == 3l) { 
 			// ignore creation of a property
 			return;
 		} else {
 			// new instance
 			Id typeId = element.getInstanceType().id();
-			instanceIndex.put(element.id(), typeIndex.get(typeId));
+			 ws.debugInstanceTypes().stream()
+			 	.filter(type -> type.id().equals(typeId))
+			 	.forEach(type -> instanceIndex.put(element.id(), type.name()));
+			
+			
+//			if (typeId != null && typeIndex.get(typeId) != null)
+//				instanceIndex.put(element.id(), typeIndex.get(typeId));
+//			else {
+//				// unknown type
+//				
+//				InstanceType it = element.getInstanceType();
+//				Set<InstanceType> types = ws.debugInstanceTypes();
+//				element.id();
+//			}
 		}
 	}
 	
 	private void processPropertyUpdateAdd(PropertyUpdateAdd op, Element element) {
 		// check if this is about an instance
-	//	if (!instanceIndex.containsKey(op.elementId()))
-	//		return;
+		if (!instanceIndex.containsKey(op.elementId()))
+			return;
 		// now lets check if this is about a step, and if so about input
 		if (isOfStepType(element.id())) {
 			if (op.name().startsWith("in_")) {
@@ -75,16 +111,16 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {// Ser
 																added != null ? added.name() : "NULL"
 																));		
 			}
-		} else {
-			log.info(op.toString());
-		}
+		} //else {
+			//log.info(op.toString());
+		//}
 			
 	}
 	
 	private void processPropertyUpdateRemove(PropertyUpdateRemove op, Element element) {
 		// check if this is about an instance
-	//	if (!instanceIndex.containsKey(op.elementId()))
-	//		return;
+		if (!instanceIndex.containsKey(op.elementId()))
+			return;
 		// now lets check if this is about a step, and if so about input
 		if (isOfStepType(element.id())) {
 	//		if (op.name().startsWith("in_")) {
@@ -95,16 +131,31 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {// Ser
 																op.indexOrKey()
 																));		
 	//		}
-		} else {
-			log.info(op.toString());
-		}
+		}//else {
+//			log.info(op.toString());
+//		}
 	}
 	
 	private void processPropertyUpdateSet(PropertyUpdateSet op, Element element) {
-		log.info(String.format("%s updated %s to %s", element.name(),
-				op.name(),
-				op.value().toString()
-				));	
+		if (isOfStepType(element.id())) {
+			log.info(String.format("Step %s updated %s to %s", element.name(),
+					op.name(),
+					op.value().toString()
+					));	
+		} else if (isOfCRDType(element.id()) && op.name().equals("result")) {
+			ConsistencyRule cr = (ConsistencyRule)element;
+			Instance context = cr.contextInstance();
+			if (isOfStepType(context.id())) { // rule belonging to a step,
+				ProcessStep step = WrapperCache.getWrappedInstance(ProcessStep.class, context);
+				step.processRuleEvaluationChange(cr, op);
+			log.info(String.format("CRD of type %s for step %s updated %s to %s", element.name(), context.name(),
+					op.name(),
+					op.value().toString()
+					));	
+			}
+		}
+		
+
 	}
 	
 //	@Override

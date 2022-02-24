@@ -19,7 +19,9 @@ import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.PropertyType;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
+import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
+import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -29,6 +31,7 @@ public class RuleTests {
 	InstanceType typeStep, typeJira;
 	Instance step1, step2;
 	Instance jira1, jira2;
+	ProcessInstanceChangeProcessor picp;
 //	@Autowired
 //	private WorkspaceService workspaceService;
 
@@ -36,9 +39,12 @@ public class RuleTests {
 	void setup() {
 		RuleService.setEvaluator(new ArlRuleEvaluator());
 		workspace = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		workspace.setAutoUpdate(true);
+		picp = new ProcessInstanceChangeProcessor(workspace);
 		typeJira = TestArtifacts.getJiraInstanceType(workspace);
 		StepDefinition s1 = StepDefinition.getInstance("S1", workspace);
-		typeStep = ProcessStep.getOrCreateDesignSpaceCoreSchema(workspace);
+		s1.setCondition(Conditions.PRECONDITION, "self.in_story->size() > 0");
+		typeStep = ProcessStep.getOrCreateDesignSpaceInstanceType(workspace, s1);
 		if (typeStep.getPropertyType("in_story") == null) {
 			PropertyType storyPropT = typeStep.createPropertyType("in_story", Cardinality.LIST, typeJira);
 		}
@@ -51,8 +57,6 @@ public class RuleTests {
 	@Test
 	public void testInsertRule() {
 		
-		
-		
 		ConsistencyRuleType crd1 = ConsistencyRuleType.create(workspace, typeStep, "crd1", "self.in_story->size() > 0");
 		workspace.concludeTransaction();
 		assert ConsistencyUtils.crdValid(crd1);
@@ -60,6 +64,7 @@ public class RuleTests {
 		step2.getPropertyAsList("in_story").add(jira1);
 		step1.getPropertyAsList("in_story").add(jira1);
 		workspace.concludeTransaction();
+		//workspace.commit();
 		
 		assert ConsistencyUtils.creExists(workspace.its(crd1), step1, true, false, true);
 		//step1.propertyAsList("in.story").remove(0);
@@ -70,9 +75,15 @@ public class RuleTests {
 		assert ConsistencyUtils.creExists(workspace.its(crd1), step2, true, false, true);
 		assert(step1.getPropertyAsList("in_story").size() == 0);
 		SetProperty<ConsistencyRule> cres = crd1.consistencyRuleEvaluations();
-		cres.stream().forEach(cre -> cre.contextInstance().name());
+		cres.stream().forEach(
+				cre -> cre.contextInstance().name());
 		
-		jira2 = workspace.createInstance(typeJira, "Jira2");	
+	}
+	
+	@Test
+	public void testInsertRuleViaSpec() {
+		step2.getPropertyAsList("in_story").add(jira1);
+		step1.getPropertyAsList("in_story").add(jira1);
 		workspace.concludeTransaction();
 	}
 

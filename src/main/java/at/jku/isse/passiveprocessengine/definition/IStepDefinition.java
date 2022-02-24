@@ -7,6 +7,7 @@ import java.util.Set;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.passiveprocessengine.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.IdentifiableElement;
+import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 public interface IStepDefinition extends IdentifiableElement {
     
@@ -14,10 +15,7 @@ public interface IStepDefinition extends IdentifiableElement {
 	Map<String,InstanceType> getExpectedOutput();
 	Map<String, String> getInputToOutputMappingRules();
 	
-	Optional<String> getPreconditionRule();
-	Optional<String> getPostconditionRule();
-	Optional<String> getActivationRule();
-	Optional<String> getCancelationRule();
+	Optional<String> getCondition(Conditions condition);
 	Set<QAConstraintSpec> getQAConstraints();
 
 	DecisionNodeDefinition getOutDND();

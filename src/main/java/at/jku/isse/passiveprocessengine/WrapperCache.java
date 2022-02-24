@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.definition;
+package at.jku.isse.passiveprocessengine;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;

@@ -5,6 +5,8 @@ import com.github.oxo42.stateless4j.StateMachineConfig;
 
 public class StepLifecycle {
 	
+	public static enum Conditions { PRECONDITION, POSTCONDITION, ACTIVATION, CANCELATION }
+	
 	// see as inspiration: https://docs.camunda.org/manual/7.4/reference/cmmn11/concepts/lifecycle/#task-stage-lifecycle
 	public static enum State {
 		AVAILABLE, // not used yet
