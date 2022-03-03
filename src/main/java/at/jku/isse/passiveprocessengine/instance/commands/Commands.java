@@ -33,7 +33,7 @@ public class Commands {
 			this.parentCauseRef = parentCauseRef;
 			return this;
 		}
-		
+		public abstract void execute();
 	}
 	
 //	@Data
@@ -156,12 +156,12 @@ public class Commands {
 //        private final String id;
 //        private final List<IArtifact> artifacts;
 //    }
-    @Data
-    public static class SetPreConditionsFulfillmentCmd extends TrackableCmd {
-        private final String id;
-        private final String wftId;
-        private final boolean isFulfilled;
-    }
+//    @Data
+//    public static class SetPreConditionsFulfillmentCmd extends TrackableCmd {
+//        private final String id;
+//        private final String wftId;
+//        private final boolean isFulfilled;
+//    }
     
     
     @Data
@@ -169,6 +169,34 @@ public class Commands {
         private final ProcessStep step;
         private final Conditions condition;
         private final boolean isFulfilled;
+		@Override
+		public void execute() {
+			switch(condition) {
+			case ACTIVATION:
+				step.setActivationConditionsFulfilled();
+				break;
+			case CANCELATION:
+				step.setCancelConditionsFulfilled(isFulfilled);
+				break;
+			case POSTCONDITION:
+				step.setPostConditionsFulfilled(isFulfilled);
+				break;
+			case PRECONDITION:
+				step.setPreConditionsFulfilled(isFulfilled);
+				break;
+			default:
+				break;
+			
+			}
+			
+		}
+		@Override
+		public String toString() {
+			return "ConditionChangedCmd [" + step.getDefinition().getName() + " " + condition + " : " + isFulfilled
+					+ "]";
+		}
+        
+        
     }
     
   

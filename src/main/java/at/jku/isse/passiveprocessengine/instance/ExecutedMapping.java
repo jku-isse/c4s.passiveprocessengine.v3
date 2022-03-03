@@ -1,6 +1,6 @@
 package at.jku.isse.passiveprocessengine.instance;
 
-import artifactapi.IArtifact;
+import at.jku.isse.designspace.core.model.Instance;
 
 
 public class ExecutedMapping {
@@ -8,17 +8,17 @@ public class ExecutedMapping {
 	enum DIR { outToIn, //from Step output to Step input
 		inToIn, // from process input to Step input
 		outToOut, // from Step output to process output
-		inToOut //from porcess input to process output
+		inToOut //from process input to process output
 		};
 	
 	ProcessStep fromStep;
 	String fromParam;
-	IArtifact art;
+	Instance art;
 	ProcessStep toStep;
 	String toParam;
 	DIR dir = DIR.outToIn;
 	
-	public ExecutedMapping(ProcessStep fromStep, String fromParam, IArtifact art, ProcessStep toStep, String toParam) {
+	public ExecutedMapping(ProcessStep fromStep, String fromParam, Instance art, ProcessStep toStep, String toParam) {
 		super();
 		this.fromStep = fromStep;
 		this.fromParam = fromParam;
@@ -27,7 +27,7 @@ public class ExecutedMapping {
 		this.toParam = toParam;
 	}
 	
-	public ExecutedMapping(ProcessStep fromStep, String fromParam, IArtifact art, ProcessStep toStep, String toParam, DIR direction) {
+	public ExecutedMapping(ProcessStep fromStep, String fromParam, Instance art, ProcessStep toStep, String toParam, DIR direction) {
 		super();
 		this.fromStep = fromStep;
 		this.fromParam = fromParam;
@@ -55,11 +55,11 @@ public class ExecutedMapping {
 		this.fromParam = fromParam;
 	}
 
-	public IArtifact getArtifact() {
+	public Instance getArtifact() {
 		return art;
 	}
 
-	public void setArtifact(IArtifact art) {
+	public void setArtifact(Instance art) {
 		this.art = art;
 	}
 
@@ -88,7 +88,7 @@ public class ExecutedMapping {
 	}
 
 	
-	public ExecutedMapping fluentSetArtifact(IArtifact art) {
+	public ExecutedMapping fluentSetArtifact(Instance art) {
 		this.setArtifact(art);
 		return this;
 	}

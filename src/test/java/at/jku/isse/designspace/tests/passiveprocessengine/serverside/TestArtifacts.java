@@ -17,7 +17,6 @@ public class TestArtifacts {
 				return thisType.get();
 			else {
 				InstanceType typeStep = ws.createInstanceType(JIRATYPE, ws.TYPES_FOLDER);
-				
 				return typeStep;
 			}
 	}

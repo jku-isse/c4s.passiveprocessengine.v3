@@ -1,10 +1,12 @@
 package at.jku.isse.passiveprocessengine;
 
 import at.jku.isse.designspace.core.model.Instance;
+import at.jku.isse.designspace.core.model.Workspace;
 
 public abstract class InstanceWrapper implements IdentifiableElement{
 	
 	protected transient Instance instance;
+	protected transient Workspace ws;
 	
 	public InstanceWrapper(Instance instance) {
 		assert instance != null;

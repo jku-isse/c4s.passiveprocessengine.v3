@@ -3,7 +3,10 @@ package at.jku.isse.passiveprocessengine.instance;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -23,6 +26,7 @@ import at.jku.isse.designspace.core.model.WorkspaceListener;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.instance.commands.Commands.TrackableCmd;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -103,14 +107,14 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 			return;
 		// now lets check if this is about a step, and if so about input
 		if (isOfStepType(element.id())) {
-			if (op.name().startsWith("in_")) {
+			//if (op.name().startsWith("in_")) {
 				Id addedId = (Id) op.value();
 				Element added = ws.findElement(addedId);
 				log.info(String.format("%s %s now also contains %s", element.name(),
 																op.name(),
 																added != null ? added.name() : "NULL"
 																));		
-			}
+			//}
 		} //else {
 			//log.info(op.toString());
 		//}
@@ -136,7 +140,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 //		}
 	}
 	
-	private void processPropertyUpdateSet(PropertyUpdateSet op, Element element) {
+	private Optional<TrackableCmd> processPropertyUpdateSet(PropertyUpdateSet op, Element element) {
 		if (isOfStepType(element.id())) {
 			log.info(String.format("Step %s updated %s to %s", element.name(),
 					op.name(),
@@ -147,15 +151,15 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 			Instance context = cr.contextInstance();
 			if (isOfStepType(context.id())) { // rule belonging to a step,
 				ProcessStep step = WrapperCache.getWrappedInstance(ProcessStep.class, context);
-				step.processRuleEvaluationChange(cr, op);
-			log.info(String.format("CRD of type %s for step %s updated %s to %s", element.name(), context.name(),
-					op.name(),
-					op.value().toString()
-					));	
+				TrackableCmd effect = step.processRuleEvaluationChange(cr, op);
+				log.info(String.format("CRD of type %s for step %s updated %s to %s", element.name(), context.name(),
+						op.name(),
+						op.value().toString()
+						));	
+				return Optional.ofNullable(effect);
 			}
 		}
-		
-
+		return Optional.empty();
 	}
 	
 //	@Override
@@ -190,7 +194,8 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 
 	@Override
 	public void handleUpdated(List<Operation> operations) {
-		operations.stream().forEach(operation -> {
+		@SuppressWarnings("unchecked")
+		List<TrackableCmd> effects = (List<TrackableCmd>) operations.stream().map(operation -> {
  			Element element = ws.findElement(operation.elementId());
 			if (operation instanceof ElementCreate) {
 				// update type and instance index
@@ -203,7 +208,8 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 						processPropertyUpdateRemove((PropertyUpdateRemove) operation, element);
 					} else
 						if (operation instanceof PropertyUpdateSet) {
-							processPropertyUpdateSet((PropertyUpdateSet) operation, element);
+							return processPropertyUpdateSet((PropertyUpdateSet) operation, element);
+							
 						} else
 							if (operation instanceof PropertyCreate) { 
 								// no logging
@@ -215,7 +221,18 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 					element.getInstanceType() != null ? element.getInstanceType().id() : "NoInstanceType",
 							operation.getClass().getSimpleName()));
 		//	}
-		});
+			return Optional.empty();
+		})
+		.filter(Optional::isPresent)
+		.map(opt -> opt.get())
+		.collect(Collectors.toList());
 		
+		// now lets just execute all commands
+		if (effects.size() > 0) {
+			effects.stream()
+				.peek(cmd -> log.debug(String.format("Executing: %s", cmd.toString())))
+				.forEach(cmd -> cmd.execute());
+			ws.concludeTransaction();
+		}
 	}
 }

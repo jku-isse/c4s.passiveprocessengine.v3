@@ -13,38 +13,72 @@ import at.jku.isse.designspace.core.model.Property;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.WrapperCache;
-import at.jku.isse.passiveprocessengine.definition.IStepDefinition;
+import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import lombok.extern.slf4j.Slf4j;
+
 
 @Slf4j
 public class ProcessInstance extends ProcessStep {
 
-	static enum CoreProperties {stepInstances, decisionNodeInstances};
+	static enum CoreProperties {stepInstances, decisionNodeInstances, processDefinition};
 	
 	public static final String designspaceTypeId = ProcessInstance.class.getSimpleName();
-	
-	transient protected ProcessDefinition pd;
+
 	
 	public ProcessInstance(Instance instance) {
 		super(instance);
 	}
 
-	@SuppressWarnings("unchecked")
-	public void addInput(String inParam, Instance artifact) {
-		if (pd.getExpectedInput().containsKey(inParam)) {
-			Property<?> prop = instance.getProperty("in_"+inParam);
-			if (prop.propertyType.isAssignable(artifact)) {
-				instance.getPropertyAsList("in_"+inParam).add(artifact);
-			} else {
-				log.warn(String.format("Cannot add input %s to process instance %s with nonmatching artifact type %s of id % %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name()));
-			}
-		} else {
-			// additionally Somehow notify about wrong param access
-			log.warn(String.format("Ignoring attempt to add unexpected input %s to process instance %s", inParam, this.getName()));
-		}
+	protected void createAndWireTask(StepDefinition sd) {
+    	DecisionNodeInstance inDNI = getOrCreateDNI(sd.getInDND());
+    	DecisionNodeInstance outDNI = getOrCreateDNI(sd.getOutDND());
+    	if (getProcessSteps().stream().noneMatch(t -> t.getDefinition().getId().equals(sd.getId()))) {
+        	ProcessStep step = ProcessStep.getInstance(ws, sd, inDNI, outDNI);
+        	step.setProcess(this);
+        	if (step != null)
+        		this.addProcessStep(step);
+        }
+    	//if (wft != null) {
+    			//if (this.expectedLifecycleState.equals(State.CANCELED)) {
+    			//	newAWOs.addAll(wft.setCanceled(true, cause));
+    			//} else if (this.expectedLifecycleState.equals(State.NO_WORK_EXPECTED)) {
+    			//	newAWOs.addAll(wft.setWorkExpected(false, cause));
+    			//}    			
+    	//}
+     }
+	
+    private DecisionNodeInstance getOrCreateDNI(DecisionNodeDefinition dnd) {
+    	return this.getDecisionNodeInstances().stream()
+    	.filter(dni -> dni.getDefinition().equals(dnd))
+    	.findAny().orElseGet(() -> { DecisionNodeInstance dni = DecisionNodeInstance.getInstance(ws, dnd);
+    				dni.setProcess(this);
+    				this.addDecisionNodeInstance(dni);
+    				return dni;
+    	});
+    }
+	    
+	public ProcessDefinition getDefinition() {
+		return  WrapperCache.getWrappedInstance(ProcessDefinition.class, instance.getPropertyAsInstance(CoreProperties.processDefinition.toString()));
 	}
 	
+	public void addInput(String inParam, Instance artifact) {
+		super.addInput(inParam, artifact);
+		// now see if we need to map this to first DNI - we assume all went well
+		getDecisionNodeInstances().stream()
+		.filter(dni -> dni.getInSteps().size() == 0)
+		.forEach(dni -> {
+			dni.tryActivationPropagation(); // to trigger mapping to first steps
+		});
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void addProcessStep(ProcessStep step) {
+		assert(step != null);
+		assert(step.getInstance() != null);
+		instance.getPropertyAsSet(CoreProperties.stepInstances.toString()).add(step.getInstance());
+	}
 	
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getProcessSteps() {
@@ -67,7 +101,12 @@ public class ProcessInstance extends ProcessStep {
 		} else return Collections.emptySet();
 	}
 	
-	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws, IStepDefinition td) {
+	@SuppressWarnings("unchecked")
+	private void addDecisionNodeInstance(DecisionNodeInstance dni) {
+		instance.getPropertyAsSet(CoreProperties.decisionNodeInstances.toString()).add(dni.getInstance());
+	}
+	
+	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws, ProcessDefinition td) {
 		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
 				.filter(it -> it.name().equals(designspaceTypeId+td.getId()))
 				.findAny();
@@ -75,15 +114,34 @@ public class ProcessInstance extends ProcessStep {
 			return thisType.get();
 		else {
 			InstanceType typeStep = ws.createInstanceType(designspaceTypeId+td.getName(), ws.TYPES_FOLDER, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, td));
-			typeStep.createPropertyType(CoreProperties.stepInstances.toString(), Cardinality.LIST, getOrCreateDesignSpaceCoreSchema(ws));
-			typeStep.createPropertyType(CoreProperties.decisionNodeInstances.toString(), Cardinality.LIST, DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(ws));
+			typeStep.createPropertyType(CoreProperties.processDefinition.toString(), Cardinality.SINGLE, ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws));
+			typeStep.createPropertyType(CoreProperties.stepInstances.toString(), Cardinality.SET, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
+			typeStep.createPropertyType(CoreProperties.decisionNodeInstances.toString(), Cardinality.SET, DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(ws));
 			return typeStep;
 		}
 	}
 		
-	public static ProcessStep getInstance(Workspace ws, IStepDefinition sd) {
-		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+UUID.randomUUID());
-		return WrapperCache.getWrappedInstance(ProcessInstance.class, instance);
+	public static ProcessInstance getInstance(Workspace ws, ProcessDefinition sd) {
+		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+UUID.randomUUID());
+		ProcessInstance pi = WrapperCache.getWrappedInstance(ProcessInstance.class, instance);
+		pi.init(sd);
+		return pi;
+	}
+	
+	protected void init(ProcessDefinition pdef) {
+		// init first DNI, there should be only one. Needs to be checked earlier with definition creation
+		// we assume consistent, correct specification/definition here
+		super.init(pdef, null, null);
+		instance.getPropertyAsSingle(CoreProperties.processDefinition.toString()).set(pdef.getInstance());
+		pdef.getDecisionNodeDefinitions().stream()
+			.filter(dnd -> dnd.getInSteps().size() == 0)
+			.forEach(dnd -> {
+				DecisionNodeInstance dni = DecisionNodeInstance.getInstance(ws, dnd);
+				dni.setProcess(this);
+				this.addDecisionNodeInstance(dni);
+				dni.tryActivationPropagation(); // to trigger instantiation of initial steps
+			});
+		// datamapping from proc to DNI is triggered upon adding input, which is not available at this stage
 	}
 	
 }

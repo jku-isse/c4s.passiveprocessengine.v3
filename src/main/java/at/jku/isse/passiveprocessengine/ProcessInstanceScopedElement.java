@@ -9,14 +9,14 @@ import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 
-public abstract class ProcessScopedElement extends InstanceWrapper {
+public abstract class ProcessInstanceScopedElement extends InstanceWrapper {
 
 	static enum CoreProperties {process};
-	public static final String designspaceTypeId = ProcessScopedElement.class.getSimpleName();
+	public static final String designspaceTypeId = ProcessInstanceScopedElement.class.getSimpleName();
 	
 	
 	
-	public ProcessScopedElement(Instance instance) {
+	public ProcessInstanceScopedElement(Instance instance) {
 		super(instance);
 	}
 
@@ -33,12 +33,12 @@ public abstract class ProcessScopedElement extends InstanceWrapper {
 	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
 		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
-			.filter(it -> it.name().equals(ProcessScopedElement.designspaceTypeId))
+			.filter(it -> it.name().equals(designspaceTypeId))
 			.findAny();
 		if (thisType.isPresent())
 			return thisType.get();
 		else {
-			InstanceType typeStep = ws.createInstanceType(ProcessStep.designspaceTypeId, ws.TYPES_FOLDER);
+			InstanceType typeStep = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER);
 			typeStep.createPropertyType(CoreProperties.process.toString(), Cardinality.SINGLE, typeStep);
 			return typeStep;
 		}

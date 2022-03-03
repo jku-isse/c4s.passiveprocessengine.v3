@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.passiveprocessengine.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.IdentifiableElement;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 

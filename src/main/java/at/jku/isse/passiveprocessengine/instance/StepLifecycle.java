@@ -32,7 +32,7 @@ public class StepLifecycle {
 		OUTPUT_SUFFICIENT // all required output available
 	}
 	
-	public static enum Triggers {
+	public static enum Trigger {
 		ENABLE,
 		ACTIVATE,
 		CANCEL,
@@ -45,104 +45,104 @@ public class StepLifecycle {
 		MARK_COMPLETE_REPAIR
 	}
 	
-	private static StateMachineConfig<State, Triggers> smcExpected;
-	private static StateMachineConfig<State, Triggers> smcActual;
+	private static StateMachineConfig<State, Trigger> smcExpected;
+	private static StateMachineConfig<State, Trigger> smcActual;
 	
-	public static StateMachineConfig<State, Triggers> getExpectedStateMachineConfig() {
+	public static StateMachineConfig<State, Trigger> getExpectedStateMachineConfig() {
 		if (smcExpected == null) {
 			// https://github.com/oxo42/stateless4j
 			smcExpected = new StateMachineConfig<>();
 			smcExpected.configure(State.AVAILABLE)
-				.permit(Triggers.ENABLE, State.ENABLED)
-				.permit(Triggers.HALT, State.NO_WORK_EXPECTED)
-				.permit(Triggers.CANCEL, State.CANCELED);
+				.permit(Trigger.ENABLE, State.ENABLED)
+				.permit(Trigger.HALT, State.NO_WORK_EXPECTED)
+				.permit(Trigger.CANCEL, State.CANCELED);
 			smcExpected.configure(State.ENABLED)
-				.permit(Triggers.ACTIVATE, State.ACTIVE)
-				.permit(Triggers.RESET, State.AVAILABLE)
-				.permit(Triggers.MARK_COMPLETE, State.COMPLETED)
-				.permit(Triggers.HALT, State.NO_WORK_EXPECTED)
-				.permit(Triggers.CANCEL, State.CANCELED);
+				.permit(Trigger.ACTIVATE, State.ACTIVE)
+				.permit(Trigger.RESET, State.AVAILABLE)
+				.permit(Trigger.MARK_COMPLETE, State.COMPLETED)
+				.permit(Trigger.HALT, State.NO_WORK_EXPECTED)
+				.permit(Trigger.CANCEL, State.CANCELED);
 			smcExpected.configure(State.ACTIVE)
-				.permit(Triggers.MARK_COMPLETE, State.COMPLETED)
+				.permit(Trigger.MARK_COMPLETE, State.COMPLETED)
 //				.permit(Triggers.ENABLE, State.ENABLED) makes no sense to go back to ENABLED once we were active
 //				.permit(Triggers.RESET, State.AVAILABLE)
-				.permit(Triggers.HALT, State.NO_WORK_EXPECTED)
-				.permit(Triggers.CANCEL, State.CANCELED);
+				.permit(Trigger.HALT, State.NO_WORK_EXPECTED)
+				.permit(Trigger.CANCEL, State.CANCELED);
 			smcExpected.configure(State.NO_WORK_EXPECTED)
-				.permit(Triggers.RESET, State.AVAILABLE)
-				.permit(Triggers.ENABLE, State.ENABLED)
-				.permit(Triggers.CANCEL, State.CANCELED)
-				.permit(Triggers.ACTIVATE_REPAIR, State.ACTIVE)
-				.permit(Triggers.MARK_COMPLETE_REPAIR, State.COMPLETED)
+				.permit(Trigger.RESET, State.AVAILABLE)
+				.permit(Trigger.ENABLE, State.ENABLED)
+				.permit(Trigger.CANCEL, State.CANCELED)
+				.permit(Trigger.ACTIVATE_REPAIR, State.ACTIVE)
+				.permit(Trigger.MARK_COMPLETE_REPAIR, State.COMPLETED)
 				.substateOf(State.SUPERSTATE_ENDED);
 			smcExpected.configure(State.CANCELED)
-				.permit(Triggers.RESET, State.AVAILABLE)
-				.permit(Triggers.ENABLE, State.ENABLED)
-				.permit(Triggers.HALT, State.NO_WORK_EXPECTED)
-				.permit(Triggers.ACTIVATE_REPAIR, State.ACTIVE)
-				.permit(Triggers.MARK_COMPLETE_REPAIR, State.COMPLETED)
+				.permit(Trigger.RESET, State.AVAILABLE)
+				.permit(Trigger.ENABLE, State.ENABLED)
+				.permit(Trigger.HALT, State.NO_WORK_EXPECTED)
+				.permit(Trigger.ACTIVATE_REPAIR, State.ACTIVE)
+				.permit(Trigger.MARK_COMPLETE_REPAIR, State.COMPLETED)
 				.substateOf(State.SUPERSTATE_ENDED);
 			smcExpected.configure(State.COMPLETED)
-				.permit(Triggers.CANCEL, State.CANCELED) // if we worked in good faith on an XOR branch that later needs to be ignored, we should cancel any completed step to signal that we explicitly wont use the results of that step
+				.permit(Trigger.CANCEL, State.CANCELED) // if we worked in good faith on an XOR branch that later needs to be ignored, we should cancel any completed step to signal that we explicitly wont use the results of that step
 				.substateOf(State.SUPERSTATE_ENDED);
 		}
 		return smcExpected;
 	}
 	
-	public static StateMachineConfig<State, Triggers> getActualStateMachineConfig() {
+	public static StateMachineConfig<State, Trigger> getActualStateMachineConfig() {
 		if (smcActual == null) {
 			// https://github.com/oxo42/stateless4j
 			smcActual = new StateMachineConfig<>();
 			smcActual.configure(State.AVAILABLE)
-				.permit(Triggers.ACTIVATE, State.ACTIVE) //deviating trigger
-				.permit(Triggers.MARK_COMPLETE, State.COMPLETED) // deviating trigger
-				.permit(Triggers.ENABLE, State.ENABLED)
-				.permit(Triggers.HALT, State.NO_WORK_EXPECTED)
-				.permit(Triggers.CANCEL, State.CANCELED);
+				.permit(Trigger.ACTIVATE, State.ACTIVE) //deviating trigger
+				.permit(Trigger.MARK_COMPLETE, State.COMPLETED) // deviating trigger
+				.permit(Trigger.ENABLE, State.ENABLED)
+				.permit(Trigger.HALT, State.NO_WORK_EXPECTED)
+				.permit(Trigger.CANCEL, State.CANCELED);
 			smcActual.configure(State.ENABLED)
-				.permit(Triggers.ACTIVATE, State.ACTIVE)
-				.permit(Triggers.RESET, State.AVAILABLE)
-				.permit(Triggers.MARK_COMPLETE, State.COMPLETED)
-				.permit(Triggers.HALT, State.NO_WORK_EXPECTED)
-				.permit(Triggers.CANCEL, State.CANCELED);
+				.permit(Trigger.ACTIVATE, State.ACTIVE)
+				.permit(Trigger.RESET, State.AVAILABLE)
+				.permit(Trigger.MARK_COMPLETE, State.COMPLETED)
+				.permit(Trigger.HALT, State.NO_WORK_EXPECTED)
+				.permit(Trigger.CANCEL, State.CANCELED);
 			smcActual.configure(State.ACTIVE)
-				.permit(Triggers.MARK_COMPLETE_DEVIATING, State.COMPLETED) // deviating trigger	
-				.ignore(Triggers.ACTIVATE_REPAIR) // repair / expected catching up with actual 
-				.permit(Triggers.MARK_COMPLETE, State.COMPLETED)
+				.permit(Trigger.MARK_COMPLETE_DEVIATING, State.COMPLETED) // deviating trigger	
+				.ignore(Trigger.ACTIVATE_REPAIR) // repair / expected catching up with actual 
+				.permit(Trigger.MARK_COMPLETE, State.COMPLETED)
 				//.permit(Triggers.ENABLE, State.ENABLED)  //FIXME: doesnt make sense, if we have already made some actions, why would we ever go back to enabled, perhaps when we made accidental changes and undo them? 
 				// --> still some activeness, then question whether we rather cancel, deactivation needs special capability which we ignore for now
-				.permit(Triggers.RESET, State.AVAILABLE)
-				.permit(Triggers.HALT, State.NO_WORK_EXPECTED)
-				.permit(Triggers.CANCEL, State.CANCELED);
+				.permit(Trigger.RESET, State.AVAILABLE)
+				.permit(Trigger.HALT, State.NO_WORK_EXPECTED)
+				.permit(Trigger.CANCEL, State.CANCELED);
 			smcActual.configure(State.NO_WORK_EXPECTED)
-				.permit(Triggers.ACTIVATE_DEVIATING, State.ACTIVE) //deviating trigger
-				.permit(Triggers.MARK_COMPLETE_DEVIATING, State.COMPLETED) // deviating trigger
-				.permit(Triggers.MARK_COMPLETE_REPAIR, State.COMPLETED) // repair trigger
-				.permit(Triggers.ACTIVATE_REPAIR, State.ACTIVE) //repair trigger 
+				.permit(Trigger.ACTIVATE_DEVIATING, State.ACTIVE) //deviating trigger
+				.permit(Trigger.MARK_COMPLETE_DEVIATING, State.COMPLETED) // deviating trigger
+				.permit(Trigger.MARK_COMPLETE_REPAIR, State.COMPLETED) // repair trigger
+				.permit(Trigger.ACTIVATE_REPAIR, State.ACTIVE) //repair trigger 
 				//.permit(Triggers.ACTIVATE, State.ACTIVE)
-				.permit(Triggers.RESET, State.AVAILABLE)
-				.permit(Triggers.ENABLE, State.ENABLED)
-				.permit(Triggers.CANCEL, State.CANCELED)
+				.permit(Trigger.RESET, State.AVAILABLE)
+				.permit(Trigger.ENABLE, State.ENABLED)
+				.permit(Trigger.CANCEL, State.CANCELED)
 			//	.permit(Triggers.MARK_COMPLETE, State.COMPLETED)
 				.substateOf(State.SUPERSTATE_ENDED);
 			smcActual.configure(State.CANCELED)
-				.permit(Triggers.ACTIVATE_DEVIATING, State.ACTIVE) //deviating trigger
-				.permit(Triggers.MARK_COMPLETE_DEVIATING, State.COMPLETED) // deviating trigger
-				.permit(Triggers.MARK_COMPLETE_REPAIR, State.COMPLETED) // repair trigger
-				.permit(Triggers.ACTIVATE_REPAIR, State.ACTIVE) //repair trigger
-				.permit(Triggers.ACTIVATE, State.ACTIVE)
-				.permit(Triggers.RESET, State.AVAILABLE)
-				.permit(Triggers.ENABLE, State.ENABLED)
-				.permit(Triggers.HALT, State.NO_WORK_EXPECTED)
+				.permit(Trigger.ACTIVATE_DEVIATING, State.ACTIVE) //deviating trigger
+				.permit(Trigger.MARK_COMPLETE_DEVIATING, State.COMPLETED) // deviating trigger
+				.permit(Trigger.MARK_COMPLETE_REPAIR, State.COMPLETED) // repair trigger
+				.permit(Trigger.ACTIVATE_REPAIR, State.ACTIVE) //repair trigger
+				.permit(Trigger.ACTIVATE, State.ACTIVE)
+				.permit(Trigger.RESET, State.AVAILABLE)
+				.permit(Trigger.ENABLE, State.ENABLED)
+				.permit(Trigger.HALT, State.NO_WORK_EXPECTED)
 			//	.permit(Triggers.ACTIVATE, State.ACTIVE)
 				//.permit(Triggers.MARK_COMPLETE, State.COMPLETED)
 				.substateOf(State.SUPERSTATE_ENDED);
 			smcActual.configure(State.COMPLETED)
-				.permit(Triggers.RESET, State.AVAILABLE) //deviating trigger	
-				.permit(Triggers.ACTIVATE, State.ACTIVE) //deviating trigger
-				.permit(Triggers.CANCEL, State.CANCELED) // if we worked in good faith on an XOR branch that later needs to be ignored, we should cancel any completed step to signal that we explicitly wont use the results of that step
-				.permit(Triggers.HALT, State.NO_WORK_EXPECTED) // when a complete task is in an XOR branch that is not finally selected
-				.ignore(Triggers.MARK_COMPLETE_REPAIR) // repair / expected catching up with actual 
+				.permit(Trigger.RESET, State.AVAILABLE) //deviating trigger	
+				.permit(Trigger.ACTIVATE, State.ACTIVE) //deviating trigger
+				.permit(Trigger.CANCEL, State.CANCELED) // if we worked in good faith on an XOR branch that later needs to be ignored, we should cancel any completed step to signal that we explicitly wont use the results of that step
+				.permit(Trigger.HALT, State.NO_WORK_EXPECTED) // when a complete task is in an XOR branch that is not finally selected
+				.ignore(Trigger.MARK_COMPLETE_REPAIR) // repair / expected catching up with actual 
 				.substateOf(State.SUPERSTATE_ENDED);
 		}
 		return smcActual;
@@ -150,23 +150,23 @@ public class StepLifecycle {
 	
 	
 	
-	public static StateMachine<State, Triggers> buildExpectedStatemachine() {
-		StateMachine<State, Triggers> sm = new StateMachine<>(State.AVAILABLE, getExpectedStateMachineConfig());
+	public static StateMachine<State, Trigger> buildExpectedStatemachine() {
+		StateMachine<State, Trigger> sm = new StateMachine<>(State.AVAILABLE, getExpectedStateMachineConfig());
 		return sm;
 	}
 	
-	public static StateMachine<State, Triggers> buildActualStatemachine() {
-		StateMachine<State, Triggers> sm = new StateMachine<>(State.AVAILABLE, getActualStateMachineConfig());
+	public static StateMachine<State, Trigger> buildActualStatemachine() {
+		StateMachine<State, Trigger> sm = new StateMachine<>(State.AVAILABLE, getActualStateMachineConfig());
 		return sm;
 	}
 	
-	public static StateMachine<State, Triggers> buildExpectedStatemachineInState(State state) {
-		StateMachine<State, Triggers> sm = new StateMachine<>(state, getExpectedStateMachineConfig());
+	public static StateMachine<State, Trigger> buildExpectedStatemachineInState(State state) {
+		StateMachine<State, Trigger> sm = new StateMachine<>(state, getExpectedStateMachineConfig());
 		return sm;
 	}
 	
-	public static StateMachine<State, Triggers> buildActualStatemachineInState(State state) {
-		StateMachine<State, Triggers> sm = new StateMachine<>(state, getActualStateMachineConfig());
+	public static StateMachine<State, Trigger> buildActualStatemachineInState(State state) {
+		StateMachine<State, Trigger> sm = new StateMachine<>(state, getActualStateMachineConfig());
 		return sm;
 	}
 }

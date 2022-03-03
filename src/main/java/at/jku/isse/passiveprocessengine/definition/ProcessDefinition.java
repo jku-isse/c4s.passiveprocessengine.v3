@@ -55,6 +55,12 @@ public class ProcessDefinition extends StepDefinition{
 		instance.getPropertyAsSet(CoreProperties.decisionNodeDefinitions.toString()).add(dnd.getInstance());
 	}
 	
+	public DecisionNodeDefinition getDecisionNodeDefinitionByName(String name) {
+		return getDecisionNodeDefinitions().stream()
+		.filter(dnd -> dnd.getName().equals(name))
+		.findAny().orElse(null);
+	}
+	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
 		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
 				.filter(it -> it.name().contentEquals(designspaceTypeId))
@@ -74,4 +80,17 @@ public class ProcessDefinition extends StepDefinition{
 		return WrapperCache.getWrappedInstance(ProcessDefinition.class, instance);
 	}
 	
+	public StepDefinition createStepDefinition(String stepId, Workspace ws) {
+		StepDefinition sd =  StepDefinition.getInstance(stepId, ws); // any other initialization there
+		sd.setProcess(this);
+		this.addStepDefinition(sd);
+		return sd;
+	}
+	
+	public DecisionNodeDefinition createDecisionNodeDefinition(String dndId, Workspace ws) {
+		DecisionNodeDefinition dnd = DecisionNodeDefinition.getInstance(dndId, ws); // any other initialization there
+		dnd.setProcess(this);
+		this.addDecisionNodeDefinition(dnd);
+		return dnd;
+	}
 }
