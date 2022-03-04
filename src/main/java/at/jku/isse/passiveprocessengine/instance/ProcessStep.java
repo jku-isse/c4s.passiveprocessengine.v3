@@ -2,6 +2,7 @@ package at.jku.isse.passiveprocessengine.instance;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -78,11 +79,16 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		// if premature conditions, then delegate to process instance, resp often will need to be on process level anyway
 		
 			// input to putput mappings
-			if (crt.name().startsWith("crd_datamapping") && Boolean.valueOf(op.value().toString()) == false) { // an unfulfilled datamapping rules
+			if (crt.name().startsWith("crd_datamapping") ) { // an unfulfilled datamapping rules
+				if (Boolean.valueOf(op.value().toString()) == false) {
 				// now we need to "repair" this, i.e., set the output accordingly
-				InputToOutputMapper.mapInputToOutputInStepScope(this, cr);
-			}
-			log.debug(String.format("Step %s has rule %s evaluate to %s", this.getName(), crt.name(), op.value().toString()));
+					log.debug(String.format("Datamapping %s will be repaired", this.getName(), crt.name()));
+					InputToOutputMapper.mapInputToOutputInStepScope(this, cr);
+				} else {
+					log.debug(String.format("Datamapping %s now consistent", this.getName(), crt.name()));
+				}
+			} else
+				log.debug(String.format("Step %s has rule %s evaluate to %s", this.getName(), crt.name(), op.value().toString()));
 		}
 		return null;
 	}
@@ -115,8 +121,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	@SuppressWarnings("unchecked")
-	public List<Instance> getInput(String param) {
-		return (List<Instance>) instance.getPropertyAsList("in_"+param).get();
+	public Set<Instance> getInput(String param) {
+		return (Set<Instance>) instance.getPropertyAsSet("in_"+param).get();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -124,7 +130,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		if (getDefinition().getExpectedInput().containsKey(inParam)) {
 			Property<?> prop = instance.getProperty("in_"+inParam);
 			if (prop.propertyType.isAssignable(artifact)) {
-				instance.getPropertyAsList("in_"+inParam).add(artifact);
+				instance.getPropertyAsSet("in_"+inParam).add(artifact);
 			} else {
 				log.warn(String.format("Cannot add input %s to %s with nonmatching artifact type %s of id % %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name()));
 			}
@@ -135,13 +141,13 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	@SuppressWarnings("unchecked")
-	public List<Instance> getOutput(String param) {
-		return (List<Instance>) instance.getPropertyAsList("out_"+param).get();
+	public Set<Instance> getOutput(String param) {
+		return (Set<Instance>) instance.getPropertyAsSet("out_"+param).get();
 	}
 	
 	@SuppressWarnings("unchecked")
 	public void addOutput(String param, Instance art) {
-		instance.getPropertyAsList("out_"+param).add(art);
+		instance.getPropertyAsSet("out_"+param).add(art);
 	}
 	
 	public DecisionNodeInstance getInDNI() {
@@ -318,11 +324,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			InstanceType typeStep = ws.createInstanceType(designspaceTypeId+td.getName(), ws.TYPES_FOLDER, superType);
 			td.getExpectedInput().entrySet().stream()
 				.forEach(entry -> {
-						typeStep.createPropertyType("in_"+entry.getKey(), Cardinality.LIST, entry.getValue());
+						typeStep.createPropertyType("in_"+entry.getKey(), Cardinality.SET, entry.getValue());
 				});
 			td.getExpectedOutput().entrySet().stream()
 			.forEach(entry -> {
-					typeStep.createPropertyType("out_"+entry.getKey(), Cardinality.LIST, entry.getValue());
+					typeStep.createPropertyType("out_"+entry.getKey(), Cardinality.SET, entry.getValue());
 			});
 			
 			for (Conditions condition : Conditions.values()) {

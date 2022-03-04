@@ -18,9 +18,11 @@ public class WrapperCache {
 	@SuppressWarnings("unchecked")
 	public static <T extends InstanceWrapper> T getWrappedInstance(Class<? extends InstanceWrapper> clazz, Instance instance) {
 		assert(instance != null);
-		if (cache.containsKey(instance.id()))
-			return (T) cache.get(instance.id()).get();
-		else
+		if (cache.containsKey(instance.id())) {
+			InstanceWrapper iw = cache.get(instance.id()).get();
+			if (iw != null)
+				return (T) iw; // else we reenter this
+		}
 		try {
 			// otherwise we take the constructor of that class that takes an Instance object as parameter
 			// and create it, passing it the instance object
