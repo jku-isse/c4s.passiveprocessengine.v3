@@ -10,6 +10,7 @@ import at.jku.isse.designspace.rule.arl.repair.Operator;
 import at.jku.isse.designspace.rule.arl.repair.Repair;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
+import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.service.RuleService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,17 +19,26 @@ public class InputToOutputMapper {
 
 	
 
-	public static void mapInputToOutputInStepScope(ProcessStep step, ConsistencyRule violatedCR) {
-		if (violatedCR.isConsistent()) return; // nothing to do
+	@SuppressWarnings("unchecked")
+	public static void mapInputToOutputInStepScope(ProcessStep step, ConsistencyRule crule) {
+		if (crule.isConsistent()) return; // nothing to do
 
-		RepairNode rn = RuleService.repairTree(violatedCR);
-		Set<Object> objects = step.getInstance().workspace.debugInstanceTypeFindByName("JiraArtifact").getInstancesIncludingThoseOfSubtypes().get();
+		
+		ConsistencyRuleType crt = (ConsistencyRuleType) crule.getInstanceType();
+		RepairNode rn = RuleService.repairTree(crule);
+		
+		Set<Object> objects = (Set<Object>) step.getDefinition().getExpectedOutput().values().stream()
+			.distinct()
+			.flatMap(type -> type.getInstancesIncludingThoseOfSubtypes().get().stream())
+			.collect(Collectors.toSet());
+		
+		//Set<Object> objects = step.getInstance().workspace.debugInstanceTypeFindByName("JiraArtifact").getInstancesIncludingThoseOfSubtypes().get();
 		// obtain based on outProperty --> need to check which outproperty this is
 		// this also works only if all instances that are relevant are somewhere in the designspace prefetched
 		
 		//rn.getConcreteRepairs(step.getInstance().getPropertyAsSet("in_jiraIn").get(), violatedCR, false, false);
 		//Set<Object> objects = Set.copyOf(step.getInstance().getPropertyAsSet("in_jiraIn").get());
-		Set<Repair> repairs = rn.getConcreteRepairs(objects, violatedCR, false, false); 
+		Set<Repair> repairs = rn.getConcreteRepairs(objects, crule, true, false); 
 		//Set<Repair> repairs = rn.getRepairs();
 		//rn.generateRepairsSample();
 		Set<Repair> validConcreteRepairs = repairs.stream()

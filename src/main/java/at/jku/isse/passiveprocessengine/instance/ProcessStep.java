@@ -342,6 +342,9 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				.forEach(entry -> {
 					ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeStep, "crd_datamapping_"+entry.getKey()+"_"+typeStep.name(), entry.getValue());
 					assert ConsistencyUtils.crdValid(crt);
+					//if (! crt.hasProperty("datamappingId"))
+					//	crt.getInstanceType().createPropertyType("datamappingId", Cardinality.SINGLE, Workspace.STRING);
+					//crt.getPropertyAsSingle("datamappingId").set(entry.getKey());
 					typeStep.createPropertyType("crd_datamapping_"+entry.getKey(), Cardinality.SINGLE, crt);
 				});
 			

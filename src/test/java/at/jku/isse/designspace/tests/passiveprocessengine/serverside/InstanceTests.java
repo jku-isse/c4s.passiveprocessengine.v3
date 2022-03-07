@@ -64,13 +64,12 @@ class InstanceTests {
 	
 	@Test
 	void testComplexDataMapping() {
-		Instance jiraA = ws.createInstance(typeJira, "jiraA");
-		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add("jiraB");
-		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add("jiraC");
-		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add("jiraD");
 		Instance jiraB = ws.createInstance(typeJira, "jiraB");
 		Instance jiraC = ws.createInstance(typeJira, "jiraC");
 		Instance jiraD = ws.createInstance(typeJira, "jiraD");
+		Instance jiraA = ws.createInstance(typeJira, "jiraA");
+		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add("jiraB");
+		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add("jiraC");
 		
 		ProcessDefinition procDef = getTestDefinition(ws);
 		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
@@ -80,22 +79,26 @@ class InstanceTests {
 		System.out.println(proc);
 		proc.getProcessSteps().stream().forEach(step -> System.out.println(step));
 		
+		assert(proc.getProcessSteps().stream()
+			.filter(step -> step.getDefinition().getName().equals("sd1") )
+			.allMatch(step -> step.getOutput("jiraOut").size() == 2));
 	}
 	
 	@Test
 	void testRules() {
-		Instance jiraA = ws.createInstance(typeJira, "jiraA");
-		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add("jiraB");
-		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add("jiraC");
-		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add("jiraD");
 		Instance jiraB = ws.createInstance(typeJira, "jiraB");
 		Instance jiraC = ws.createInstance(typeJira, "jiraC");
 		Instance jiraD = ws.createInstance(typeJira, "jiraD");
+		Instance jiraA = ws.createInstance(typeJira, "jiraA");
+		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add("jiraB");
+		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add("jiraC");
+		
 		
 		ProcessDefinition procDef = getTestDefinition(ws);
 		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
 		proc.addInput("jiraIn", jiraA);
 		ws.concludeTransaction();
+		assertTrue(jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).get().size()==2);
 		proc.getProcessSteps().stream()
 			.filter(td -> td.getDefinition().getInputToOutputMappingRules().size() > 0)
 			.peek(td -> System.out.println("Visiting Step: "+td.getName()))
@@ -104,16 +107,14 @@ class InstanceTests {
 					InstanceType type = td.getInstance().getProperty("crd_datamapping_"+entry.getKey()).propertyType().referencedInstanceType();
 					ConsistencyRuleType crt = (ConsistencyRuleType)type;
 					System.out.println("Checking "+crt.name());
+					
 					assertTrue(ConsistencyUtils.crdValid(crt));
 				});
 		});
 		
-		
-		
 		System.out.println(proc);
 		proc.getProcessSteps().stream().forEach(step -> System.out.println(step));
 
-		
 	}
 	
 	public static ProcessDefinition getTestDefinition(Workspace ws) {
@@ -136,12 +137,15 @@ class InstanceTests {
 		//sd1.addInputToOutputMappingRule("jiraIn2jiraOut", "self.in_jiraIn->forAll(elem | result->includes(elem) = self.out_jiraOut->excludes(elem))-> size() = 0"); // i.e., the symetricDifference is empty, i.e., the same elements need to be in both lists
 		//sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", "self.in_jiraIn->size() = self.out_jiraOut-> size()"); // i.e., the symetricDifference is empty, i.e., the same elements need to be in both lists
 		//->asList()->first().asType('JiraArtifact')
-		//sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", "self.in_jiraIn.requirementIDs->forAll(id | self.out_jiraOut->exists(art  | art.name = id))"); // for every id in requirements there is an instance with that name
-		sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", "self.in_jiraIn->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn))"); // for every id in requirements there is an instance with that name
+		sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", "self.in_jiraIn->asList()->first()->asType(<"+typeJira.getQualifiedName()+">).requirementIDs->forAll(id | self.out_jiraOut->exists(art  | art.name = id))"); // for every id in requirements there is an instance with that name
+		
+		//sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", "self.in_jiraIn->asList()->first()->asType(<"+typeJira.getQualifiedName()+">).requirementIDs->forAll(id | self.out_jiraOut->exists(art  | art.name = id))"); // for every id in requirements there is an instance with that name
+		//sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", "self.in_jiraIn->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and "
+		//		+ " self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // for every id in requirements there is an instance with that name
 		
 		sd1.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 		//sd1.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() = self.in_jiraIn->asList()->first().requirementIDs->size()");
-		sd1.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() = 1");
+		sd1.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() >= 1");
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);
 		
