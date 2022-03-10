@@ -63,13 +63,24 @@ public class ProcessInstance extends ProcessStep {
 		return  WrapperCache.getWrappedInstance(ProcessDefinition.class, instance.getPropertyAsInstance(CoreProperties.processDefinition.toString()));
 	}
 	
+	public void removeInput(String inParam, Instance artifact) {
+		super.removeInput(inParam, artifact);
+		// now see if we need to map this to first DNI - we assume all went well
+		getDecisionNodeInstances().stream()
+		.filter(dni -> dni.getInSteps().size() == 0)
+		.forEach(dni -> {
+			dni.signalPrevTaskDataChanged(this);
+		});
+	}
+	
 	public void addInput(String inParam, Instance artifact) {
 		super.addInput(inParam, artifact);
 		// now see if we need to map this to first DNI - we assume all went well
 		getDecisionNodeInstances().stream()
 		.filter(dni -> dni.getInSteps().size() == 0)
 		.forEach(dni -> {
-			dni.tryActivationPropagation(); // to trigger mapping to first steps
+			//dni.tryActivationPropagation(); // to trigger mapping to first steps
+			dni.signalPrevTaskDataChanged(this);
 		});
 	}
 	

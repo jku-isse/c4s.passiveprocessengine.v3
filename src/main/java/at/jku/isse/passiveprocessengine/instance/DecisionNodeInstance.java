@@ -9,11 +9,16 @@ import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
-import at.jku.isse.passiveprocessengine.instance.ExecutedMapping.DIR;
+import at.jku.isse.passiveprocessengine.instance.RuntimeMapping.FlowDir;
+import at.jku.isse.passiveprocessengine.instance.RuntimeMapping.Status;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import com.google.common.collect.Sets;
 
 public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 
@@ -30,12 +35,12 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		WAITING, ENABLED, DISABLED, USED
 	}
 
-	private transient List<ExecutedMapping> mappings = new LinkedList<>(); //TODO: remove this and directly check
+	//private transient List<ExecutedMapping> mappings = new LinkedList<>(); //TODO: remove this and directly check
 	// Also ensure that with every input data add/remove, all valid/eligible instep.outputs are mapped/propagated,
 
-	public List<ExecutedMapping> getExecutedMappings() {
-		return mappings;
-	}
+//	public List<ExecutedMapping> getExecutedMappings() {
+//		return mappings;
+//	}
 	
 	protected DecisionNodeDefinition getDefinition() {
 		return  WrapperCache.getWrappedInstance(DecisionNodeDefinition.class, instance.getPropertyAsInstance(CoreProperties.dnd.toString()));
@@ -127,42 +132,45 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		}
 		return currentState;
 	}
-//	
-//	public List<ProcessChangeEvent> signalPrevTaskDataChanged(IWorkflowTask prevTask, ProcessChangeEvent cause) {
+	
+	public void signalPrevTaskDataChanged(ProcessStep prevTask) {
+		checkAndExecuteDataMappings(); // we just check everything, not too expensive as mappings are typically few.
+	}
+	
+//	public void signalPrevTaskDataChanged(ProcessStep prevTask) {
 //		// --> check mappings what needs to be added or deleted from subsequent tasks!!!
 //		// if so, then check datamappings if they have mapped something that needs to be removed, or have not yet mapped something they now need to map
 //
-//		List<ProcessChangeEvent> changes = new ArrayList<>();
-//
+//		
 //		// add
-//		List<MappingDefinition> definitionsToExecute = ofType.getMappings().stream()
+//		List<MappingDefinition> definitionsToExecute = getDefinition().getMappings().stream()
 //				.filter(def -> def.getFrom().stream()
 //						.anyMatch(pair -> pair.getFirst().equals(prevTask.getType().getId()))) // search all defined mappings with prevTask
 //				.filter(def -> mappings.stream()
 //						.noneMatch(mapping -> def.getFrom().stream().anyMatch(pair -> pair.getFirst().equals(mapping.getFromTask().getType().getId())))) // use only defined mappings that are not already executed
 //				.collect(Collectors.toList());
-//		checkAndExecuteDataMappings(definitionsToExecute, cause);
+//		checkAndExecuteDataMappings(definitionsToExecute);
 //
 //		// remove
 //		List<ExecutedMapping> mappingsToRemove = new ArrayList<>();
 //		mappings.stream()
-//				.filter(m -> m.getFromTask().equals(prevTask)) // check if prevTask has been used, if not, nothing to do
+//				.filter(m -> m.getFromStep().equals(prevTask)) // check if prevTask has been used, if not, nothing to do
 //				.filter(m -> prevTask.getOutput().stream()
 //						.noneMatch(ai -> m.getFromRole().equals(ai.getRole()))) // search for executed mappings that were removed
 //				.forEach(m -> {
 //					switch (m.getDirection()) {
 //						case inToIn: case outToIn:
-//							changes.addAll(m.getToTask().removeInput(new ArtifactInput(m.getArtifact(), m.getToRole()), cause));
+//							m.getToStep().removeInput(m.getToParam(), m.getArtifact());
 //							break;
 //						case inToOut: case outToOut:
-//							changes.addAll(m.getToTask().removeOutput(new ArtifactOutput(m.getArtifact(), m.getToRole()), cause));
+//							m.getToStep().removeOutput(new ArtifactOutput(m.getArtifact(), m.getToRole()));
 //							break;
 //					}
 //					mappingsToRemove.add(m);
 //				});
 //		mappings.removeAll(mappingsToRemove); // remove the undone mappings
 //
-//		return changes;
+//		
 //	}
 	
 	public void tryInConditionsFullfilled() {
@@ -329,9 +337,28 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			// then we are done with this workflow and execute any final mappings into the workflows output
 			 isEndOfProcess = true;
 		}
-		Set<ExecutedMapping> preparedMappings = prepareDataflow(isEndOfProcess, getDefinition().getMappings());
-		preparedMappings.stream()
-				.forEach(mapping -> execute(mapping));
+		Set<RuntimeMapping> preparedMappings =  prepareDataflow(isEndOfProcess, getDefinition().getMappings());
+		// now we know which to add and which to keep, next determine which to remove!
+		Set<RuntimeMapping> combined = Stream.concat(preparedMappings.stream(), 
+													determineUndoMappingStatus(preparedMappings).stream())
+		        								.collect(Collectors.toSet()); 
+		combined.stream()
+				.forEach(mapping -> { 
+					switch (mapping.getStatus()) {
+					case TO_BE_ADDED:
+						execute(mapping);
+						break;
+					case TO_BE_REMOVED:
+						undo(mapping);
+						break;
+					case CONSISTENT: // fallthrough
+					case TO_BE_CHECKED: // should not happen
+					default: // default do nothing
+						break; 
+					}
+				});
+		
+		
 	}
 //
 //	private List<ProcessChangeEvent> checkAndExecuteDataMappings(List<MappingDefinition> definitions, ProcessChangeEvent cause) { // TODO fix code duplication with checkAndExecuteDataMappings()
@@ -364,17 +391,21 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 //	}
 
 
-	private Set<ExecutedMapping> prepareDataflow(boolean isEndOfProcess, Set<MappingDefinition> definitions) {
+	private Set<RuntimeMapping> prepareDataflow(boolean isEndOfProcess, Set<MappingDefinition> definitions) {
 		return definitions.stream()
 				.flatMap(md -> {
-						ExecutedMapping templateEM = new ExecutedMapping();
+						RuntimeMapping templateEM = new RuntimeMapping();
 						templateEM.setFromParam(md.getFromParameter());
 						templateEM.setToParam(md.getToParameter());
 						if (resolveSourceCompletedTaskOrWorkflow(md.getFromStepType(), templateEM, isEndOfProcess) 
 								&& resolveDestinationTaskOrWorkflow(templateEM, md.getToStepType())) { // now we have direction and fromTask set and if so then also toTask
-							Set<ExecutedMapping> cand = getArtifactsFromCompletedTaskOrWorkflow(templateEM);
+							Set<RuntimeMapping> cand = getArtifactsFromCompletedTaskOrWorkflow(templateEM);
+							// now we have all RuntimeMappings (i.e., mapping instances) for this mapping and the available artifacts
+							// next we determine which of those are still ok, which ones are to be added
 							return cand.stream()
-									.filter(em -> shouldBeMapped(em));
+							//		.filter(em -> shouldBeMapped(em)); // we no longer filter here, but eval every mapping, to be handeled separately later
+									.map(em -> determineMappingStatus(em));
+							// this might return mappings referencing the same artifact multiple times, which is not an issue, as step input and outputs are sets anyway
 						}
 						else return null;//Collections.emptySet().stream();
 			})
@@ -382,76 +413,141 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			.collect(Collectors.toSet());
 	}
 
-	private boolean shouldBeMapped(ExecutedMapping em) {
+	private RuntimeMapping determineMappingStatus(RuntimeMapping em) {
 		// check if not yet exists:
 		switch(em.getDirection()) {
 		case inToIn: //fallthrough
 		case outToIn: // check the input of the task 
-			if (em.getToStep().getInput(em.getToParam())==null) {
+			Set<Instance> in = em.getToStep().getInput(em.getToParam());
+			if (in==null || in.isEmpty()) {
 				// then mark this a mappable as new Input
-				return true;
+				em.setStatus(Status.TO_BE_ADDED);
 			} else {
-				Set<Id> existingArt = em.getToStep().getInput(em.getToParam())
-															.stream()
+				Set<Id> existingArt = in.stream()
 															.map(art -> art.id())
 															.collect(Collectors.toSet());
 				if (existingArt.contains(em.getArtifact().id()))
-					return false;
+					em.setStatus(Status.CONSISTENT);
 				else {
-					return true;
+					em.setStatus(Status.TO_BE_ADDED);
 				}
 			}
+			break;
 		case inToOut: // fallthrough
 		case outToOut: //to output of task or process
-			if (em.getToStep().getOutput(em.getToParam()).size()==0) {
+			Set<Instance> out = em.getToStep().getOutput(em.getToParam());
+			if (out == null || out.isEmpty()) {
 				// then mark this a mappable as new Input
-				return true;
+				em.setStatus(Status.TO_BE_ADDED);
 			} else {
-				Set<Id> existingArt = em.getToStep().getOutput(em.getToParam()).stream().map(art -> art.id()).collect(Collectors.toSet());
+				Set<Id> existingArt = out.stream().map(art -> art.id()).collect(Collectors.toSet());
 				if (existingArt.contains(em.getArtifact().id()))
-					return false;
+					em.setStatus(Status.CONSISTENT);
 				else {
-					return true;
+					em.setStatus(Status.TO_BE_ADDED);
 				}
 			}
+			break;
 		default:
-			return false;
+			em.setStatus(Status.CONSISTENT);
+			break;
 		}
+		return em;
 	}
 	
-	private void execute(ExecutedMapping mapping) {
-		mappings.add(mapping);
+	
+	private Set<RuntimeMapping> determineUndoMappingStatus(Set<RuntimeMapping> newAndExistingMappings) {
+		// we need to first collect all target params (in and outs) from the DNI - assumption: and in is only mapped from process or prior steps, and out is only mapped from step to process
+		// then obtain all artifacts available
+		// for each artifact check if it is used in any of the mappings (in that param)
+		// if not, the mark it as removed, NOTE: we only have to set the target param and artifact, not the source as we dont care where it came from (and might not even be able to establish this).
+		
+		
+		Set<RuntimeMapping> inMappingsToRemove = newAndExistingMappings.stream()
+			.filter(em -> em.dir.equals(FlowDir.inToIn) || em.dir.equals(FlowDir.outToIn)) // look at in and out params separately
+			.map(em -> new AbstractMap.SimpleEntry<ProcessStep, String>(em.getToStep(), em.getToParam()))
+			.distinct() // now we have all pairs of <step ,inparameter >
+			.flatMap(entry -> checkExistingInArtifacts(entry.getKey(), entry.getValue(),  artInNewOrExistingMapping(newAndExistingMappings, entry.getKey(), entry.getValue())))
+			.collect(Collectors.toSet());
+		
+		Set<RuntimeMapping> outMappingsToRemove = newAndExistingMappings.stream()
+				.filter(em -> em.dir.equals(FlowDir.inToOut) || em.dir.equals(FlowDir.outToOut)) // look at in and out params separately
+				.map(em -> new AbstractMap.SimpleEntry<ProcessStep, String>(em.getToStep(), em.getToParam()))
+				.distinct() // now we have all pairs of <step ,inparameter >
+				.flatMap(entry -> checkExistingOutArtifacts(entry.getKey(), entry.getValue(),  artInNewOrExistingMapping(newAndExistingMappings, entry.getKey(), entry.getValue())))
+				.collect(Collectors.toSet());
+		
+		return Sets.union(inMappingsToRemove,  outMappingsToRemove);
+	}
+	
+	private Stream<RuntimeMapping> checkExistingInArtifacts(ProcessStep step, String param, Set<Instance> mappedArt) {
+		return step.getInput(param).stream()
+			.filter(art -> !mappedArt.contains(art)) // any art that is not in existing mappings for that input
+			.map(art -> new RuntimeMapping(null, null, art, step, param, FlowDir.outToIn)) // source does not matter, as we are only removing this mapping later
+			.map(m-> { m.setStatus(Status.TO_BE_REMOVED); return m;});
+	}
+	
+	private Stream<RuntimeMapping> checkExistingOutArtifacts(ProcessStep step, String param, Set<Instance> mappedArt) {
+		return step.getOutput(param).stream()
+			.filter(art -> !mappedArt.contains(art)) // any art that is not in existing mappings for that output
+			.map(art -> new RuntimeMapping(null, null, art, step, param, FlowDir.outToOut)) // source does not matter, as we are only removing this mapping later
+			.map(m-> { m.setStatus(Status.TO_BE_REMOVED); return m;});
+	}
+	
+	private Set<Instance> artInNewOrExistingMapping(Set<RuntimeMapping> newAndExistingMappings, ProcessStep step, String param) {
+		return newAndExistingMappings.stream()
+			.filter(m -> m.getToStep().equals(step))
+			.filter(m -> m.getToParam().equals(param))
+			.map(m -> m.getArtifact())
+			.collect(Collectors.toSet());
+	}
+	
+	private void execute(RuntimeMapping mapping) {
+		//mappings.add(mapping);
 		switch (mapping.getDirection()) {		
 			case inToIn : //fallthrough
 			case outToIn :
 				mapping.getToStep().addInput(mapping.getToParam(), mapping.getArtifact());
-				this.mappings.add(mapping);
+			//	this.mappings.add(mapping);
 				break;
 			case inToOut :// fallthrough
 			case outToOut :
 				mapping.getToStep().addOutput(mapping.getToParam(), mapping.getArtifact());
-				this.mappings.add(mapping);
+			//	this.mappings.add(mapping);
 				break;
 		}
 	}
 	
-	private boolean resolveSourceCompletedTaskOrWorkflow(String taskId, ExecutedMapping templateEM, boolean isEndOfProcess) {
+	private void undo(RuntimeMapping mapping) {
+		switch (mapping.getDirection()) {		
+		case inToIn : //fallthrough
+		case outToIn :
+			mapping.getToStep().removeInput(mapping.getToParam(), mapping.getArtifact());
+			break;
+		case inToOut :// fallthrough
+		case outToOut :
+			mapping.getToStep().removeOutput(mapping.getToParam(), mapping.getArtifact());
+			break;
+		}
+	}
+	
+	private boolean resolveSourceCompletedTaskOrWorkflow(String taskId, RuntimeMapping templateEM, boolean isEndOfProcess) {
 		return getProcess().getProcessSteps().stream()	
 		.filter(wft -> wft.getDefinition().getName().equals(taskId) )
 		.filter(wft -> wft.getExpectedLifecycleState().equals(State.COMPLETED)) // we only map data for tasks that are indeed completed
 		.filter(Objects::nonNull)
 		.findFirst().map( wft -> { if (isEndOfProcess) 
-										templateEM.setDirection(DIR.outToOut);
+										templateEM.setDirection(FlowDir.outToOut);
 									else
-										templateEM.setDirection(DIR.outToIn);
+										templateEM.setDirection(FlowDir.outToIn);
 								templateEM.setFromStep(wft);
 								return true;
 							} ).orElseGet( () -> {
 			if (getProcess().getDefinition().getName().equals(taskId)) {
 				if (isEndOfProcess) 
-					templateEM.setDirection(DIR.inToOut);
+					templateEM.setDirection(FlowDir.inToOut);
 				else
-					templateEM.setDirection(DIR.inToIn);
+					templateEM.setDirection(FlowDir.inToIn);
 				templateEM.setFromStep(getProcess());
 				return true;
 			}
@@ -461,27 +557,27 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		});
 	}
 	
-	private Set<ExecutedMapping> getArtifactsFromCompletedTaskOrWorkflow(ExecutedMapping templateEM) {
+	private Set<RuntimeMapping> getArtifactsFromCompletedTaskOrWorkflow(RuntimeMapping templateEM) {
 		switch(templateEM.getDirection()) {
 		case inToIn: //fallthrough
 		case inToOut: // for input from process
 			return templateEM.getFromStep().getInput(templateEM.getFromParam())
 					.stream()
-					.map(art -> ExecutedMapping.copyFrom(templateEM).fluentSetArtifact(art))
+					.map(art -> RuntimeMapping.copyFrom(templateEM).fluentSetArtifact(art))
 					.collect(Collectors.toSet());
 		case outToIn: //fallthrough
 		case outToOut: //for output from task
 			// we checked for completed task earlier when adding it to the template
 			return templateEM.getFromStep().getOutput(templateEM.getFromParam())
 														.stream()
-														.map(art -> ExecutedMapping.copyFrom(templateEM).fluentSetArtifact(art))
+														.map(art -> RuntimeMapping.copyFrom(templateEM).fluentSetArtifact(art))
 														.collect(Collectors.toSet());
 		default:
 			return Collections.emptySet();
 		}
 	}
 	
-	private boolean resolveDestinationTaskOrWorkflow(ExecutedMapping templateEM, String taskId) {
+	private boolean resolveDestinationTaskOrWorkflow(RuntimeMapping templateEM, String taskId) {
 		switch(templateEM.getDirection()) {
 		case outToIn: //fallthrough
 		case inToIn: // for input from process to input of task

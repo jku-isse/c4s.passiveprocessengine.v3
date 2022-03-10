@@ -26,6 +26,7 @@ import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -39,7 +40,7 @@ class InstanceTests {
 	void setup() throws Exception {
 		RuleService.setEvaluator(new ArlRuleEvaluator());
 		ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
-		ws.setAutoUpdate(true);
+		//ws.setAutoUpdate(true);
 		picp = new ProcessInstanceChangeProcessor(ws);
 		typeJira = TestArtifacts.getJiraInstanceType(ws);
 	}
@@ -82,6 +83,72 @@ class InstanceTests {
 		assert(proc.getProcessSteps().stream()
 			.filter(step -> step.getDefinition().getName().equals("sd1") )
 			.allMatch(step -> step.getOutput("jiraOut").size() == 2));
+	}
+	
+	@Test
+	void testComplexDataMappingUpdateToProperty() {
+		Instance jiraB = ws.createInstance(typeJira, "jiraB");
+		Instance jiraC = ws.createInstance(typeJira, "jiraC");
+		Instance jiraD = ws.createInstance(typeJira, "jiraD");
+		Instance jiraA = ws.createInstance(typeJira, "jiraA");
+		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add("jiraB");
+		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add("jiraC");
+		
+		ProcessDefinition procDef = getTestDefinition(ws);
+		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
+		proc.addInput("jiraIn", jiraA);
+		ws.concludeTransaction();
+		assert(proc.getProcessSteps().stream()
+				.filter(step -> step.getDefinition().getName().equals("sd1") )
+				.allMatch(step -> step.getOutput("jiraOut").size() == 2));
+		
+		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).remove("jiraC");
+		ws.concludeTransaction();
+		assert(jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).size() == 1);
+		
+		System.out.println(proc);
+		proc.getProcessSteps().stream().forEach(step -> System.out.println(step));
+		
+		assert(proc.getProcessSteps().stream()
+			.filter(step -> step.getDefinition().getName().equals("sd1") )
+			.allMatch(step -> step.getOutput("jiraOut").size() == 1));
+	}
+	
+	@Test
+	void testComplexDataMappingRemoveInput() {
+		Instance jiraB = ws.createInstance(typeJira, "jiraB");
+		Instance jiraC = ws.createInstance(typeJira, "jiraC");
+		Instance jiraD = ws.createInstance(typeJira, "jiraD");
+		Instance jiraA = ws.createInstance(typeJira, "jiraA");
+		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add("jiraB");
+		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add("jiraC");
+		
+		ProcessDefinition procDef = getTestDefinition(ws);
+		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
+		proc.addInput("jiraIn", jiraA);
+		ws.concludeTransaction();
+		
+		proc.addInput("jiraIn", jiraD);
+		proc.removeInput("jiraIn", jiraA);
+		assert(proc.getProcessSteps().stream()
+				.filter(step -> step.getDefinition().getName().equals("sd1") )
+				.allMatch(step -> step.getInput("jiraIn").size() == 1));
+		ws.concludeTransaction();
+		
+		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).remove("jiraB");
+		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).remove("jiraC");
+		ws.concludeTransaction();
+		assert(proc.getProcessSteps().stream()
+			.filter(step -> step.getDefinition().getName().equals("sd1") )
+			.allMatch(step -> step.getOutput("jiraOut").size() == 0));
+		
+		jiraD.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add("jiraB");
+		ws.concludeTransaction();
+		System.out.println(proc);
+		proc.getProcessSteps().stream().forEach(step -> System.out.println(step));
+		assert(proc.getProcessSteps().stream()
+				.filter(step -> step.getDefinition().getName().equals("sd1") )
+				.allMatch(step -> (step.getOutput("jiraOut").size() == 1) && step.getActualLifecycleState().equals(State.COMPLETED) ));
 	}
 	
 	@Test
@@ -137,7 +204,21 @@ class InstanceTests {
 		//sd1.addInputToOutputMappingRule("jiraIn2jiraOut", "self.in_jiraIn->forAll(elem | result->includes(elem) = self.out_jiraOut->excludes(elem))-> size() = 0"); // i.e., the symetricDifference is empty, i.e., the same elements need to be in both lists
 		//sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", "self.in_jiraIn->size() = self.out_jiraOut-> size()"); // i.e., the symetricDifference is empty, i.e., the same elements need to be in both lists
 		//->asList()->first().asType('JiraArtifact')
-		sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", "self.in_jiraIn->asList()->first()->asType(<"+typeJira.getQualifiedName()+">).requirementIDs->forAll(id | self.out_jiraOut->exists(art  | art.name = id))"); // for every id in requirements there is an instance with that name
+		sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", 
+			"self.in_jiraIn"
+				+ "->asList()"
+				+ "->first()"
+				+ "->asType(<"+typeJira.getQualifiedName()+">)"
+						+ ".requirementIDs"
+							+ "->forAll(id | self.out_jiraOut->exists(art  | art.name = id))"
+			+ " and "
+				+ "self.out_jiraOut"
+				+ "->forAll(out | self.in_jiraIn"
+									+ "->asList()"
+									+ "->first()"
+									+ "->asType(<"+typeJira.getQualifiedName()+">)"
+											+ ".requirementIDs"
+											+ "->exists(artId | artId = out.name))"); // for every id in requirements there is an instance with that name, and vice versa
 		
 		//sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", "self.in_jiraIn->asList()->first()->asType(<"+typeJira.getQualifiedName()+">).requirementIDs->forAll(id | self.out_jiraOut->exists(art  | art.name = id))"); // for every id in requirements there is an instance with that name
 		//sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", "self.in_jiraIn->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and "

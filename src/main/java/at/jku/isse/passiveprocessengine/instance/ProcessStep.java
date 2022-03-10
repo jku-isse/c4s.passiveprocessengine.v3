@@ -82,10 +82,10 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			if (crt.name().startsWith("crd_datamapping") ) { // an unfulfilled datamapping rules
 				if (Boolean.valueOf(op.value().toString()) == false) {
 				// now we need to "repair" this, i.e., set the output accordingly
-					log.debug(String.format("Datamapping %s will be repaired", this.getName(), crt.name()));
+					log.debug(String.format("Datamapping %s will be repaired", crt.name(), crt.name()));
 					InputToOutputMapper.mapInputToOutputInStepScope(this, cr);
 				} else {
-					log.debug(String.format("Datamapping %s now consistent", this.getName(), crt.name()));
+					log.debug(String.format("Datamapping %s now consistent", crt.name(), crt.name()));
 				}
 			} else
 				log.debug(String.format("Step %s has rule %s evaluate to %s", this.getName(), crt.name(), op.value().toString()));
@@ -121,12 +121,27 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	@SuppressWarnings("unchecked")
+	protected void removeInput(String inParam, Instance artifact) {
+		if (getDefinition().getExpectedInput().containsKey(inParam)) {
+			Property<?> prop = instance.getProperty("in_"+inParam);
+			if (prop.propertyType.isAssignable(artifact)) {
+				instance.getPropertyAsSet("in_"+inParam).remove(artifact);
+			} else {
+				log.warn(String.format("Cannot remove input %s to %s with nonmatching artifact type %s of id % %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name()));
+			}
+		} else {
+			// additionally Somehow notify about wrong param access
+			log.warn(String.format("Ignoring attempt to remove unexpected input %s to %s", inParam, this.getName()));
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
 	public Set<Instance> getInput(String param) {
 		return (Set<Instance>) instance.getPropertyAsSet("in_"+param).get();
 	}
 	
 	@SuppressWarnings("unchecked")
-	public void addInput(String inParam, Instance artifact) {
+	protected void addInput(String inParam, Instance artifact) {
 		if (getDefinition().getExpectedInput().containsKey(inParam)) {
 			Property<?> prop = instance.getProperty("in_"+inParam);
 			if (prop.propertyType.isAssignable(artifact)) {
@@ -146,8 +161,12 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	@SuppressWarnings("unchecked")
-	public void addOutput(String param, Instance art) {
+	protected void addOutput(String param, Instance art) {
 		instance.getPropertyAsSet("out_"+param).add(art);
+	}
+	
+	protected void removeOutput(String param, Instance art) {
+		instance.getPropertyAsSet("out_"+param).remove(art);
 	}
 	
 	public DecisionNodeInstance getInDNI() {
@@ -160,6 +179,10 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	
 	public State getExpectedLifecycleState() {
 		return expectedSM.getState();
+	}
+	
+	public State getActualLifecycleState() {
+		return actualSM.getState();
 	}
 	
 	public void setWorkExpected(boolean isExpected) {
@@ -342,13 +365,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				.forEach(entry -> {
 					ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeStep, "crd_datamapping_"+entry.getKey()+"_"+typeStep.name(), entry.getValue());
 					assert ConsistencyUtils.crdValid(crt);
-					//if (! crt.hasProperty("datamappingId"))
-					//	crt.getInstanceType().createPropertyType("datamappingId", Cardinality.SINGLE, Workspace.STRING);
-					//crt.getPropertyAsSingle("datamappingId").set(entry.getKey());
 					typeStep.createPropertyType("crd_datamapping_"+entry.getKey(), Cardinality.SINGLE, crt);
 				});
-			
-			//TODO: instantiate all of input to output mapping rules (incl repairs, i.e., the actual mapping logic)
 			return typeStep;
 		}
 	}

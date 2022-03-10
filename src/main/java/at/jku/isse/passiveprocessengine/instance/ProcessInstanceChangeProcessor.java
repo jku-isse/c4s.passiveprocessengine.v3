@@ -161,36 +161,6 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 		}
 		return Optional.empty();
 	}
-	
-//	@Override
-//	public void handleServiceRequest(Workspace workspace, List<Operation> operations) {
-//		operations.stream().forEach(operation -> {
-// 			Element element = workspace.findElement(operation.elementId());
-//			if (operation instanceof ElementCreate) {
-//				// update type and instance index
-//				processElementCreate((ElementCreate) operation, element);
-//			} else
-//				if (operation instanceof PropertyUpdateAdd) {
-//					processPropertyUpdateAdd((PropertyUpdateAdd) operation, element);
-//				} else 
-//					if (operation instanceof PropertyUpdateRemove) {
-//						processPropertyUpdateRemove((PropertyUpdateRemove) operation, element);
-//					} else
-//						if (operation instanceof PropertyUpdateSet) {
-//							processPropertyUpdateSet((PropertyUpdateSet) operation, element);
-//						} else
-//							if (operation instanceof PropertyCreate) { 
-//								// no logging
-//							} else 
-//			//if (element.getInstanceType() != null && element.getInstanceType().id().value() == 137) {
-//			log.debug(String.format("Element %s %s <%s> changed: %s", 
-//					element.id(), 
-//					element.name(),
-//					element.getInstanceType() != null ? element.getInstanceType().id() : "NoInstanceType",
-//							operation.getClass().getSimpleName()));
-//		//	}
-//		});
-//	}
 
 	@Override
 	public void handleUpdated(List<Operation> operations) {

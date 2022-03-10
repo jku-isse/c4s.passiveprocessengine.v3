@@ -3,22 +3,25 @@ package at.jku.isse.passiveprocessengine.instance;
 import at.jku.isse.designspace.core.model.Instance;
 
 
-public class ExecutedMapping {
+public class RuntimeMapping {
 
-	enum DIR { outToIn, //from Step output to Step input
+	enum FlowDir { outToIn, //from Step output to Step input
 		inToIn, // from process input to Step input
 		outToOut, // from Step output to process output
 		inToOut //from process input to process output
 		};
 	
+	enum Status { TO_BE_CHECKED, TO_BE_ADDED, TO_BE_REMOVED, CONSISTENT }; 	
+		
 	ProcessStep fromStep;
 	String fromParam;
 	Instance art;
 	ProcessStep toStep;
 	String toParam;
-	DIR dir = DIR.outToIn;
+	FlowDir dir = FlowDir.outToIn;
+	Status status = Status.TO_BE_CHECKED;
 	
-	public ExecutedMapping(ProcessStep fromStep, String fromParam, Instance art, ProcessStep toStep, String toParam) {
+	public RuntimeMapping(ProcessStep fromStep, String fromParam, Instance art, ProcessStep toStep, String toParam) {
 		super();
 		this.fromStep = fromStep;
 		this.fromParam = fromParam;
@@ -27,7 +30,7 @@ public class ExecutedMapping {
 		this.toParam = toParam;
 	}
 	
-	public ExecutedMapping(ProcessStep fromStep, String fromParam, Instance art, ProcessStep toStep, String toParam, DIR direction) {
+	public RuntimeMapping(ProcessStep fromStep, String fromParam, Instance art, ProcessStep toStep, String toParam, FlowDir direction) {
 		super();
 		this.fromStep = fromStep;
 		this.fromParam = fromParam;
@@ -37,7 +40,7 @@ public class ExecutedMapping {
 		this.dir = direction;
 	}
 	
-	public ExecutedMapping() {}
+	public RuntimeMapping() {}
 
 	public ProcessStep getFromStep() {
 		return fromStep;
@@ -79,26 +82,35 @@ public class ExecutedMapping {
 		this.toParam = toParam;
 	}
 
-	public DIR getDirection() {
+	public FlowDir getDirection() {
 		return dir;
 	}
 
-	public void setDirection(DIR dir) {
+	public void setDirection(FlowDir dir) {
 		this.dir = dir;
 	}
 
+	public Status getStatus() {
+		return status;
+	}
+
+	public void setStatus(Status status) {
+		this.status = status;
+	}
 	
-	public ExecutedMapping fluentSetArtifact(Instance art) {
+	public RuntimeMapping fluentSetArtifact(Instance art) {
 		this.setArtifact(art);
 		return this;
 	}
 	
-	public static ExecutedMapping copyFrom(ExecutedMapping template) {
-		return new ExecutedMapping(template.getFromStep(),
+	public static RuntimeMapping copyFrom(RuntimeMapping template) {
+		return new RuntimeMapping(template.getFromStep(),
 								template.getFromParam(),
 								template.getArtifact(),
 								template.getToStep(),
 								template.getToParam(),
 								template.getDirection());
 	}
+
+
 }
