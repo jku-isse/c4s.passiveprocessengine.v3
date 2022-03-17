@@ -16,6 +16,7 @@ import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
+import at.jku.isse.passiveprocessengine.instance.ProcessStep.CoreProperties;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -63,6 +64,24 @@ public class ProcessInstance extends ProcessStep {
 		return  WrapperCache.getWrappedInstance(ProcessDefinition.class, instance.getPropertyAsInstance(CoreProperties.processDefinition.toString()));
 	}
 	
+	@Override
+	public DecisionNodeInstance getInDNI() {
+			Instance inst = instance.getPropertyAsInstance(ProcessStep.CoreProperties.inDNI.toString());
+			if (inst != null)
+				return WrapperCache.getWrappedInstance(DecisionNodeInstance.class, inst);
+			else
+				return null; 
+	}
+
+	@Override
+	public DecisionNodeInstance getOutDNI() {
+		Instance inst = instance.getPropertyAsInstance(ProcessStep.CoreProperties.outDNI.toString());
+		if (inst != null)
+			return WrapperCache.getWrappedInstance(DecisionNodeInstance.class, inst);
+		else
+			return null; 
+	}
+	
 	public void removeInput(String inParam, Instance artifact) {
 		super.removeInput(inParam, artifact);
 		// now see if we need to map this to first DNI - we assume all went well
@@ -83,6 +102,8 @@ public class ProcessInstance extends ProcessStep {
 			dni.signalPrevTaskDataChanged(this);
 		});
 	}
+	
+	
 	
 	@SuppressWarnings("unchecked")
 	private void addProcessStep(ProcessStep step) {
@@ -154,5 +175,7 @@ public class ProcessInstance extends ProcessStep {
 			});
 		// datamapping from proc to DNI is triggered upon adding input, which is not available at this stage
 	}
+
+
 	
 }

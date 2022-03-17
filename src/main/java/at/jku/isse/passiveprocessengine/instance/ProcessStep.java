@@ -1,6 +1,7 @@
 package at.jku.isse.passiveprocessengine.instance;
 
-import java.util.List;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -8,11 +9,16 @@ import java.util.stream.Collectors;
 
 import com.github.oxo42.stateless4j.StateMachine;
 
+import at.jku.isse.designspace.core.events.PropertyUpdateAdd;
+import at.jku.isse.designspace.core.events.PropertyUpdateRemove;
 import at.jku.isse.designspace.core.events.PropertyUpdateSet;
 import at.jku.isse.designspace.core.model.Cardinality;
+import at.jku.isse.designspace.core.model.Element;
+import at.jku.isse.designspace.core.model.Id;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Property;
+import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
@@ -20,6 +26,7 @@ import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.IStepDefinition;
+import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
@@ -39,7 +46,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	
 	public ProcessStep(Instance instance) {
 		super(instance);
-		initLifecycleStates();
+		initState();
 	}
 	
 	//FIXME: check if those transient properties are correctly reset upon loading
@@ -48,8 +55,9 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	protected transient boolean areCancelCondFulfilled = false;
 	protected transient boolean isWorkExpected = true;
 	
+	protected transient HashMap<String, Boolean> qaState = new HashMap<>();
 	
-	private void initLifecycleStates() {
+	private void initState() {
 		
 		String actState = (String) instance.getPropertyAsValueOrNull(CoreProperties.actualLifecycleState.toString());
 		if (actState == null) {
@@ -79,15 +87,19 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		// if premature conditions, then delegate to process instance, resp often will need to be on process level anyway
 		
 			// input to putput mappings
-			if (crt.name().startsWith("crd_datamapping") ) { // an unfulfilled datamapping rules
-				if (Boolean.valueOf(op.value().toString()) == false) {
+			if (crt.name().startsWith("crd_datamapping") ) { 
+				if (Boolean.valueOf(op.value().toString()) == false) { // an unfulfilled datamapping rules
 				// now we need to "repair" this, i.e., set the output accordingly
-					log.debug(String.format("Datamapping %s will be repaired", crt.name(), crt.name()));
-					InputToOutputMapper.mapInputToOutputInStepScope(this, cr);
+					log.debug(String.format("Datamapping %s will be repaired", crt.name()));
+					return new IOMappingInconsistentCmd(this, cr);
 				} else {
-					log.debug(String.format("Datamapping %s now consistent", crt.name(), crt.name()));
+					log.debug(String.format("Datamapping %s now consistent", crt.name()));
 				}
-			} else
+			} else if (crt.name().startsWith("crd_qaspec_") ) { // a qa constraint
+				log.debug(String.format("QA Constraint %s now %s ", crt.name(), op.value().toString()));
+				//processQAEvent(cr, op); Boolean.parseBoolean(op.value().toString())
+				return new QAConstraintChangedCmd(this, cr, Boolean.parseBoolean(op.value().toString()));
+			}	else
 				log.debug(String.format("Step %s has rule %s evaluate to %s", this.getName(), crt.name(), op.value().toString()));
 		}
 		return null;
@@ -104,15 +116,60 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		else if (crt.name().startsWith("crd_"+Conditions.CANCELATION.toString()+"_")) 
 			return Conditions.CANCELATION;
 		else {
-			if (!crt.name().startsWith("crd_datamapping_"))
+			if (!crt.name().startsWith("crd_datamapping_") && !crt.name().startsWith("crd_qaspec_"))
 					log.error("Unknown consistency rule: "+crt.name());
 			return null;
 		}
 	}
 	
-	public void processIOChangeEvent() {
-		// here obtain any event that relates to this task such as adding, removing, changing inputs or output
-		// then trigger cascading
+	public void processIOAddEvent(PropertyUpdateAdd op) {
+		// if in added, establish if this resembles unexpected late input 
+		if (op.name().startsWith("in_") 
+				&& ( this.getActualLifecycleState().equals(State.ACTIVE) 
+					|| this.getActualLifecycleState().equals(State.COMPLETED) )) {
+			//(if so, then do something about this)
+			Id addedId = (Id) op.value();
+			Element added = ws.findElement(addedId);
+			log.info(String.format("Step %s received unexpected late input %s %s", this.getName(), op.name(), added.name()  ));
+		}
+		else if (op.name().startsWith("out_") // if out added, establish if this is late output, then propagate further
+				&& this.getActualLifecycleState().equals(State.COMPLETED) ){
+			Id addedId = (Id) op.value();
+			Element added = ws.findElement(addedId);
+			log.info(String.format("Step %s received unexpected late output %s %s, now propagating downstream", this.getName(), op.name(), added.name()  ));
+			getOutDNI().signalPrevTaskDataChanged(this);
+		}
+	}
+	
+	public void processIORemoveEvent(PropertyUpdateRemove op) {
+		// if in removed, establish if this resembles unexpected late removeal 
+		if (op.name().startsWith("in_") 
+				&& ( this.getActualLifecycleState().equals(State.ACTIVE) 
+					|| this.getActualLifecycleState().equals(State.COMPLETED) )) {
+			//(if so, then do something about this)
+			log.info(String.format("Step %s had some input removed from %s after step start", this.getName(), op.name()));
+		}
+		else if (op.name().startsWith("out_") // if out removed, establish if this is late output removal, then propagate further
+				&& this.getActualLifecycleState().equals(State.COMPLETED) ){
+			log.info(String.format("Step %s had some output removed from %s after step completion, now propagating downstream", this.getName(), op.name()));
+			getOutDNI().signalPrevTaskDataChanged(this);
+		}
+		else 
+			log.debug(String.format("Step %s had some output removed from %s, not propagating downstream yet", this.getName(), op.name()));
+	}
+	
+	
+	public void processQAEvent(ConsistencyRule cr, boolean fulfilled) {
+		String id = cr.name();
+		boolean preQaState = areQAconstraintsFulfilled(); // are all QA checks fulfilled?
+		qaState.put(id, fulfilled);
+		boolean newQaState = areQAconstraintsFulfilled(); // are all QA checks now fulfilled?
+		if (preQaState != newQaState) { // a change in qa fulfillment that we might want to react to
+			if (arePostCondFulfilled && newQaState)  
+				this.trigger(StepLifecycle.Trigger.MARK_COMPLETE) ;
+			if (!newQaState && actualSM.isInState(State.COMPLETED)) 
+				this.trigger(StepLifecycle.Trigger.ACTIVATE);
+		}
 	}
 	
 	public StepDefinition getDefinition() {
@@ -135,9 +192,15 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Set<Instance> getInput(String param) {
-		return (Set<Instance>) instance.getPropertyAsSet("in_"+param).get();
+		SetProperty setP = instance.getPropertyAsSet("in_"+param);
+		if (setP == null) {
+			//if (!instance.hasProperty("in_"+param))
+			log.error(String.format("Attempt to access non-existing input %s in Step %s.", param, this.getName()));
+			return Collections.emptySet();
+		}
+		return (Set<Instance>) setP.get();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -157,7 +220,13 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	
 	@SuppressWarnings("unchecked")
 	public Set<Instance> getOutput(String param) {
-		return (Set<Instance>) instance.getPropertyAsSet("out_"+param).get();
+		SetProperty setP = instance.getPropertyAsSet("out_"+param);
+		if (setP == null) {
+			//if (!instance.hasProperty("in_"+param))
+			log.error(String.format("Attempt to access non-existing output %s in Step %s.", param, this.getName()));
+			return Collections.emptySet();
+		}
+		return (Set<Instance>) setP.get();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -205,9 +274,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	public boolean areQAconstraintsFulfilled() {
-		//TODO implement, iterate through links to quality eval rule evaluations
-		// check if all are fulfilled
-		return true;
+		return  qaState.values().parallelStream().allMatch(b -> b==true);
 	}
 	
 	public void setPostConditionsFulfilled(boolean isfulfilled) {
@@ -275,7 +342,12 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				if (actualSM.getState().equals(State.ACTIVE) && this.getProcess() != null) {
 					getProcess().setActivationConditionsFulfilled();
 				}
-				tryProgress = true;				
+				switch (expectedSM.getState()) { // we only progress in deviating state when postcond fulfilled or cancled or no work expected
+				case CANCELED: //fallthrough
+				case COMPLETED://fallthrough
+				case NO_WORK_EXPECTED: 
+					tryProgress = true;
+				}				
 			}
 		} else {
 			log.info(String.format("Step %s received (and ignored) for 'expectedSM' unexpected Event %s for State %s ", this.getName(),  event,  actualSM.getState()));			
@@ -338,13 +410,13 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	
 	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws, IStepDefinition td) {
 		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
-				.filter(it -> it.name().equals(designspaceTypeId+td.getId()))
+				.filter(it -> it.name().equals(designspaceTypeId+"_"+td.getId()))
 				.findAny();
 		if (thisType.isPresent())
 			return thisType.get();
 		else {
 			InstanceType superType = getOrCreateDesignSpaceCoreSchema(ws);
-			InstanceType typeStep = ws.createInstanceType(designspaceTypeId+td.getName(), ws.TYPES_FOLDER, superType);
+			InstanceType typeStep = ws.createInstanceType(designspaceTypeId+"_"+td.getName(), ws.TYPES_FOLDER, superType);
 			td.getExpectedInput().entrySet().stream()
 				.forEach(entry -> {
 						typeStep.createPropertyType("in_"+entry.getKey(), Cardinality.SET, entry.getValue());
@@ -367,8 +439,21 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 					assert ConsistencyUtils.crdValid(crt);
 					typeStep.createPropertyType("crd_datamapping_"+entry.getKey(), Cardinality.SINGLE, crt);
 				});
+			//qa constraints:
+			td.getQAConstraints().stream()
+				.forEach(spec -> {
+					String specId = getQASpecId(spec, typeStep);
+					ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeStep, specId, spec.getQaConstraintSpec());
+					assert ConsistencyUtils.crdValid(crt);
+					typeStep.createPropertyType(specId, Cardinality.SINGLE, crt);
+					
+				});
 			return typeStep;
 		}
+	}
+	
+	public static String getQASpecId(QAConstraintSpec spec, InstanceType typeStep) {
+		return "crd_qaspec_"+spec.getQaConstraintId();
 	}
 
 	protected static ProcessStep getInstance(Workspace ws, StepDefinition sd, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI) {
@@ -388,7 +473,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			inDNI.addOutStep(this);
 		}
 		if (outDNI != null) {
-			instance.getPropertyAsSingle(CoreProperties.outDNI.toString()).set(inDNI.getInstance());
+			instance.getPropertyAsSingle(CoreProperties.outDNI.toString()).set(outDNI.getInstance());
 			outDNI.addInStep(this);		
 		}
 		// FIXME: better realized via bidirectional properties
@@ -399,7 +484,9 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 //				
 //			}
 //		}
-		
+		sd.getQAConstraints().stream()
+		.map(spec -> getQASpecId(spec, getOrCreateDesignSpaceInstanceType(ws, getDefinition()))) // now we have the id of all the QA constraints/rules
+		.forEach(qid -> qaState.put(qid, false));
 	}
 	
 	@Override
@@ -412,8 +499,10 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				.collect(Collectors.joining("; "));
 		String states = "E:"+expectedSM.getState()+"|A:"+actualSM.getState();
 		String process = getProcess() != null ? getProcess().getName() : "NONE";
+		String inDNI = getInDNI() != null ? getInDNI().getDefinition().getName() : "NONE" ; 
+		String outDNI = getOutDNI() != null ? getOutDNI().getDefinition().getName() : "NONE";
 		
-		return "Step ["+ getName() + " "+states+" "+input+" "+output+" in Proc: " + process +" DS: " +getInstance().toString();
+		return "Step "+ getName() + " "+states+" "+input+" "+output+" [QAok: "+areQAconstraintsFulfilled()+"] [DNIs: "+inDNI+":"+outDNI+"] in Proc: " + process +" DS: " +getInstance().toString();
 	}
 
 

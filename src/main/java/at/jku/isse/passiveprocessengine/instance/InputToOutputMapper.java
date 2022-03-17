@@ -10,11 +10,11 @@ import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.designspace.rule.arl.exception.ChangeExecutionException;
 import at.jku.isse.designspace.rule.arl.repair.AbstractRepairAction;
-import at.jku.isse.designspace.rule.arl.repair.ExecutableRepairAction;
 import at.jku.isse.designspace.rule.arl.repair.Operator;
 import at.jku.isse.designspace.rule.arl.repair.Repair;
 import at.jku.isse.designspace.rule.arl.repair.RepairAction;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
+import at.jku.isse.designspace.rule.arl.repair.RepairTreeFilter;
 import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
@@ -30,37 +30,33 @@ public class InputToOutputMapper {
 	public static void mapInputToOutputInStepScope(ProcessStep step, ConsistencyRule crule) {
 		if (crule.isConsistent()) return; // nothing to do
 
-		
 		ConsistencyRuleType crt = (ConsistencyRuleType) crule.getInstanceType();
-		RepairNode rn = RuleService.repairTree(crule);
+		RepairNode repairTree = RuleService.repairTree(crule);
+		RepairTreeFilter rtf = new OutputUpdateRepairTreeFilter();
+		rtf.filterRepairTree(repairTree);
 		
-		if (!pruneRepairNode(rn, null)) {
-			log.error("No repairs remain to fix InputToOutputMapping: "+crt.name());
-			return;
-		}
-		log.info("Pruned RepairTree for : "+crt.name());
-		ConsistencyUtils.printRepairTree(rn);
+		
+//		RepairNode rn = RuleService.repairTree(crule);
+//		if (!pruneRepairNode(rn, null)) {
+//			log.error("No repairs remain to fix InputToOutputMapping: "+crt.name());
+//			return;
+//		}
+//		log.info("Pruned RepairTree for : "+crt.name());
+//		ConsistencyUtils.printRepairTree(rn);
 		
 		Set<Object> objects = (Set<Object>) step.getDefinition().getExpectedOutput().values().stream()
 			.distinct()
 			.flatMap(type -> type.getInstancesIncludingThoseOfSubtypes().get().stream())
 			.collect(Collectors.toSet());
 		// this also works only if all instances that are relevant are somewhere in the designspace prefetched
-		
-		 Set<Repair> repairs = getConcreteRepairs(objects, 1, crt, crule.contextInstance()); 
-		//Set<Repair> repairs = rn.getConcreteRepairs(objects, false, false); 
-		
-		//Set<Repair> validConcreteRepairs = repairs.stream()
-		//.filter(a -> a.isExecutable()) // get concrete repairs only
-		//.filter(cr -> doesOnlyContainAddOrRemoveOperators(cr)) // only add/remove of elements allowed
-		//.filter(cr -> onlyChangesOutput(cr)) // filter out anything that touches something other than the output
-		//.collect(Collectors.toSet());
+		 Set<Repair> repairs = //repairTree.getConcreteRepairs(objects, 1);// 
+				 				getConcreteRepairs(objects, 1, crt, crule.contextInstance()); 
 		
 		repairs.stream().findAny().ifPresentOrElse(repair -> {
 				log.debug("Executing Datamapping: "+repair);
 				try {
 					repair.execute();
-					crt.workspace.concludeTransaction();
+					//crt.workspace.concludeTransaction();
 				} catch (ChangeExecutionException e) {
 					log.error("Error executing repair "+repair);
 					e.printStackTrace();
@@ -68,116 +64,132 @@ public class InputToOutputMapper {
 				}
 				, () -> log.error("No concrete Repairs found for "+crt.name())
 			);
-		
-
 	}
 	
-	@SuppressWarnings("rawtypes")
-	private static boolean doesOnlyContainAddOrRemoveOperators(Repair cr) {
-		return cr.getRepairActions().stream()
-				.allMatch(ra -> _onlyAddOrRemoveOperator((RepairAction) ra));
-	}
+//	@SuppressWarnings("rawtypes")
+//	private static boolean doesOnlyContainAddOrRemoveOperators(Repair cr) {
+//		return cr.getRepairActions().stream()
+//				.allMatch(ra -> _onlyAddOrRemoveOperator((RepairAction) ra));
+//	}
 	
 	private static boolean _onlyAddOrRemoveOperator(RepairAction ra) {
 		return ra.getOperator().equals(Operator.ADD) || ra.getOperator().equals(Operator.REMOVE);
 	}
 	
-	@SuppressWarnings("unchecked")
-	private static boolean onlyChangesOutput(Repair cr) {
-		return cr.getRepairActions().stream()
-			.filter(ExecutableRepairAction.class::isInstance)
-			.map(ExecutableRepairAction.class::cast)
-			.allMatch(era -> _onlyChangesOutput((RepairAction) era));
-		//return false;
-	}
+//	@SuppressWarnings("unchecked")
+//	private static boolean onlyChangesOutput(Repair cr) {
+//		return cr.getRepairActions().stream()
+//			.filter(RepairAction.class::isInstance)
+//			.map(RepairAction.class::cast)
+//			.allMatch(era -> _onlyChangesOutput((RepairAction) era));
+//		//return false;
+//	}
 	
 	private static boolean _onlyChangesOutput(RepairAction ra) {
 		return ra.getProperty() != null && ra.getProperty().startsWith("out_");
 	}
 	
-	private static boolean pruneRepairNode(RepairNode rn, RepairNode parent) {
-		// we recursively visit all nodes and remove those that are not ADD or REMOVE operations, and those where the property is null or does not start with out_	
-		
-		// first, due to hashCode() problem, reinsert children (otherwise, we cant remove them when necessary)
-		Set<RepairNode> copy = Set.copyOf(rn.getChildren());
-		rn.getChildren().clear();
-		copy.stream().forEach(rnChild -> rn.addChild(rnChild));
-		
-		switch(rn.getNodeType()) {
-		case ALTERNATIVE:
-			// if this is an alternative, ensure that at least one remains
-			List.copyOf(rn.getChildren()).stream()
-				.filter(childRn -> !pruneRepairNode(childRn, rn))
-				.forEach(childRn -> { 
-					rn.removeChild(childRn); });
-			if (rn.getChildren().size() == 1 && parent != null) {// then rewrite tree as this child is the only alternative, unless this is the root node
-				RepairNode child = rn.getChildren().iterator().next();
-				parent.addChild(child);
-				child.setParent(parent);
-				parent.removeChild(rn);
-			}
-			return (rn.getChildren().size() > 0);
-		case SEQUENCE:
-			// ensure all remain valid
-			int preCount = rn.getChildren().size();
-			List.copyOf(rn.getChildren()).stream()
-			.filter(childRn -> !pruneRepairNode(childRn, rn))
-			.forEach(childRn -> { 
-				rn.removeChild(childRn);		
-			});
-			int postCount = rn.getChildren().size();
-			return preCount == postCount;
-		case MULTIVALUE:
-			// not sure what this does
-			// lets fall through
-		case VALUE:
-			boolean doKeep = true;
-			if (rn instanceof RepairAction) {
-				doKeep =	_onlyAddOrRemoveOperator((RepairAction)rn) 
-							&& _onlyChangesOutput((RepairAction)rn);
-			}
-			return doKeep;
-		default:
-			return false;
-		}
-	}
 	
-    public static Set<Repair> getConcreteRepairs(Set<Object> objects, int limit,ConsistencyRuleType crd, Instance contextInstance) {
-        ConsistencyRuleType childCRD = getChildWorkspaceConsistencyRule(crd);
-        childW.update();
-        childW.concludeTransaction();
-        RuleService.currentWorkspace = childW;
-        RuleService.evaluator.evaluateAll();
-        ConsistencyRule inconsistency = childCRD.consistencyRuleEvaluation(contextInstance);
-        RuleService.evaluator.evaluate(inconsistency);
-        RepairNode repairTree = RuleService.repairTree(inconsistency);
-        if(repairTree == null || !pruneRepairNode(repairTree, null))
-            return null;
-        if (repairTree.isExecutable())
-        	return repairTree.getRepairs();
-        
-        Set<Repair> concreteRepairs = repairTree.getConcreteRepairs(objects.parallelStream().map(obj -> childW.its((Instance)obj)).collect(Collectors.toSet()),limit);
-        convertRepairsToWorkspace(crd.workspace,concreteRepairs);
-        RuleService.currentWorkspace = crd.workspace;
-        return concreteRepairs;
-    }
-    
-    static Workspace childW = null;
-    
-    protected static ConsistencyRuleType getChildWorkspaceConsistencyRule(ConsistencyRuleType crd){
-        if(childW == null)
-            createChildWorkspace(crd.workspace);
-        Object childInconsistency =  childW.findElement(crd.id());
-        return (ConsistencyRuleType) childInconsistency;
-    }
+//	private static boolean pruneRepairNode(RepairNode rn, RepairNode parent) {
+//		// we recursively visit all nodes and remove those that are not ADD or REMOVE operations, and those where the property is null or does not start with out_	
+//		
+//		// first, due to hashCode() problem, reinsert children (otherwise, we cant remove them when necessary)
+//		Set<RepairNode> copy = Set.copyOf(rn.getChildren());
+//		rn.getChildren().clear();
+//		copy.stream().forEach(rnChild -> rn.addChild(rnChild));
+//		
+//		switch(rn.getNodeType()) {
+//		case ALTERNATIVE:
+//			// if this is an alternative, ensure that at least one remains
+//			List.copyOf(rn.getChildren()).stream()
+//				.filter(childRn -> !pruneRepairNode(childRn, rn))
+//				.forEach(childRn -> { 
+//					rn.removeChild(childRn); });
+//			if (rn.getChildren().size() == 1 && parent != null) {// then rewrite tree as this child is the only alternative, unless this is the root node
+//				RepairNode child = rn.getChildren().iterator().next();
+//				parent.addChild(child);
+//				child.setParent(parent);
+//				parent.removeChild(rn);
+//			}
+//			return (rn.getChildren().size() > 0);
+//		case SEQUENCE:
+//			// ensure all remain valid
+//			int preCount = rn.getChildren().size();
+//			List.copyOf(rn.getChildren()).stream()
+//			.filter(childRn -> !pruneRepairNode(childRn, rn))
+//			.forEach(childRn -> { 
+//				rn.removeChild(childRn);		
+//			});
+//			int postCount = rn.getChildren().size();
+//			return preCount == postCount;
+//		case MULTIVALUE:
+//			// not sure what this does
+//			// lets fall through
+//		case VALUE:
+//			boolean doKeep = true;
+//			if (rn instanceof RepairAction) {
+//				doKeep =	_onlyAddOrRemoveOperator((RepairAction)rn) 
+//							&& _onlyChangesOutput((RepairAction)rn);
+//			}
+//			return doKeep;
+//		default:
+//			return false;
+//		}
+//	}
+//	
+	static Workspace childW = null;
 
-    private static void createChildWorkspace(Workspace workspace) {
-        childW = WorkspaceService.createWorkspace("childWorkspace", workspace,
-                WorkspaceService.ANY_USER, null, false, false);
-//        childW.update();
-//        childW.concludeTransaction();
-    }
-    
+  protected static Set<Repair> getConcreteRepairs(Set<Object> objects, int limit,ConsistencyRuleType crd, Instance contextInstance) {
+  if(childW == null)
+  	childW = WorkspaceService.createWorkspace("childWorkspace",crd.workspace,
+              WorkspaceService.ANY_USER, null, false, false);
+  else {
+  	childW.update();
+      childW.concludeTransaction();
+  }
+  ConsistencyRuleType childCRD =  childW.findElement(crd.id());
+  RuleService.currentWorkspace = childW;
+  RuleService.evaluator.evaluateAll();
+  ConsistencyRule inconsistency = childCRD.consistencyRuleEvaluation(contextInstance);
+  RuleService.evaluator.evaluate(inconsistency);
+  RepairNode repairTree = RuleService.repairTree(inconsistency);
+  if(repairTree == null) {
+  	RuleService.currentWorkspace = crd.workspace;
+  	return null;
+  }
+  RepairTreeFilter rtf = new OutputUpdateRepairTreeFilter();
+  rtf.filterRepairTree(repairTree);
+  Set<Repair> concreteRepairs = repairTree.getConcreteRepairs(objects.parallelStream().map(obj -> childW.its((Instance)obj)).collect(Collectors.toSet()),limit);
+  convertRepairsToWorkspace(crd.workspace,concreteRepairs);
+  RuleService.currentWorkspace = crd.workspace;
+  return concreteRepairs;
+}
+	
+	
+//    protected static Set<Repair> getConcreteRepairs(Set<Object> objects, int limit,ConsistencyRuleType crd, Instance contextInstance) {
+//        if(childW == null)
+//        	childW = WorkspaceService.createWorkspace("childWorkspace",crd.workspace,
+//                    WorkspaceService.ANY_USER, null, false, false);
+//        else {
+//        	childW.update();
+//            childW.concludeTransaction();
+//        }
+//        ConsistencyRuleType childCRD =  childW.findElement(crd.id());
+//        RuleService.currentWorkspace = childW;
+//        RuleService.evaluator.evaluateAll();
+//        ConsistencyRule inconsistency = childCRD.consistencyRuleEvaluation(contextInstance);
+//        RuleService.evaluator.evaluate(inconsistency);
+//        RepairNode repairTree = RuleService.repairTree(inconsistency);
+//        if(repairTree == null || !pruneRepairNode(repairTree, null)) {
+//        	RuleService.currentWorkspace = crd.workspace;
+//        	return null;
+//        }
+//        Set<Repair> concreteRepairs = repairTree.getConcreteRepairs(objects.parallelStream().map(obj -> childW.its((Instance)obj)).collect(Collectors.toSet()),limit);
+//        convertRepairsToWorkspace(crd.workspace,concreteRepairs);
+//        RuleService.currentWorkspace = crd.workspace;
+//        return concreteRepairs;
+//    }
+//    
     private static void convertRepairsToWorkspace(Workspace targetWorkspace, Set<Repair> repairs){
         for (Repair repair : repairs) {
             for (Object o : repair.getRepairActions()) {
@@ -195,5 +207,14 @@ public class InputToOutputMapper {
                 }
             }
         }
+    }
+    
+    private static class OutputUpdateRepairTreeFilter extends RepairTreeFilter {
+
+		@Override
+		public boolean compliesTo(RepairAction repairAction) {
+			return _onlyAddOrRemoveOperator(repairAction) && _onlyChangesOutput(repairAction);
+		}
+    	
     }
 }

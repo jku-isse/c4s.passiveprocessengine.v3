@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.instance;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,10 @@ import at.jku.isse.designspace.core.model.WorkspaceListener;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.commands.Commands.ConditionChangedCmd;
+import at.jku.isse.passiveprocessengine.instance.commands.Commands.IOMappingInconsistentCmd;
+import at.jku.isse.passiveprocessengine.instance.commands.Commands.QAConstraintChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.commands.Commands.TrackableCmd;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,29 +40,12 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 
 	Workspace ws;
 	// refactor this out later into a schema cache
-	//Map<Id, String> typeIndex = new HashMap<>();
 	Map<Id, String> instanceIndex = new HashMap<>();
 	
-	
-//	public ProcessInstanceChangeProcessor(WorkspaceService workspaceService) {
-//		//ws.addListener(this);
-//		this.ws = WorkspaceService.PUBLIC_WORKSPACE;
-//		
-//		// init typeIndex
-//		ws.debugInstanceTypes().stream()
-//			.forEach(it -> typeIndex.put(it.id(), it.name()));
-//		//Workspace.serviceListeners.add(this);
-//		WorkspaceService.subscribeToWorkspace(ws, this);
-//	}
+
 	
 	public ProcessInstanceChangeProcessor(Workspace ws) {
-		//ws.addListener(this);
 		this.ws = ws;
-		
-		// init typeIndex
-		//ws.debugInstanceTypes().stream()
-		//	.forEach(it -> typeIndex.put(it.id(), it.name()));
-		//Workspace.serviceListeners.add(this);
 		ws.workspaceListeners.add( this);
 	}
 
@@ -87,17 +75,6 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 			 ws.debugInstanceTypes().stream()
 			 	.filter(type -> type.id().equals(typeId))
 			 	.forEach(type -> instanceIndex.put(element.id(), type.name()));
-			
-			
-//			if (typeId != null && typeIndex.get(typeId) != null)
-//				instanceIndex.put(element.id(), typeIndex.get(typeId));
-//			else {
-//				// unknown type
-//				
-//				InstanceType it = element.getInstanceType();
-//				Set<InstanceType> types = ws.debugInstanceTypes();
-//				element.id();
-//			}
 		}
 	}
 	
@@ -105,20 +82,21 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 		// check if this is about an instance
 		if (!instanceIndex.containsKey(op.elementId()))
 			return;
-		// now lets check if this is about a step, and if so about input
+		// now lets check if this is about a step, 
 		if (isOfStepType(element.id())) {
-			//if (op.name().startsWith("in_")) {
 				Id addedId = (Id) op.value();
 				Element added = ws.findElement(addedId);
-				log.info(String.format("%s %s now also contains %s", element.name(),
+				if(!op.name().contains("/@") 
+						&& (op.name().startsWith("in_") 
+						      || op.name().startsWith("out_") )) {
+					ProcessStep step = WrapperCache.getWrappedInstance(ProcessStep.class, (Instance)element);
+					step.processIOAddEvent(op);
+					log.debug(String.format("%s %s now also contains %s", element.name(),
 																op.name(),
 																added != null ? added.name() : "NULL"
-																));		
-			//}
-		} //else {
-			//log.info(op.toString());
-		//}
-			
+																));	
+				}
+		}		
 	}
 	
 	private void processPropertyUpdateRemove(PropertyUpdateRemove op, Element element) {
@@ -130,14 +108,17 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 	//		if (op.name().startsWith("in_")) {
 	//			Id remId = (Id) op.value(); // IS NOT SET, returns NULL if remove is called via index
 	//			Element rem = ws.findElement(remId);
+			if(!op.name().contains("/@")  // ignore special properties  (e.g., usage in consistency rules, etc)
+					&& (op.name().startsWith("in_") 
+					      || op.name().startsWith("out_") )) {
+				ProcessStep step = WrapperCache.getWrappedInstance(ProcessStep.class, (Instance)element);
+				step.processIORemoveEvent(op);
 				log.info(String.format("%s %s removed %s", element.name(),
 																op.name(),
 																op.indexOrKey()
-																));		
-	//		}
-		}//else {
-//			log.info(op.toString());
-//		}
+																));	
+			}
+		}
 	}
 	
 	private Optional<TrackableCmd> processPropertyUpdateSet(PropertyUpdateSet op, Element element) {
@@ -152,10 +133,10 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 			if (isOfStepType(context.id())) { // rule belonging to a step,
 				ProcessStep step = WrapperCache.getWrappedInstance(ProcessStep.class, context);
 				TrackableCmd effect = step.processRuleEvaluationChange(cr, op);
-				log.info(String.format("CRD of type %s for step %s updated %s to %s", element.name(), context.name(),
-						op.name(),
-						op.value().toString()
-						));	
+//				log.debug(String.format("CRD of type %s for step %s updated %s to %s", element.name(), context.name(),
+//						op.name(),
+//						op.value().toString()
+//						));	
 				return Optional.ofNullable(effect);
 			}
 		}
@@ -165,7 +146,8 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 	@Override
 	public void handleUpdated(List<Operation> operations) {
 		@SuppressWarnings("unchecked")
-		List<TrackableCmd> effects = (List<TrackableCmd>) operations.stream().map(operation -> {
+		List<TrackableCmd> effects = (List<TrackableCmd>) operations.stream()
+		 .map(operation -> {
  			Element element = ws.findElement(operation.elementId());
 			if (operation instanceof ElementCreate) {
 				// update type and instance index
@@ -199,10 +181,87 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 		
 		// now lets just execute all commands
 		if (effects.size() > 0) {
+			// qa not fulfilled
 			effects.stream()
+			.filter(QAConstraintChangedCmd.class::isInstance)
+			.map(QAConstraintChangedCmd.class::cast)
+			.filter(cmd -> !cmd.isFulfilled())
+			.peek(cmd -> log.debug(String.format("Executing: %s", cmd.toString())))
+			.forEach(cmd -> cmd.execute());
+			
+			// first sort them to apply them in a sensible order, e.g., preconditions fulfilled before postconditions
+			effects.stream()
+				.filter(ConditionChangedCmd.class::isInstance)
+				.map(ConditionChangedCmd.class::cast)
+				.sorted(new CommandComparator())
 				.peek(cmd -> log.debug(String.format("Executing: %s", cmd.toString())))
 				.forEach(cmd -> cmd.execute());
+			
+			// if QA is fulfilled
+			effects.stream()
+			.filter(QAConstraintChangedCmd.class::isInstance)
+			.map(QAConstraintChangedCmd.class::cast)
+			.filter(cmd -> cmd.isFulfilled())
+			.peek(cmd -> log.debug(String.format("Executing: %s", cmd.toString())))
+			.forEach(cmd -> cmd.execute());
+			
+			// then execute datamappings
+			effects.stream()
+				.filter(IOMappingInconsistentCmd.class::isInstance)
+				.map(IOMappingInconsistentCmd.class::cast)
+				.peek(cmd -> log.debug(String.format("Executing: %s", cmd.toString())))
+				.forEach(cmd -> cmd.execute());
+			
 			ws.concludeTransaction();
 		}
+	}
+	
+	
+	public static class CommandComparator implements Comparator<ConditionChangedCmd> {
+
+		@Override
+		public int compare(ConditionChangedCmd o1, ConditionChangedCmd o2) {
+			if (o1.getStep().getProcess() == null ) { // we have a process
+				if (o2.getStep().getProcess() == null) // we have a second process
+					return o1.getStep().getName().compareTo(o2.getStep().getName()); // we sort processes by their id
+				else {// other is a step, 
+					return 1; // we put steps first, do process updates at the end
+				}
+			} else if (o2.getStep().getProcess() == null) { // second one is a process, but not first
+				return -1; // we put steps first, process updates at the very end
+			} else { // neither are processes
+				int procBased = o1.getStep().getProcess().getName().compareTo(o2.getStep().getProcess().getName()); // compare via process
+				if (procBased == 0) {
+					// now compare via steps
+					int stepBased = o1.getStep().getName().compareTo(o2.getStep().getName()); 
+					if (stepBased == 0) { // same step
+						return Integer.compare(getAssignedValue(o1.getCondition(), o1.isFulfilled()), getAssignedValue(o2.getCondition(), o2.isFulfilled()));
+					} else return stepBased; // TODO: compare/sort not by step name but by step order in proc definition 
+				} else return procBased; // sort steps from different processes by process first
+			}
+		}
+		
+		private int getAssignedValue(Conditions cond, boolean fulfilled) {
+			// we need to ensure that we first signal a failure of conditions, before a fulfillment to avoid activation propagation that needs to be undone thereafter
+			//TODO: support also no work expected
+			// now sort by state transition: 0 canceled -> 1 noWorkExpected
+			// 										-> 3 preFulfilled(false) 							-> 5 active -> 6 postFulfilled(true)
+			//	but		-> 2 postFulfilled(false) 							->  4 prefulfilled(true) 	--> 5 active
+			switch(cond) {
+			case CANCELATION:
+				return 0;
+			case ACTIVATION:
+				return 5;
+			case POSTCONDITION:
+				if (fulfilled) return 6;
+				else return 2;
+			case PRECONDITION:
+				if (fulfilled) return 4;
+				else return 3;
+			default:
+				return 10;
+			}
+		}
+		
 	}
 }

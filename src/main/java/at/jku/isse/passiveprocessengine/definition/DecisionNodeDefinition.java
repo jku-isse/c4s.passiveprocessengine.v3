@@ -95,7 +95,8 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 
 	public static DecisionNodeDefinition getInstance(String dndId, Workspace ws) {
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), dndId);
-		
+		// default AND
+		instance.getPropertyAsSingle(CoreProperties.inFlowType.toString()).set(InFlowType.AND.toString());
 		return WrapperCache.getWrappedInstance(DecisionNodeDefinition.class, instance);
 	}
 	

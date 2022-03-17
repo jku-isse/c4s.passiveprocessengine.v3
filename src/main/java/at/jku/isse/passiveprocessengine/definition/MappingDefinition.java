@@ -11,7 +11,13 @@ import at.jku.isse.passiveprocessengine.WrapperCache;
 
 public class MappingDefinition extends InstanceWrapper{
 
-	public static enum CoreProperties {fromStepType, fromParameter, toStepType, toParameter}
+//	public enum FlowDir { outToIn, //from Step output to Step input
+//		inToIn, // from process input to Step input
+//		outToOut, // from Step output to process output
+//		inToOut //from process input to process output
+//		};
+	
+	public static enum CoreProperties {fromStepType, fromParameter, toStepType, toParameter, flowDir}
 	
 	public static final String designspaceTypeId = MappingDefinition.class.getSimpleName();
 	
@@ -51,6 +57,14 @@ public class MappingDefinition extends InstanceWrapper{
 		instance.getPropertyAsSingle(CoreProperties.toParameter.toString()).set(toParameter);
 	}
 	
+//	public FlowDir getFlowDir() {
+//		return FlowDir.valueOf((String) instance.getPropertyAsValueOrNull(CoreProperties.flowDir.toString()));
+//	}
+//
+//	public void setFlowDir(FlowDir flowDir) {
+//		instance.getPropertyAsSingle(CoreProperties.flowDir.toString()).set(flowDir.toString());
+//	}
+	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
 		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
 				.filter(it -> it.name().contentEquals(designspaceTypeId))
@@ -63,17 +77,19 @@ public class MappingDefinition extends InstanceWrapper{
 				typeStep.createPropertyType(CoreProperties.fromParameter.toString(), Cardinality.SINGLE, Workspace.STRING);
 				typeStep.createPropertyType(CoreProperties.toStepType.toString(), Cardinality.SINGLE, Workspace.STRING);
 				typeStep.createPropertyType(CoreProperties.toParameter.toString(), Cardinality.SINGLE, Workspace.STRING);
+		//		typeStep.createPropertyType(CoreProperties.flowDir.toString(), Cardinality.SINGLE, Workspace.STRING);
 				return typeStep;
 			}
 	}
 
-	public static MappingDefinition getInstance(String fromStepType, String fromParameter, String toStepType, String toParameter, Workspace ws) {
+	public static MappingDefinition getInstance(String fromStepType, String fromParameter, String toStepType, String toParameter,Workspace ws) {
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), fromStepType+fromParameter+toStepType+toParameter);
 		MappingDefinition md = WrapperCache.getWrappedInstance(MappingDefinition.class, instance);
 		md.setFromStepType(fromStepType);
 		md.setFromParameter(fromParameter);
 		md.setToStepType(toStepType);
 		md.setToParameter(toParameter);
+	//	md.setFlowDir(flowDir);
 		return md;
 	}
 

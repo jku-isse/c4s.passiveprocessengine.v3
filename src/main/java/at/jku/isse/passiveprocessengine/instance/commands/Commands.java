@@ -3,6 +3,8 @@ package at.jku.isse.passiveprocessengine.instance.commands;
 import artifactapi.ArtifactIdentifier;
 import artifactapi.IArtifact;
 import artifactapi.ResourceLink;
+import at.jku.isse.designspace.rule.model.ConsistencyRule;
+import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
@@ -163,6 +165,37 @@ public class Commands {
 //        private final boolean isFulfilled;
 //    }
     
+	@Data 
+	public static class QAConstraintChangedCmd extends TrackableCmd {
+		private final ProcessStep step;
+		private final ConsistencyRule crule;
+		 private final boolean isFulfilled;
+	
+		public void execute() {
+			step.processQAEvent(crule, isFulfilled);
+		}
+
+		@Override
+		public String toString() {
+			return "QAConstraintChangedCmd [" + step.getDefinition().getName() + " " + crule.getInstanceType().name() +":"+ isFulfilled + "]";
+		}
+	}
+	
+	@Data
+	public static class IOMappingInconsistentCmd extends TrackableCmd {
+		private final ProcessStep step;
+		private final ConsistencyRule crule;
+	
+		public void execute() {
+			InputToOutputMapper.mapInputToOutputInStepScope(step, crule);
+		}
+
+		@Override
+		public String toString() {
+			return "IOMappingInconsistentCmd [" + step.getDefinition().getName() + " " + crule.getInstanceType().name() + "]";
+		}
+		
+	}
     
     @Data
     public static class ConditionChangedCmd extends TrackableCmd {
