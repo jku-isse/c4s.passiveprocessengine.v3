@@ -51,7 +51,8 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 
 	private boolean isOfStepType(Id id) {
 		if (id == null) return false;
-		return instanceIndex.getOrDefault(id, "NOTFOUND").startsWith(ProcessStep.designspaceTypeId);
+		String type = instanceIndex.getOrDefault(id, "NOTFOUND");
+		return (type.startsWith(ProcessStep.designspaceTypeId) || type.startsWith(ProcessInstance.designspaceTypeId));
 	}
 	
 	private boolean isOfCRDType(Id id) {

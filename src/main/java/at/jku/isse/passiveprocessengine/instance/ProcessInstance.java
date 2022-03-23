@@ -156,14 +156,21 @@ public class ProcessInstance extends ProcessStep {
 	public static ProcessInstance getInstance(Workspace ws, ProcessDefinition sd) {
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+UUID.randomUUID());
 		ProcessInstance pi = WrapperCache.getWrappedInstance(ProcessInstance.class, instance);
-		pi.init(sd);
+		pi.init(sd, null, null);
 		return pi;
 	}
 	
-	protected void init(ProcessDefinition pdef) {
+	public static ProcessInstance getSubprocessInstance(Workspace ws, ProcessDefinition sd, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI) {
+		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+UUID.randomUUID());
+		ProcessInstance pi = WrapperCache.getWrappedInstance(ProcessInstance.class, instance);
+		pi.init(sd, inDNI, outDNI);
+		return pi;
+	}
+	
+	protected void init(ProcessDefinition pdef, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI) {
 		// init first DNI, there should be only one. Needs to be checked earlier with definition creation
 		// we assume consistent, correct specification/definition here
-		super.init(pdef, null, null);
+		super.init(pdef, inDNI, outDNI);
 		instance.getPropertyAsSingle(CoreProperties.processDefinition.toString()).set(pdef.getInstance());
 		pdef.getDecisionNodeDefinitions().stream()
 			.filter(dnd -> dnd.getInSteps().size() == 0)

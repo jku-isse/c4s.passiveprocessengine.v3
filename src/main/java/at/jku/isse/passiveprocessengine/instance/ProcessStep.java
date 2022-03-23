@@ -26,6 +26,7 @@ import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.IStepDefinition;
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
@@ -136,8 +137,10 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				&& this.getActualLifecycleState().equals(State.COMPLETED) ){
 			Id addedId = (Id) op.value();
 			Element added = ws.findElement(addedId);
-			log.info(String.format("Step %s received unexpected late output %s %s, now propagating downstream", this.getName(), op.name(), added.name()  ));
-			getOutDNI().signalPrevTaskDataChanged(this);
+			log.info(String.format("Step %s received unexpected late output %s %s, now propagating to successors", this.getName(), op.name(), added.name()  ));
+			// in case this is a ProcessInstance
+			if (getOutDNI() != null)
+				getOutDNI().signalPrevTaskDataChanged(this);
 		}
 	}
 	
@@ -151,11 +154,13 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 		else if (op.name().startsWith("out_") // if out removed, establish if this is late output removal, then propagate further
 				&& this.getActualLifecycleState().equals(State.COMPLETED) ){
-			log.info(String.format("Step %s had some output removed from %s after step completion, now propagating downstream", this.getName(), op.name()));
-			getOutDNI().signalPrevTaskDataChanged(this);
+			log.info(String.format("Step %s had some output removed from %s after step completion, now propagating to successors", this.getName(), op.name()));
+			// in case this is a ProcessInstance
+			if (getOutDNI() != null)
+				getOutDNI().signalPrevTaskDataChanged(this);
 		}
 		else 
-			log.debug(String.format("Step %s had some output removed from %s, not propagating downstream yet", this.getName(), op.name()));
+			log.debug(String.format("Step %s had some output removed from %s, not propagating to successors yet", this.getName(), op.name()));
 	}
 	
 	
@@ -385,7 +390,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			case CANCELED: //fallthrough
 			case COMPLETED://fallthrough
 			case NO_WORK_EXPECTED: 
-				this.getOutDNI().tryInConditionsFullfilled();
+				if (this.getOutDNI() != null) //need to check, we might be a process without a parent
+					this.getOutDNI().tryInConditionsFullfilled();
 			} 
 		}
 	}
@@ -460,10 +466,15 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		assert(sd != null);
 		assert(inDNI != null);
 		assert(outDNI != null);
-		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+UUID.randomUUID());
-		ProcessStep step = WrapperCache.getWrappedInstance(ProcessStep.class, instance);
-		step.init(sd, inDNI, outDNI);
-		return step;
+		if (sd instanceof ProcessDefinition) { // we have a subprocess
+			// we delegate to ProcessInstance
+			return ProcessInstance.getSubprocessInstance(ws, (ProcessDefinition) sd, inDNI, outDNI);
+		} else {
+			Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+UUID.randomUUID());
+			ProcessStep step = WrapperCache.getWrappedInstance(ProcessStep.class, instance);
+			step.init(sd, inDNI, outDNI);
+			return step;
+		}
 	}
 
 	protected void init(StepDefinition sd, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI) {
@@ -471,19 +482,18 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		if (inDNI != null) {
 			instance.getPropertyAsSingle(CoreProperties.inDNI.toString()).set(inDNI.getInstance());
 			inDNI.addOutStep(this);
+			// FIXME: better realized via bidirectional properties
 		}
 		if (outDNI != null) {
 			instance.getPropertyAsSingle(CoreProperties.outDNI.toString()).set(outDNI.getInstance());
 			outDNI.addInStep(this);		
+			// FIXME: better realized via bidirectional properties
 		}
-		// FIXME: better realized via bidirectional properties
-//		for (Conditions condition : Conditions.values()) {
-//			if (sd.getCondition(condition).isPresent()) {
-//				PropertyType pt = instance.getInstanceType().getPropertyType(condition.toString());
-//				ConsistencyRuleType crd = (ConsistencyRuleType) pt.getInstanceType();
-//				
-//			}
-//		}
+		// only if no input and no preconditions --> automatically go into enabled, (if there is input, then there needs to be a precondition checking for presence of input)
+		// but this implies that only manual output can be set as there is no input to derive output from (as there cannot be any io mapping)
+		if (sd.getExpectedInput().isEmpty() && sd.getCondition(Conditions.PRECONDITION).isEmpty()) {
+			this.setPreConditionsFulfilled(true);
+		}
 		sd.getQAConstraints().stream()
 		.map(spec -> getQASpecId(spec, getOrCreateDesignSpaceInstanceType(ws, getDefinition()))) // now we have the id of all the QA constraints/rules
 		.forEach(qid -> qaState.put(qid, false));

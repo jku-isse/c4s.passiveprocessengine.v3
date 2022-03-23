@@ -1,4 +1,4 @@
-package at.jku.isse.designspace.tests.passiveprocessengine.serverside;
+package at.jku.isse.passiveprocessengine.instance;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

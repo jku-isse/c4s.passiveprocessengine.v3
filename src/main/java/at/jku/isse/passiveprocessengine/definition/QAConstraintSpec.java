@@ -7,18 +7,13 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
+import at.jku.isse.passiveprocessengine.WrapperCache;
 
 public class QAConstraintSpec extends InstanceWrapper{
 
 	
 	public static enum CoreProperties {qaConstraintSpec, humanReadableDescription};
 	public static final String designspaceTypeId = QAConstraintSpec.class.getSimpleName();
-
-	public QAConstraintSpec(String qaConstraintId, String qaConstraintSpec, String humanReadableDescription, Workspace ws) {
-		super(ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), qaConstraintId));
-		instance.getPropertyAsSingle(CoreProperties.qaConstraintSpec.toString()).set(qaConstraintSpec);
-		instance.getPropertyAsSingle(CoreProperties.humanReadableDescription.toString()).set(humanReadableDescription);
-	}
 	
 	public QAConstraintSpec(Instance instance) {
 		super(instance);
@@ -49,6 +44,13 @@ public class QAConstraintSpec extends InstanceWrapper{
 				typeStep.createPropertyType(CoreProperties.humanReadableDescription.toString(), Cardinality.SINGLE, Workspace.STRING);
 				return typeStep;
 			}
+	}
+	
+	public static QAConstraintSpec createInstance(String qaConstraintId, String qaConstraintSpec, String humanReadableDescription, Workspace ws) {
+		Instance instance = ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), qaConstraintId);
+		instance.getPropertyAsSingle(CoreProperties.qaConstraintSpec.toString()).set(qaConstraintSpec);
+		instance.getPropertyAsSingle(CoreProperties.humanReadableDescription.toString()).set(humanReadableDescription);
+		return WrapperCache.getWrappedInstance(QAConstraintSpec.class, instance);
 	}
 
 }

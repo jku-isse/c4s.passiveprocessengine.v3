@@ -1,7 +1,6 @@
 package at.jku.isse.passiveprocessengine.instance;
 
 import at.jku.isse.designspace.core.model.Cardinality;
-import at.jku.isse.designspace.core.model.Id;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
@@ -27,19 +26,6 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	public DecisionNodeInstance(Instance instance) {
 		super(instance);
 	}
-
-	// FIXME: check that transient fields are properly initialized upon loading
-//	private transient HashMap<ProcessStep, Progress> inTaskStatus = new HashMap<>();
-//	private enum Progress {
-//		WAITING, ENABLED, DISABLED, USED
-//	}
-
-	//private transient List<ExecutedMapping> mappings = new LinkedList<>(); //TODO: remove this and directly check
-	// Also ensure that with every input data add/remove, all valid/eligible instep.outputs are mapped/propagated,
-
-//	public List<ExecutedMapping> getExecutedMappings() {
-//		return mappings;
-//	}
 	
 	protected DecisionNodeDefinition getDefinition() {
 		return  WrapperCache.getWrappedInstance(DecisionNodeDefinition.class, instance.getPropertyAsInstance(CoreProperties.dnd.toString()));
@@ -85,54 +71,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			.map(inst -> WrapperCache.getWrappedInstance(ProcessStep.class, (Instance)inst))
 			.collect(Collectors.toSet());
 	}
-	
-//	private Progress mapInitialStatus(ProcessStep task) {
-//		if (task.getExpectedLifecycleState().equals(State.COMPLETED))
-//			return Progress.ENABLED;
-//		else if (task.getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED) || task.getExpectedLifecycleState().equals(State.CANCELED))
-//			return Progress.DISABLED;
-//		else 
-//			return Progress.WAITING;
-//	}
-//	
-//	private Progress mapExistingStatus(ProcessStep task, Progress currentState) {
-//		switch(currentState) {
-//			case WAITING:
-//				if(task.getExpectedLifecycleState().equals(State.COMPLETED))
-//					return Progress.ENABLED;
-//				else if (task.getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED) || task.getExpectedLifecycleState().equals(State.CANCELED))
-//					return Progress.DISABLED;
-//				else
-//					return Progress.WAITING;
-//			case DISABLED:
-//				//canceling a step, will disable it here, but we have no signal when it becomes available again, thus it will permanently remain in DISABLED for the moment
-//				if(task.getExpectedLifecycleState().equals(State.COMPLETED)) { 
-//					// we dont override here, how to handle switching between exclusive tasks! --> one needs to be deactivated/canceled or reverted
-//					// distinguish between having progressed and not having progressed -->
-//					// IF we have no other ready yet, then transition into ENABLED, 
-//					boolean isAnotherEnabled = inTaskStatus.entrySet().stream()
-//						.filter(entry -> !entry.getKey().equals(task))
-//						.anyMatch(entry -> entry.getValue().equals(Progress.ENABLED));
-//					if (!isAnotherEnabled)
-//						return Progress.ENABLED;										
-//				}				
-//				return Progress.DISABLED;
-//			case ENABLED:
-//				if(task.getExpectedLifecycleState().equals(State.COMPLETED))
-//					return Progress.ENABLED;
-//				else if (task.getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED) || task.getExpectedLifecycleState().equals(State.CANCELED))
-//					return Progress.DISABLED;
-//				else // if no longer complete, returned to some other state // TODO: what if there is a deviation?
-//					return Progress.WAITING;
-//			case USED:
-//				if(task.getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED) || task.getExpectedLifecycleState().equals(State.CANCELED)) {
-//					// TODO if used but now disabled, then lets check if some data remapping needs to be done
-//				}
-//				return Progress.USED;
-//		}
-//		return currentState;
-//	}
-//	
+		
 	public void signalPrevTaskDataChanged(ProcessStep prevTask) {
 		boolean isEndOfProcess = false;
 		if (this.getDefinition().getOutSteps().size() == 0 ) {
@@ -142,51 +81,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		checkAndExecuteDataMappings(isEndOfProcess);// we just check everything, not too expensive as mappings are typically few.
 	}
 	
-//	public void signalPrevTaskDataChanged(ProcessStep prevTask) {
-//		// --> check mappings what needs to be added or deleted from subsequent tasks!!!
-//		// if so, then check datamappings if they have mapped something that needs to be removed, or have not yet mapped something they now need to map
-//
-//		
-//		// add
-//		List<MappingDefinition> definitionsToExecute = getDefinition().getMappings().stream()
-//				.filter(def -> def.getFrom().stream()
-//						.anyMatch(pair -> pair.getFirst().equals(prevTask.getType().getId()))) // search all defined mappings with prevTask
-//				.filter(def -> mappings.stream()
-//						.noneMatch(mapping -> def.getFrom().stream().anyMatch(pair -> pair.getFirst().equals(mapping.getFromTask().getType().getId())))) // use only defined mappings that are not already executed
-//				.collect(Collectors.toList());
-//		checkAndExecuteDataMappings(definitionsToExecute);
-//
-//		// remove
-//		List<ExecutedMapping> mappingsToRemove = new ArrayList<>();
-//		mappings.stream()
-//				.filter(m -> m.getFromStep().equals(prevTask)) // check if prevTask has been used, if not, nothing to do
-//				.filter(m -> prevTask.getOutput().stream()
-//						.noneMatch(ai -> m.getFromRole().equals(ai.getRole()))) // search for executed mappings that were removed
-//				.forEach(m -> {
-//					switch (m.getDirection()) {
-//						case inToIn: case outToIn:
-//							m.getToStep().removeInput(m.getToParam(), m.getArtifact());
-//							break;
-//						case inToOut: case outToOut:
-//							m.getToStep().removeOutput(new ArtifactOutput(m.getArtifact(), m.getToRole()));
-//							break;
-//					}
-//					mappingsToRemove.add(m);
-//				});
-//		mappings.removeAll(mappingsToRemove); // remove the undone mappings
-//
-//		
-//	}
-	
-	public void tryInConditionsFullfilled() {
-		// make sure we have latest status in our mapping
-		//List<WorkflowChangeEvent> changes = new ArrayList<>();
-		//WorkflowChangeEvent wce = null;
-//		this.getInSteps().stream()
-//			.peek(task -> inTaskStatus.computeIfPresent(task, (key, value) -> mapExistingStatus(task, value)))
-//			.forEach(task -> inTaskStatus.computeIfAbsent(task, k -> mapInitialStatus(task))  );
-//		
-		
+	public void tryInConditionsFullfilled() {	
 		switch(this.getDefinition().getInFlowType()) {
 		case AND: 
 			// we ignore Expected Canceled and no work expected
@@ -385,22 +280,20 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			this.setHasPropagated();
 		} 
 		
-		if (this.isInflowFulfilled() && this.hasPropagated()) {
-			boolean isEndOfProcess = false;
-			if (this.getDefinition().getOutSteps().size() == 0 ) {
-				// then we are done with this workflow and execute any final mappings into the workflows output
-				 isEndOfProcess = true;
-			}
-			checkAndExecuteDataMappings(isEndOfProcess);
-			checkIfProcessIsCompleteNow();
+		boolean isEndOfProcess = false;
+		if (this.getDefinition().getOutSteps().size() == 0 ) {
+			// is this the final DNI?
+			 isEndOfProcess = true;
 		}
-	}
-	
-	private void checkIfProcessIsCompleteNow() {
-		// check if this is the last DNI, and thus notify process that it is done
-		if (this.getDefinition().getOutSteps().size() == 0) {
-			this.getProcess().setPostConditionsFulfilled(true);
-		} 
+		if (this.isInflowFulfilled() && this.hasPropagated()) {
+			checkAndExecuteDataMappings(isEndOfProcess);
+			if (isEndOfProcess)
+				this.getProcess().setPostConditionsFulfilled(true);
+		}
+		if (this.hasPropagated() && !this.isInflowFulfilled() && isEndOfProcess) {
+			// just make sure that the process is not complete anymore (may be called several times)
+			this.getProcess().setPostConditionsFulfilled(false);
+		}
 	}
 	
 	private void checkAndExecuteDataMappings(boolean isEndOfProcess) {

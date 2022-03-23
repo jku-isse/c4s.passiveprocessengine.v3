@@ -1,4 +1,4 @@
-package at.jku.isse.designspace.tests.passiveprocessengine.serverside;
+package at.jku.isse.passiveprocessengine.instance;
 
 import java.util.Optional;
 
