@@ -17,6 +17,8 @@ import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep.CoreProperties;
+import at.jku.isse.passiveprocessengine.instance.commands.Responses;
+import at.jku.isse.passiveprocessengine.instance.commands.Responses.InputResponse;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -82,25 +84,31 @@ public class ProcessInstance extends ProcessStep {
 			return null; 
 	}
 	
-	public void removeInput(String inParam, Instance artifact) {
-		super.removeInput(inParam, artifact);
-		// now see if we need to map this to first DNI - we assume all went well
-		getDecisionNodeInstances().stream()
-		.filter(dni -> dni.getInSteps().size() == 0)
-		.forEach(dni -> {
-			dni.signalPrevTaskDataChanged(this);
-		});
+	public Responses.InputResponse removeInput(String inParam, Instance artifact) {
+		InputResponse isOk = super.removeInput(inParam, artifact);
+		if (isOk.getError() == null) {
+			// now see if we need to map this to first DNI - we assume all went well
+			getDecisionNodeInstances().stream()
+			.filter(dni -> dni.getInSteps().size() == 0)
+			.forEach(dni -> {
+				dni.signalPrevTaskDataChanged(this);
+			});
+		}
+		return isOk;
 	}
 	
-	public void addInput(String inParam, Instance artifact) {
-		super.addInput(inParam, artifact);
-		// now see if we need to map this to first DNI - we assume all went well
-		getDecisionNodeInstances().stream()
-		.filter(dni -> dni.getInSteps().size() == 0)
-		.forEach(dni -> {
-			//dni.tryActivationPropagation(); // to trigger mapping to first steps
-			dni.signalPrevTaskDataChanged(this);
-		});
+	public Responses.InputResponse addInput(String inParam, Instance artifact) {
+		InputResponse isOk = super.addInput(inParam, artifact);
+		if (isOk.getError() == null) {
+			// now see if we need to map this to first DNI - we assume all went well
+			getDecisionNodeInstances().stream()
+			.filter(dni -> dni.getInSteps().size() == 0)
+			.forEach(dni -> {
+				//dni.tryActivationPropagation(); // to trigger mapping to first steps
+				dni.signalPrevTaskDataChanged(this);
+			});
+		}
+		return isOk;
 	}
 	
 	

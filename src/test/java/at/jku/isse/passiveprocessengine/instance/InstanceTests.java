@@ -23,6 +23,9 @@ import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
+import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
+import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
+import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
@@ -32,11 +35,13 @@ import at.jku.isse.passiveprocessengine.instance.TestArtifacts.JiraStates;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
+public
 class InstanceTests {
 
 	static Workspace ws;
 	static InstanceType typeJira;
 	ProcessInstanceChangeProcessor picp;
+	static JsonDefinitionSerializer json = new JsonDefinitionSerializer();
 	
 	@BeforeEach
 	void setup() throws Exception {
@@ -224,7 +229,24 @@ class InstanceTests {
 		assert(proc.getOutput("jiraOut").size() == 1);
 	}
 	
-	
+	@Test
+	void testSimpleParentProcessFromSerializationForm() {
+		Instance jiraF =  TestArtifacts.getJiraInstance(ws, "jiraF");
+		DTOs.Process procD = TestProcesses.getSimpleSuperDTOProcessDefinition(ws);
+		String jsonProc = json.toJson(procD);
+		DTOs.Process deSer = json.fromJson(jsonProc);
+		ProcessDefinition procDef = DefinitionTransformer.fromDTO(deSer, ws);
+		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
+		proc.addInput("jiraIn", jiraF);
+		ws.concludeTransaction();
+		TestArtifacts.setStateToJiraInstance(jiraF, JiraStates.Closed);
+		ws.concludeTransaction();
+		
+		InstanceTests.printFullProcessToLog(proc); 
+		assert(proc.getExpectedLifecycleState().equals(State.COMPLETED));
+		assert(proc.getActualLifecycleState().equals(State.COMPLETED));
+		assert(proc.getOutput("jiraOut").size() == 1);
+	}
 	
 	public static void assertAllConstraintsAreValid(ProcessInstance proc) {
 		proc.getProcessSteps().stream()

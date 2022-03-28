@@ -33,6 +33,8 @@ import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Trigger;
 import at.jku.isse.passiveprocessengine.instance.commands.Commands.*;
+import at.jku.isse.passiveprocessengine.instance.commands.Responses;
+import at.jku.isse.passiveprocessengine.instance.commands.Responses.InputResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -182,18 +184,22 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		
 	}
 	
-	@SuppressWarnings("unchecked")
-	protected void removeInput(String inParam, Instance artifact) {
+	protected Responses.InputResponse removeInput(String inParam, Instance artifact) {
 		if (getDefinition().getExpectedInput().containsKey(inParam)) {
 			Property<?> prop = instance.getProperty("in_"+inParam);
 			if (prop.propertyType.isAssignable(artifact)) {
 				instance.getPropertyAsSet("in_"+inParam).remove(artifact);
+				return InputResponse.okResponse();
 			} else {
-				log.warn(String.format("Cannot remove input %s to %s with nonmatching artifact type %s of id % %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name()));
+				String msg = String.format("Cannot remove input %s to %s with nonmatching artifact type %s of id % %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name());
+				log.warn(msg);
+				return InputResponse.errorResponse(msg);
 			}
 		} else {
 			// additionally Somehow notify about wrong param access
-			log.warn(String.format("Ignoring attempt to remove unexpected input %s to %s", inParam, this.getName()));
+			String msg = String.format("Ignoring attempt to remove unexpected input %s to %s", inParam, this.getName());
+			log.warn(msg);
+			return InputResponse.errorResponse(msg);
 		}
 	}
 	
@@ -209,17 +215,22 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected void addInput(String inParam, Instance artifact) {
+	protected Responses.InputResponse addInput(String inParam, Instance artifact) {
 		if (getDefinition().getExpectedInput().containsKey(inParam)) {
 			Property<?> prop = instance.getProperty("in_"+inParam);
 			if (prop.propertyType.isAssignable(artifact)) {
 				instance.getPropertyAsSet("in_"+inParam).add(artifact);
+				return InputResponse.okResponse();
 			} else {
-				log.warn(String.format("Cannot add input %s to %s with nonmatching artifact type %s of id % %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name()));
+				String msg = String.format("Cannot add input %s to %s with nonmatching artifact type %s of id % %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name());
+				log.warn(msg);
+				return InputResponse.errorResponse(msg);
 			}
 		} else {
 			// additionally Somehow notify about wrong param access
-			log.warn(String.format("Ignoring attempt to add unexpected input %s to %s", inParam, this.getName()));
+			String msg = String.format("Ignoring attempt to add unexpected input %s to %s", inParam, this.getName());
+			log.warn(msg);
+			return InputResponse.errorResponse(msg);
 		}
 	}
 	

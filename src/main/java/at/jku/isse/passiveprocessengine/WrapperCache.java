@@ -38,4 +38,8 @@ public class WrapperCache {
 		}
 		return null;
 	}
+	
+	public static void removeWrapper(Id id) {
+		cache.remove(id);
+	}
 }

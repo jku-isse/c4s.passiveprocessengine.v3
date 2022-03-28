@@ -4,12 +4,24 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 
+
 public class JsonDefinitionSerializer {
 
 	 Gson gson;
 	 
 	 public JsonDefinitionSerializer() {
-		 gson = new GsonBuilder().setPrettyPrinting().create();
+//		 RuntimeTypeAdapterFactory<DTOs.Typed> runtimeTypeAdapterFactory = RuntimeTypeAdapterFactory
+//				    .of(DTOs.Typed.class, "_type")
+//				    .registerSubtype(DTOs.DecisionNode.class, DTOs.DecisionNode.class.getSimpleName())
+//				    .registerSubtype(DTOs.Process.class, DTOs.Process.class.getSimpleName())
+//				    .registerSubtype(DTOs.Step.class, DTOs.Step.class.getSimpleName())
+//				    ;
+		 
+		 gson = new GsonBuilder()
+				 .registerTypeAdapterFactory(new MultiTypeAdapterFactory())
+				 //.registerTypeAdapterFactory(runtimeTypeAdapterFactory)
+				 .setPrettyPrinting()
+				 .create();
 	 }
 	 
 	 public String toJson(DTOs.Process procDef) {
@@ -17,7 +29,6 @@ public class JsonDefinitionSerializer {
 	 }
 	 
 	 public DTOs.Process fromJson(String procDefJson) throws JsonSyntaxException {
-		 DTOs.Process procDef = gson.fromJson(procDefJson, DTOs.Process.class);
-		 return procDef;
+		 return gson.fromJson(procDefJson,  DTOs.Process.class);
 	 }
 }

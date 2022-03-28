@@ -10,20 +10,33 @@ import java.util.Set;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 public class DTOs {
 
+	
+	public static interface Typed {
+		
+	}
+	
+	@ToString(doNotUseGetters = true)
 	@Data
-	public static class Element {
+	public abstract static class Element implements Typed{
+		String _type = this.getClass().getSimpleName();
 		String code;
 		String description;
 	}
 	
+	@EqualsAndHashCode(callSuper = true)
+	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class QAConstraint extends Element {
 		String arlRule;
 	}
 	
+	@EqualsAndHashCode(callSuper = true)
+	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class Step extends Element {
 		String inDNDid;
@@ -35,6 +48,7 @@ public class DTOs {
 		Set<QAConstraint> qaConstraints = new HashSet<>();
 	} 
 
+	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class Mapping {
 		String fromStep;
@@ -50,12 +64,16 @@ public class DTOs {
 		}
 	}
 	
+	@EqualsAndHashCode(callSuper = true)
+	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class DecisionNode extends Element {
 		InFlowType inflowType;
 		Set<Mapping> mapping = new HashSet<>();
 	}
 	
+	@EqualsAndHashCode(callSuper = true)
+	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class Process extends Step {
 		List<Step> steps = new LinkedList<>();

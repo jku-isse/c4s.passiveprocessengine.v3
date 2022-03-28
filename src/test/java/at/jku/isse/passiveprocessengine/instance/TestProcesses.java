@@ -3,10 +3,16 @@ package at.jku.isse.passiveprocessengine.instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
+import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
+import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.DecisionNode;
+import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Mapping;
+import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Process;
+import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Step;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 public class TestProcesses {
@@ -142,6 +148,88 @@ public class TestProcesses {
 			dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd1.getName(), "jiraOut", sd2.getName(), "jiraIn",  ws));
 			return procDef;
 		}
+
+	public static DTOs.Process getSimpleDTOSubprocess(Workspace ws) {
+		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
+		DTOs.Process procD = new DTOs.Process();
+		procD.setCode("TestSerializeProc1");
+		procD.setDescription("Test for Serialization");
+		procD.getInput().put("jiraIn", typeJira.name());
+		procD.getOutput().put("jiraOut", typeJira.name());
+		procD.getConditions().put(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
+		
+		DTOs.DecisionNode dn1 = new DTOs.DecisionNode();
+		dn1.setCode("dndSubStart");
+		dn1.setInflowType(InFlowType.AND);
+		DTOs.DecisionNode dn2 = new DTOs.DecisionNode();
+		dn2.setCode("dndSubEnd");
+		dn2.setInflowType(InFlowType.AND);
+		procD.getDns().add(dn1);
+		procD.getDns().add(dn2);
+		
+		DTOs.Step sd1 = new DTOs.Step();
+		sd1.setCode("subtask1");
+		sd1.getInput().put("jiraIn", typeJira.name());
+		sd1.getOutput().put("jiraOut", typeJira.name());
+		sd1.getConditions().put(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
+		sd1.getConditions().put(Conditions.POSTCONDITION, "self.in_jiraIn->forAll( issue | issue.state = 'Closed')");
+		sd1.getIoMapping().put("jiraIn2jiraOut", "self.in_jiraIn->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
+		sd1.setInDNDid(dn1.getCode());
+		sd1.setOutDNDid(dn2.getCode());
+		procD.getSteps().add(sd1);
+		
+		DTOs.Step sd2 = new DTOs.Step();
+		sd2.setCode("subtask2");
+		sd2.getInput().put("jiraIn", typeJira.name());
+		sd2.getConditions().put(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
+		sd2.getConditions().put(Conditions.POSTCONDITION, "self.in_jiraIn->forAll( issue | issue.state = 'Closed')"); 
+		sd2.setInDNDid(dn1.getCode());
+		sd2.setOutDNDid(dn2.getCode());
+		procD.getSteps().add(sd2);
+	
+		dn1.getMapping().add(new DTOs.Mapping(procD.getCode(), "jiraIn", sd1.getCode(), "jiraIn")); //into both steps
+		dn1.getMapping().add(new DTOs.Mapping(procD.getCode(), "jiraIn", sd2.getCode(), "jiraIn")); //into both steps
+		dn2.getMapping().add(new DTOs.Mapping(sd1.getCode(), "jiraOut", procD.getCode(), "jiraOut")); //out of the first
+		return procD;
+	}
+
+	public static DTOs.Process getSimpleSuperDTOProcessDefinition(Workspace ws) {
+		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
+		DTOs.Process procD = new DTOs.Process();
+		procD.setCode("TestSerializeParentProc1");
+		procD.setDescription("Test for Serialization");
+		procD.getInput().put("jiraIn", typeJira.name());
+		procD.getOutput().put("jiraOut", typeJira.name());
+		procD.getConditions().put(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
+		DTOs.DecisionNode dn1 = new DTOs.DecisionNode();
+		dn1.setCode("dndParentStart");
+		dn1.setInflowType(InFlowType.AND);
+		DTOs.DecisionNode dn2 = new DTOs.DecisionNode();
+		dn2.setCode("dndParentEnd");
+		dn2.setInflowType(InFlowType.AND);
+		procD.getDns().add(dn1);
+		procD.getDns().add(dn2);
+		
+		DTOs.Step sd1 = new DTOs.Step();
+		sd1.setCode("paratask1");
+		sd1.getInput().put("jiraIn", typeJira.name());
+		sd1.getConditions().put(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
+		sd1.getConditions().put(Conditions.POSTCONDITION, "self.in_jiraIn->forAll( issue | issue.state = 'Closed')"); 
+		sd1.setInDNDid(dn1.getCode());
+		sd1.setOutDNDid(dn2.getCode());
+		procD.getSteps().add(sd1);
+		
+		DTOs.Step sd2 = getSimpleDTOSubprocess(ws);
+		sd2.setInDNDid(dn1.getCode());
+		sd2.setOutDNDid(dn2.getCode());
+		procD.getSteps().add(sd2);
+		
+		dn1.getMapping().add(new DTOs.Mapping(procD.getCode(), "jiraIn", sd1.getCode(), "jiraIn")); //into both steps
+		dn1.getMapping().add(new DTOs.Mapping(procD.getCode(), "jiraIn", sd2.getCode(), "jiraIn")); //into both steps
+		dn2.getMapping().add(new DTOs.Mapping(sd2.getCode(), "jiraOut", procD.getCode(), "jiraOut")); //out of the second
+		
+		return procD;
+	}
 
 	
 }
