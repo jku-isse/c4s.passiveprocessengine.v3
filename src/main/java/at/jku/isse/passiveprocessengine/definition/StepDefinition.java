@@ -164,6 +164,11 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 				return dnd;
 		}
 	}
+	
+	@Override
+	public void deleteCascading() {
+		instance.delete();
+	}
 
 
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {

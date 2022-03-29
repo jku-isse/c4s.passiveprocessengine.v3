@@ -2,6 +2,7 @@ package at.jku.isse.passiveprocessengine.instance;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,5 +15,12 @@ public class ProcessException extends Exception {
 	@NonNull
 	String mainMessage;
 	List<String> errorMessages = new LinkedList<>();
+	
+	@Override
+	public String getMessage() {
+		return mainMessage + " : \r\n "+errorMessages.stream().collect(Collectors.joining(",","[","]")); 
+	}
+	
+	
 	
 }

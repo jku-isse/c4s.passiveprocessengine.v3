@@ -77,6 +77,12 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 			.collect(Collectors.toSet());
 	}
 	
+	@Override
+	public void deleteCascading() {
+		this.getMappings().forEach(md -> md.deleteCascading());
+		instance.delete();
+	}
+	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
 		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
 				.filter(it -> it.name().contentEquals(designspaceTypeId))

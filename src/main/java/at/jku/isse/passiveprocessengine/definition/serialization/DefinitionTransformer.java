@@ -8,7 +8,9 @@ import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Process;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class DefinitionTransformer {
 
 	public static ProcessDefinition fromDTO(DTOs.Process procDTO, Workspace ws) {
@@ -54,7 +56,11 @@ public class DefinitionTransformer {
 	}
 	
 	private static InstanceType resolveInstanceType(String type, Workspace ws) {
-		return ws.debugInstanceTypeFindByName(type);
+		InstanceType iType = ws.debugInstanceTypeFindByName(type);
+		if (iType == null) {
+			log.warn("Process Description uses unknown instance type: "+type);
+		}
+		return iType;
 	}
 	
 	

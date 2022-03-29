@@ -606,6 +606,13 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		return templateEM;
 	}
 	
+	public void deleteCascading() {
+		// remove any lower-level instances this step is managing, which is none
+		// hence
+		// finally delete self
+		this.getInstance().delete();
+	}
+	
 //	private boolean resolveSourceCompletedTaskOrWorkflow(String taskId, RuntimeMapping templateEM, boolean isEndOfProcess) {
 //		return getProcess().getProcessSteps().stream()	
 //		.filter(wft -> wft.getDefinition().getName().equals(taskId) )

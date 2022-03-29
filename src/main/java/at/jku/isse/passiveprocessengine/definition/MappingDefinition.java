@@ -57,6 +57,11 @@ public class MappingDefinition extends InstanceWrapper{
 		instance.getPropertyAsSingle(CoreProperties.toParameter.toString()).set(toParameter);
 	}
 	
+	@Override
+	public void deleteCascading() {
+		instance.delete();
+	}
+	
 //	public FlowDir getFlowDir() {
 //		return FlowDir.valueOf((String) instance.getPropertyAsValueOrNull(CoreProperties.flowDir.toString()));
 //	}
@@ -97,6 +102,8 @@ public class MappingDefinition extends InstanceWrapper{
 	public String toString() {
 		return "MapDef [" + getFromStepType() + ":"+getFromParameter()+" -> "+ getToStepType() + ":"+getToParameter()+"]";
 	}
+
+
 	
 	
 }

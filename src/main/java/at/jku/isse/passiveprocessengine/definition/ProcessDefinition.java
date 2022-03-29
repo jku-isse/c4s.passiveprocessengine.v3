@@ -61,6 +61,13 @@ public class ProcessDefinition extends StepDefinition{
 		.findAny().orElse(null);
 	}
 	
+	@Override
+	public void deleteCascading() {
+		getDecisionNodeDefinitions().forEach(dnd -> dnd.deleteCascading());
+		getStepDefinitions().forEach(sd -> sd.deleteCascading());
+		super.deleteCascading();
+	}
+	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
 		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
 				.filter(it -> it.name().contentEquals(designspaceTypeId))

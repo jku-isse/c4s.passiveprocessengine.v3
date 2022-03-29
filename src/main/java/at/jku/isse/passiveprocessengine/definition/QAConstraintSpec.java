@@ -31,6 +31,11 @@ public class QAConstraintSpec extends InstanceWrapper{
 		return (String) instance.getPropertyAsValue(CoreProperties.humanReadableDescription.toString());
 	}
 	
+	@Override
+	public void deleteCascading() {
+		instance.delete();
+	}
+	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
 		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
 				.filter(it -> it.name().contentEquals(designspaceTypeId))
@@ -52,5 +57,7 @@ public class QAConstraintSpec extends InstanceWrapper{
 		instance.getPropertyAsSingle(CoreProperties.humanReadableDescription.toString()).set(humanReadableDescription);
 		return WrapperCache.getWrappedInstance(QAConstraintSpec.class, instance);
 	}
+
+
 
 }

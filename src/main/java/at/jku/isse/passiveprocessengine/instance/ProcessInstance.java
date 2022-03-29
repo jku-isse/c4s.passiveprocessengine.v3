@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.instance;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -29,9 +30,13 @@ public class ProcessInstance extends ProcessStep {
 	
 	public static final String designspaceTypeId = ProcessInstance.class.getSimpleName();
 
-	
+		
 	public ProcessInstance(Instance instance) {
 		super(instance);
+	}
+	
+	public ZonedDateTime getCurrentTimestamp() {
+		return ZonedDateTime.now(); //default value, to be replaced with time provider
 	}
 
 	protected void createAndWireTask(StepDefinition sd) {
@@ -43,13 +48,6 @@ public class ProcessInstance extends ProcessStep {
         	if (step != null)
         		this.addProcessStep(step);
         }
-    	//if (wft != null) {
-    			//if (this.expectedLifecycleState.equals(State.CANCELED)) {
-    			//	newAWOs.addAll(wft.setCanceled(true, cause));
-    			//} else if (this.expectedLifecycleState.equals(State.NO_WORK_EXPECTED)) {
-    			//	newAWOs.addAll(wft.setWorkExpected(false, cause));
-    			//}    			
-    	//}
      }
 	
     private DecisionNodeInstance getOrCreateDNI(DecisionNodeDefinition dnd) {
@@ -144,6 +142,16 @@ public class ProcessInstance extends ProcessStep {
 	@SuppressWarnings("unchecked")
 	private void addDecisionNodeInstance(DecisionNodeInstance dni) {
 		instance.getPropertyAsSet(CoreProperties.decisionNodeInstances.toString()).add(dni.getInstance());
+	}
+	
+	public void deleteCascading() {
+		// remove any lower-level instances this step is managing
+		// DNIs and Steps
+		getDecisionNodeInstances().forEach(dni -> dni.deleteCascading());
+		getProcessSteps().forEach(step -> step.deleteCascading());
+		// we are not deleting input and output artifacts as we are just referencing them!
+		// finally delete self via super call
+		super.deleteCascading();
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws, ProcessDefinition td) {

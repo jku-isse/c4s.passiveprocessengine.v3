@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.instance;
+package at.jku.isse.designspace.passiveprocessengine.instance;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -16,6 +16,7 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
+import at.jku.isse.designspace.passiveprocessengine.instance.TestArtifacts.JiraStates;
 import at.jku.isse.designspace.rule.checker.ArlRuleEvaluator;
 import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
@@ -31,7 +32,6 @@ import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
-import at.jku.isse.passiveprocessengine.instance.TestArtifacts.JiraStates;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest

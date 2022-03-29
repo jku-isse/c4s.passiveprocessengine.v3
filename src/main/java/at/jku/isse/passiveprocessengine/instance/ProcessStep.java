@@ -2,6 +2,8 @@ package at.jku.isse.passiveprocessengine.instance;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -58,7 +60,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	protected transient boolean areCancelCondFulfilled = false;
 	protected transient boolean isWorkExpected = true;
 	
-	protected transient HashMap<String, Boolean> qaState = new HashMap<>();
+	protected transient Map<String, ConstraintWrapper> qaState = new HashMap<>();
 	
 	private void initState() {
 		
@@ -169,7 +171,10 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	public void processQAEvent(ConsistencyRule cr, boolean fulfilled) {
 		String id = cr.name();
 		boolean preQaState = areQAconstraintsFulfilled(); // are all QA checks fulfilled?
-		qaState.put(id, fulfilled);
+		ConstraintWrapper cw = qaState.get(id);
+		cw.setCr(cr);
+		cw.setEvalResult(fulfilled);
+		cw.setLastChanged(getProcess().getCurrentTimestamp());
 		boolean newQaState = areQAconstraintsFulfilled(); // are all QA checks now fulfilled?
 		if (preQaState != newQaState) { // a change in qa fulfillment that we might want to react to
 			if (arePostCondFulfilled && newQaState)  
@@ -177,6 +182,19 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			if (!newQaState && actualSM.isInState(State.COMPLETED)) 
 				this.trigger(StepLifecycle.Trigger.ACTIVATE);
 		}
+	}
+	
+	public Set<ConstraintWrapper> getQAstatus() {
+		return qaState.values().parallelStream().collect(Collectors.toSet());
+	}
+	
+	public void deleteCascading() {
+		// remove any lower-level instances this step is managing
+		// DNIs are deleted at process level, not managed here
+		qaState.values().forEach(cw -> cw.deleteCascading());
+		// we are not deleting input and output artifacts as we are just referencing them!
+		// finally delete self
+		this.getInstance().delete();
 	}
 	
 	public StepDefinition getDefinition() {
@@ -290,7 +308,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	public boolean areQAconstraintsFulfilled() {
-		return  qaState.values().parallelStream().allMatch(b -> b==true);
+		return  qaState.values().parallelStream().allMatch(cw -> cw.getEvalResult()==true);
 	}
 	
 	public void setPostConditionsFulfilled(boolean isfulfilled) {
@@ -506,8 +524,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			this.setPreConditionsFulfilled(true);
 		}
 		sd.getQAConstraints().stream()
-		.map(spec -> getQASpecId(spec, getOrCreateDesignSpaceInstanceType(ws, getDefinition()))) // now we have the id of all the QA constraints/rules
-		.forEach(qid -> qaState.put(qid, false));
+		//FIXME: generate instance for constraint wrapper!!
+		.forEach(spec -> { 
+			String qid = getQASpecId(spec, getOrCreateDesignSpaceInstanceType(ws, getDefinition()));
+			qaState.put(qid, new ConstraintWrapper(null, spec, null, false, getProcess().getCurrentTimestamp(), this.getProcess()));
+			});
 	}
 	
 	@Override

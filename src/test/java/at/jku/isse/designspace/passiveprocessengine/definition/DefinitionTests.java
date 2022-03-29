@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.definition;
+package at.jku.isse.designspace.passiveprocessengine.definition;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -13,12 +13,12 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
+import at.jku.isse.designspace.passiveprocessengine.instance.TestArtifacts;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
-import at.jku.isse.passiveprocessengine.instance.TestArtifacts;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 @ExtendWith(SpringExtension.class)

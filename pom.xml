@@ -6,7 +6,7 @@
 
     <groupId>JKU.ISSE</groupId>
     <artifactId>c4s.passiveprocessengine.v3</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
 
     <distributionManagement>
     	<repository>
@@ -48,19 +48,17 @@
     	<dependency>
 			<groupId>JKU.ISSE</groupId>
 			<artifactId>c4s.artifact.api</artifactId>
-			<version>4.1.5-SNAPSHOT</version>
+			<version>4.1.10-SNAPSHOT</version>
 		</dependency>
-<!-- 		<dependency>
+		<dependency>
             <groupId>at.jku.isse.designspace.sdk</groupId>
             <artifactId>main</artifactId>
             <version>4.0</version>
-            <scope>compile</scope>
-        </dependency> -->
+        </dependency> 
         <dependency>
 			<groupId>at.jku.isse.designspace</groupId>
 			<artifactId>core</artifactId>
 			<version>4.0</version>
-			<scope>compile</scope>
 		</dependency>
 <!-- 		<dependency>
 			<groupId>at.jku.isse.designspace</groupId>
@@ -68,25 +66,24 @@
 			<version>4.0</version>
 			<scope>compile</scope>
 		</dependency> -->
-		<dependency>
+<dependency>
             <groupId>at.jku.isse.designspace</groupId>
             <artifactId>rule</artifactId>
             <version>4.0</version>
-            <scope>compile</scope>
-        </dependency>
+        </dependency> 
 <!--         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
             <version>5.2.3.RELEASE</version>
             <scope>compile</scope>
         </dependency> -->
-        <dependency>
+         <dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<version>2.2.3.RELEASE</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
+<!--		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-autoconfigure</artifactId>
 			<version>2.2.3.RELEASE</version>
@@ -96,15 +93,15 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-logging</artifactId>
 			<version>2.2.3.RELEASE</version>
-		</dependency>
+		</dependency>-->
 
-		<!-- Spring RestController -->
+		<!-- Spring RestController 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 			<version>2.2.3.RELEASE</version>
 		</dependency>
-        
+        -->
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>

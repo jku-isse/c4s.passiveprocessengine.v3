@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.definition.serialization;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -8,16 +9,31 @@ import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class ProcessRegistry {
 	
 	protected Workspace ws;
 	protected InstanceType procDefType;
 	
-	public ProcessRegistry(Workspace ws) {
-		this.ws=ws;
-		procDefType = ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);
+	protected Set<DTOs.Process> cachePD = new HashSet<>();
+	protected boolean isInit = false;
+	
+	public ProcessRegistry() {
+		
 	}
+	
+	public void inject(Workspace ws) {
+		this.ws=ws;
+		procDefType = ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);	
+		ws.debugInstanceTypes().parallelStream().forEach(itype -> log.debug(String.format("Available instance type %s as %s", itype.name(), itype.getQualifiedName())));
+		
+		isInit = true;
+		cachePD.forEach(pd -> storeProcessDefinitionIfNotExists(pd));
+		cachePD.clear();
+	}
+	
 	
 	public Optional<ProcessDefinition> getProcessDefinition(String name) {
 		return procDefType.getInstancesIncludingThoseOfSubtypes().stream()
@@ -27,6 +43,8 @@ public class ProcessRegistry {
 	}
 	
 	public ProcessDefinition storeProcessDefinitionIfNotExists(DTOs.Process process) {
+		if (!isInit) { cachePD.add(process); return null;}
+		
 		Optional<ProcessDefinition> optPD = getProcessDefinition(process.getCode());
 		if (optPD.isEmpty()) {
 			return DefinitionTransformer.fromDTO(process, ws);
