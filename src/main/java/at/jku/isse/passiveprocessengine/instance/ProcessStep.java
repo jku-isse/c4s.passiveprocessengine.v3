@@ -36,7 +36,7 @@ import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Trigger;
 import at.jku.isse.passiveprocessengine.instance.commands.Commands.*;
 import at.jku.isse.passiveprocessengine.instance.commands.Responses;
-import at.jku.isse.passiveprocessengine.instance.commands.Responses.InputResponse;
+import at.jku.isse.passiveprocessengine.instance.commands.Responses.IOResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -81,7 +81,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 	}
 	
-	public TrackableCmd processRuleEvaluationChange(ConsistencyRule cr, PropertyUpdateSet op) {
+	public ProcessScopedCmd processRuleEvaluationChange(ConsistencyRule cr, PropertyUpdateSet op) {
 		// now here we have to distinguish what this evaluation change implies
 		ConsistencyRuleType crt = (ConsistencyRuleType)cr.getInstanceType();
 		Conditions cond = determineCondition(crt);
@@ -202,22 +202,22 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		
 	}
 	
-	protected Responses.InputResponse removeInput(String inParam, Instance artifact) {
+	protected Responses.IOResponse removeInput(String inParam, Instance artifact) {
 		if (getDefinition().getExpectedInput().containsKey(inParam)) {
 			Property<?> prop = instance.getProperty("in_"+inParam);
 			if (prop.propertyType.isAssignable(artifact)) {
 				instance.getPropertyAsSet("in_"+inParam).remove(artifact);
-				return InputResponse.okResponse();
+				return IOResponse.okResponse();
 			} else {
 				String msg = String.format("Cannot remove input %s to %s with nonmatching artifact type %s of id % %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name());
 				log.warn(msg);
-				return InputResponse.errorResponse(msg);
+				return IOResponse.errorResponse(msg);
 			}
 		} else {
 			// additionally Somehow notify about wrong param access
 			String msg = String.format("Ignoring attempt to remove unexpected input %s to %s", inParam, this.getName());
 			log.warn(msg);
-			return InputResponse.errorResponse(msg);
+			return IOResponse.errorResponse(msg);
 		}
 	}
 	
@@ -233,22 +233,21 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected Responses.InputResponse addInput(String inParam, Instance artifact) {
+	public Responses.IOResponse addInput(String inParam, Instance artifact) {
 		if (getDefinition().getExpectedInput().containsKey(inParam)) {
 			Property<?> prop = instance.getProperty("in_"+inParam);
 			if (prop.propertyType.isAssignable(artifact)) {
 				instance.getPropertyAsSet("in_"+inParam).add(artifact);
-				return InputResponse.okResponse();
+				return IOResponse.okResponse();
 			} else {
 				String msg = String.format("Cannot add input %s to %s with nonmatching artifact type %s of id % %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name());
 				log.warn(msg);
-				return InputResponse.errorResponse(msg);
+				return IOResponse.errorResponse(msg);
 			}
 		} else {
-			// additionally Somehow notify about wrong param access
 			String msg = String.format("Ignoring attempt to add unexpected input %s to %s", inParam, this.getName());
 			log.warn(msg);
-			return InputResponse.errorResponse(msg);
+			return IOResponse.errorResponse(msg);
 		}
 	}
 	
@@ -264,8 +263,22 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected void addOutput(String param, Instance art) {
-		instance.getPropertyAsSet("out_"+param).add(art);
+	public Responses.IOResponse addOutput(String param, Instance artifact) {
+		if (getDefinition().getExpectedOutput().containsKey(param)) {
+			Property<?> prop = instance.getProperty("out_"+param);
+			if (prop.propertyType.isAssignable(artifact)) {
+				instance.getPropertyAsSet("out_"+param).add(artifact);
+				return IOResponse.okResponse();
+			} else {
+				String msg = String.format("Cannot add outnput %s to %s with nonmatching artifact type %s of id % %s", param, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name());
+				log.warn(msg);
+				return IOResponse.errorResponse(msg);
+			}
+		} else {
+			String msg = String.format("Ignoring attempt to add unexpected output %s to %s", param, this.getName());
+			log.warn(msg);
+			return IOResponse.errorResponse(msg);
+		}
 	}
 	
 	protected void removeOutput(String param, Instance art) {
@@ -491,22 +504,24 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		return "crd_qaspec_"+spec.getQaConstraintId();
 	}
 
-	protected static ProcessStep getInstance(Workspace ws, StepDefinition sd, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI) {
+	protected static ProcessStep getInstance(Workspace ws, StepDefinition sd, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, ProcessInstance scope) {
 		assert(sd != null);
 		assert(inDNI != null);
 		assert(outDNI != null);
+		assert(scope != null);
 		if (sd instanceof ProcessDefinition) { // we have a subprocess
 			// we delegate to ProcessInstance
-			return ProcessInstance.getSubprocessInstance(ws, (ProcessDefinition) sd, inDNI, outDNI);
+			return ProcessInstance.getSubprocessInstance(ws, (ProcessDefinition) sd, inDNI, outDNI, scope);
 		} else {
 			Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+UUID.randomUUID());
 			ProcessStep step = WrapperCache.getWrappedInstance(ProcessStep.class, instance);
-			step.init(sd, inDNI, outDNI);
+			step.setProcess(scope);
+			step.init(ws, sd, inDNI, outDNI);
 			return step;
 		}
 	}
 
-	protected void init(StepDefinition sd, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI) {
+	protected void init(Workspace ws, StepDefinition sd, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI) {
 		instance.getPropertyAsSingle(CoreProperties.stepDefinition.toString()).set(sd.getInstance());
 		if (inDNI != null) {
 			instance.getPropertyAsSingle(CoreProperties.inDNI.toString()).set(inDNI.getInstance());
@@ -524,10 +539,9 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			this.setPreConditionsFulfilled(true);
 		}
 		sd.getQAConstraints().stream()
-		//FIXME: generate instance for constraint wrapper!!
 		.forEach(spec -> { 
 			String qid = getQASpecId(spec, getOrCreateDesignSpaceInstanceType(ws, getDefinition()));
-			qaState.put(qid, new ConstraintWrapper(null, spec, null, false, getProcess().getCurrentTimestamp(), this.getProcess()));
+			qaState.put(qid, ConstraintWrapper.getInstance(ws, spec, null, false, getProcess().getCurrentTimestamp(), this.getProcess()));
 			});
 	}
 	

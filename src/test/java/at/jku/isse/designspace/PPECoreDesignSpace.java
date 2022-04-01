@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 import javax.annotation.PreDestroy;
 
 @SpringBootApplication
-public class DesignSpace  implements ApplicationListener<ApplicationReadyEvent> {
+public class PPECoreDesignSpace  implements ApplicationListener<ApplicationReadyEvent> {
     public static String persistenceFileName = null;
     public static boolean load = false;
     public static boolean save = false;
@@ -58,7 +58,7 @@ public class DesignSpace  implements ApplicationListener<ApplicationReadyEvent> 
                 GrpcUtils.replayFileName=args[1];
         }
 
-        SpringApplication application = new SpringApplication(DesignSpace.class);
+        SpringApplication application = new SpringApplication(PPECoreDesignSpace.class);
         application.setBanner(new CustomBanner());
         application.run(args);
 

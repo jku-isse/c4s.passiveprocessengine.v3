@@ -5,18 +5,18 @@ import lombok.Data;
 public class Responses {
 	
 	@Data
-	public static class InputResponse { 
+	public static class IOResponse { 
 		String success = null;
 		String error = null;
 	
-		public static InputResponse okResponse() {
-			InputResponse okResp = new InputResponse();
+		public static IOResponse okResponse() {
+			IOResponse okResp = new IOResponse();
 			okResp.success = "OK";
 			return okResp;
 		}
 		
-		public static InputResponse errorResponse(String errMsg) {
-			InputResponse errResp = new InputResponse();
+		public static IOResponse errorResponse(String errMsg) {
+			IOResponse errResp = new IOResponse();
 			errResp.error = errMsg;
 			return errResp;
 		}

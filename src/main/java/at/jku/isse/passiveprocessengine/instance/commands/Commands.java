@@ -5,6 +5,7 @@ import artifactapi.IArtifact;
 import artifactapi.ResourceLink;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
+import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
@@ -25,16 +26,19 @@ public class Commands {
         
     }
 	
-	public static abstract class TrackableCmd implements IdentifiableCmd{
+	public static abstract class ProcessScopedCmd implements IdentifiableCmd{
 		
-		String parentCauseRef;
-		public String getParentCauseRef() {
-			return parentCauseRef;
-		}
-		public TrackableCmd setParentCauseRef(String parentCauseRef) {
-			this.parentCauseRef = parentCauseRef;
-			return this;
-		}
+//		String parentCauseRef;
+//		public String getParentCauseRef() {
+//			return parentCauseRef;
+//		}
+//		public ProcessScopedCmd setParentCauseRef(String parentCauseRef) {
+//			this.parentCauseRef = parentCauseRef;
+//			return this;
+//		}
+		
+		public abstract ProcessInstance getScope();
+		
 		public abstract void execute();
 	}
 	
@@ -166,7 +170,7 @@ public class Commands {
 //    }
     
 	@Data 
-	public static class QAConstraintChangedCmd extends TrackableCmd {
+	public static class QAConstraintChangedCmd extends ProcessScopedCmd {
 		private final ProcessStep step;
 		private final ConsistencyRule crule;
 		 private final boolean isFulfilled;
@@ -179,10 +183,15 @@ public class Commands {
 		public String toString() {
 			return "QAConstraintChangedCmd [" + step.getDefinition().getName() + " " + crule.getInstanceType().name() +":"+ isFulfilled + "]";
 		}
+
+		@Override
+		public ProcessInstance getScope() {
+			return step.getProcess();
+		}
 	}
 	
 	@Data
-	public static class IOMappingInconsistentCmd extends TrackableCmd {
+	public static class IOMappingInconsistentCmd extends ProcessScopedCmd {
 		private final ProcessStep step;
 		private final ConsistencyRule crule;
 	
@@ -195,10 +204,14 @@ public class Commands {
 			return "IOMappingInconsistentCmd [" + step.getDefinition().getName() + " " + crule.getInstanceType().name() + "]";
 		}
 		
+		@Override
+		public ProcessInstance getScope() {
+			return step.getProcess();
+		}
 	}
     
     @Data
-    public static class ConditionChangedCmd extends TrackableCmd {
+    public static class ConditionChangedCmd extends ProcessScopedCmd {
         private final ProcessStep step;
         private final Conditions condition;
         private final boolean isFulfilled;
@@ -229,7 +242,10 @@ public class Commands {
 					+ "]";
 		}
         
-        
+		@Override
+		public ProcessInstance getScope() {
+			return step.getProcess();
+		}
     }
     
   

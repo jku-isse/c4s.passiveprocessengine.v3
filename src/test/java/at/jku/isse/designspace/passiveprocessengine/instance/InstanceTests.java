@@ -16,7 +16,6 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
-import at.jku.isse.designspace.passiveprocessengine.instance.TestArtifacts.JiraStates;
 import at.jku.isse.designspace.rule.checker.ArlRuleEvaluator;
 import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
@@ -27,6 +26,9 @@ import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlow
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
 import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
+import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
+import at.jku.isse.passiveprocessengine.demo.TestProcesses;
+import at.jku.isse.passiveprocessengine.demo.TestArtifacts.JiraStates;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;

@@ -12,11 +12,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
-import at.jku.isse.designspace.passiveprocessengine.instance.TestProcesses;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
 import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
+import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 @ExtendWith(SpringExtension.class)
@@ -34,6 +34,7 @@ public class SerializationTest {
 	void setup() throws Exception {
 	//	Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 	}
+	
 
 	@Test
 	void testSerializeAndBackSimpleProcessDefinition() {
@@ -74,13 +75,23 @@ public class SerializationTest {
 				
 	}
 	
-//	@Configuration
-//	public static class PPECoreSpringConfig {
-//
-//	        @Bean
-//	        public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
-//	                return new PropertySourcesPlaceholderConfigurer();
-//	        }
-//
-//	}
+	@Test
+	void testOutputGitSimpleProcess() {
+		DTOs.Process procD = TestProcesses.getMinimalGithubBasedProcess();
+		String jsonProc = json.toJson(procD);
+		System.out.println(jsonProc);
+	}
+	
+	@Test
+	void testOutputFromProcessDef() {
+		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		ProcessDefinition inPD = TestProcesses.getSimple2StepProcessDefinition(ws);
+		DTOs.Process procD = DefinitionTransformer.toDTO(inPD);
+		String jsonProc = json.toJson(procD);
+		System.out.println(jsonProc);
+		DTOs.Process deSer = json.fromJson(jsonProc);
+		ProcessDefinition procDef = DefinitionTransformer.fromDTO(deSer, ws);
+		assert(procDef.getName().equals(inPD.getName()));
+	}
+
 }

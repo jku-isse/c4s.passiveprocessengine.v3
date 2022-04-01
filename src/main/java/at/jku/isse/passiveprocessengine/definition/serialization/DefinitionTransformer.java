@@ -8,6 +8,7 @@ import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Process;
+import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -63,5 +64,52 @@ public class DefinitionTransformer {
 		return iType;
 	}
 	
+	public static DTOs.Process toDTO(ProcessDefinition pDef) {
+		DTOs.Process proc = new Process();
+		pDef.getStepDefinitions().stream().forEach(pStep -> {
+			DTOs.Step step = new DTOs.Step();
+			if (pStep instanceof ProcessDefinition) {
+				proc.getSteps().add(toDTO((ProcessDefinition) pStep));
+			} else {
+				initDTOfromStep(step, pStep);
+				proc.getSteps().add(step);
+			}
+			//TODO: description
+		});
+		pDef.getDecisionNodeDefinitions().stream().forEach(dnd -> {
+			DTOs.DecisionNode dn = new DTOs.DecisionNode();
+			dn.setCode(dnd.getName());
+			dn.setInflowType(dnd.getInFlowType());
+			dnd.getMappings().stream().forEach(md -> {
+				DTOs.Mapping mapping = new DTOs.Mapping(md.getFromStepType(), md.getFromParameter(), md.getToStepType(), md.getToParameter());
+				dn.getMapping().add(mapping);
+				//TODO: description
+			});
+			proc.getDns().add(dn);
+		});
+		initDTOfromStep(proc, pDef);
+		return proc;
+	}
 	
+	private static void initDTOfromStep(DTOs.Step step, StepDefinition pStep) {
+		step.setCode(pStep.getName());
+		if (pStep.getInDND() != null)
+			step.setInDNDid(pStep.getInDND().getName());
+		if (pStep.getOutDND() != null)
+			step.setOutDNDid(pStep.getOutDND().getName());
+		pStep.getExpectedInput().entrySet().stream().forEach(entry -> step.getInput().put(entry.getKey(), entry.getValue().name()));
+		pStep.getExpectedOutput().entrySet().stream().forEach(entry -> step.getOutput().put(entry.getKey(), entry.getValue().name()));
+		pStep.getQAConstraints().stream().forEach(qac -> { 
+			DTOs.QAConstraint qa = new DTOs.QAConstraint();
+			qa.setArlRule(qac.getQaConstraintSpec());
+			qa.setCode(qac.getQaConstraintId());
+			qa.setDescription(qac.getHumanReadableDescription());
+			step.getQaConstraints().add(qa ); 
+		});
+		pStep.getInputToOutputMappingRules().entrySet().stream().forEach(entry -> step.getIoMapping().put(entry.getKey(), entry.getValue()));
+		for (Conditions cond : Conditions.values()) {
+			pStep.getCondition(cond).ifPresent(condARL -> step.getConditions().put(cond, condARL));
+		}
+		//TODO: description field
+	}
 }

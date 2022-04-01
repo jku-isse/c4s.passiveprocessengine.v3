@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.instance;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +32,7 @@ import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.commands.Commands.ConditionChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.commands.Commands.IOMappingInconsistentCmd;
 import at.jku.isse.passiveprocessengine.instance.commands.Commands.QAConstraintChangedCmd;
-import at.jku.isse.passiveprocessengine.instance.commands.Commands.TrackableCmd;
+import at.jku.isse.passiveprocessengine.instance.commands.Commands.ProcessScopedCmd;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -122,7 +123,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 		}
 	}
 	
-	private Optional<TrackableCmd> processPropertyUpdateSet(PropertyUpdateSet op, Element element) {
+	private Optional<ProcessScopedCmd> processPropertyUpdateSet(PropertyUpdateSet op, Element element) {
 		if (isOfStepType(element.id())) {
 			log.info(String.format("Step %s updated %s to %s", element.name(),
 					op.name(),
@@ -133,7 +134,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 			Instance context = cr.contextInstance();
 			if (isOfStepType(context.id())) { // rule belonging to a step,
 				ProcessStep step = WrapperCache.getWrappedInstance(ProcessStep.class, context);
-				TrackableCmd effect = step.processRuleEvaluationChange(cr, op);
+				ProcessScopedCmd effect = step.processRuleEvaluationChange(cr, op);
 //				log.debug(String.format("CRD of type %s for step %s updated %s to %s", element.name(), context.name(),
 //						op.name(),
 //						op.value().toString()
@@ -146,8 +147,12 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 
 	@Override
 	public void handleUpdated(List<Operation> operations) {
+		handleUpdates(operations);
+	}
+	
+	protected Set<ProcessInstance> handleUpdates(List<Operation> operations) {
 		@SuppressWarnings("unchecked")
-		List<TrackableCmd> effects = (List<TrackableCmd>) operations.stream()
+		List<ProcessScopedCmd> effects = (List<ProcessScopedCmd>) operations.stream()
 		 .map(operation -> {
  			Element element = ws.findElement(operation.elementId());
 			if (operation instanceof ElementCreate) {
@@ -214,9 +219,10 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 				.forEach(cmd -> cmd.execute());
 			
 			ws.concludeTransaction();
-		}
+			return effects.stream().map(cmd -> cmd.getScope()).collect(Collectors.toSet());
+		} else
+			return Collections.emptySet();
 	}
-	
 	
 	public static class CommandComparator implements Comparator<ConditionChangedCmd> {
 

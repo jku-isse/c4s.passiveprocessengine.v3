@@ -19,7 +19,7 @@ import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep.CoreProperties;
 import at.jku.isse.passiveprocessengine.instance.commands.Responses;
-import at.jku.isse.passiveprocessengine.instance.commands.Responses.InputResponse;
+import at.jku.isse.passiveprocessengine.instance.commands.Responses.IOResponse;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -43,8 +43,8 @@ public class ProcessInstance extends ProcessStep {
     	DecisionNodeInstance inDNI = getOrCreateDNI(sd.getInDND());
     	DecisionNodeInstance outDNI = getOrCreateDNI(sd.getOutDND());
     	if (getProcessSteps().stream().noneMatch(t -> t.getDefinition().getId().equals(sd.getId()))) {
-        	ProcessStep step = ProcessStep.getInstance(ws, sd, inDNI, outDNI);
-        	step.setProcess(this);
+        	ProcessStep step = ProcessStep.getInstance(ws, sd, inDNI, outDNI, this);
+        	//step.setProcess(this);
         	if (step != null)
         		this.addProcessStep(step);
         }
@@ -82,8 +82,8 @@ public class ProcessInstance extends ProcessStep {
 			return null; 
 	}
 	
-	public Responses.InputResponse removeInput(String inParam, Instance artifact) {
-		InputResponse isOk = super.removeInput(inParam, artifact);
+	public Responses.IOResponse removeInput(String inParam, Instance artifact) {
+		IOResponse isOk = super.removeInput(inParam, artifact);
 		if (isOk.getError() == null) {
 			// now see if we need to map this to first DNI - we assume all went well
 			getDecisionNodeInstances().stream()
@@ -95,8 +95,8 @@ public class ProcessInstance extends ProcessStep {
 		return isOk;
 	}
 	
-	public Responses.InputResponse addInput(String inParam, Instance artifact) {
-		InputResponse isOk = super.addInput(inParam, artifact);
+	public Responses.IOResponse addInput(String inParam, Instance artifact) {
+		IOResponse isOk = super.addInput(inParam, artifact);
 		if (isOk.getError() == null) {
 			// now see if we need to map this to first DNI - we assume all went well
 			getDecisionNodeInstances().stream()
@@ -172,21 +172,22 @@ public class ProcessInstance extends ProcessStep {
 	public static ProcessInstance getInstance(Workspace ws, ProcessDefinition sd) {
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+UUID.randomUUID());
 		ProcessInstance pi = WrapperCache.getWrappedInstance(ProcessInstance.class, instance);
-		pi.init(sd, null, null);
+		pi.init(sd, null, null, ws);
 		return pi;
 	}
 	
-	public static ProcessInstance getSubprocessInstance(Workspace ws, ProcessDefinition sd, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI) {
+	public static ProcessInstance getSubprocessInstance(Workspace ws, ProcessDefinition sd, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, ProcessInstance scope) {
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+UUID.randomUUID());
 		ProcessInstance pi = WrapperCache.getWrappedInstance(ProcessInstance.class, instance);
-		pi.init(sd, inDNI, outDNI);
+		pi.setProcess(scope);
+		pi.init(sd, inDNI, outDNI, ws);
 		return pi;
 	}
 	
-	protected void init(ProcessDefinition pdef, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI) {
+	protected void init(ProcessDefinition pdef, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, Workspace ws) {
 		// init first DNI, there should be only one. Needs to be checked earlier with definition creation
 		// we assume consistent, correct specification/definition here
-		super.init(pdef, inDNI, outDNI);
+		super.init(ws, pdef, inDNI, outDNI);
 		instance.getPropertyAsSingle(CoreProperties.processDefinition.toString()).set(pdef.getInstance());
 		pdef.getDecisionNodeDefinitions().stream()
 			.filter(dnd -> dnd.getInSteps().size() == 0)

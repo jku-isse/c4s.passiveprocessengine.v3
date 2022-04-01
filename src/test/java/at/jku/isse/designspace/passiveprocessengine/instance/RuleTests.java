@@ -19,6 +19,7 @@ import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.PropertyType;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
+import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;

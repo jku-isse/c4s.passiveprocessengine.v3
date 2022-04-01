@@ -1,4 +1,4 @@
-package at.jku.isse.designspace.passiveprocessengine.instance;
+package at.jku.isse.passiveprocessengine.demo;
 
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
@@ -231,5 +231,38 @@ public class TestProcesses {
 		return procD;
 	}
 
+	public static DTOs.Process getMinimalGithubBasedProcess() {
+		DTOs.Process procD = new DTOs.Process();
+		procD.setCode("DemoMinimalGithubProcesses");
+		procD.setDescription("Test Accessing Github");
+		procD.getInput().put("issueIn", "git_issue");
+		procD.getOutput().put("testcaseOut", "git_issue");
+		procD.getConditions().put(Conditions.PRECONDITION, "self.in_issueIn->size() = 1");
+		DTOs.DecisionNode dn1 = new DTOs.DecisionNode();
+		dn1.setCode("dndGitProcStart");
+		dn1.setInflowType(InFlowType.AND);
+		DTOs.DecisionNode dn2 = new DTOs.DecisionNode();
+		dn2.setCode("dndGitProcEnd");
+		dn2.setInflowType(InFlowType.AND);
+		procD.getDns().add(dn1);
+		procD.getDns().add(dn2);
+		
+		DTOs.Step sd1 = new DTOs.Step();
+		sd1.setCode("single1");
+		sd1.getInput().put("issueIn", "git_issue");
+		sd1.getOutput().put("testcaseOut", "git_issue");
+		sd1.getConditions().put(Conditions.PRECONDITION, "self.in_issueIn->size() = 1");
+		sd1.getConditions().put(Conditions.POSTCONDITION, "self.out_testcaseOut->forAll( issue | issue.state = 'Closed')");
+		//sd1.getIoMapping().put("issueIn2testcaseOut", "self.in_issueIn->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
+		sd1.setInDNDid(dn1.getCode());
+		sd1.setOutDNDid(dn2.getCode());
+		procD.getSteps().add(sd1);
+		
+		dn1.getMapping().add(new DTOs.Mapping(procD.getCode(), "issueIn", sd1.getCode(), "issueIn")); //into steps
+		dn2.getMapping().add(new DTOs.Mapping(sd1.getCode(), "testcaseOut", procD.getCode(), "testcaseOut")); //out of the second
+		
+		return procD;
+	}
+	
 	
 }
