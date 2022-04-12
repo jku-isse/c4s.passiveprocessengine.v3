@@ -18,8 +18,8 @@ import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep.CoreProperties;
-import at.jku.isse.passiveprocessengine.instance.commands.Responses;
-import at.jku.isse.passiveprocessengine.instance.commands.Responses.IOResponse;
+import at.jku.isse.passiveprocessengine.instance.messages.Responses;
+import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -156,7 +156,8 @@ public class ProcessInstance extends ProcessStep {
 	
 	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws, ProcessDefinition td) {
 		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
-				.filter(it -> it.name().equals(designspaceTypeId+td.getId()))
+				.filter(it -> !it.isDeleted)
+				.filter(it -> it.name().equals(designspaceTypeId+td.getName()))
 				.findAny();
 		if (thisType.isPresent())
 			return thisType.get();

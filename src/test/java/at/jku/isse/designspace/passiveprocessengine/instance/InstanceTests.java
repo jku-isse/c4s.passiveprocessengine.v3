@@ -21,6 +21,7 @@ import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
+import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
@@ -29,9 +30,11 @@ import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionS
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts.JiraStates;
+import at.jku.isse.passiveprocessengine.instance.ConstraintWrapper;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
+import at.jku.isse.passiveprocessengine.instance.ProcessStep.CoreProperties;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 
@@ -48,8 +51,9 @@ class InstanceTests {
 	@BeforeEach
 	void setup() throws Exception {
 		RuleService.setEvaluator(new ArlRuleEvaluator());
-		ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
-		//ws.setAutoUpdate(true);
+		ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, true, false);
+		//ws = WorkspaceService.PUBLIC_WORKSPACE;
+		RuleService.currentWorkspace = ws;
 		picp = new ProcessInstanceChangeProcessor(ws);
 		typeJira = TestArtifacts.getJiraInstanceType(ws);
 	}
@@ -110,13 +114,15 @@ class InstanceTests {
 		assertAllConstraintsAreValid(proc);
 		assert(proc.getProcessSteps().stream()
 			.filter(step -> step.getDefinition().getName().equals("sd1") )
-			.allMatch(step -> (step.getOutput("jiraOut").size() == 1) && step.getExpectedLifecycleState().equals(State.COMPLETED) ) );
+			.allMatch(step -> (step.getOutput("jiraOut").iterator().next().name().equals("jiraB")) && step.getExpectedLifecycleState().equals(State.COMPLETED) ) );
 		
-		assert(proc.getProcessSteps().stream()
-				.filter(step -> step.getDefinition().getName().equals("sd2") )
-				.allMatch(step -> (step.getInput("jiraIn").size() == 1) 
-									&& (step.getOutput("jiraOut").size() == 1) 
-									&& step.getActualLifecycleState().equals(State.ENABLED) ) );
+		ProcessStep step2 = proc.getProcessSteps().stream()
+				.filter(step -> step.getDefinition().getName().equals("sd2") ).findAny().get();
+		assert(step2.getInput("jiraIn").iterator().next().name().equals("jiraB")) ;
+		assert(step2.getInput("jiraIn").size()==1) ;
+		assert(step2.getOutput("jiraOut").size()==1) ;
+		assert(step2.getOutput("jiraOut").iterator().next().name().equals("jiraB")) ;
+		assert(step2.getActualLifecycleState().equals(State.ENABLED) );
 	}
 	
 	@Test
@@ -150,7 +156,7 @@ class InstanceTests {
 		ws.concludeTransaction();
 		assert(proc.getProcessSteps().stream()
 				.filter(step -> step.getDefinition().getName().equals("sd2") )
-				.allMatch(step -> (step.getOutput("jiraOut").size() == 1)) );
+				.allMatch(step -> (step.getOutput("jiraOut").iterator().next().name().equals("jiraB"))) );
 		
 		jiraD.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).remove("jiraB");
 //		ws.concludeTransaction();
@@ -166,10 +172,10 @@ class InstanceTests {
 		proc.getProcessSteps().stream().forEach(step -> System.out.println(step));
 		assert(proc.getProcessSteps().stream()
 				.filter(step -> step.getDefinition().getName().equals("sd1") )
-				.allMatch(step -> (step.getOutput("jiraOut").size() == 1) && step.getExpectedLifecycleState().equals(State.COMPLETED) ));
+				.allMatch(step -> (step.getOutput("jiraOut").iterator().next().name().equals("jiraC")) && step.getExpectedLifecycleState().equals(State.COMPLETED) ));
 		assert(proc.getProcessSteps().stream()
 				.filter(step -> step.getDefinition().getName().equals("sd2") )
-				.allMatch(step -> (step.getOutput("jiraOut").size() == 1) && step.getActualLifecycleState().equals(State.ACTIVE) ));
+				.allMatch(step -> (step.getOutput("jiraOut").iterator().next().name().equals("jiraC")) && step.getActualLifecycleState().equals(State.ACTIVE) ));
 	}
 	
 	@Test
@@ -264,8 +270,11 @@ class InstanceTests {
 				assertTrue(ConsistencyUtils.crdValid(crt));
 			});
 			td.getDefinition().getQAConstraints().stream().forEach(entry -> {
-				InstanceType type = td.getInstance().getProperty(ProcessStep.getQASpecId(entry, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, td.getDefinition()))).propertyType().referencedInstanceType();
-				ConsistencyRuleType crt = (ConsistencyRuleType)type;
+				//InstanceType type = td.getInstance().getProperty(ProcessStep.getQASpecId(entry, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, td.getDefinition()))).propertyType().referencedInstanceType();
+				String id = ProcessStep.getQASpecId(entry);
+				ConstraintWrapper cw = WrapperCache.getWrappedInstance(ConstraintWrapper.class, (Instance) td.getInstance().getPropertyAsMap(ProcessStep.CoreProperties.qaState.toString()).get(id));
+				
+				ConsistencyRuleType crt = (ConsistencyRuleType)cw.getCr().getInstanceType();
 				String eval = (String) crt.ruleEvaluations().get().stream()
 								.map(rule -> ((Rule)rule).result()+"" )
 								.collect(Collectors.joining(",","[","]"));

@@ -48,7 +48,7 @@ public class DTOs {
 		Set<QAConstraint> qaConstraints = new HashSet<>();
 	} 
 
-	@ToString(doNotUseGetters = true, callSuper = true)
+	@ToString(doNotUseGetters = true)
 	@Data
 	public static class Mapping {
 		String fromStep;
@@ -68,7 +68,7 @@ public class DTOs {
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class DecisionNode extends Element {
-		InFlowType inflowType;
+		InFlowType inflowType = InFlowType.AND; //default value
 		Set<Mapping> mapping = new HashSet<>();
 	}
 	
@@ -78,5 +78,13 @@ public class DTOs {
 	public static class Process extends Step {
 		List<Step> steps = new LinkedList<>();
 		List<DecisionNode> dns = new LinkedList<>();
+		
+		public Step getStepByCode(String code) {
+			return steps.stream().filter(step -> step.getCode().equals(code)).findAny().orElseGet(null);
+		}
+		
+		public DecisionNode getInDNof(Step step) {
+			return dns.stream().filter(dn -> dn.getCode().equals(step.getInDNDid())).findAny().orElseGet(null);
+		}
 	}
 }

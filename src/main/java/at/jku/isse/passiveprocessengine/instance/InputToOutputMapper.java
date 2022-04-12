@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.instance;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.service.RuleService;
+import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -27,8 +29,8 @@ public class InputToOutputMapper {
 	
 
 	@SuppressWarnings("unchecked")
-	public static void mapInputToOutputInStepScope(ProcessStep step, ConsistencyRule crule) {
-		if (crule.isConsistent()) return; // nothing to do
+	public static List<Events.ProcessChangedEvent> mapInputToOutputInStepScope(ProcessStep step, ConsistencyRule crule) {
+		if (crule.isConsistent()) return Collections.emptyList(); // nothing to do
 
 		ConsistencyRuleType crt = (ConsistencyRuleType) crule.getInstanceType();
 		RepairNode repairTree = RuleService.repairTree(crule);
@@ -48,6 +50,10 @@ public class InputToOutputMapper {
 			.distinct()
 			.flatMap(type -> type.getInstancesIncludingThoseOfSubtypes().get().stream())
 			.collect(Collectors.toSet());
+		if (objects.size() == 0) {
+			log.error(String.format("No candidates for fixing datamapping % found", crt.name() ));
+			return Collections.emptyList();
+		}	
 		// this also works only if all instances that are relevant are somewhere in the designspace prefetched
 		 Set<Repair> repairs = //repairTree.getConcreteRepairs(objects, 1);// 
 				 				getConcreteRepairs(objects, 1, crt, crule.contextInstance()); 
@@ -62,8 +68,12 @@ public class InputToOutputMapper {
 					e.printStackTrace();
 				}
 				}
-				, () -> log.error("No concrete Repairs found for "+crt.name())
-			);
+				, () -> { 
+						log.error("No concrete Repairs found for "+crt.name());
+				//TODO: THIS NEEDS TO BE FIXED:		throw new RuntimeException("Datamapping could not be repaired");
+					}
+				);
+		return Collections.emptyList(); //FIXME: somehow determine from repairs what was added and removed.
 	}
 	
 //	@SuppressWarnings("rawtypes")

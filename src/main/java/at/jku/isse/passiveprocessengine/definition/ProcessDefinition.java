@@ -1,7 +1,9 @@
 package at.jku.isse.passiveprocessengine.definition;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -13,6 +15,9 @@ import at.jku.isse.designspace.core.model.ListProperty;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.instance.DecisionNodeInstance;
+import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
+import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 
 public class ProcessDefinition extends StepDefinition{
 
@@ -68,8 +73,22 @@ public class ProcessDefinition extends StepDefinition{
 		super.deleteCascading();
 	}
 	
+	public void initializeInstanceTypes() {
+		ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
+		DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(instance.workspace);
+		this.getStepDefinitions().stream().forEach(sd -> ProcessStep.getOrCreateDesignSpaceInstanceType(instance.workspace, sd));
+	}
+	
+	public Map<String, Map<String, String>> checkConstraintValidity() {
+		Map<String, Map<String, String>> overallStatus = new HashMap<>();
+		overallStatus.put(this.getName(), ProcessInstance.getConstraintValidityStatus(ws, this));
+		getStepDefinitions().forEach(sd -> overallStatus.put(sd.getName(), ProcessStep.getConstraintValidityStatus(ws, sd)));
+		return overallStatus;
+	}
+	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
 		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
+				.filter(it -> !it.isDeleted)
 				.filter(it -> it.name().contentEquals(designspaceTypeId))
 				.findAny();
 			if (thisType.isPresent())

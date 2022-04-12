@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.instance.commands;
+package at.jku.isse.passiveprocessengine.instance.messages;
 
 import lombok.Data;
 

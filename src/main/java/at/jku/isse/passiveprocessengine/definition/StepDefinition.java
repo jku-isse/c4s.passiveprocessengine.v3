@@ -1,6 +1,7 @@
 package at.jku.isse.passiveprocessengine.definition;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -12,8 +13,11 @@ import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.MapProperty;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
+import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
+import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.extern.slf4j.Slf4j;
 
@@ -167,12 +171,37 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	
 	@Override
 	public void deleteCascading() {
+		// deleting constraints:
+		Map<String, String> status = new HashMap<>();
+		InstanceType instType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this);
+		for (Conditions condition : Conditions.values()) {
+			if (this.getCondition(condition).isPresent()) {
+				String name = "crd_"+condition+"_"+instType.name();
+				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  "crd_"+condition+"_"+instType.name(), instType, this.getCondition(condition).get());
+				if (crt != null) crt.delete();
+			}	
+		}
+		this.getInputToOutputMappingRules().entrySet().stream()
+			.forEach(entry -> {
+				String name = "crd_datamapping_"+entry.getKey()+"_"+instType.name();
+				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, entry.getValue());
+				if (crt != null) crt.delete();
+			});
+		//delete qa constraints:
+		this.getQAConstraints().stream()
+			.forEach(spec -> {
+				String specId = ProcessStep.getQASpecId(spec);
+				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
+				if (crt != null) crt.delete();
+			});
+		ProcessStep.getOrCreateDesignSpaceInstanceType(instance.workspace, this).delete();
 		instance.delete();
 	}
 
 
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
 		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
+				.filter(it -> !it.isDeleted)
 				.filter(it -> it.name().contentEquals(designspaceTypeId))
 				.findAny();
 			if (thisType.isPresent())

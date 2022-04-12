@@ -10,6 +10,8 @@ import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
 import at.jku.isse.passiveprocessengine.instance.RuntimeMapping.FlowDir;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
+import at.jku.isse.passiveprocessengine.instance.messages.Events;
+import at.jku.isse.passiveprocessengine.instance.messages.Events.DataMappingChangedEvent;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -72,16 +74,16 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			.collect(Collectors.toSet());
 	}
 		
-	public void signalPrevTaskDataChanged(ProcessStep prevTask) {
+	public List<Events.ProcessChangedEvent> signalPrevTaskDataChanged(ProcessStep prevTask) {
 		boolean isEndOfProcess = false;
 		if (this.getDefinition().getOutSteps().size() == 0 ) {
 			// then we are done with this workflow and execute any final mappings into the workflows output
 			 isEndOfProcess = true;
 		}
-		checkAndExecuteDataMappings(isEndOfProcess);// we just check everything, not too expensive as mappings are typically few.
+		return checkAndExecuteDataMappings(isEndOfProcess);// we just check everything, not too expensive as mappings are typically few.
 	}
 	
-	public void tryInConditionsFullfilled() {	
+	public List<Events.ProcessChangedEvent> tryInConditionsFullfilled() {	
 		switch(this.getDefinition().getInFlowType()) {
 		case AND: 
 			// we ignore Expected Canceled and no work expected
@@ -92,7 +94,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 				.filter(step -> !step.getExpectedLifecycleState().equals(State.CANCELED) )
 				.allMatch(step -> step.getExpectedLifecycleState().equals(State.COMPLETED) );
 			setInflowFulfilled(inFlowANDok);
-			tryActivationPropagation(); // we can always trigger, check for inflowfulfilled is done there
+			return tryActivationPropagation(); // we can always trigger, check for inflowfulfilled is done there
 			
 //			if (inTaskStatus.values().stream()
 //					.filter(p -> !(p.equals(Progress.DISABLED))) // we ignore task.getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED) || task.getExpectedLifecycleState().equals(State.CANCELED) and expect the rest to be Expected)COMPLETE
@@ -111,7 +113,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 //					tryActivationPropagation();// we were triggred, so we propagate
 //				else
 //					setInflowFulfilled(false);
-			break;
+//			break;
 		case OR:
 			// as soon as one is E: COMPLETED we set fulfillment and activate further, even when deviating
 			boolean inFlowORok = getInSteps().stream()
@@ -119,7 +121,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 				.filter(step -> !step.getExpectedLifecycleState().equals(State.CANCELED) )
 				.anyMatch(step -> step.getExpectedLifecycleState().equals(State.COMPLETED) );
 			setInflowFulfilled(inFlowORok);
-			tryActivationPropagation(); // we can always trigger, check for inflowfulfilled is done there
+			return tryActivationPropagation(); // we can always trigger, check for inflowfulfilled is done there
 			
 //			if (inTaskStatus.values().stream()
 //					.filter(p -> !(p.equals(Progress.DISABLED))) // we ignore those
@@ -135,7 +137,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 //				tryActivationPropagation();
 //			} else
 //				setInflowFulfilled(false);
-			break;
+//			break;
 		case XOR:
 			// as soon as the first is E: complete we trigger, all others will be set to no work expected
 			// thus there may be only one E:complete step as the others will be E: no work expected or E: cancelled
@@ -175,7 +177,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 				}	
 			}
 			
-			tryActivationPropagation(); // we can always trigger, check for inflow fulfilled is done there
+			return tryActivationPropagation(); // we can always trigger, check for inflow fulfilled is done there
 			
 //			Optional<ProcessStep> optId = inTaskStatus.entrySet().stream()
 //					.filter(entry -> entry.getValue().equals(Progress.ENABLED))
@@ -207,11 +209,11 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 //				tryActivationPropagation();
 //			} else
 //				setInflowFulfilled(false);
-			break;
+			//break;
 			//FIXME: check if no active branch --> happens after one step on active branch is canceled
 			// then needs to reactivate all other branches that have no work expected set.
 		default:
-			break;
+			return Collections.emptyList();
 		}
 		// check if have some delayed output that needs to be propagted
 		//if (this.hasPropagated())
@@ -266,8 +268,9 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			.forEach(dni -> deactivateTasksOn(dni, null, finalDNI));
 	}
 	
-	public void tryActivationPropagation() {
+	public List<Events.ProcessChangedEvent> tryActivationPropagation() {
 		// if not yet progressed,
+		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		if (this.isInflowFulfilled() && !this.hasPropagated()) {
 			// get all out task defs, check if they exist or create them
 			// first time activation		
@@ -286,17 +289,18 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			 isEndOfProcess = true;
 		}
 		if (this.isInflowFulfilled() && this.hasPropagated()) {
-			checkAndExecuteDataMappings(isEndOfProcess);
+			events.addAll(checkAndExecuteDataMappings(isEndOfProcess));
 			if (isEndOfProcess)
-				this.getProcess().setPostConditionsFulfilled(true);
+				events.addAll(this.getProcess().setPostConditionsFulfilled(true));
 		}
 		if (this.hasPropagated() && !this.isInflowFulfilled() && isEndOfProcess) {
 			// just make sure that the process is not complete anymore (may be called several times)
-			this.getProcess().setPostConditionsFulfilled(false);
+			events.addAll(this.getProcess().setPostConditionsFulfilled(false));
 		}
+		return events;
 	}
 	
-	private void checkAndExecuteDataMappings(boolean isEndOfProcess) {
+	private List<Events.ProcessChangedEvent> checkAndExecuteDataMappings(boolean isEndOfProcess) {
 		// all mappings of this DNI resolved:
 		Set<RuntimeMapping> templates = getDefinition().getMappings().stream()
 				.map(mdef -> resolveMappingDefinitionToTemplates(mdef, isEndOfProcess))
@@ -328,17 +332,21 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		//Set<RuntimeMapping> combined = Stream.concat(preparedMappings.stream(), 
 		//											determineUndoMappingStatus(preparedMappings, getDefinition().getMappings()).stream())
 		//       								.collect(Collectors.toSet()); 
+		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		keepM.forEach(em -> {
 			log.debug("Keep: "+em.toString());
 		});
 		newM.forEach(em -> {
 			log.debug("Add: "+em.toString());
 			execute(em);
+			events.add(new DataMappingChangedEvent(this.getProcess())); //TODO: put meaningful data into event
 		});
 		delFinallyM.forEach(em -> {
 			log.debug("Del: "+em.toString());
 			undo(em);
+			events.add(new DataMappingChangedEvent(this.getProcess()));//TODO: put meaningful data into event
 		});
+		return events;
 	}
 	
 	private Stream<RuntimeMapping> fillViaSource(RuntimeMapping templateEM) {
@@ -377,151 +385,6 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			return Stream.empty();
 		}
 }
-
-	
-//
-//	private List<ProcessChangeEvent> checkAndExecuteDataMappings(List<MappingDefinition> definitions, ProcessChangeEvent cause) { // TODO fix code duplication with checkAndExecuteDataMappings()
-//		// also check if data mapping to execute
-//		Set<ExecutedMapping> preparedMappings;
-//		if (this.getWorkflow().getType().getTasksFlowingOutOf(this.getDefinition()).size() == 0 ) {
-//			// then we are done with this workflow and execute any final mappings into the workflows output
-//			preparedMappings = prepareEndOfProcessDataflow(definitions);
-//		} else {
-//			preparedMappings = prepareSimpleDataflow(false, definitions);
-//		}
-//		return preparedMappings.stream()
-//				.flatMap(mapping -> execute(mapping, cause).stream())
-//				.filter(Objects::nonNull)
-//				.collect(Collectors.toList());
-//	}
-//
-//	
-//	protected boolean isWorkExpected(IWorkflowTask task) {
-//		if (this.ofType.getInBranchingType().equals(InFlowType.XOR)) {
-//			// if there is any other task that is used or enabled, then we expect no work, else we would expect some work
-//			boolean otherTaskUsed = this.inTaskStatus.entrySet().stream()
-//				.filter(entry -> !entry.getKey().equals(task.getId())) // disregard this one
-//				.anyMatch(entry -> entry.getValue().equals(Progress.USED) || entry.getValue().equals(Progress.ENABLED)); // if we find any of these, 
-//				//then no work expected
-//			return !otherTaskUsed;
-//		} else { // only for XOR inflows would we expect some task not to be done
-//			return true;
-//		}
-//	}
-
-
-//	private Set<RuntimeMapping> prepareDataflow(boolean isEndOfProcess, Set<MappingDefinition> definitions) {
-//		return definitions.stream()
-//				.flatMap(md -> {
-//						RuntimeMapping templateEM = new RuntimeMapping();
-//						templateEM.setFromParam(md.getFromParameter());
-//						templateEM.setToParam(md.getToParameter());
-//						if (resolveSourceCompletedTaskOrWorkflow(md.getFromStepType(), templateEM, isEndOfProcess) 
-//								&& resolveDestinationTaskOrWorkflow(templateEM, md.getToStepType())) { // now we have direction and fromTask set and if so then also toTask
-//							Set<RuntimeMapping> cand = getArtifactsFromCompletedTaskOrWorkflow(templateEM);
-//							// now we have all RuntimeMappings (i.e., mapping instances) for this mapping and the available artifacts
-//							// next we determine which of those are still ok, which ones are to be added
-//							return cand.stream()
-//							//		.filter(em -> shouldBeMapped(em)); // we no longer filter here, but eval every mapping, to be handeled separately later
-//									.map(em -> determineMappingStatus(em));
-//							// this might return mappings referencing the same artifact multiple times, which is not an issue, as step input and outputs are sets anyway
-//						}
-//						else return null;//Collections.emptySet().stream();
-//			})
-//			.filter(Objects::nonNull)
-//			.collect(Collectors.toSet());
-//	}
-
-//	private RuntimeMapping determineMappingStatus(RuntimeMapping em) {
-//		// check if not yet exists:
-//		switch(em.getDirection()) {
-//		case inToIn: //fallthrough
-//		case outToIn: // check the input of the task 
-//			Set<Instance> in = em.getToStep().getInput(em.getToParam());
-//			if (in==null || in.isEmpty()) {
-//				// then mark this a mappable as new Input
-//				em.setStatus(Status.TO_BE_ADDED);
-//			} else {
-//				Set<Id> existingArt = in.stream()
-//															.map(art -> art.id())
-//															.collect(Collectors.toSet());
-//				if (existingArt.contains(em.getArtifact().id()))
-//					em.setStatus(Status.CONSISTENT);
-//				else {
-//					em.setStatus(Status.TO_BE_ADDED);
-//				}
-//			}
-//			break;
-//		case inToOut: // fallthrough
-//		case outToOut: //to output of task or process
-//			Set<Instance> out = em.getToStep().getOutput(em.getToParam());
-//			if (out == null || out.isEmpty()) {
-//				// then mark this a mappable as new Input
-//				em.setStatus(Status.TO_BE_ADDED);
-//			} else {
-//				Set<Id> existingArt = out.stream().map(art -> art.id()).collect(Collectors.toSet());
-//				if (existingArt.contains(em.getArtifact().id()))
-//					em.setStatus(Status.CONSISTENT);
-//				else {
-//					em.setStatus(Status.TO_BE_ADDED);
-//				}
-//			}
-//			break;
-//		default:
-//			em.setStatus(Status.CONSISTENT);
-//			break;
-//		}
-//		return em;
-//	}
-	
-	
-//	private Set<RuntimeMapping> determineUndoMappingStatus(Set<RuntimeMapping> newAndExistingMappings, Set<MappingDefinition> mDef) {
-//		// we need to first collect all target params (in and outs) from the DNI - assumption: and in is only mapped from process or prior steps, and out is only mapped from step to process
-//		// then obtain all artifacts available
-//		// for each artifact check if it is used in any of the mappings (in that param)
-//		// if not, the mark it as removed, NOTE: we only have to set the target param and artifact, not the source as we dont care where it came from (and might not even be able to establish this).
-//		
-//		Set<RuntimeMapping> inMappingsToRemove = mDef.stream()
-//			.filter(em -> em.getFlowDir().equals(FlowDir.inToIn) || em.getFlowDir().equals(FlowDir.outToIn)) // look at in and out params separately
-//			.map(em -> new AbstractMap.SimpleEntry<ProcessStep, String>(em.getToStep(), em.getToParam()))
-//			.distinct() // now we have all pairs of <step ,inparameter >
-//			.flatMap(entry -> checkExistingInArtifacts(entry.getKey(), entry.getValue(),  artInNewOrExistingMapping(newAndExistingMappings, entry.getKey(), entry.getValue())))
-//			.collect(Collectors.toSet());
-//		
-//		Set<RuntimeMapping> outMappingsToRemove = newAndExistingMappings.stream()
-//				.filter(em -> em.dir.equals(FlowDir.inToOut) || em.dir.equals(FlowDir.outToOut)) // look at in and out params separately
-//				.map(em -> new AbstractMap.SimpleEntry<ProcessStep, String>(em.getToStep(), em.getToParam()))
-//				.distinct() // now we have all pairs of <step ,inparameter >
-//				.flatMap(entry -> checkExistingOutArtifacts(entry.getKey(), entry.getValue(),  artInNewOrExistingMapping(newAndExistingMappings, entry.getKey(), entry.getValue())))
-//				.collect(Collectors.toSet());
-//		
-//		// we also need to check if there are any mapping target that should be empty, those will not appear as new or existing mappings
-//		// so for each destination in mDef we need to check if the target artifact appears in the newOrExisting Mapping, other wise remove
-//		
-//		return  Stream.concat(inMappingsToRemove.stream(),outMappingsToRemove.stream()).collect(Collectors.toSet());
-//	}
-	
-//	private Stream<RuntimeMapping> checkExistingInArtifacts(ProcessStep step, String param, Set<Instance> mappedArt) {
-//		return step.getInput(param).stream()
-//			.filter(art -> !mappedArt.contains(art)) // any art that is not in existing mappings for that input
-//			.map(art -> new RuntimeMapping(null, null, art, step, param, FlowDir.outToIn)) // source does not matter, as we are only removing this mapping later
-//			.map(m-> { m.setStatus(Status.TO_BE_REMOVED); return m;});
-//	}
-//	
-//	private Stream<RuntimeMapping> checkExistingOutArtifacts(ProcessStep step, String param, Set<Instance> mappedArt) {
-//		return step.getOutput(param).stream()
-//			.filter(art -> !mappedArt.contains(art)) // any art that is not in existing mappings for that output
-//			.map(art -> new RuntimeMapping(null, null, art, step, param, FlowDir.outToOut)) // source does not matter, as we are only removing this mapping later
-//			.map(m-> { m.setStatus(Status.TO_BE_REMOVED); return m;});
-//	}
-//	
-//	private Set<Instance> artInNewOrExistingMapping(Set<RuntimeMapping> newAndExistingMappings, ProcessStep step, String param) {
-//		return newAndExistingMappings.stream()
-//			.filter(m -> m.getToStep().equals(step))
-//			.filter(m -> m.getToParam().equals(param))
-//			.map(m -> m.getArtifact())
-//			.collect(Collectors.toSet());
-//	}
 	
 	private void execute(RuntimeMapping mapping) {
 		//mappings.add(mapping);
@@ -612,79 +475,11 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		// finally delete self
 		this.getInstance().delete();
 	}
-	
-//	private boolean resolveSourceCompletedTaskOrWorkflow(String taskId, RuntimeMapping templateEM, boolean isEndOfProcess) {
-//		return getProcess().getProcessSteps().stream()	
-//		.filter(wft -> wft.getDefinition().getName().equals(taskId) )
-//		.filter(wft -> wft.getExpectedLifecycleState().equals(State.COMPLETED)) // we only map data for tasks that are indeed completed
-//		.filter(Objects::nonNull)
-//		.findFirst().map( wft -> { if (isEndOfProcess) 
-//										templateEM.setDirection(FlowDir.outToOut);
-//									else
-//										templateEM.setDirection(FlowDir.outToIn);
-//								templateEM.setFromStep(wft);
-//								return true;
-//							} ).orElseGet( () -> {
-//			if (getProcess().getDefinition().getName().equals(taskId)) { // the taskId identifies the process
-//				if (isEndOfProcess) 
-//					templateEM.setDirection(FlowDir.inToOut);
-//				else
-//					templateEM.setDirection(FlowDir.inToIn);
-//				templateEM.setFromStep(getProcess());
-//				return true;
-//			}
-//			else { 
-//				return false;
-//			}
-//		});
-//	}
-	
-//	private Set<RuntimeMapping> getArtifactsFromCompletedTaskOrWorkflow(RuntimeMapping templateEM) { // the filtering of completed tasks was done earlier, templateEM fulfills this constraint already
-//		switch(templateEM.getDirection()) {
-//		case inToIn: //fallthrough
-//		case inToOut: // for input from process
-//			return templateEM.getFromStep().getInput(templateEM.getFromParam())
-//					.stream()
-//					.map(art -> RuntimeMapping.copyFrom(templateEM).fluentSetArtifact(art))
-//					.collect(Collectors.toSet());
-//		case outToIn: //fallthrough
-//		case outToOut: //for output from task
-//			// we checked for completed task earlier when adding it to the template
-//			return templateEM.getFromStep().getOutput(templateEM.getFromParam())
-//														.stream()
-//														.map(art -> RuntimeMapping.copyFrom(templateEM).fluentSetArtifact(art))
-//														.collect(Collectors.toSet());
-//		default:
-//			return Collections.emptySet();
-//		}
-//	}
-	
-//	private boolean resolveDestinationTaskOrWorkflow(RuntimeMapping templateEM, String taskId) {
-//		switch(templateEM.getDirection()) {
-//		case outToIn: //fallthrough
-//		case inToIn: // for input from process to input of task
-//			return getProcess().getProcessSteps().stream()	
-//			.filter(wft -> wft.getDefinition().getName().equals(taskId) )
-//			.map(wft -> (ProcessStep)wft)
-//			.findAny()
-//			.map( wft -> { templateEM.setToStep(wft);
-//							return true;})
-//			.orElse(false);
-//		case inToOut: //fallthrough
-//		case outToOut: //for output from task
-//			if (getProcess().getDefinition().getName().equals(taskId)) {
-//				templateEM.setToStep(getProcess());
-//				return true;
-//			} else 
-//		  		return false;
-//		default:
-//			return false;
-//		}
-//	}
 
 	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
 		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
+			.filter(it -> !it.isDeleted)
 			.filter(it -> it.name().equals(designspaceTypeId))
 			.findAny();
 		if (thisType.isPresent())

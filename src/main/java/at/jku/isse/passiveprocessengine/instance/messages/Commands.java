@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.instance.commands;
+package at.jku.isse.passiveprocessengine.instance.messages;
 
 import artifactapi.ArtifactIdentifier;
 import artifactapi.IArtifact;
@@ -14,6 +14,7 @@ import lombok.Data;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +40,7 @@ public class Commands {
 		
 		public abstract ProcessInstance getScope();
 		
-		public abstract void execute();
+		public abstract List<Events.ProcessChangedEvent> execute();
 	}
 	
 //	@Data
@@ -175,8 +176,8 @@ public class Commands {
 		private final ConsistencyRule crule;
 		 private final boolean isFulfilled;
 	
-		public void execute() {
-			step.processQAEvent(crule, isFulfilled);
+		public List<Events.ProcessChangedEvent> execute() {
+			return step.processQAEvent(crule, isFulfilled);
 		}
 
 		@Override
@@ -195,8 +196,8 @@ public class Commands {
 		private final ProcessStep step;
 		private final ConsistencyRule crule;
 	
-		public void execute() {
-			InputToOutputMapper.mapInputToOutputInStepScope(step, crule);
+		public List<Events.ProcessChangedEvent> execute() {
+			return InputToOutputMapper.mapInputToOutputInStepScope(step, crule);
 		}
 
 		@Override
@@ -216,23 +217,18 @@ public class Commands {
         private final Conditions condition;
         private final boolean isFulfilled;
 		@Override
-		public void execute() {
+		public List<Events.ProcessChangedEvent> execute() {
 			switch(condition) {
 			case ACTIVATION:
-				step.setActivationConditionsFulfilled();
-				break;
+				return step.setActivationConditionsFulfilled();
 			case CANCELATION:
-				step.setCancelConditionsFulfilled(isFulfilled);
-				break;
+				return step.setCancelConditionsFulfilled(isFulfilled);
 			case POSTCONDITION:
-				step.setPostConditionsFulfilled(isFulfilled);
-				break;
+				return step.setPostConditionsFulfilled(isFulfilled);
 			case PRECONDITION:
-				step.setPreConditionsFulfilled(isFulfilled);
-				break;
+				return step.setPreConditionsFulfilled(isFulfilled);				
 			default:
-				break;
-			
+				return Collections.emptyList();
 			}
 			
 		}
