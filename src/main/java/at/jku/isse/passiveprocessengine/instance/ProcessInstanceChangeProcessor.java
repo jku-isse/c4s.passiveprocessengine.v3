@@ -78,6 +78,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 			// new instance
 			Id typeId = element.getInstanceType().id();
 			 ws.debugInstanceTypes().stream()
+			 	.filter(type -> !type.isDeleted)
 			 	.filter(type -> type.id().equals(typeId))
 			 	.forEach(type -> instanceIndex.put(element.id(), type.name()));
 		}
