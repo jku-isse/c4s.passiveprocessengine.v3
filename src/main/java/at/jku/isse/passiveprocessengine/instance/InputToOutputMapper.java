@@ -55,7 +55,11 @@ public class InputToOutputMapper {
 		// this also works only if all instances that are relevant are somewhere in the designspace prefetched
 		 Set<Repair> repairs = //repairTree.getConcreteRepairs(objects, 1);// 
 				 				getConcreteRepairs(objects, 1, crt, crule.contextInstance()); 
-		
+		if (repairs == null) {
+			log.error("FATAL: No repairs could be created for "+crt.name());
+			// check if there is a rule error, print that, hence later retry needed
+			return Collections.emptyList();
+		}
 		repairs.stream().findAny().ifPresentOrElse(repair -> {
 				log.debug("Executing Datamapping: "+repair);
 				try {
@@ -163,6 +167,7 @@ public class InputToOutputMapper {
   RepairNode repairTree = RuleService.repairTree(inconsistency);
   if(repairTree == null) {
   	RuleService.currentWorkspace = crd.workspace;
+  	log.error("Repairtree is null for crd: "+crd);
   	return null;
   }
   RepairTreeFilter rtf = new OutputUpdateRepairTreeFilter();

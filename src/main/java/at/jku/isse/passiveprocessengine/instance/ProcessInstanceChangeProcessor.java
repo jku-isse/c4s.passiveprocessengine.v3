@@ -136,6 +136,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 					op.value().toString()
 					));	
 		} else if (isOfCRDType(element.id()) && op.name().equals("result")) {
+			// FIXME: we also have to check if a rule no longer has any error, only then can we process it properly
 			ConsistencyRule cr = (ConsistencyRule)element;
 			Instance context = cr.contextInstance();
 			if (isOfStepType(context.id())) { // rule belonging to a step,
@@ -199,7 +200,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 			.filter(QAConstraintChangedCmd.class::isInstance)
 			.map(QAConstraintChangedCmd.class::cast)
 			.filter(cmd -> !cmd.isFulfilled())
-			.peek(cmd -> log.debug(String.format("Executing: %s", cmd.toString())))
+			.map(cmd -> { log.debug(String.format("Executing: %s", cmd.toString())); return cmd;})
 			.flatMap(cmd -> cmd.execute().stream())
 			.collect(Collectors.toList()));
 			
@@ -208,7 +209,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 				.filter(ConditionChangedCmd.class::isInstance)
 				.map(ConditionChangedCmd.class::cast)
 				.sorted(new CommandComparator())
-				.peek(cmd -> log.debug(String.format("Executing: %s", cmd.toString())))
+				.map(cmd -> { log.debug(String.format("Executing: %s", cmd.toString())); return cmd;})
 				.flatMap(cmd -> cmd.execute().stream())
 				.collect(Collectors.toList()));
 			
@@ -217,7 +218,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 			.filter(QAConstraintChangedCmd.class::isInstance)
 			.map(QAConstraintChangedCmd.class::cast)
 			.filter(cmd -> cmd.isFulfilled())
-			.peek(cmd -> log.debug(String.format("Executing: %s", cmd.toString())))
+			.map(cmd -> { log.debug(String.format("Executing: %s", cmd.toString())); return cmd;})
 			.flatMap(cmd -> cmd.execute().stream())
 			.collect(Collectors.toList()));
 			
@@ -225,7 +226,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 			cmdEvents.addAll(effects.stream()
 				.filter(IOMappingInconsistentCmd.class::isInstance)
 				.map(IOMappingInconsistentCmd.class::cast)
-				.peek(cmd -> log.debug(String.format("Executing: %s", cmd.toString())))
+				.map(cmd -> { log.debug(String.format("Executing: %s", cmd.toString())); return cmd;})
 				.flatMap(cmd -> cmd.execute().stream())
 				.collect(Collectors.toList()));
 			

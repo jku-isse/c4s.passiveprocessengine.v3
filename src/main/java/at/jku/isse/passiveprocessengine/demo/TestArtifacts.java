@@ -10,7 +10,7 @@ import at.jku.isse.designspace.core.model.Workspace;
 public class TestArtifacts {
 
 	public static final String DEMOISSUETYPE = "DemoIssue";
-	public static enum CoreProperties { requirementIDs, state }
+	public static enum CoreProperties { requirementIDs, state, requirements, parent }
 	public static enum JiraStates { Open, InProgress, Closed}
 	
 	public static InstanceType getJiraInstanceType(Workspace ws) {
@@ -23,6 +23,8 @@ public class TestArtifacts {
 				InstanceType typeJira = ws.createInstanceType(DEMOISSUETYPE, ws.TYPES_FOLDER);
 				typeJira.createPropertyType(CoreProperties.requirementIDs.toString(), Cardinality.SET, Workspace.STRING);
 				typeJira.createPropertyType(CoreProperties.state.toString(), Cardinality.SINGLE, Workspace.STRING);
+				typeJira.createPropertyType(CoreProperties.requirements.toString(), Cardinality.SET, typeJira);
+				typeJira.createPropertyType(CoreProperties.parent.toString(), Cardinality.SINGLE, typeJira);
 				return typeJira;
 			}
 	}
@@ -36,8 +38,20 @@ public class TestArtifacts {
 		return jira;
 	}
 	
+	public static void addJiraToJira(Instance jira, Instance jiraToAdd) {
+		jira.getPropertyAsSet(TestArtifacts.CoreProperties.requirements.toString()).add(jiraToAdd);
+	}
+	
+	public static void removeJiraFromJira(Instance jira, Instance jiraToRemove) {
+		jira.getPropertyAsSet(TestArtifacts.CoreProperties.requirements.toString()).remove(jiraToRemove);
+	}
+	
 	public static void setStateToJiraInstance(Instance inst, JiraStates state) {
 		inst.getProperty(CoreProperties.state.toString()).set(state.toString());
+	}
+	
+	public static void addParentToJira(Instance inst, Instance parent) {
+		inst.getProperty(CoreProperties.parent.toString()).set(parent);
 	}
 	
 	public static JiraStates getState(Instance inst) {

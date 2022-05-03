@@ -148,6 +148,33 @@ public class TestProcesses {
 			dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd1.getName(), "jiraOut", sd2.getName(), "jiraIn",  ws));
 			return procDef;
 		}
+	
+	public static ProcessDefinition get2StepProcessDefinitionWithSymmetricDiffMapping(Workspace ws) {
+		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
+		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
+		procDef.addExpectedInput("jiraIn", typeJira);		
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1", ws);
+		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2", ws);
+		
+		StepDefinition sd1 = procDef.createStepDefinition("sd1", ws);
+		sd1.addExpectedInput("jiraIn", typeJira);
+		sd1.addExpectedOutput("jiraOut", typeJira);
+
+		sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", 
+			"self.in_jiraIn"
+				+ "->any()"
+				+ "->asType(<"+typeJira.getQualifiedName()+">)"
+						+ ".requirements"
+							+ "->asSet() "  
+							+"->symmetricDifference(self.out_jiraOut) " +  // ->collect(out | out.name) to map to set of names
+							"->size() = 0"
+							); // for every id in requirements there is an instance with that name, and vice versa
+
+		sd1.setInDND(dnd1);
+		sd1.setOutDND(dnd2);
+		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
+		return procDef;
+	}
 
 	public static DTOs.Process getSimpleDTOSubprocess(Workspace ws) {
 		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);

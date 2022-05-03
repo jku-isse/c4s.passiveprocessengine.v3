@@ -256,6 +256,36 @@ class InstanceTests {
 		assert(proc.getOutput("jiraOut").size() == 1);
 	}
 	
+	@Test
+	void testSymmetricDifferenceDatamapping() {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA", "jiraB", "jiraC");
+		TestArtifacts.addJiraToJira(jiraA, jiraB);
+		TestArtifacts.addJiraToJira(jiraA, jiraC);
+		
+		ProcessDefinition procDef = TestProcesses.get2StepProcessDefinitionWithSymmetricDiffMapping(ws);
+		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
+		proc.addInput("jiraIn", jiraA);
+		ws.concludeTransaction();
+	//	assertAllConstraintsAreValid(proc);
+	//	printFullProcessToLog(proc);
+		assert(proc.getProcessSteps().stream()
+				.filter(step -> step.getDefinition().getName().equals("sd1") )
+				.allMatch(step -> step.getOutput("jiraOut").size() == 2 ));
+
+		
+		TestArtifacts.removeJiraFromJira(jiraA,  jiraB);
+		TestArtifacts.addJiraToJira(jiraA,  jiraD);
+		ws.concludeTransaction();
+		printFullProcessToLog(proc);
+		assert(proc.getProcessSteps().stream()
+				.filter(step -> step.getDefinition().getName().equals("sd1") )
+				.allMatch(step -> step.getOutput("jiraOut").size() == 2 ));
+
+	}
+	
 	public static void assertAllConstraintsAreValid(ProcessInstance proc) {
 		proc.getProcessSteps().stream()
 		.peek(td -> System.out.println("Visiting Step: "+td.getName()))
