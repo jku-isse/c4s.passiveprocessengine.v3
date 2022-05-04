@@ -105,7 +105,7 @@ class RepairTests {
         WorkspaceService.createPropertyType(ws, instanceType, "prev", Cardinality.SINGLE, instanceType);
         
         DerivedPropertyRuleType dPropIn2Out = DerivedPropertyRuleType.create(ws, instanceType, "out", Cardinality.SINGLE, "if self.in.isDefined() and self.in.parent.isDefined() then self.in.parent else null endif");
-        DerivedPropertyRuleType dPropout2In = DerivedPropertyRuleType.create(ws, instanceType, "in", Cardinality.SINGLE, "if self.prev.isDefined() and self.prev.out.isDefined() then self.prev.out else null endif");
+        DerivedPropertyRuleType dPropOut2In = DerivedPropertyRuleType.create(ws, instanceType, "in", Cardinality.SINGLE, "if self.prev.isDefined() and self.prev.out.isDefined() then self.prev.out else null endif");
 
                 
         Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");

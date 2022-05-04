@@ -80,11 +80,11 @@ public class DTOs {
 		List<DecisionNode> dns = new LinkedList<>();
 		
 		public Step getStepByCode(String code) {
-			return steps.stream().filter(step -> step.getCode().equals(code)).findAny().orElseGet(null);
+			return steps.stream().filter(step -> step.getCode().equals(code)).findAny().orElse(null);
 		}
 		
 		public DecisionNode getInDNof(Step step) {
-			return dns.stream().filter(dn -> dn.getCode().equals(step.getInDNDid())).findAny().orElseGet(null);
+			return dns.stream().filter(dn -> dn.getCode().equals(step.getInDNDid())).findAny().orElse(null);
 		}
 	}
 }
