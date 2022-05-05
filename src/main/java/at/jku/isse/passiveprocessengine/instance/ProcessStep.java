@@ -351,6 +351,15 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	public boolean areQAconstraintsFulfilled() {
+		// are there all constraint wrappers actually added already
+		if (this.getDefinition() == null)
+			return false;
+		
+		int expQA = this.getDefinition().getQAConstraints().size();
+		int actualQA = instance.getPropertyAsMap(CoreProperties.qaState.toString()).values().size();
+		if (expQA != actualQA) 
+			return false; // as long as the expected QA is not the actual number of QA checks, the eval cant be true;
+		
 		return instance.getPropertyAsMap(CoreProperties.qaState.toString()).values().stream()
 			.map(inst -> WrapperCache.getWrappedInstance(ConstraintWrapper.class, (Instance) inst))
 			.allMatch(cw -> ((ConstraintWrapper)cw).getEvalResult()==true);

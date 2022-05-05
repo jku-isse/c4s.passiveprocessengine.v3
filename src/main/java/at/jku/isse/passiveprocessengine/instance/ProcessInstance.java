@@ -188,8 +188,8 @@ public class ProcessInstance extends ProcessStep {
 	protected void init(ProcessDefinition pdef, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, Workspace ws) {
 		// init first DNI, there should be only one. Needs to be checked earlier with definition creation
 		// we assume consistent, correct specification/definition here
-		super.init(ws, pdef, inDNI, outDNI);
 		instance.getPropertyAsSingle(CoreProperties.processDefinition.toString()).set(pdef.getInstance());
+		super.init(ws, pdef, inDNI, outDNI);
 		pdef.getDecisionNodeDefinitions().stream()
 			.filter(dnd -> dnd.getInSteps().size() == 0)
 			.forEach(dnd -> {

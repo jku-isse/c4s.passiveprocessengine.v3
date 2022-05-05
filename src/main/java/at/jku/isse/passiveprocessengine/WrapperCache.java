@@ -18,6 +18,10 @@ public class WrapperCache {
 	@SuppressWarnings("unchecked")
 	public static <T extends InstanceWrapper> T getWrappedInstance(Class<? extends InstanceWrapper> clazz, Instance instance) {
 		assert(instance != null);
+		if (instance == null) { 
+			log.error("WrapperCache was invoked with null instance");
+			return null;
+		} else {
 		if (cache.containsKey(instance.id())) {
 			InstanceWrapper iw = cache.get(instance.id()).get();
 			if (iw != null)
@@ -37,6 +41,7 @@ public class WrapperCache {
 			log.error(e.getMessage());
 		}
 		return null;
+		}
 	}
 	
 	public static void removeWrapper(Id id) {
