@@ -17,7 +17,7 @@ public class WrapperCache {
 	
 	@SuppressWarnings("unchecked")
 	public static <T extends InstanceWrapper> T getWrappedInstance(Class<? extends InstanceWrapper> clazz, Instance instance) {
-		assert(instance != null);
+		//assert(instance != null);
 		if (instance == null) { 
 			log.error("WrapperCache was invoked with null instance");
 			return null;

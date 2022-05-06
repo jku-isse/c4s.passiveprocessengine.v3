@@ -46,7 +46,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProcessStep extends ProcessInstanceScopedElement{
 
-	public static enum CoreProperties {actualLifecycleState, expectedLifecycleState, stepDefinition, inDNI, outDNI, qaState};
+	public static enum CoreProperties {actualLifecycleState, expectedLifecycleState, stepDefinition, inDNI, outDNI, qaState, 
+		processedPreCondFulfilled, processedPostCondFulfilled, processedCancelCondFulfilled, isWorkExpected};
 	
 	public static final String designspaceTypeId = ProcessStep.class.getSimpleName();
 	
@@ -58,11 +59,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		initState();
 	}
 	
-	//FIXME: check if those transient properties are correctly reset upon loading
-	protected transient boolean arePreCondFulfilled = false;
-	protected transient boolean arePostCondFulfilled = false;
-	protected transient boolean areCancelCondFulfilled = false;
-	protected transient boolean isWorkExpected = true;
+	//check if those transient properties are correctly reset upon loading
+	//protected transient boolean arePreCondFulfilled = false;
+	//protected transient boolean arePostCondFulfilled = false;
+	//protected transient boolean areCancelCondFulfilled = false;
+	//protected transient boolean isWorkExpected = true;
 //	protected transient Map<String, ConstraintWrapper> qaState = new HashMap<>();
 	
 	protected transient boolean priorQAfulfilled = false;
@@ -192,7 +193,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		boolean newQaState = areQAconstraintsFulfilled(); // are all QA checks now fulfilled?
 		if (priorQAfulfilled != newQaState) { // a change in qa fulfillment that we might want to react to
 			priorQAfulfilled = newQaState;
-			if (arePostCondFulfilled && newQaState)  
+			if (arePostCondFulfilled() && newQaState)  
 				return this.trigger(StepLifecycle.Trigger.MARK_COMPLETE) ;
 			if (!newQaState && actualSM.isInState(State.COMPLETED)) 
 				return this.trigger(StepLifecycle.Trigger.ACTIVATE);
@@ -213,6 +214,22 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			return Optional.empty();
 		else
 			return Optional.ofNullable((ConsistencyRule)prop.get());
+	}
+	
+	public boolean arePostCondFulfilled() {
+		return (boolean) instance.getPropertyAsValue(CoreProperties.processedPostCondFulfilled.toString());
+	}
+	
+	public boolean arePreCondFulfilled() {
+		return (boolean) instance.getPropertyAsValue(CoreProperties.processedPreCondFulfilled.toString());
+	}
+	
+	public boolean areCancelCondFulfilled() {
+		return (boolean) instance.getPropertyAsValue(CoreProperties.processedCancelCondFulfilled.toString());
+	}
+	
+	public boolean isWorkExpected() {
+		return (boolean) instance.getPropertyAsValue(CoreProperties.isWorkExpected.toString());
 	}
 	
 	public void deleteCascading() {
@@ -332,15 +349,15 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	public void setWorkExpected(boolean isExpected) {
-		if (isWorkExpected != isExpected ) {
-				isWorkExpected = isExpected;	
-				if (!isWorkExpected) {
+		if (isWorkExpected() != isExpected ) {
+			instance.getPropertyAsSingle(CoreProperties.isWorkExpected.toString()).set(isExpected);	
+				if (!isExpected) {
 					trigger(Trigger.HALT);
 				}
 				else {
-				if (arePostCondFulfilled && areQAconstraintsFulfilled())
+				if (arePostCondFulfilled() && areQAconstraintsFulfilled())
 					trigger(Trigger.MARK_COMPLETE_REPAIR);
-				if (arePreCondFulfilled)
+				if (arePreCondFulfilled())
 					trigger(Trigger.ENABLE);
 				if (actualSM.isInState(State.ACTIVE))
 					trigger(Trigger.ACTIVATE_REPAIR);
@@ -367,8 +384,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	public List<Events.ProcessChangedEvent> setPostConditionsFulfilled(boolean isfulfilled) {
-		if (arePostCondFulfilled != isfulfilled) { // a change
-			arePostCondFulfilled = isfulfilled;
+		if (arePostCondFulfilled() != isfulfilled) { // a change
+			instance.getPropertyAsSingle(CoreProperties.processedPostCondFulfilled.toString()).set(isfulfilled);
 			if (isfulfilled && areQAconstraintsFulfilled())  
 				return this.trigger(StepLifecycle.Trigger.MARK_COMPLETE) ;
 			if (!isfulfilled && actualSM.isInState(State.COMPLETED)) 
@@ -376,10 +393,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 		return Collections.emptyList();
 	}
+
 	
 	public List<Events.ProcessChangedEvent> setPreConditionsFulfilled(boolean isfulfilled) {
-		if (arePreCondFulfilled != isfulfilled) {  // a change
-			arePreCondFulfilled = isfulfilled;
+		if (arePreCondFulfilled() != isfulfilled) {  // a change
+			instance.getPropertyAsSingle(CoreProperties.processedPreCondFulfilled.toString()).set(isfulfilled);
 			if (isfulfilled)  
 				return this.trigger(StepLifecycle.Trigger.ENABLE) ;
 			else 
@@ -389,17 +407,17 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	public List<Events.ProcessChangedEvent> setCancelConditionsFulfilled(boolean isfulfilled) {
-		if (areCancelCondFulfilled != isfulfilled) {
-			areCancelCondFulfilled = isfulfilled;
+		if (areCancelCondFulfilled() != isfulfilled) {
+			instance.getPropertyAsSingle(CoreProperties.processedCancelCondFulfilled.toString()).set(isfulfilled);
 			if (isfulfilled)
 				return trigger(Trigger.CANCEL);
 			else { // check which is the new state:
 				// we cant use actual state as this might be deviating multiple ways (e.g., we should now be in available, but actual state is in active
-				if (!isWorkExpected)
+				if (!isWorkExpected())
 					return trigger(Trigger.HALT); //other steps are prefered/used at the moment
-				if (arePostCondFulfilled && areQAconstraintsFulfilled())
+				if (arePostCondFulfilled() && areQAconstraintsFulfilled())
 					return trigger(Trigger.MARK_COMPLETE_REPAIR);
-				if (arePreCondFulfilled)
+				if (arePreCondFulfilled())
 					return trigger(Trigger.ENABLE);
 				if (actualSM.isInState(State.ACTIVE))
 					return trigger(Trigger.ACTIVATE_REPAIR);
@@ -539,6 +557,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			// FIXME: better realized via bidirectional properties
 			typeStep.createPropertyType(CoreProperties.actualLifecycleState.toString(), Cardinality.SINGLE, Workspace.STRING);
 			typeStep.createPropertyType(CoreProperties.expectedLifecycleState.toString(), Cardinality.SINGLE, Workspace.STRING);
+			
+			typeStep.createPropertyType(CoreProperties.processedPreCondFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
+			typeStep.createPropertyType(CoreProperties.processedPostCondFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
+			typeStep.createPropertyType(CoreProperties.processedCancelCondFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
+			typeStep.createPropertyType(CoreProperties.isWorkExpected.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
 			return typeStep;
 		}
 	}
@@ -614,6 +637,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 
 	protected void init(Workspace ws, StepDefinition sd, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI) {
+		instance.getPropertyAsSingle(CoreProperties.processedPreCondFulfilled.toString()).set(false);
+		instance.getPropertyAsSingle(CoreProperties.processedPostCondFulfilled.toString()).set(false);
+		instance.getPropertyAsSingle(CoreProperties.processedCancelCondFulfilled.toString()).set(false);
+		instance.getPropertyAsSingle(CoreProperties.isWorkExpected.toString()).set(true);
+		
 		instance.getPropertyAsSingle(CoreProperties.stepDefinition.toString()).set(sd.getInstance());
 		if (inDNI != null) {
 			instance.getPropertyAsSingle(CoreProperties.inDNI.toString()).set(inDNI.getInstance());
