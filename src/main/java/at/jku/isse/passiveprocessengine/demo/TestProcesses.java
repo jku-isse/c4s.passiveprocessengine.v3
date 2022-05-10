@@ -166,16 +166,80 @@ public class TestProcesses {
 				+ "->asType(<"+typeJira.getQualifiedName()+">)"
 						+ ".requirements"
 							+ "->asSet() "  
-							+"->symmetricDifference(self.out_jiraOut) " +  // ->collect(out | out.name) to map to set of names
+							+"->symmetricDifference(self.out_jiraOut) " +  
 							"->size() = 0"
-							); // for every id in requirements there is an instance with that name, and vice versa
-
+							); 		
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		return procDef;
 	}
+	
+	public static ProcessDefinition get2StepProcessDefinitionWithUnionMapping(Workspace ws) {
+		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
+		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
+		procDef.addExpectedInput("jiraIn", typeJira);		
+		procDef.addExpectedInput("jiraIn2", typeJira);
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1", ws);
+		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2", ws);
+		
+		StepDefinition sd1 = procDef.createStepDefinition("sd1", ws);
+		sd1.addExpectedInput("jiraIn", typeJira);
+		sd1.addExpectedInput("jiraIn2", typeJira);
+		sd1.addExpectedOutput("jiraOut", typeJira);
 
+		sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", 
+			"self.in_jiraIn2->union(self.in_jiraIn"
+				+ "->any()"
+				+ "->asType(<"+typeJira.getQualifiedName()+">)"
+						+ ".requirements"
+							+ "->asSet()) "  
+							+"->symmetricDifference(self.out_jiraOut) " +  
+							"->size() = 0"
+							); 
+
+		sd1.setInDND(dnd1);
+		sd1.setOutDND(dnd2);
+		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
+		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn2", sd1.getName(), "jiraIn2",  ws));
+		
+		return procDef;
+	}
+
+	public static ProcessDefinition get2StepProcessDefinitionWithExistsCheck(Workspace ws) {
+		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
+		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
+		procDef.addExpectedInput("jiraIn", typeJira);		
+		procDef.addExpectedInput("jiraIn2", typeJira);
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1", ws);
+		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2", ws);
+		
+		StepDefinition sd1 = procDef.createStepDefinition("sd1", ws);
+		sd1.addExpectedInput("jiraIn", typeJira);
+		sd1.addExpectedInput("jiraIn2", typeJira);
+		sd1.addExpectedOutput("jiraOut", typeJira);
+
+		sd1.setCondition(Conditions.PRECONDITION, "self.in_jiraIn2->union( \r\n"
+				+ "self.in_jiraIn->any()->asType(<"+typeJira.getQualifiedName()+">).requirements \r\n"
+				+ ") \r\n" // combined set of instances
+				+ "->exists(req  | req.state='Open')"); 
+
+		
+		sd1.setCondition(Conditions.POSTCONDITION, "self.in_jiraIn2->union( \r\n"
+				+ "self.in_jiraIn->any()->asType(<"+typeJira.getQualifiedName()+">).requirements \r\n"
+				+ " 	->select(req | req.parent.isDefined() ) \r\n"
+				+ " 	->collect(req2 | req2.parent) \r\n"
+				+ ") \r\n" // combined set of instances
+				+ "	->exists(parent : <"+typeJira.getQualifiedName()+"> | parent.state='Closed')"); 
+
+		sd1.setInDND(dnd1);
+		sd1.setOutDND(dnd2);
+		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
+		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn2", sd1.getName(), "jiraIn2",  ws));
+		
+		return procDef;
+	}
+	
 	public static DTOs.Process getSimpleDTOSubprocess(Workspace ws) {
 		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
 		DTOs.Process procD = new DTOs.Process();
