@@ -1,0 +1,255 @@
+{
+  "steps": [
+    {
+      "inDNDid": "0",
+      "outDNDid": "2",
+      "input": {
+        "story": "git_issue"
+      },
+      "output": {
+        "cscSubtask": "git_issue",
+        "sucSubtask": "git_issue",
+        "mmfSubtask": "git_issue"
+      },
+      "ioMapping": {
+        "Story2SUC": "self.in_story-\u003eany()\n  -\u003easType(\u003croot/types/git_issue\u003e)\n     .linkedIssues\n-\u003eselect( ref | ref.title.substring(1,11).equalsIgnoreCase(\u0027RefineToSUC\u0027))\n -\u003eforAll( child |  self.out_sucSubtask-\u003eexists(art | child.asType(\u003croot/types/git_issue\u003e)  \u003d art))",
+        "Story2CSC": "self.in_story-\u003eany()\n  -\u003easType(\u003croot/types/git_issue\u003e)\n     .linkedIssues\n-\u003eselect( ref | ref.title.substring(1,17).equalsIgnoreCase(\u0027CreateOrRefineCSC\u0027))\n -\u003eforAll( child |  self.out_cscSubtask-\u003eexists(art | child.asType(\u003croot/types/git_issue\u003e)  \u003d art))",
+        "OutputRefFromInput": "self.out_mmfSubtask\n-\u003eforAll(out | self.in_story\n           -\u003easList()\n           -\u003efirst()\n           -\u003easType(\u003croot/types/git_issue\u003e)\n           .linkedIssues\n           -\u003eexists(ref | ref \u003d out))\nand\nself.out_sucSubtask\n-\u003eforAll(out2 | self.in_story\n           -\u003easList()\n           -\u003efirst()\n           -\u003easType(\u003croot/types/git_issue\u003e)\n           .linkedIssues\n           -\u003eexists(ref2 | ref2 \u003d out2))\nand\nself.out_cscSubtask\n-\u003eforAll(out3 | self.in_story\n           -\u003easList()\n           -\u003efirst()\n           -\u003easType(\u003croot/types/git_issue\u003e)\n           .linkedIssues\n           -\u003eexists(ref3 | ref3 \u003d out3))",
+        "Story2MMF": "self.in_story-\u003eany()\n  -\u003easType(\u003croot/types/git_issue\u003e)\n     .linkedIssues\n-\u003eselect( ref | ref.title.substring(1,16).equalsIgnoreCase(\u0027WriteOrReviseMMF\u0027))\n -\u003eforAll( child |  self.out_mmfSubtask-\u003eexists(art | child.asType(\u003croot/types/git_issue\u003e)  \u003d art))"
+      },
+      "conditions": {
+        "POSTCONDITION": "self.out_mmfSubtask-\u003esize() \u003e 0 and self.out_sucSubtask-\u003esize() \u003e 0 and self.out_cscSubtask-\u003esize() \u003e 0",
+        "PRECONDITION": "self.in_story-\u003esize() \u003d 1 and self.in_story-\u003eany() -\u003easType(\u003croot/types/git_issue\u003e).labels-\u003eincludes(\u0027Story\u0027)"
+      },
+      "qaConstraints": [],
+      "specOrderIndex": 1,
+      "_type": "Step",
+      "code": "PrepareProcess"
+    },
+    {
+      "inDNDid": "2",
+      "outDNDid": "3",
+      "input": {
+        "mmfSubtask": "git_issue",
+        "story": "git_issue"
+      },
+      "output": {
+        "buc": "git_issue",
+        "mmf": "git_issue"
+      },
+      "ioMapping": {
+        "mmfSub2buc": "self.in_mmfSubtask-\u003eany()\n  -\u003easType(\u003croot/types/git_issue\u003e)\n     .linkedIssues\n-\u003eselect( ref | ref.labels-\u003eincludes(\u0027BUC\u0027))\n-\u003easSet()\n-\u003esymmetricDifference(self.out_buc)\n-\u003esize() \u003d 0",
+        "mmfSub2mmf": "self.in_mmfSubtask-\u003eany()\n  -\u003easType(\u003croot/types/git_issue\u003e)\n     .linkedIssues\n-\u003eselect( ref | ref.labels-\u003eincludes(\u0027MMF\u0027))\n-\u003easSet()\n-\u003esymmetricDifference(self.out_mmf)\n-\u003esize() \u003d 0"
+      },
+      "conditions": {
+        "POSTCONDITION": "self.in_mmfSubtask\n-\u003eany()\n-\u003easType(\u003croot/types/git_issue\u003e)\n.state.equalsIgnoreCase(\u0027closed\u0027) \nand \nself.in_mmfSubtask-\u003eany()\n  -\u003easType(\u003croot/types/git_issue\u003e)\n     .linkedIssues\n-\u003eselect( ref1 | ref1.labels-\u003eincludes(\u0027MMF\u0027))\n-\u003esize() \u003e 0 \nand \nself.in_mmfSubtask-\u003eany()\n  -\u003easType(\u003croot/types/git_issue\u003e)\n     .linkedIssues\n-\u003eselect( ref2 | ref2.labels-\u003eincludes(\u0027BUC\u0027))\n-\u003esize() \u003e 0 ",
+        "PRECONDITION": "self.in_mmfSubtask-\u003esize() \u003e 0 and self.in_story-\u003esize() \u003e 0",
+        "ACTIVATION": "self.in_story-\u003eany()\n  -\u003easType(\u003croot/types/git_issue\u003e)\n     .linkedIssues\n-\u003eselect( ref3 | ref3.title.substring(1,16).equalsIgnoreCase(\u0027WriteOrReviseMMF\u0027))\n -\u003esize() \u003e 0"
+      },
+      "qaConstraints": [
+        {
+          "arlRule": "self.out_mmf-\u003eforAll( mmf1 | mmf1.linkedIssues-\u003eexists(art | art.labels-\u003eincludes(\u0027SR\u0027)))",
+          "specOrderIndex": 0,
+          "_type": "QAConstraint",
+          "code": "MMFtraceToSR",
+          "description": "Each linked MMF must trace to at least one Stakeholder Request (SR)."
+        },
+        {
+          "arlRule": "self.out_mmf-\u003eforAll( mmf1 | mmf1.linkedIssues-\u003eexists(art | art.labels-\u003eincludes(\u0027BUC\u0027)))",
+          "specOrderIndex": 1,
+          "_type": "QAConstraint",
+          "code": "MMFtraceToBUC",
+          "description": "Each linked MMF must trace to at least one Business Use Case (BUC)."
+        },
+        {
+          "arlRule": "self.out_mmf-\u003eforAll(mmf | mmf.linkedIssues-\u003eselect(art : \u003croot/types/git_issue\u003e | art.labels-\u003eincludes(\u0027SR\u0027))-\u003eforAll(sr2 : \u003croot/types/git_issue\u003e | sr2.linkedIssues-\u003eexists(art2 | art2.labels-\u003eincludes(\u0027BUC\u0027)) ) )",
+          "specOrderIndex": 2,
+          "_type": "QAConstraint",
+          "code": "SRtraceToBUC",
+          "description": "Each SR linked via an MMF must trace to at least one  Business Use Case (BUC)."
+        }
+      ],
+      "specOrderIndex": 2,
+      "_type": "Step",
+      "code": "WriteOrReviseMMF"
+    },
+    {
+      "inDNDid": "3",
+      "outDNDid": "4",
+      "input": {
+        "sucSubtask": "git_issue",
+        "story": "git_issue"
+      },
+      "output": {
+        "suc": "git_issue"
+      },
+      "ioMapping": {
+        "sucSub2suc": "self.in_sucSubtask-\u003eany()\n  -\u003easType(\u003croot/types/git_issue\u003e)\n     .linkedIssues\n-\u003eselect( ref | ref.labels-\u003eincludes(\u0027SUC\u0027))\n-\u003easSet()\n-\u003esymmetricDifference(self.out_suc)\n-\u003esize() \u003d 0"
+      },
+      "conditions": {
+        "POSTCONDITION": "self.in_sucSubtask-\u003eany()\n-\u003easType(\u003croot/types/git_issue\u003e).state.equalsIgnoreCase(\u0027closed\u0027) and \nself.out_suc-\u003esize() \u003e 0",
+        "PRECONDITION": "self.in_sucSubtask-\u003esize() \u003e 0 and self.in_story-\u003esize() \u003e 0",
+        "ACTIVATION": "self.in_story-\u003eany()\n  -\u003easType(\u003croot/types/git_issue\u003e)\n     .linkedIssues\n-\u003eselect( ref | ref.title.substring(1,11).equalsIgnoreCase(\u0027RefineToSUC\u0027))\n -\u003esize() \u003e 0"
+      },
+      "qaConstraints": [
+        {
+          "arlRule": "self.out_suc-\u003eforAll( suc1 | suc1.linkedIssues-\u003eexists(art | art.labels-\u003eincludes(\u0027SUC\u0027)))  or self.out_suc-\u003eforAll( suc2 | suc2.linkedIssues-\u003eexists(art2 | art2.labels-\u003eincludes(\u0027BUC\u0027))) ",
+          "specOrderIndex": 0,
+          "_type": "QAConstraint",
+          "code": "SUCtraceToSUCorBUC",
+          "description": "Each SUC must trace to at least one (parent) System Use Case (SUC) or a Business Use Case (BUC)"
+        }
+      ],
+      "specOrderIndex": 3,
+      "_type": "Step",
+      "code": "RefineToSuc"
+    },
+    {
+      "inDNDid": "4",
+      "outDNDid": "1",
+      "input": {
+        "cscSubtask": "git_issue",
+        "story": "git_issue"
+      },
+      "output": {
+        "csc": "git_issue"
+      },
+      "ioMapping": {},
+      "conditions": {
+        "POSTCONDITION": "self.in_cscSubtask-\u003eany()-\u003easType(\u003croot/types/git_issue\u003e).state.equalsIgnoreCase(\u0027closed\u0027)",
+        "PRECONDITION": "self.in_cscSubtask-\u003esize() \u003e 0 and self.in_story-\u003esize() \u003e 0"
+      },
+      "qaConstraints": [
+        {
+          "arlRule": "self.name \u003c\u003e \"\"",
+          "specOrderIndex": 0,
+          "_type": "QAConstraint",
+          "code": "CSCtraceToSUC",
+          "description": "Each CSC must trace to at least one System Use Case (SUC)."
+        }
+      ],
+      "specOrderIndex": 4,
+      "_type": "Step",
+      "code": "CreateOrRefineCSC"
+    }
+  ],
+  "dns": [
+    {
+      "inflowType": "AND",
+      "mapping": [
+        {
+          "fromStep": "PrematureTest",
+          "fromParam": "story",
+          "toStep": "PrepareProcess",
+          "toParam": "story"
+        }
+      ],
+      "_type": "DecisionNode",
+      "code": "0"
+    },
+    {
+      "inflowType": "AND",
+      "mapping": [
+        {
+          "fromStep": "RefineToSuc",
+          "fromParam": "suc",
+          "toStep": "PrematureTest",
+          "toParam": "suc"
+        },
+        {
+          "fromStep": "CreateOrRefineCSC",
+          "fromParam": "csc",
+          "toStep": "PrematureTest",
+          "toParam": "csc"
+        },
+        {
+          "fromStep": "WriteOrReviseMMF",
+          "fromParam": "buc",
+          "toStep": "PrematureTest",
+          "toParam": "buc"
+        },
+        {
+          "fromStep": "WriteOrReviseMMF",
+          "fromParam": "mmf",
+          "toStep": "PrematureTest",
+          "toParam": "mmf"
+        }
+      ],
+      "_type": "DecisionNode",
+      "code": "1"
+    },
+    {
+      "inflowType": "AND",
+      "mapping": [
+        {
+          "fromStep": "PrepareProcess",
+          "fromParam": "mmfSubtask",
+          "toStep": "WriteOrReviseMMF",
+          "toParam": "mmfSubtask"
+        },
+        {
+          "fromStep": "PrematureTest",
+          "fromParam": "story",
+          "toStep": "WriteOrReviseMMF",
+          "toParam": "story"
+        }
+      ],
+      "_type": "DecisionNode",
+      "code": "2"
+    },
+    {
+      "inflowType": "AND",
+      "mapping": [
+        {
+          "fromStep": "PrematureTest",
+          "fromParam": "story",
+          "toStep": "RefineToSuc",
+          "toParam": "story"
+        },
+        {
+          "fromStep": "PrepareProcess",
+          "fromParam": "sucSubtask",
+          "toStep": "RefineToSuc",
+          "toParam": "sucSubtask"
+        }
+      ],
+      "_type": "DecisionNode",
+      "code": "3"
+    },
+    {
+      "inflowType": "AND",
+      "mapping": [
+        {
+          "fromStep": "PrematureTest",
+          "fromParam": "story",
+          "toStep": "CreateOrRefineCSC",
+          "toParam": "story"
+        },
+        {
+          "fromStep": "PrepareProcess",
+          "fromParam": "cscSubtask",
+          "toStep": "CreateOrRefineCSC",
+          "toParam": "cscSubtask"
+        }
+      ],
+      "_type": "DecisionNode",
+      "code": "4"
+    }
+  ],
+  "prematureStepConditions": {},
+  "input": {
+    "story": "git_issue"
+  },
+  "output": {
+    "suc": "git_issue",
+    "buc": "git_issue",
+    "csc": "git_issue",
+    "mmf": "git_issue"
+  },
+  "ioMapping": {},
+  "conditions": {},
+  "qaConstraints": [],
+  "specOrderIndex": 0,
+  "_type": "Process",
+  "code": "PrematureTest"
+}

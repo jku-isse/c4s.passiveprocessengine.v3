@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
@@ -58,6 +59,7 @@ public class ProcessRegistry {
 		if (optPD.isEmpty()) {
 			log.debug("Storing new process: "+process.getCode());
 			ProcessDefinition pd = DefinitionTransformer.fromDTO(process, ws);
+			new PrematureTriggerGenerator().generatePrematureConstraints(pd);
 			pd.initializeInstanceTypes();
 			ws.concludeTransaction();
 			Map<String, Map<String, String>> validity = pd.checkConstraintValidity();

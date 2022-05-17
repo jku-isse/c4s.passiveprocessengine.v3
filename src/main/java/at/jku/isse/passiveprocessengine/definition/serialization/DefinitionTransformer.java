@@ -52,7 +52,8 @@ public class DefinitionTransformer {
 		step.getOutput().entrySet().stream().forEach(entry -> pStep.addExpectedOutput(entry.getKey(), resolveInstanceType(entry.getValue(), ws)));
 		step.getConditions().entrySet().stream().forEach(entry -> pStep.setCondition(entry.getKey(), entry.getValue()));
 		step.getIoMapping().entrySet().stream().forEach(entry -> pStep.addInputToOutputMappingRule(entry.getKey(),  entry.getValue()));
-		step.getQaConstraints().stream().forEach(qac -> pStep.addQAConstraint(QAConstraintSpec.createInstance(qac.getCode(), qac.getArlRule(), qac.getDescription(), ws)));
+		step.getQaConstraints().stream().forEach(qac -> pStep.addQAConstraint(QAConstraintSpec.createInstance(qac.getCode(), qac.getArlRule(), qac.getDescription(), qac.getSpecOrderIndex(), ws)));
+		pStep.setSpecOrderIndex(step.getSpecOrderIndex());
 		//FIXME: description field is not used in specification (only in persistance)
 	}
 	
@@ -104,6 +105,7 @@ public class DefinitionTransformer {
 			qa.setArlRule(qac.getQaConstraintSpec());
 			qa.setCode(qac.getQaConstraintId());
 			qa.setDescription(qac.getHumanReadableDescription());
+			qa.setSpecOrderIndex(qac.getOrderIndex());
 			step.getQaConstraints().add(qa ); 
 		});
 		pStep.getInputToOutputMappingRules().entrySet().stream().forEach(entry -> step.getIoMapping().put(entry.getKey(), entry.getValue()));

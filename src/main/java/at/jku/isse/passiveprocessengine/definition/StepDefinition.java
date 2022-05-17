@@ -27,7 +27,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	public static enum CoreProperties {expectedInput, expectedOutput, ioMappingRules, 
 							conditions,
 							qaConstraints,
-							inDND, outDND};
+							inDND, outDND, specOrderIndex};
 	
 	public static final String designspaceTypeId = StepDefinition.class.getSimpleName();
 	
@@ -169,6 +169,14 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		}
 	}
 	
+	public void setSpecOrderIndex(int index) {
+		instance.getPropertyAsSingle(CoreProperties.specOrderIndex.toString()).set(index);
+	}
+	
+	public Integer getSpecOrderIndex() {
+		return (Integer) instance.getPropertyAsValueOrElse(CoreProperties.specOrderIndex.toString(), () -> 0);
+	}
+	
 	@Override
 	public void deleteCascading() {
 		// deleting constraints:
@@ -215,6 +223,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 				typeStep.createPropertyType(CoreProperties.inDND.toString(), Cardinality.SINGLE, Workspace.STRING);
 				typeStep.createPropertyType(CoreProperties.outDND.toString(), Cardinality.SINGLE, Workspace.STRING);
 				typeStep.createPropertyType((CoreProperties.ioMappingRules.toString()), Cardinality.MAP, Workspace.STRING);
+				typeStep.createPropertyType((CoreProperties.specOrderIndex.toString()), Cardinality.SINGLE, Workspace.INTEGER);
 				return typeStep;
 			}
 	}

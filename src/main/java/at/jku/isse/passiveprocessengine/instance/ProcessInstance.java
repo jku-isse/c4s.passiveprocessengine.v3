@@ -2,23 +2,26 @@ package at.jku.isse.passiveprocessengine.instance;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import at.jku.isse.designspace.core.events.PropertyUpdateSet;
 import at.jku.isse.designspace.core.model.Cardinality;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.core.model.Property;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
+import at.jku.isse.designspace.rule.model.ConsistencyRule;
+import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep.CoreProperties;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses;
+import at.jku.isse.passiveprocessengine.instance.messages.Commands.*;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,16 +41,32 @@ public class ProcessInstance extends ProcessStep {
 	public ZonedDateTime getCurrentTimestamp() {
 		return ZonedDateTime.now(); //default value, to be replaced with time provider
 	}
+	
+	public ProcessScopedCmd prepareRuleEvaluationChange(ConsistencyRule cr, PropertyUpdateSet op) {
+		ConsistencyRuleType crt = (ConsistencyRuleType)cr.getInstanceType();
+		if (crt.name().startsWith("crd_prematuretrigger_") ) { 
+			log.debug(String.format("Queuing execution of Premature Trigger of step %s , trigger is now %s ", crt.name(), op.value().toString()));
+			StepDefinition sd = getDefinition().getStepDefinitionForPrematureConstraint(crt.name());
+			if (this.getProcessSteps().stream().anyMatch(step -> step.getDefinition().equals(sd)))
+				return null; // as we already have that step instantiated, no need to create further cmds
+			else
+				return new PrematureStepTriggerCmd(sd, this, Boolean.valueOf(op.value().toString()));
+		} else
+			return super.prepareRuleEvaluationChange(cr, op);
+	}
 
-	protected void createAndWireTask(StepDefinition sd) {
+	public ProcessStep createAndWireTask(StepDefinition sd) {
     	DecisionNodeInstance inDNI = getOrCreateDNI(sd.getInDND());
     	DecisionNodeInstance outDNI = getOrCreateDNI(sd.getOutDND());
     	if (getProcessSteps().stream().noneMatch(t -> t.getDefinition().getId().equals(sd.getId()))) {
         	ProcessStep step = ProcessStep.getInstance(ws, sd, inDNI, outDNI, this);
         	//step.setProcess(this);
-        	if (step != null)
+        	if (step != null) {
         		this.addProcessStep(step);
+        		return step;
+        	}
         }
+    	return null;
      }
 	
     private DecisionNodeInstance getOrCreateDNI(DecisionNodeDefinition dnd) {
@@ -144,6 +163,9 @@ public class ProcessInstance extends ProcessStep {
 		instance.getPropertyAsSet(CoreProperties.decisionNodeInstances.toString()).add(dni.getInstance());
 	}
 	
+
+	
+	
 	public void deleteCascading() {
 		// remove any lower-level instances this step is managing
 		// DNIs and Steps
@@ -152,6 +174,23 @@ public class ProcessInstance extends ProcessStep {
 		// we are not deleting input and output artifacts as we are just referencing them!
 		// finally delete self via super call
 		super.deleteCascading();
+	}
+	
+	public static Map<String, String> getConstraintValidityStatus(Workspace ws, ProcessDefinition pd) {
+		Map<String, String> status = ProcessStep.getConstraintValidityStatus(ws, pd);
+		InstanceType instType = getOrCreateDesignSpaceInstanceType(ws, pd);
+		//premature constraints:
+		pd.getPrematureTriggers().entrySet().stream()
+			.forEach(entry -> {
+				String ruleId = generatePrematureRuleName(entry.getKey(), pd);
+				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
+				if (crt == null) {
+					log.error("Expected Rule for existing process not found: "+ruleId);
+					status.put(ruleId, "Corrupt data - Expected Rule not found");
+				} else
+					status.put(ruleId, crt.hasRuleError() ? crt.ruleError() : "valid");
+			});
+		return status;
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws, ProcessDefinition td) {
@@ -166,12 +205,29 @@ public class ProcessInstance extends ProcessStep {
 			typeStep.createPropertyType(CoreProperties.processDefinition.toString(), Cardinality.SINGLE, ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws));
 			typeStep.createPropertyType(CoreProperties.stepInstances.toString(), Cardinality.SET, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
 			typeStep.createPropertyType(CoreProperties.decisionNodeInstances.toString(), Cardinality.SET, DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(ws));
+			td.getPrematureTriggers().entrySet().stream()
+			.forEach(entry -> {
+				if (entry.getValue() != null) {
+					String ruleName = generatePrematureRuleName(entry.getKey(), td);
+					ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeStep, ruleName, entry.getValue());
+					//typeStep.createPropertyType("crd_datamapping_"+entry.getKey(), Cardinality.SINGLE, crt);	// not sure we need a property here				
+					td.setPrematureConstraintNameStepDefinition(ruleName, entry.getKey());
+				}
+			});
 			return typeStep;
 		}
 	}
+	
+	public static String generatePrematureRuleName(String stepTypeName, ProcessDefinition pd) {
+		return "crd_prematuretrigger_"+stepTypeName+"_"+pd.getName();
+	}
 		
 	public static ProcessInstance getInstance(Workspace ws, ProcessDefinition sd) {
-		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+UUID.randomUUID());
+		return getInstance(ws, sd, UUID.randomUUID().toString());
+	}
+	
+	public static ProcessInstance getInstance(Workspace ws, ProcessDefinition sd, String namePostfix) {
+		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+namePostfix);
 		ProcessInstance pi = WrapperCache.getWrappedInstance(ProcessInstance.class, instance);
 		pi.init(sd, null, null, ws);
 		return pi;

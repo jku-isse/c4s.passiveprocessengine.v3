@@ -2,7 +2,6 @@ package at.jku.isse.passiveprocessengine.instance;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -25,12 +24,10 @@ import at.jku.isse.designspace.core.model.Property;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.SingleProperty;
 import at.jku.isse.designspace.core.model.Workspace;
-import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
-import at.jku.isse.passiveprocessengine.definition.IStepDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
@@ -88,7 +85,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		priorQAfulfilled = areQAconstraintsFulfilled();
 	}
 	
-	public ProcessScopedCmd processRuleEvaluationChange(ConsistencyRule cr, PropertyUpdateSet op) {
+	public ProcessScopedCmd prepareRuleEvaluationChange(ConsistencyRule cr, PropertyUpdateSet op) {
 		// now here we have to distinguish what this evaluation change implies
 		ConsistencyRuleType crt = (ConsistencyRuleType)cr.getInstanceType();
 		Conditions cond = determineCondition(crt);
@@ -105,10 +102,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			if (crt.name().startsWith("crd_datamapping") ) { 
 				if (Boolean.valueOf(op.value().toString()) == false) { // an unfulfilled datamapping rules
 				// now we need to "repair" this, i.e., set the output accordingly
-					log.debug(String.format("Datamapping %s will be repaired", crt.name()));
-					return new IOMappingInconsistentCmd(this, cr);
+					log.debug(String.format("Datamapping %s queued for repair", crt.name()));
+					return new IOMappingConsistencyCmd(this, cr, true);
 				} else {
 					log.debug(String.format("Datamapping %s now consistent", crt.name()));
+					return new IOMappingConsistencyCmd(this, cr, false);
 				}
 			} else if (crt.name().startsWith("crd_qaspec_") ) { // a qa constraint
 				log.debug(String.format("QA Constraint %s now %s ", crt.name(), op.value().toString()));
@@ -137,7 +135,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 	}
 	
-	public List<Events.ProcessChangedEvent> processIOAddEvent(PropertyUpdateAdd op) {
+	
+	public ProcessScopedCmd prepareIOAddEvent(PropertyUpdateAdd op) { //List<Events.ProcessChangedEvent>
 		// if in added, establish if this resembles unexpected late input 
 		if (op.name().startsWith("in_") 
 				&& ( this.getActualLifecycleState().equals(State.ACTIVE) 
@@ -152,15 +151,18 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				&& this.getActualLifecycleState().equals(State.COMPLETED) ){
 			Id addedId = (Id) op.value();
 			Element added = ws.findElement(addedId);
-			log.info(String.format("Step %s received unexpected late output %s %s, now propagating to successors", this.getName(), op.name(), added.name()  ));
-			// in case this is a ProcessInstance
-			if (getOutDNI() != null)
-				return getOutDNI().signalPrevTaskDataChanged(this);
+			log.info(String.format("Step %s received unexpected late output %s %s, queuing for propagation to successors", this.getName(), op.name(), added.name()  ));
+			// we should not just propagate, as the newly added output could be violating completion or qa constraints and we should not propagate the artifact just yet. -->
+			// return a potential propagation cause Command, that is later checked again, whether it is still valid.
+			if (getOutDNI() != null) { // to avoid NPE in case this is a ProcessInstance 
+				return new OutputChangedCmd(this, op);
+				//return getOutDNI().signalPrevTaskDataChanged(this);
+			}
 		}
-		return Collections.emptyList();
+		return null; //Collections.emptyList();
 	}
 	
-	public List<Events.ProcessChangedEvent> processIORemoveEvent(PropertyUpdateRemove op) {
+	public ProcessScopedCmd prepareIORemoveEvent(PropertyUpdateRemove op) { //List<Events.ProcessChangedEvent>
 		// if in removed, establish if this resembles unexpected late removeal 
 		if (op.name().startsWith("in_") 
 				&& ( this.getActualLifecycleState().equals(State.ACTIVE) 
@@ -170,14 +172,17 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 		else if (op.name().startsWith("out_") // if out removed, establish if this is late output removal, then propagate further
 				&& this.getActualLifecycleState().equals(State.COMPLETED) ){
-			log.info(String.format("Step %s had some output removed from %s after step completion, now propagating to successors", this.getName(), op.name()));
-			// in case this is a ProcessInstance
-			if (getOutDNI() != null)
-				return getOutDNI().signalPrevTaskDataChanged(this);
+			log.info(String.format("Step %s had some output removed from %s after step completion, queuing for propagation to successors", this.getName(), op.name()));
+			// we should not just propagate, as the newly added output could be violating completion or qa constraints and we should not propagate the artifact just yet. -->
+			// return a potential propagation cause Command, that is later checked again, whether it is still valid.
+			if (getOutDNI() != null) { // to avoid NPE in case this is a ProcessInstance
+				return new OutputChangedCmd(this, op);
+				//return getOutDNI().signalPrevTaskDataChanged(this);
+			}
 		}
 		else 
 			log.debug(String.format("Step %s had some output removed from %s, not propagating to successors yet", this.getName(), op.name()));
-		return Collections.emptyList();
+		return null; //Collections.emptyList();
 	}
 	
 	
@@ -567,16 +572,16 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws, StepDefinition td) {
-		String procName = td.getProcess() != null ? td.getProcess().getName() : "ROOTPROCESS";
+		String stepName = getProcessStepName(td);
 		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
 				.filter(it -> !it.isDeleted)
-				.filter(it -> it.name().equals(designspaceTypeId+"_"+td.getName()+"_"+procName))
+				.filter(it -> it.name().equals(stepName))
 				.findAny();
 		if (thisType.isPresent())
 			return thisType.get();
 		else {
 			InstanceType superType = getOrCreateDesignSpaceCoreSchema(ws);
-			InstanceType typeStep = ws.createInstanceType(designspaceTypeId+"_"+td.getName()+"_"+procName, ws.TYPES_FOLDER, superType);
+			InstanceType typeStep = ws.createInstanceType(stepName, ws.TYPES_FOLDER, superType);
 			td.getExpectedInput().entrySet().stream()
 				.forEach(entry -> {
 						typeStep.createPropertyType("in_"+entry.getKey(), Cardinality.SET, entry.getValue());
@@ -619,6 +624,13 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		return "crd_qaspec_"+spec.getQaConstraintId();
 	}
 
+	public static String getProcessStepName(StepDefinition sd) {
+		String procName = sd.getProcess() != null ? sd.getProcess().getName() : "ROOTPROCESS";
+		return designspaceTypeId+"_"+sd.getName()+"_"+procName;
+	}
+	
+
+	
 	protected static ProcessStep getInstance(Workspace ws, StepDefinition sd, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, ProcessInstance scope) {
 		assert(sd != null);
 		assert(inDNI != null);

@@ -3,18 +3,23 @@ package at.jku.isse.passiveprocessengine.instance.messages;
 import artifactapi.ArtifactIdentifier;
 import artifactapi.IArtifact;
 import artifactapi.ResourceLink;
+import at.jku.isse.designspace.core.events.PropertyUpdate;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
+import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import lombok.Data;
-
+import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,154 +27,60 @@ import java.util.Map.Entry;
 
 public class Commands {
 
-	public interface IdentifiableCmd {
-       // String getId();
-        
+	public interface IdentifiableCmd {       
     }
 	
 	public static abstract class ProcessScopedCmd implements IdentifiableCmd{
 		
-//		String parentCauseRef;
-//		public String getParentCauseRef() {
-//			return parentCauseRef;
-//		}
-//		public ProcessScopedCmd setParentCauseRef(String parentCauseRef) {
-//			this.parentCauseRef = parentCauseRef;
-//			return this;
-//		}
 		
 		public abstract ProcessInstance getScope();
 		
 		public abstract List<Events.ProcessChangedEvent> execute();
 	}
+
+    @Slf4j
+	@Data
+	public static class PrematureStepTriggerCmd extends ProcessScopedCmd {
+		private final StepDefinition sd;
+		private final ProcessInstance procInst;
+		private final boolean isFulfilled;
+		
+		public List<Events.ProcessChangedEvent> execute() {
+			if (isFulfilled) {
+				if (getScope().getProcessSteps().stream().noneMatch(t -> t.getDefinition().getId().equals(sd.getId()))) {
+					ProcessStep step = getScope().createAndWireTask(sd);
+					if (step != null) {
+						//TODO: set more precise inputs (or from further distance)
+						//TODO: trigger correct step transitions
+						List<Events.ProcessChangedEvent> events = new LinkedList<>();
+						events.addAll(step.getInDNI().tryDataPropagationToPrematurelyTriggeredTask());
+						events.addAll(step.setActivationConditionsFulfilled());
+						return events;
+					} else {
+						log.warn(String.format("No step created while trying to execute premature invocation of %s in %s ", sd.getName(), procInst.getName()));
+						return Collections.emptyList();
+					}
+				} else { // nothing to do
+					log.debug(String.format("No need to execute premature invocation of %s in %s as step exists in the mean time", sd.getName(), procInst.getName()));
+					return Collections.emptyList();
+				}
+			} // nothing to do
+				return Collections.emptyList();
+		}
+		
+		@Override
+		public ProcessInstance getScope() {
+			return procInst;
+		}
+
+		@Override
+		public String toString() {
+			return "PrematureStepTriggerCmd [" + sd.getName() + " in "+procInst.getName()+" premature triggered: " + isFulfilled
+					+ "]";
+		}
+	}
 	
-//	@Data
-//	public static class CompositeCmd extends TrackableCmd {
-//        private final String id;
-//		private final List<TrackableCmd> commandList;
-//	}
-	
-//    @Data
-//    public static class CreateWorkflowCmd extends TrackableCmd{
-//        private final String id;
-//        private final Map<ArtifactIdentifier, String> input;
-//        private final String definitionName;
-//    }
-//    
-//    @Data
-//    public static class CreateSubWorkflowCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//        private final String parentWfiId;
-//        private final String parentWftId;
-//        private final String definitionName;
-//        private final Map<ArtifactIdentifier, String> input;
-//    }
-//
-//    @Data
-//    public static class CompleteDataflowCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//        private final String dniId;
-//        private final ResourceLink res;
-//    }
-//
-//    @Data
-//    public static class DeleteCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//    }
-//    @Data
-//    public static class AddConstraintsCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//        private final String wftId;
-//        private final Map<String, String> rules;
-//    }
-//    @Data
-//    public static class AddEvaluationResultToConstraintCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//        private final String wftId;
-//        private final String qacId;
-//        private final Map<ResourceLink, Boolean> res;
-//        private final CorrelationTuple corr;
-//        private final Instant time;
-//    }
-//    @Data
-//    public static class CheckConstraintCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//        private final String constrId;
-//    }
-//    @Data
-//    public static class CheckAllConstraintsCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//    }
-//    @Data
-//    public static class AddInputCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//        private final String wftId;
-//        private final String artifactId;
-//        private final String role;
-//        private final String type;
-//    }
-//    @Data
-//    public static class AddOutputCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//        private final String wftId;
-//        private final String artifactId;
-//        private final String role;
-//        private final String type;
-//    }
-//    @Data
-//    public static class AddInputToWorkflowCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//        private final String artifactId;
-//        private final String role;
-//        private final String type;
-//    }
-//    @Data
-//    public static class AddOutputToWorkflowCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//        private final String artifactId;
-//        private final String role;
-//        private final String type;
-//    }
-//    @Data
-//    public static class RemoveOutputCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//        private final String wftId;
-//        private final ArtifactIdentifier artifactId;
-//        private final String role;
-//    }
-//    @Data
-//    public static class RemoveInputCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//        private final String wftId;
-//        private final ArtifactIdentifier artifactId;
-//        private final String role;
-//    }
-//    @Data
-//    public static class UpdateArtifactsCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//        private final List<IArtifact> artifacts;
-//    }
-//    @Data
-//    public static class SetPreConditionsFulfillmentCmd extends TrackableCmd {
-//        private final String id;
-//        private final String wftId;
-//        private final boolean isFulfilled;
-//    }
-    
+	@EqualsAndHashCode(callSuper=false)
 	@Data 
 	public static class QAConstraintChangedCmd extends ProcessScopedCmd {
 		private final ProcessStep step;
@@ -191,13 +102,18 @@ public class Commands {
 		}
 	}
 	
+	@EqualsAndHashCode(callSuper=false)
 	@Data
-	public static class IOMappingInconsistentCmd extends ProcessScopedCmd {
+	public static class IOMappingConsistencyCmd extends ProcessScopedCmd {
 		private final ProcessStep step;
 		private final ConsistencyRule crule;
+		private final boolean isInconsistent;
 	
 		public List<Events.ProcessChangedEvent> execute() {
-			return InputToOutputMapper.mapInputToOutputInStepScope(step, crule);
+			if (isInconsistent)
+				return InputToOutputMapper.mapInputToOutputInStepScope(step, crule);
+			else // nothing to do
+				return Collections.emptyList();
 		}
 
 		@Override
@@ -209,8 +125,11 @@ public class Commands {
 		public ProcessInstance getScope() {
 			return step.getProcess();
 		}
+		
+		
 	}
     
+	@EqualsAndHashCode(callSuper=false)
     @Data
     public static class ConditionChangedCmd extends ProcessScopedCmd {
         private final ProcessStep step;
@@ -220,7 +139,9 @@ public class Commands {
 		public List<Events.ProcessChangedEvent> execute() {
 			switch(condition) {
 			case ACTIVATION:
-				return step.setActivationConditionsFulfilled();
+				if (isFulfilled)
+					return step.setActivationConditionsFulfilled();
+				else return Collections.emptyList();
 			case CANCELATION:
 				return step.setCancelConditionsFulfilled(isFulfilled);
 			case POSTCONDITION:
@@ -244,7 +165,30 @@ public class Commands {
 		}
     }
     
-  
+	@Data
+	public static class OutputChangedCmd extends ProcessScopedCmd {
+		private final ProcessStep step;
+		private final PropertyUpdate change;
+		
+		public List<Events.ProcessChangedEvent> execute() {
+			if (step.getOutDNI() != null && step.getActualLifecycleState().equals(State.COMPLETED)) // to avoid NPE in case this is a ProcessInstance AND still some unexpected late output change
+				return step.getOutDNI().signalPrevTaskDataChanged(step);
+			else
+				return Collections.emptyList();
+		}
+
+		@Override
+		public String toString() {
+			return "OutputChangedCmd [" + step.getDefinition().getName() + " " + change.name() + "]";
+		}
+		
+		@Override
+		public ProcessInstance getScope() {
+			return step.getProcess();
+		}
+		
+		
+	}
     
     
 //    @Data

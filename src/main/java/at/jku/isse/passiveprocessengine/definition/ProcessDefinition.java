@@ -12,16 +12,19 @@ import at.jku.isse.designspace.core.model.Cardinality;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.ListProperty;
+import at.jku.isse.designspace.core.model.MapProperty;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
+import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.definition.StepDefinition.CoreProperties;
 import at.jku.isse.passiveprocessengine.instance.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 
 public class ProcessDefinition extends StepDefinition{
 
-	public static enum CoreProperties {decisionNodeDefinitions, stepDefinitions}
+	public static enum CoreProperties {decisionNodeDefinitions, stepDefinitions, prematureTriggers, prematureTriggerMappings}
 	
 	public static final String designspaceTypeId = ProcessDefinition.class.getSimpleName();
 	
@@ -66,10 +69,49 @@ public class ProcessDefinition extends StepDefinition{
 		.findAny().orElse(null);
 	}
 	
+	public StepDefinition getStepDefinitionByName(String name) {
+		return getStepDefinitions().stream()
+				.filter(step -> step.getName().equals(name))
+				.findAny().orElse(null);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void addPrematureTrigger(String stepName, String trigger) {
+		instance.getPropertyAsMap(CoreProperties.prematureTriggers.toString()).put(stepName, trigger);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Map<String, String> getPrematureTriggers() {
+		MapProperty<?> triggers = instance.getPropertyAsMap(CoreProperties.prematureTriggers.toString());
+		if (triggers != null && triggers.get() != null) {
+			return ( Map<String, String>) triggers.get();
+		} else return Collections.emptyMap();
+	}
+	
+	public StepDefinition getStepDefinitionForPrematureConstraint(String constraintName) {
+		MapProperty<?> triggers = instance.getPropertyAsMap(CoreProperties.prematureTriggerMappings.toString());
+		if (triggers != null && triggers.get() != null) {
+			String stepDefName =  (( Map<String, String>) triggers.get()).get(constraintName);
+			return getStepDefinitionByName(stepDefName);
+		} else return null;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void setPrematureConstraintNameStepDefinition(String constraintName, String stepDefinitionName) {
+		instance.getPropertyAsMap(CoreProperties.prematureTriggerMappings.toString()).put(constraintName, stepDefinitionName);
+	}
+	
 	@Override
 	public void deleteCascading() {
 		getDecisionNodeDefinitions().forEach(dnd -> dnd.deleteCascading());
 		getStepDefinitions().forEach(sd -> sd.deleteCascading());
+		InstanceType thisType = ProcessInstance.getOrCreateDesignSpaceInstanceType(ws, this);
+		this.getPrematureTriggers().entrySet().stream()
+		.forEach(entry -> {
+			String name = ProcessInstance.generatePrematureRuleName(entry.getKey(), this);
+			ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, thisType, entry.getValue());
+			if (crt != null) crt.delete();
+		});
 		super.deleteCascading();
 	}
 	
@@ -97,6 +139,8 @@ public class ProcessDefinition extends StepDefinition{
 				InstanceType typeStep = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, StepDefinition.getOrCreateDesignSpaceCoreSchema(ws));
 				typeStep.createPropertyType(CoreProperties.stepDefinitions.toString(), Cardinality.LIST, StepDefinition.getOrCreateDesignSpaceCoreSchema(ws));
 				typeStep.createPropertyType(CoreProperties.decisionNodeDefinitions.toString(), Cardinality.SET, DecisionNodeDefinition.getOrCreateDesignSpaceCoreSchema(ws));
+				typeStep.createPropertyType(CoreProperties.prematureTriggers.toString(), Cardinality.MAP, Workspace.STRING);
+				typeStep.createPropertyType(CoreProperties.prematureTriggerMappings.toString(), Cardinality.MAP, Workspace.STRING);
 				return typeStep;
 			}
 	}

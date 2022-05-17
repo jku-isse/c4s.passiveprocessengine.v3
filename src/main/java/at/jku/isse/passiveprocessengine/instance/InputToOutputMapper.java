@@ -28,7 +28,10 @@ public class InputToOutputMapper {
 
 	@SuppressWarnings("unchecked")
 	public static List<Events.ProcessChangedEvent> mapInputToOutputInStepScope(ProcessStep step, ConsistencyRule crule) {
-		if (crule.isConsistent()) return Collections.emptyList(); // nothing to do
+		if (crule.isConsistent()) {
+			log.info("MappingRule became consistent while request was queued "+crule.toString());
+			return Collections.emptyList(); // nothing to do
+		}
 
 		ConsistencyRuleType crt = (ConsistencyRuleType) crule.getInstanceType();
 		RepairNode repairTree = RuleService.repairTree(crule);
@@ -56,7 +59,8 @@ public class InputToOutputMapper {
 		 Set<Repair> repairs = //repairTree.getConcreteRepairs(objects, 1);// 
 				 				getConcreteRepairs(objects, 1, crt, crule.contextInstance()); 
 		if (repairs == null) {
-			log.error("FATAL: No repairs could be created for "+crt.name());
+			String state = crule.isConsistent() ? "CONSISTENT" : "INCONSISTENT";
+			log.error("FATAL: No repairs could be created for "+state+" "+crt.name());
 			// check if there is a rule error, print that, hence later retry needed
 			return Collections.emptyList();
 		}
@@ -167,7 +171,8 @@ public class InputToOutputMapper {
   RepairNode repairTree = RuleService.repairTree(inconsistency);
   if(repairTree == null) {
   	RuleService.currentWorkspace = crd.workspace;
-  	log.error("Repairtree is null for crd: "+crd);
+  	String state = inconsistency.isConsistent() ? "CONSISTENT" : "INCONSISTENT";
+  	log.error("Repairtree is null for "+state+" crd: "+crd);
   	return null;
   }
   RepairTreeFilter rtf = new OutputUpdateRepairTreeFilter();

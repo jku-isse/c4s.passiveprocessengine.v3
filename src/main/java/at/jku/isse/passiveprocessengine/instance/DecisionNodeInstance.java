@@ -80,7 +80,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			// then we are done with this workflow and execute any final mappings into the workflows output
 			 isEndOfProcess = true;
 		}
-		return checkAndExecuteDataMappings(isEndOfProcess);// we just check everything, not too expensive as mappings are typically few.
+		return checkAndExecuteDataMappings(isEndOfProcess, false);// we just check everything, not too expensive as mappings are typically few.
 	}
 	
 	public List<Events.ProcessChangedEvent> tryInConditionsFullfilled() {	
@@ -289,7 +289,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			 isEndOfProcess = true;
 		}
 		if (this.isInflowFulfilled() && this.hasPropagated()) {
-			events.addAll(checkAndExecuteDataMappings(isEndOfProcess));
+			events.addAll(checkAndExecuteDataMappings(isEndOfProcess, false));
 			if (isEndOfProcess)
 				events.addAll(this.getProcess().setPostConditionsFulfilled(true));
 		}
@@ -300,10 +300,14 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		return events;
 	}
 	
-	private List<Events.ProcessChangedEvent> checkAndExecuteDataMappings(boolean isEndOfProcess) {
+	public List<Events.ProcessChangedEvent> tryDataPropagationToPrematurelyTriggeredTask() {
+		return checkAndExecuteDataMappings(false, true);
+	}
+	
+	private List<Events.ProcessChangedEvent> checkAndExecuteDataMappings(boolean isEndOfProcess, boolean isPremature) {
 		// all mappings of this DNI resolved:
 		Set<RuntimeMapping> templates = getDefinition().getMappings().stream()
-				.map(mdef -> resolveMappingDefinitionToTemplates(mdef, isEndOfProcess))
+				.map(mdef -> resolveMappingDefinitionToTemplates(mdef, isEndOfProcess, isPremature))
 				.filter(Objects::nonNull)
 				.collect(Collectors.toSet());
 
@@ -415,14 +419,14 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		}
 	}
 	
-	private RuntimeMapping resolveMappingDefinitionToTemplates(MappingDefinition mdef, boolean isEndOfProcess) {
+	private RuntimeMapping resolveMappingDefinitionToTemplates(MappingDefinition mdef, boolean isEndOfProcess, boolean isPremature) {
 		RuntimeMapping templateEM = new RuntimeMapping();
 		templateEM.setFromParam(mdef.getFromParameter());
 		templateEM.setToParam(mdef.getToParameter());
 		// first get the source
 		getProcess().getProcessSteps().stream()	
 		.filter(wft -> wft.getDefinition().getName().equals(mdef.getFromStepType()) )
-		.filter(wft -> wft.getExpectedLifecycleState().equals(State.COMPLETED) &&  wft.getActualLifecycleState().equals(State.COMPLETED)) // we only map data for tasks that are indeed completed
+		.filter(wft -> isPremature || (wft.getExpectedLifecycleState().equals(State.COMPLETED) &&  wft.getActualLifecycleState().equals(State.COMPLETED))) // we only map data for tasks that are indeed completed or we map for a premature step
 		.filter(Objects::nonNull)
 		.findFirst().ifPresentOrElse( wft -> { if (isEndOfProcess) 
 												templateEM.setDirection(FlowDir.outToOut);
@@ -463,9 +467,10 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			;
 		}
 		
-		if (templateEM.getToStep() == null) // not found, e.g., a step not yet created, should not happen
+		if (templateEM.getToStep() == null) { // not found, e.g., a step not yet created, should not happen 
+			//(might happen if only one of many subsequent steps are prematurely started, thus the other not yet instantiated)
 			return null;
-	
+		}
 		return templateEM;
 	}
 	

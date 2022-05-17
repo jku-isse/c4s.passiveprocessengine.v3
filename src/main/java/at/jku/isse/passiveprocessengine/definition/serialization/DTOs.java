@@ -33,6 +33,7 @@ public class DTOs {
 	@Data
 	public static class QAConstraint extends Element {
 		String arlRule;
+		int specOrderIndex = 0;
 	}
 	
 	@EqualsAndHashCode(callSuper = true)
@@ -46,6 +47,7 @@ public class DTOs {
 		Map<String,String> ioMapping = new HashMap<>();
 		Map<Conditions,String> conditions = new HashMap<>();
 		Set<QAConstraint> qaConstraints = new HashSet<>();
+		int specOrderIndex = 0;
 	} 
 
 	@ToString(doNotUseGetters = true)
@@ -78,6 +80,7 @@ public class DTOs {
 	public static class Process extends Step {
 		List<Step> steps = new LinkedList<>();
 		List<DecisionNode> dns = new LinkedList<>();
+		Map<String, String> prematureStepConditions = new HashMap<>();
 		
 		public Step getStepByCode(String code) {
 			return steps.stream().filter(step -> step.getCode().equals(code)).findAny().orElse(null);

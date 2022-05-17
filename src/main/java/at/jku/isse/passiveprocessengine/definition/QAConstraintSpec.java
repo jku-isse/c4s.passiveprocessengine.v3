@@ -8,11 +8,12 @@ import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.definition.StepDefinition.CoreProperties;
 
 public class QAConstraintSpec extends InstanceWrapper{
 
 	
-	public static enum CoreProperties {qaConstraintSpec, humanReadableDescription};
+	public static enum CoreProperties {qaConstraintSpec, humanReadableDescription, specOrderIndex};
 	public static final String designspaceTypeId = QAConstraintSpec.class.getSimpleName();
 	
 	public QAConstraintSpec(Instance instance) {
@@ -31,6 +32,10 @@ public class QAConstraintSpec extends InstanceWrapper{
 		return (String) instance.getPropertyAsValue(CoreProperties.humanReadableDescription.toString());
 	}
 	
+	public Integer getOrderIndex() {
+		return (Integer) instance.getPropertyAsValue(CoreProperties.specOrderIndex.toString());
+	}
+	
 	@Override
 	public void deleteCascading() {
 		instance.delete();
@@ -47,14 +52,16 @@ public class QAConstraintSpec extends InstanceWrapper{
 				// constraintId maps to Instance name property
 				typeStep.createPropertyType(CoreProperties.qaConstraintSpec.toString(), Cardinality.SINGLE, Workspace.STRING);
 				typeStep.createPropertyType(CoreProperties.humanReadableDescription.toString(), Cardinality.SINGLE, Workspace.STRING);
+				typeStep.createPropertyType((CoreProperties.specOrderIndex.toString()), Cardinality.SINGLE, Workspace.INTEGER);
 				return typeStep;
 			}
 	}
 	
-	public static QAConstraintSpec createInstance(String qaConstraintId, String qaConstraintSpec, String humanReadableDescription, Workspace ws) {
+	public static QAConstraintSpec createInstance(String qaConstraintId, String qaConstraintSpec, String humanReadableDescription, int specOrderIndex, Workspace ws) {
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), qaConstraintId);
 		instance.getPropertyAsSingle(CoreProperties.qaConstraintSpec.toString()).set(qaConstraintSpec);
 		instance.getPropertyAsSingle(CoreProperties.humanReadableDescription.toString()).set(humanReadableDescription);
+		instance.getPropertyAsSingle(CoreProperties.specOrderIndex.toString()).set(specOrderIndex);
 		return WrapperCache.getWrappedInstance(QAConstraintSpec.class, instance);
 	}
 

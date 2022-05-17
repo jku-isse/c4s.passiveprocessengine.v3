@@ -124,9 +124,9 @@ public class TestProcesses {
 			
 			sd1.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 			sd1.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() = self.in_jiraIn->asList()->first()->asType(<"+typeJira.getQualifiedName()+">).requirementIDs->size()");
-			QAConstraintSpec qa1 = QAConstraintSpec.createInstance("sd1-qa1-state", "self.out_jiraOut->forAll( issue | issue.state = 'Open')", "All issue states must be 'Open'", ws);
+			QAConstraintSpec qa1 = QAConstraintSpec.createInstance("sd1-qa1-state", "self.out_jiraOut->forAll( issue | issue.state = 'Open')", "All issue states must be 'Open'", 1,ws);
 			sd1.addQAConstraint(qa1);
-			QAConstraintSpec qa2 = QAConstraintSpec.createInstance("sd1-qa2-state", "self.out_jiraOut->forAll( issue | issue.state <> 'InProgress')", "None of the issue states must be 'InProgress'", ws);
+			QAConstraintSpec qa2 = QAConstraintSpec.createInstance("sd1-qa2-state", "self.out_jiraOut->forAll( issue | issue.state <> 'InProgress')", "None of the issue states must be 'InProgress'", 2,ws);
 			sd1.addQAConstraint(qa2);
 			sd1.setInDND(dnd1);
 			sd1.setOutDND(dnd2);
@@ -138,7 +138,7 @@ public class TestProcesses {
 			sd2.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() >= 0");
 			sd2.addInputToOutputMappingRule("jiraIn2jiraOut2", "self.in_jiraIn->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and "
 							+ " self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
-			QAConstraintSpec qa3 = QAConstraintSpec.createInstance("sd2-qa3-state", "self.in_jiraIn->forAll( issue | issue.state = 'Closed')", "All in issue states must be 'Closed'", ws);
+			QAConstraintSpec qa3 = QAConstraintSpec.createInstance("sd2-qa3-state", "self.in_jiraIn->forAll( issue | issue.state = 'Closed')", "All in issue states must be 'Closed'", 3,ws);
 			sd2.addQAConstraint(qa3);
 			sd2.setInDND(dnd2);
 			sd2.setOutDND(dnd3);
