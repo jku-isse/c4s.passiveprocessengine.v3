@@ -198,6 +198,17 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 		.collect(Collectors.toList());
 		
 		prepareQueueExecution(queuedEffects); // here we can subclass and manage commands, lazy loading etc
+		return executeCommands(); // here we execute, or in subclass, when we are still lazy loading, skip execution until later
+	}
+	
+	protected void prepareQueueExecution(List<ProcessScopedCmd> mostRecentQueuedEffects) {
+		mostRecentQueuedEffects.forEach(cmd -> {
+			cmdQueue.put(cmd.toString(), cmd);
+		});
+		
+	}
+	
+	protected Set<ProcessInstance> executeCommands() {
 		Collection<ProcessScopedCmd> relevantEffects = cmdQueue.values();
 		// now lets just execute all commands
 		// but first we should check if we need to load lazy fetched artifacts that might override/undo the queuedEffects
@@ -254,24 +265,18 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 					.flatMap(cmd -> cmd.execute().stream())
 					.collect(Collectors.toList()));
 			
+			
+			Set<ProcessInstance> procs = new HashSet<>();
+			//procs.addAll(relevantEffects.stream().map(cmd -> cmd.getScope()).collect(Collectors.toSet()));
+			procs.addAll(cmdEvents.stream().map(event -> event.getProcScope()).filter(Objects::nonNull).collect(Collectors.toSet()));
 			relevantEffects.clear();
+			cmdQueue.clear();
 			ws.concludeTransaction();
 			//ws.commit();
-			Set<ProcessInstance> procs = new HashSet<>();
-			procs.addAll(relevantEffects.stream().map(cmd -> cmd.getScope()).collect(Collectors.toSet()));
-			procs.addAll(cmdEvents.stream().map(event -> event.getProcScope()).filter(Objects::nonNull).collect(Collectors.toSet()));
-			
 			//TODO: do something with the change events from command based effects, if needed, e.g., for LTE-based checking
 			return procs;
 		} else
 			return Collections.emptySet();
-	}
-	
-	protected void prepareQueueExecution(List<ProcessScopedCmd> mostRecentQueuedEffects) {
-		mostRecentQueuedEffects.forEach(cmd -> {
-			cmdQueue.put(cmd.toString(), cmd);
-		});
-		
 	}
 	
 	public static class CommandComparator implements Comparator<ConditionChangedCmd> {

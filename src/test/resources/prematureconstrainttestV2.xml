@@ -1,0 +1,479 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="n~zSfOoBX_-ZfBjz?5GK">story</variable>
+    <variable id="Xg1A%?@40.5oj`/g[|@f">mmfSubtask</variable>
+    <variable id=";}25dT@Yy4*W$R7!CRR3">sucSubtask</variable>
+    <variable id="DETYScD|z/I6BaWSqrJc">buc</variable>
+    <variable id="|^P%S].|i~FDqK@b/xTh">cscSubtask</variable>
+    <variable id="^!QDLL@!C|!H/X@__qEe">mmf</variable>
+    <variable id=".?1:xRfI,WRc.#lf2`#U">suc</variable>
+    <variable id="4e`RvkO9MVHut_)bFenQ">csc</variable>
+  </variables>
+  <block type="procedures_defnoreturn" id="Ihn6+CCS7W9=hv{^Q:d+" x="113" y="38">
+    <mutation>
+      <arg name="story" varid="n~zSfOoBX_-ZfBjz?5GK"></arg>
+    </mutation>
+    <field name="NAME">PrematureTest</field>
+    <comment pinned="false" h="80" w="160">Describe this function...</comment>
+    <statement name="STACK">
+      <block type="variables_set" id="i$Yq3q+M]PA`.C)W3q8(">
+        <field name="VAR" id="n~zSfOoBX_-ZfBjz?5GK">story</field>
+        <value name="VALUE">
+          <block type="artifact" id="mO0+(2h`8akDGGU?*%)q">
+            <field name="Type">git_issue</field>
+          </block>
+        </value>
+        <next>
+          <block type="artuse" id="/xUvoJ^K0zrMV5BD$zp[">
+            <field name="roletext">Param</field>
+            <value name="NAME">
+              <block type="variables_get" id="je|v[uiypg.$qiog[E,[">
+                <field name="VAR" id="n~zSfOoBX_-ZfBjz?5GK">story</field>
+              </block>
+            </value>
+            <next>
+              <block type="step" id="7KCYzg}K]7rv+OHU.fLU">
+                <field name="StepId">PrepareProcess</field>
+                <statement name="Input">
+                  <block type="artuse" id="^7-l43E^VIT6D*,^_WvY">
+                    <field name="roletext">Param</field>
+                    <value name="NAME">
+                      <block type="variables_get" id="*vEZ)Xcg3g0_i#yIFa4|">
+                        <field name="VAR" id="n~zSfOoBX_-ZfBjz?5GK">story</field>
+                      </block>
+                    </value>
+                  </block>
+                </statement>
+                <statement name="Transitions">
+                  <block type="transition" id="P/])gpP#;q0csTEXG%w*">
+                    <field name="State">PRECONDITION</field>
+                    <value name="condition">
+                      <block type="text" id="lrX#4FC]HX{Mp.pJlhVL">
+                        <field name="TEXT">self.in_story-&gt;size() = 1 and self.in_story-&gt;any() -&gt;asType(&lt;root/types/git_issue&gt;).labels-&gt;includes('Story')</field>
+                      </block>
+                    </value>
+                    <next>
+                      <block type="transition" id="okx*m#~GhODX$G=[awu)">
+                        <field name="State">POSTCONDITION</field>
+                        <value name="condition">
+                          <block type="text" id="*=UUSs3ip:.lr0~a`z*i">
+                            <field name="TEXT">self.out_mmfSubtask-&gt;size() &gt; 0 and self.out_sucSubtask-&gt;size() &gt; 0 and self.out_cscSubtask-&gt;size() &gt; 0</field>
+                          </block>
+                        </value>
+                      </block>
+                    </next>
+                  </block>
+                </statement>
+                <statement name="Datamappings">
+                  <block type="datamapping" id="a72yXhw/}Ql}-5%8!^|N">
+                    <field name="mappingId">mmfSubtask</field>
+                    <field name="mappingSpec">self.in_story-&gt;any()&#10;  -&gt;asType(&lt;root/types/git_issue&gt;)&#10;     .linkedIssues&#10;-&gt;select( ref | ref.title.substring(1,16).equalsIgnoreCase('WriteOrReviseMMF'))-&gt;asSet()&#10;-&gt;symmetricDifference(self.out_mmfSubtask)&#10;-&gt;size() = 0</field>
+                    <next>
+                      <block type="datamapping" id="3_X-$(c)$T~VdtG}dnY%">
+                        <field name="mappingId">sucSubtask</field>
+                        <field name="mappingSpec">self.in_story-&gt;any()&#10;  -&gt;asType(&lt;root/types/git_issue&gt;)&#10;     .linkedIssues&#10;-&gt;select( ref | ref.title.substring(1,11).equalsIgnoreCase('RefineToSUC'))-&gt;asSet()&#10;-&gt;symmetricDifference(self.out_sucSubtask)&#10;-&gt;size() = 0</field>
+                        <next>
+                          <block type="datamapping" id="rjMzW6t$;dF6,8~Hlhd~">
+                            <field name="mappingId">cscSubtask</field>
+                            <field name="mappingSpec">self.in_story-&gt;any()&#10;  -&gt;asType(&lt;root/types/git_issue&gt;)&#10;     .linkedIssues&#10;-&gt;select( ref | ref.title.substring(1,17).equalsIgnoreCase('CreateOrRefineCSC'))&#10;-&gt;asSet()&#10;-&gt;symmetricDifference(self.out_cscSubtask)&#10;-&gt;size() = 0</field>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </statement>
+                <statement name="Output">
+                  <block type="variables_set" id="ie.--m^bnEa~cCW4O%d(">
+                    <field name="VAR" id="Xg1A%?@40.5oj`/g[|@f">mmfSubtask</field>
+                    <value name="VALUE">
+                      <block type="artifact" id="SH4*FbF![3V#x5(Uw$1r">
+                        <field name="Type">git_issue</field>
+                      </block>
+                    </value>
+                    <next>
+                      <block type="variables_set" id="VW`g1o6pISzjJh-D}+:.">
+                        <field name="VAR" id=";}25dT@Yy4*W$R7!CRR3">sucSubtask</field>
+                        <value name="VALUE">
+                          <block type="artifact" id="*UQMGhF!-bRb;OB2#G|f">
+                            <field name="Type">git_issue</field>
+                          </block>
+                        </value>
+                        <next>
+                          <block type="variables_set" id="Tk9{x)9@6WH_j3wKkYig">
+                            <field name="VAR" id="|^P%S].|i~FDqK@b/xTh">cscSubtask</field>
+                            <value name="VALUE">
+                              <block type="artifact" id="UrmlB%ZVarTq+JPk:lsT">
+                                <field name="Type">git_issue</field>
+                              </block>
+                            </value>
+                            <next>
+                              <block type="artuse" id="(N;Yh,puNEnu}JYhWP$k">
+                                <field name="roletext">Param</field>
+                                <value name="NAME">
+                                  <block type="variables_get" id="K_#]/[HmnGqMrzVaSZX#">
+                                    <field name="VAR" id="Xg1A%?@40.5oj`/g[|@f">mmfSubtask</field>
+                                  </block>
+                                </value>
+                                <next>
+                                  <block type="artuse" id="TQ9brHQ.WgjACeq^~%6t">
+                                    <field name="roletext">Param</field>
+                                    <value name="NAME">
+                                      <block type="variables_get" id="`?texhh;=HgfM0qji#_[">
+                                        <field name="VAR" id=";}25dT@Yy4*W$R7!CRR3">sucSubtask</field>
+                                      </block>
+                                    </value>
+                                    <next>
+                                      <block type="artuse" id="465z:8u^rumF/4z}#n6@">
+                                        <field name="roletext">Param</field>
+                                        <value name="NAME">
+                                          <block type="variables_get" id="JyHT@3`LI,;bH(@rnYbQ">
+                                            <field name="VAR" id="|^P%S].|i~FDqK@b/xTh">cscSubtask</field>
+                                          </block>
+                                        </value>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </statement>
+                <next>
+                  <block type="step" id=";GtP8|dGV|QO.l}!#E|B">
+                    <field name="StepId">WriteOrReviseMMF</field>
+                    <statement name="Input">
+                      <block type="artuse" id="c}KHY^j+|Ly`E$7JmKWI">
+                        <field name="roletext">Param</field>
+                        <value name="NAME">
+                          <block type="variables_get" id="o~^O7yAEn?EFNca6qDZ)">
+                            <field name="VAR" id="Xg1A%?@40.5oj`/g[|@f">mmfSubtask</field>
+                          </block>
+                        </value>
+                        <next>
+                          <block type="artuse" id="IDqv1EsE/@`MgoTT1Z)L">
+                            <field name="roletext">Param</field>
+                            <value name="NAME">
+                              <block type="variables_get" id="B,b:EI77`Z%`}=61e(1B">
+                                <field name="VAR" id="n~zSfOoBX_-ZfBjz?5GK">story</field>
+                              </block>
+                            </value>
+                          </block>
+                        </next>
+                      </block>
+                    </statement>
+                    <statement name="Transitions">
+                      <block type="transition" id="N}*Pbw,)t7(1@^xqKv7|">
+                        <field name="State">ACTIVATION</field>
+                        <value name="condition">
+                          <block type="constraint" id="KV`?a~bu3Lt;,/24-Y!@">
+                            <field name="arlRule">self.in_story-&gt;any()&#10;  -&gt;asType(&lt;root/types/git_issue&gt;)&#10;     .linkedIssues&#10;-&gt;select( ref3 | ref3.title.substring(1,16).equalsIgnoreCase('WriteOrReviseMMF'))&#10; -&gt;size() &gt; 0</field>
+                          </block>
+                        </value>
+                        <next>
+                          <block type="transition" id="w24bJgN(B6HMvt:kdha0">
+                            <field name="State">POSTCONDITION</field>
+                            <comment pinned="false" h="69" w="319">Completed if closed and there is at least one buc and at least one mmf linked</comment>
+                            <value name="condition">
+                              <block type="constraint" id="X1Y9CGu8SfLI,.KOOCEx">
+                                <field name="arlRule">self.in_mmfSubtask&#10;-&gt;any()&#10;-&gt;asType(&lt;root/types/git_issue&gt;)&#10;.state.equalsIgnoreCase('closed') &#10;and &#10;self.in_mmfSubtask-&gt;any()&#10;  -&gt;asType(&lt;root/types/git_issue&gt;)&#10;     .linkedIssues&#10;-&gt;select( ref1 | ref1.labels-&gt;includes('MMF'))&#10;-&gt;size() &gt; 0 &#10;and &#10;self.in_mmfSubtask-&gt;any()&#10;  -&gt;asType(&lt;root/types/git_issue&gt;)&#10;     .linkedIssues&#10;-&gt;select( ref2 | ref2.labels-&gt;includes('BUC'))&#10;-&gt;size() &gt; 0 </field>
+                              </block>
+                            </value>
+                          </block>
+                        </next>
+                      </block>
+                    </statement>
+                    <statement name="Datamappings">
+                      <block type="datamapping" id="pXIh!UM1PU-q#Gs=1?P*">
+                        <field name="mappingId">mmf</field>
+                        <field name="mappingSpec">self.in_mmfSubtask-&gt;any()&#10;  -&gt;asType(&lt;root/types/git_issue&gt;)&#10;     .linkedIssues&#10;-&gt;select( ref | ref.labels-&gt;includes('MMF'))&#10;-&gt;asSet()&#10;-&gt;symmetricDifference(self.out_mmf)&#10;-&gt;size() = 0</field>
+                        <comment pinned="false" h="75" w="379">symmetricDifference is now supported by RepairMechanism</comment>
+                        <next>
+                          <block type="datamapping" id="`T}S~Q(f.xjc(+XHEu)$">
+                            <field name="mappingId">buc</field>
+                            <field name="mappingSpec">self.in_mmfSubtask-&gt;any()&#10;  -&gt;asType(&lt;root/types/git_issue&gt;)&#10;     .linkedIssues&#10;-&gt;select( ref | ref.labels-&gt;includes('BUC'))&#10;-&gt;asSet()&#10;-&gt;symmetricDifference(self.out_buc)&#10;-&gt;size() = 0</field>
+                            <comment pinned="false" h="75" w="379">symmetricDifference is now supported by RepairMechanism</comment>
+                          </block>
+                        </next>
+                      </block>
+                    </statement>
+                    <statement name="Output">
+                      <block type="variables_set" id="z(Q|V@#7hMB#!ra7LGof">
+                        <field name="VAR" id="DETYScD|z/I6BaWSqrJc">buc</field>
+                        <value name="VALUE">
+                          <block type="artifact" id="b4r241sLeb:5MR=FWIh_">
+                            <field name="Type">git_issue</field>
+                          </block>
+                        </value>
+                        <next>
+                          <block type="variables_set" id="kz|03-qPxb1)t37:KbM#">
+                            <field name="VAR" id="^!QDLL@!C|!H/X@__qEe">mmf</field>
+                            <value name="VALUE">
+                              <block type="artifact" id="h#)xMOdB]2Y5{R=9FeF=">
+                                <field name="Type">git_issue</field>
+                              </block>
+                            </value>
+                            <next>
+                              <block type="artuse" id="a]dwg|A/4l0Cj{0UWH-[">
+                                <field name="roletext">Param</field>
+                                <value name="NAME">
+                                  <block type="variables_get" id="?rxd~XEBBqo7#~g95:*Q">
+                                    <field name="VAR" id="DETYScD|z/I6BaWSqrJc">buc</field>
+                                  </block>
+                                </value>
+                                <next>
+                                  <block type="artuse" id="p8h,@4ve_v?AhRc^E4LO">
+                                    <field name="roletext">Param</field>
+                                    <value name="NAME">
+                                      <block type="variables_get" id="u@PB@dIP$*.je[tT_A?C">
+                                        <field name="VAR" id="^!QDLL@!C|!H/X@__qEe">mmf</field>
+                                      </block>
+                                    </value>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </statement>
+                    <statement name="QA">
+                      <block type="qacheck" id="AM#_2B,=lwOzB*)7{fIJ">
+                        <field name="qacheckId">MMFtraceToSR</field>
+                        <field name="description">Each linked MMF must trace to at least one Stakeholder Request (SR).</field>
+                        <value name="constraint">
+                          <block type="text" id="H:{iK8~E6%LI[4`.6,^U">
+                            <field name="TEXT">self.out_mmf-&gt;forAll( mmf1 | mmf1.linkedIssues-&gt;exists(art | art.labels-&gt;includes('SR')))</field>
+                          </block>
+                        </value>
+                        <next>
+                          <block type="qacheck" id="{+ZGYnSyf#{JbLOOju%m">
+                            <field name="qacheckId">MMFtraceToBUC</field>
+                            <field name="description">Each linked MMF must trace to at least one Business Use Case (BUC).</field>
+                            <value name="constraint">
+                              <block type="text" id="~JODtM(@=Vy;7MEk$^[q">
+                                <field name="TEXT">self.out_mmf-&gt;forAll( mmf1 | mmf1.linkedIssues-&gt;exists(art | art.labels-&gt;includes('BUC')))</field>
+                              </block>
+                            </value>
+                            <next>
+                              <block type="qacheck" id="}K~V@%vm%4b6/(rU0J`4">
+                                <field name="qacheckId">SRtraceToBUC</field>
+                                <field name="description">Each SR linked via an MMF must trace to at least one  Business Use Case (BUC).</field>
+                                <value name="constraint">
+                                  <block type="text" id="OB8E9HGqrVxghY(ydVif">
+                                    <field name="TEXT">self.out_mmf-&gt;forAll(mmf | mmf.linkedIssues-&gt;select(art : &lt;root/types/git_issue&gt; | art.labels-&gt;includes('SR'))-&gt;forAll(sr2 : &lt;root/types/git_issue&gt; | sr2.linkedIssues-&gt;exists(art2 | art2.labels-&gt;includes('BUC')) ) )</field>
+                                  </block>
+                                </value>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </statement>
+                    <next>
+                      <block type="step" id="5{DLf3~839Gi|MU+G{k;">
+                        <field name="StepId">RefineToSuc</field>
+                        <statement name="Input">
+                          <block type="artuse" id="D7_|R*-sB-YY#SX1(;LW">
+                            <field name="roletext">Param</field>
+                            <value name="NAME">
+                              <block type="variables_get" id="ModS3*B|*sKGKwIK)=IM">
+                                <field name="VAR" id="n~zSfOoBX_-ZfBjz?5GK">story</field>
+                              </block>
+                            </value>
+                            <next>
+                              <block type="artuse" id="6l)S0*2LowIIX486^Z!r">
+                                <field name="roletext">Param</field>
+                                <value name="NAME">
+                                  <block type="variables_get" id="f-oDv;tzU|^0**gfwww$">
+                                    <field name="VAR" id=";}25dT@Yy4*W$R7!CRR3">sucSubtask</field>
+                                  </block>
+                                </value>
+                              </block>
+                            </next>
+                          </block>
+                        </statement>
+                        <statement name="Transitions">
+                          <block type="transition" id=":l[xQ]22PSj!p_x*Gx[)">
+                            <field name="State">ACTIVATION</field>
+                            <value name="condition">
+                              <block type="constraint" id="j)J~Irp41j8=H0QtDJ,r">
+                                <field name="arlRule">self.in_story-&gt;any()&#10;  -&gt;asType(&lt;root/types/git_issue&gt;)&#10;     .linkedIssues&#10;-&gt;select( ref | ref.title.substring(1,11).equalsIgnoreCase('RefineToSUC'))&#10; -&gt;size() &gt; 0</field>
+                              </block>
+                            </value>
+                            <next>
+                              <block type="transition" id="1Mp2+A]K[/SB6s4;TL,K">
+                                <field name="State">POSTCONDITION</field>
+                                <value name="condition">
+                                  <block type="constraint" id="MuLS.lE|/;x`hT;EN#ox">
+                                    <field name="arlRule">self.in_sucSubtask-&gt;any()&#10;-&gt;asType(&lt;root/types/git_issue&gt;).state.equalsIgnoreCase('closed') &#10;and &#10;self.out_suc-&gt;size() &gt; 0</field>
+                                  </block>
+                                </value>
+                              </block>
+                            </next>
+                          </block>
+                        </statement>
+                        <statement name="Datamappings">
+                          <block type="datamapping" id="AFE8Qt^fhNls=T@5q/Hz">
+                            <field name="mappingId">suc</field>
+                            <field name="mappingSpec">self.in_sucSubtask-&gt;any()&#10;  -&gt;asType(&lt;root/types/git_issue&gt;)&#10;     .linkedIssues&#10;-&gt;select( ref | ref.labels-&gt;includes('SUC'))&#10;-&gt;asSet()&#10;-&gt;symmetricDifference(self.out_suc)&#10;-&gt;size() = 0</field>
+                            <comment pinned="false" h="75" w="379">symmetricDifference is now supported by RepairMechanism</comment>
+                          </block>
+                        </statement>
+                        <statement name="Output">
+                          <block type="variables_set" id="sr~+~9b%`_lwH[PR*Y!,">
+                            <field name="VAR" id=".?1:xRfI,WRc.#lf2`#U">suc</field>
+                            <value name="VALUE">
+                              <block type="artifact" id="EJ?YVC8?@`EhQ:ozN)6x">
+                                <field name="Type">git_issue</field>
+                              </block>
+                            </value>
+                            <next>
+                              <block type="artuse" id="H5(A`G%Sn_C7L-vvh:C|">
+                                <field name="roletext">Param</field>
+                                <value name="NAME">
+                                  <block type="variables_get" id="1d6~hp9H_Y7(sHGD_:rW">
+                                    <field name="VAR" id=".?1:xRfI,WRc.#lf2`#U">suc</field>
+                                  </block>
+                                </value>
+                              </block>
+                            </next>
+                          </block>
+                        </statement>
+                        <statement name="QA">
+                          <block type="qacheck" id="SdeO)dT]ygmPxpSH/Iag">
+                            <field name="qacheckId">SUCtraceToSUCorBUC</field>
+                            <field name="description">Each SUC must trace to at least one (parent) System Use Case (SUC) or a Business Use Case (BUC)</field>
+                            <value name="constraint">
+                              <block type="text" id="bFanlf^S38yXl^x7+.n-">
+                                <field name="TEXT">self.out_suc-&gt;forAll( suc1 | suc1.linkedIssues-&gt;exists(art | art.labels-&gt;includes('SUC')))  or self.out_suc-&gt;forAll( suc2 | suc2.linkedIssues-&gt;exists(art2 | art2.labels-&gt;includes('BUC'))) </field>
+                              </block>
+                            </value>
+                          </block>
+                        </statement>
+                        <next>
+                          <block type="step" id="vOST9Ozmb[iy+o~9:qE3">
+                            <field name="StepId">CreateOrRefineCSC</field>
+                            <statement name="Input">
+                              <block type="artuse" id="+a?tNS?bH[G87Ve=)*pp">
+                                <field name="roletext">Param</field>
+                                <value name="NAME">
+                                  <block type="variables_get" id="U]sl~u1fY~$igxnCKXdb">
+                                    <field name="VAR" id="n~zSfOoBX_-ZfBjz?5GK">story</field>
+                                  </block>
+                                </value>
+                                <next>
+                                  <block type="artuse" id="gFk6U5sO(f409e[]:=2b">
+                                    <field name="roletext">Param</field>
+                                    <value name="NAME">
+                                      <block type="variables_get" id="Au$-}nVn;S07Mok$NJOJ">
+                                        <field name="VAR" id="|^P%S].|i~FDqK@b/xTh">cscSubtask</field>
+                                      </block>
+                                    </value>
+                                  </block>
+                                </next>
+                              </block>
+                            </statement>
+                            <statement name="Transitions">
+                              <block type="transition" id="RD.-z(0e_6(,`OTk#I]{">
+                                <field name="State">POSTCONDITION</field>
+                                <value name="condition">
+                                  <block type="text" id="N{fMw!0@/6GhshX[SxyJ">
+                                    <field name="TEXT">self.in_cscSubtask-&gt;any()-&gt;asType(&lt;root/types/git_issue&gt;).state.equalsIgnoreCase('closed')</field>
+                                  </block>
+                                </value>
+                              </block>
+                            </statement>
+                            <statement name="Output">
+                              <block type="variables_set" id="n~sibE?97n7n]2(6xWnL">
+                                <field name="VAR" id="4e`RvkO9MVHut_)bFenQ">csc</field>
+                                <value name="VALUE">
+                                  <block type="artifact" id="(Uut|(hqs~BJ-WqLp[6J">
+                                    <field name="Type">git_issue</field>
+                                  </block>
+                                </value>
+                                <next>
+                                  <block type="artuse" id="Q7XPof5RIOVzKp-%$)9E">
+                                    <field name="roletext">Param</field>
+                                    <value name="NAME">
+                                      <block type="variables_get" id="5hy;}yfxbk%t0Y4zo:dz">
+                                        <field name="VAR" id="4e`RvkO9MVHut_)bFenQ">csc</field>
+                                      </block>
+                                    </value>
+                                  </block>
+                                </next>
+                              </block>
+                            </statement>
+                            <statement name="QA">
+                              <block type="qacheck" id="JC{%e7vx3%}-k0]01[O]">
+                                <field name="qacheckId">CSCtraceToSUC</field>
+                                <field name="description">Each CSC must trace to at least one System Use Case (SUC).</field>
+                                <value name="constraint">
+                                  <block type="text" id="z:RVu3j9_m1__!1N*#UM">
+                                    <field name="TEXT">self.name &lt;&gt; ""</field>
+                                  </block>
+                                </value>
+                              </block>
+                            </statement>
+                            <next>
+                              <block type="artuse" id=".l@YvQ5kWLv#`e2T)7kV">
+                                <field name="roletext">Param</field>
+                                <value name="NAME">
+                                  <block type="variables_get" id="lVszw{-|V2kexZBtnq)6">
+                                    <field name="VAR" id="DETYScD|z/I6BaWSqrJc">buc</field>
+                                  </block>
+                                </value>
+                                <next>
+                                  <block type="artuse" id=";JqJr^=AMl6VXXrSYp%5">
+                                    <field name="roletext">Param</field>
+                                    <value name="NAME">
+                                      <block type="variables_get" id="n;1F$W^4@zb*X#7=Jl2|">
+                                        <field name="VAR" id="^!QDLL@!C|!H/X@__qEe">mmf</field>
+                                      </block>
+                                    </value>
+                                    <next>
+                                      <block type="artuse" id=".el(C.C-79,Dk]@!TfJZ">
+                                        <field name="roletext">Param</field>
+                                        <value name="NAME">
+                                          <block type="variables_get" id="fsh7x-Eb)1R$T-dTk?xQ">
+                                            <field name="VAR" id=".?1:xRfI,WRc.#lf2`#U">suc</field>
+                                          </block>
+                                        </value>
+                                        <next>
+                                          <block type="artuse" id="i{WP.IZUMax;d)v3]WAL">
+                                            <field name="roletext">Param</field>
+                                            <value name="NAME">
+                                              <block type="variables_get" id="_D|Y%D.tho^l=^*HM$pT">
+                                                <field name="VAR" id="4e`RvkO9MVHut_)bFenQ">csc</field>
+                                              </block>
+                                            </value>
+                                          </block>
+                                        </next>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="datamapping" id="~-=nxq^b%SwX8Sp0-ftS" collapsed="true" x="913" y="388">
+    <field name="mappingId">OutputRefFromInput</field>
+    <field name="mappingSpec">self.out_mmfSubtask&#10;-&gt;forAll(out | self.in_story&#10;           -&gt;asList()&#10;           -&gt;first()&#10;           -&gt;asType(&lt;root/types/git_issue&gt;)&#10;           .linkedIssues&#10;           -&gt;exists(ref | ref = out))&#10;and&#10;self.out_sucSubtask&#10;-&gt;forAll(out2 | self.in_story&#10;           -&gt;asList()&#10;           -&gt;first()&#10;           -&gt;asType(&lt;root/types/git_issue&gt;)&#10;           .linkedIssues&#10;           -&gt;exists(ref2 | ref2 = out2))&#10;and&#10;self.out_cscSubtask&#10;-&gt;forAll(out3 | self.in_story&#10;           -&gt;asList()&#10;           -&gt;first()&#10;           -&gt;asType(&lt;root/types/git_issue&gt;)&#10;           .linkedIssues&#10;           -&gt;exists(ref3 | ref3 = out3))</field>
+    <comment pinned="false" h="86" w="313">Ensure that all items in output are indeed referenced by the input story</comment>
+  </block>
+</xml>

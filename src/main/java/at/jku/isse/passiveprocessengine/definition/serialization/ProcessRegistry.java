@@ -59,7 +59,7 @@ public class ProcessRegistry {
 		if (optPD.isEmpty()) {
 			log.debug("Storing new process: "+process.getCode());
 			ProcessDefinition pd = DefinitionTransformer.fromDTO(process, ws);
-			new PrematureTriggerGenerator().generatePrematureConstraints(pd);
+			// FIXME: deactivate until RuleRewriting is in place - new PrematureTriggerGenerator().generatePrematureConstraints(pd);
 			pd.initializeInstanceTypes();
 			ws.concludeTransaction();
 			Map<String, Map<String, String>> validity = pd.checkConstraintValidity();

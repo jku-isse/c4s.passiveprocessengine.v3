@@ -52,4 +52,22 @@ class TestPrematureTriggerConstraints {
 		
 		
 	}
+	
+	@Test
+	void testPrematureRuleGenerationWithSingleHopAcrossOutParam() throws IOException  {
+		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		InstanceType typeGitDemo = ws.createInstanceType("git_issue", ws.TYPES_FOLDER);
+		String path = ".";
+		String file = path+"/src/test/resources/prematuretestV2.json"; 
+		String content = Files.readString(Paths.get(file));	
+		DTOs.Process procD = json.fromJson(content);
+		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
+		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
+		pd.getPrematureTriggers().entrySet().forEach(entry -> System.out.println(entry.getKey()+":\r\n"+entry.getValue()));
+		assert(pd.getPrematureTriggers().containsKey("WriteOrReviseMMF") == true);
+		assert(pd.getPrematureTriggers().containsKey("RefineToSuc") == true);
+		assert(pd.getPrematureTriggers().containsKey("CreateOrRefineCSC") == true);
+		
+		
+	}
 }
