@@ -15,6 +15,7 @@ import at.jku.isse.designspace.rule.arl.repair.Repair;
 import at.jku.isse.designspace.rule.arl.repair.RepairAction;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.arl.repair.RepairTreeFilter;
+import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.service.RuleService;
@@ -56,7 +57,7 @@ public class InputToOutputMapper {
 			return Collections.emptyList();
 		}	
 		// this also works only if all instances that are relevant are somewhere in the designspace prefetched
-		 Set<Repair> repairs = //repairTree.getConcreteRepairs(objects, 1);// 
+		 Set<Repair> repairs = //ConsistencyUtils.getConcreteRepairs(null, objects, 1, crt, crule.contextInstance());//.repairTree.getConcreteRepairs(objects, 1);// 
 				 				getConcreteRepairs(objects, 1, crt, crule.contextInstance()); 
 		if (repairs == null) {
 			String state = crule.isConsistent() ? "CONSISTENT" : "INCONSISTENT";

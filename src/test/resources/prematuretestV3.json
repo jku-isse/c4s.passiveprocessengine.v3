@@ -1,0 +1,141 @@
+{
+  "steps": [
+    {
+      "inDNDid": "0",
+      "outDNDid": "2",
+      "input": {
+        "SRS": "azure_workitem",
+        "IssueFD": "azure_workitem"
+      },
+      "output": {
+        "FuncSpec": "azure_workitem"
+      },
+      "ioMapping": {
+        "FuncSpec": "self.in_SRS\n-\u003ecollect(req | req.relatedItems\n    -\u003eselect(link |  link.linkType.name.equalsIgnoreCase(\u0027Successor\u0027))\n     -\u003ecollect(link2 : \u003croot/types/workitem_link\u003e | link2.linkTo)\n     -\u003eselect(refitem | refitem.workItemType.name.equalsIgnoreCase(\u0027Functional Specification\u0027) )\n    -\u003eany())\n-\u003easSet()\n-\u003eselect(fs : \u003croot/types/azure_workitem\u003e | fs.isDefined()) \n-\u003esymmetricDifference(self.out_FuncSpec)\n -\u003esize() \u003d 0"
+      },
+      "conditions": {
+        "POSTCONDITION": "self.in_IssueFD\n-\u003eforAll(issue | issue.state.name \u003d \u0027Released\u0027)\nand\nself.out_FuncSpec-\u003esize() \u003e 0",
+        "PRECONDITION": "self.in_SRS\n-\u003eforAll(req | req.state.name \u003d \u0027Released\u0027)"
+      },
+      "qaConstraints": [],
+      "specOrderIndex": 1,
+      "_type": "Step",
+      "code": "CreateOrUpdateFunctionalSpec"
+    },
+    {
+      "inDNDid": "2",
+      "outDNDid": "3",
+      "input": {
+        "FuncSpec": "azure_workitem"
+      },
+      "output": {
+        "Review": "azure_workitem"
+      },
+      "ioMapping": {
+        "Review": "self.in_FuncSpec\n-\u003ecollect(req | req.relatedItems\n    -\u003eselect(link |  link.linkType.name.equalsIgnoreCase(\u0027Successor\u0027))\n     -\u003ecollect(link2 : \u003croot/types/workitem_link\u003e | link2.linkTo)\n     -\u003eselect(refitem | refitem.workItemType.name.equalsIgnoreCase(\u0027Review\u0027) )\n    -\u003eany())\n-\u003easSet()\n-\u003eselect(fs : \u003croot/types/azure_workitem\u003e | fs.isDefined()) \n-\u003esymmetricDifference(self.out_Review)\n -\u003esize() \u003d 0"
+      },
+      "conditions": {
+        "POSTCONDITION": "self.in_FuncSpec\n-\u003eforAll(req | req.relatedItems\n    -\u003eselect(link |  link.linkType.name.equalsIgnoreCase(\u0027Successor\u0027))\n     -\u003ecollect(link2 : \u003croot/types/workitem_link\u003e | link2.linkTo)\n     -\u003eselect(refitem | refitem.workItemType.name.equalsIgnoreCase(\u0027Review\u0027)) \n-\u003esize() \u003d 1)\nand\nself.out_Review\n-\u003eforAll(rev | \nrev.state.name\u003d\u0027Resolved\u0027)",
+        "PRECONDITION": "self.in_FuncSpec\n-\u003eforAll(fs | \nfs.state.name\u003d\u0027Ready For Review\u0027\nor fs.state.name\u003d\u0027Reviewed\u0027\nor fs.state.name\u003d\u0027Released\u0027)"
+      },
+      "qaConstraints": [],
+      "specOrderIndex": 2,
+      "_type": "Step",
+      "code": "ReviewFunctionSpecification"
+    },
+    {
+      "inDNDid": "3",
+      "outDNDid": "1",
+      "input": {
+        "SRS": "azure_workitem",
+        "IssueFD": "azure_workitem"
+      },
+      "output": {
+        "SRS": "azure_workitem"
+      },
+      "ioMapping": {
+        "SRS": "self.in_SRS-\u003eunion(\nself.in_IssueFD-\u003eany()\n  -\u003easType(\u003croot/types/azure_workitem\u003e)\n.relatedItems\n-\u003eselect(link | link.linkType.name.equalsIgnoreCase(\u0027Related\u0027))\n-\u003ecollect(link2 : \u003croot/types/workitem_link\u003e | link2.linkTo)\n-\u003eselect(refitem | refitem.workItemType.name.equalsIgnoreCase(\u0027Requirement\u0027) )\n-\u003easSet())\n-\u003esymmetricDifference(self.out_SRS)\n -\u003esize() \u003d 0\n\n  "
+      },
+      "conditions": {
+        "POSTCONDITION": "self.in_IssueFD\n-\u003eforAll(issue | issue.state.name \u003d \u0027Released\u0027 \n                  or  issue.state.name \u003d \u0027Reviewed\u0027)\nand \nself.out_SRS-\u003esize() \u003e 0",
+        "ACTIVATION": "self.in_SRS-\u003eunion( \nself.in_IssueFD-\u003eany() \n-\u003easType(\u003croot/types/azure_workitem\u003e).relatedItems\n-\u003eselect(link | link.linkType.name.equalsIgnoreCase(\u0027Affects\u0027)) \n-\u003ecollect(link2 : \u003croot/types/workitem_link\u003e | link2.linkTo) \n-\u003eselect(refitem | refitem.workItemType.name.equalsIgnoreCase(\u0027Requirement\u0027) ) \n-\u003easSet())\n-\u003eselect(req : \u003croot/types/azure_workitem\u003e | req.state.name\u003c\u003e\u0027Released\u0027)\n-\u003esize() \u003e 0",
+        "PRECONDITION": "self.in_IssueFD\n-\u003eforAll(issue | issue.workItemType.name \u003d \u0027CR Issue FD\u0027) \nand self.in_IssueFD-\u003esize() \u003d 1 \nand self.in_SRS\n-\u003eforAll(req | req.workItemType.name\u003d\u0027Requirement\u0027)"
+      },
+      "qaConstraints": [],
+      "specOrderIndex": 3,
+      "_type": "Step",
+      "code": "CreateOrUpdateSRS"
+    }
+  ],
+  "dns": [
+    {
+      "inflowType": "AND",
+      "mapping": [
+        {
+          "fromStep": "PrematureTestV3",
+          "fromParam": "SRS",
+          "toStep": "CreateOrUpdateFunctionalSpec",
+          "toParam": "SRS"
+        },
+        {
+          "fromStep": "PrematureTestV3",
+          "fromParam": "IssueFD",
+          "toStep": "CreateOrUpdateFunctionalSpec",
+          "toParam": "IssueFD"
+        }
+      ],
+      "_type": "DecisionNode",
+      "code": "0"
+    },
+    {
+      "inflowType": "AND",
+      "mapping": [],
+      "_type": "DecisionNode",
+      "code": "1"
+    },
+    {
+      "inflowType": "AND",
+      "mapping": [
+        {
+          "fromStep": "CreateOrUpdateFunctionalSpec",
+          "fromParam": "FuncSpec",
+          "toStep": "ReviewFunctionSpecification",
+          "toParam": "FuncSpec"
+        }
+      ],
+      "_type": "DecisionNode",
+      "code": "2"
+    },
+    {
+      "inflowType": "AND",
+      "mapping": [
+        {
+          "fromStep": "PrematureTestV3",
+          "fromParam": "SRS",
+          "toStep": "CreateOrUpdateSRS",
+          "toParam": "SRS"
+        },
+        {
+          "fromStep": "PrematureTestV3",
+          "fromParam": "IssueFD",
+          "toStep": "CreateOrUpdateSRS",
+          "toParam": "IssueFD"
+        }
+      ],
+      "_type": "DecisionNode",
+      "code": "3"
+    }
+  ],
+  "prematureStepConditions": {},
+  "input": {
+    "SRS": "azure_workitem",
+    "IssueFD": "azure_workitem"
+  },
+  "output": {},
+  "ioMapping": {},
+  "conditions": {},
+  "qaConstraints": [],
+  "specOrderIndex": 0,
+  "_type": "Process",
+  "code": "PrematureTestV3"
+}

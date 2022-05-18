@@ -70,4 +70,21 @@ class TestPrematureTriggerConstraints {
 		
 		
 	}
+	
+	@Test
+	void testPrematureRuleGenerationWithMultiSource() throws IOException  {
+		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		InstanceType typeDemo = ws.createInstanceType("azure_workitem", ws.TYPES_FOLDER);
+		String path = ".";
+		String file = path+"/src/test/resources/prematuretestV3.json"; 
+		String content = Files.readString(Paths.get(file));	
+		DTOs.Process procD = json.fromJson(content);
+		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
+		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
+		pd.getPrematureTriggers().entrySet().forEach(entry -> System.out.println(entry.getKey()+":\r\n"+entry.getValue()));
+		assert(pd.getPrematureTriggers().containsKey("ReviewFunctionSpecification") == true);
+		assert(pd.getPrematureTriggers().containsKey("CreateOrUpdateSRS") == true);
+		
+		
+	}
 }

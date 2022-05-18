@@ -57,7 +57,7 @@ public class PrematureTriggerGenerator {
 		step.getCondition(Conditions.ACTIVATION).ifPresent(constraint -> {
 			String tempConstr = rewriteConstraint(step, constraint);
 			if (tempConstr != null)
-				prematureConstraints.add(constraint);
+				prematureConstraints.add(tempConstr);
 		});
 		step.getCondition(Conditions.POSTCONDITION).ifPresent(constraint -> {
 			String tempConstr = rewriteConstraint(step, constraint);
@@ -77,9 +77,9 @@ public class PrematureTriggerGenerator {
 			.filter(param -> !dSource.keySet().contains(param))
 			.map(param -> { 
 				if (param.getIo()==IO.IN) {
-				Optional<DataSource> sOpt = getFirstOccuranceOfInParam(step, param, "");
-				sOpt.ifPresent(ds -> dSource.put(param, ds));
-				return sOpt.isPresent();
+					Optional<DataSource> sOpt = getFirstOccuranceOfInParam(step, param, "");
+					sOpt.ifPresent(ds -> dSource.put(param, ds));
+					return sOpt.isPresent();
 				} else {
 					DataSource ds = getFirstOccuranceOfOutParam(step, param, "");
 					if (ds.getSource() != step) {// if the detectable source is this step, which should not be the case, then we cant do any premature triggering
@@ -172,7 +172,7 @@ public class PrematureTriggerGenerator {
 			.filter(mapping -> mapping.getToParameter().equals(parameter.getName()) && mapping.getToStepType().equals(step.getName()) )
 			.map(mapping -> { 
 				if (mapping.getFromStepType().equals(step.getProcess().getName()) ) { // we reached the process, stop here for now (we don;t check if we are in a subprocess here for now) 
-					return new DataSource(step, mapping.getFromParameter(), IoType.procIn, prevPath);
+					return new DataSource(step.getProcess(), mapping.getFromParameter(), IoType.procIn, prevPath);
 				} else { // check the output from a previous step
 					StepDefinition prevStep = step.getProcess().getStepDefinitionByName(mapping.getFromStepType());
 					return getFirstOccuranceOfOutParam(prevStep, new StepParameter(IO.OUT, mapping.getFromParameter()), prevPath);
@@ -189,6 +189,13 @@ public class PrematureTriggerGenerator {
 				String navPath = mapping.substring(0, posSym); // now lets find which in param this outparam depends on
 				//TODO for now lets assume we only need a single in param
 				for (String inParam : step.getExpectedInput().keySet()) {
+					// to support multipe in param as source for output, we need to look further into the rule
+					// or multiple usage of the same input param, 
+					// to support this usecase, we cant just concat the navigation paths, but rather need a navigation tree, 
+					// where each usage of an input is further navigatable and eventually rewritten.
+					// so we need to ask for each used variable the path to the uttermost root/origin/source we can identify.
+					// on the way we can then rewrite all variable names to avoid conflicts
+					
 					if (navPath.startsWith("self.in_"+inParam)) { // we found the in
 						// TODO BIG assumption: there is no parameter that is identical to another but longer, e.g., paramA vs paramALong i.e., we assume we dont run into such 'collisions'
 						navPath = navPath.replaceFirst("self.in_"+inParam, "");

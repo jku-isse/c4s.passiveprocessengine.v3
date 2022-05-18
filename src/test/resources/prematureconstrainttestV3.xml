@@ -1,0 +1,266 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="n~zSfOoBX_-ZfBjz?5GK">IssueFD</variable>
+    <variable id="Xg1A%?@40.5oj`/g[|@f">SRS</variable>
+    <variable id="x[DEUC1Fo-%{4u`GK8vp">FuncSpec</variable>
+    <variable id="5o505OVo%.@P^`u|31`P">Review</variable>
+  </variables>
+  <block type="procedures_defnoreturn" id="$r{^jOIh(5-K/bYOp*FZ" x="438" y="88">
+    <mutation>
+      <arg name="IssueFD" varid="n~zSfOoBX_-ZfBjz?5GK"></arg>
+      <arg name="SRS" varid="Xg1A%?@40.5oj`/g[|@f"></arg>
+    </mutation>
+    <field name="NAME">PrematureTestV3</field>
+    <comment pinned="false" h="80" w="160">Describe this function...</comment>
+    <statement name="STACK">
+      <block type="variables_set" id="2a|ZgaD8v$omN[{^d4y]">
+        <field name="VAR" id="n~zSfOoBX_-ZfBjz?5GK">IssueFD</field>
+        <value name="VALUE">
+          <block type="artifact" id="wq_!X4czU_S??M{K(b:g">
+            <field name="Type">azure_workitem</field>
+          </block>
+        </value>
+        <next>
+          <block type="variables_set" id="4p|w(^{a5BJ/{4xp#HKd">
+            <field name="VAR" id="Xg1A%?@40.5oj`/g[|@f">SRS</field>
+            <value name="VALUE">
+              <block type="artifact" id="?ouBhFy(6)?P.1U~++tH">
+                <field name="Type">azure_workitem</field>
+              </block>
+            </value>
+            <next>
+              <block type="artuse" id="Kor66v?S@7S:+C@5f%0%">
+                <field name="roletext">Param</field>
+                <value name="NAME">
+                  <block type="variables_get" id="e/}|X`j^u9Lx1Nd(5liw">
+                    <field name="VAR" id="n~zSfOoBX_-ZfBjz?5GK">IssueFD</field>
+                  </block>
+                </value>
+                <next>
+                  <block type="artuse" id="!lj#5f89o-l]^w~fqWXk">
+                    <field name="roletext">Param</field>
+                    <value name="NAME">
+                      <block type="variables_get" id="Yt@%TD8iv~-p*2?G5oIx">
+                        <field name="VAR" id="Xg1A%?@40.5oj`/g[|@f">SRS</field>
+                      </block>
+                    </value>
+                    <next>
+                      <block type="step" id="!9!*))gJ~Wn#!XT3[%kj">
+                        <field name="StepId">CreateOrUpdateFunctionalSpec</field>
+                        <statement name="Input">
+                          <block type="artuse" id="YyWILwCo@ntu1|`.QnDE">
+                            <field name="roletext">Param</field>
+                            <value name="NAME">
+                              <block type="variables_get" id="D-fG!k:-~xp~tQkjGh+g">
+                                <field name="VAR" id="n~zSfOoBX_-ZfBjz?5GK">IssueFD</field>
+                              </block>
+                            </value>
+                            <next>
+                              <block type="artuse" id="o|]}MMrlvOdJ+pncd9Zq">
+                                <field name="roletext">Param</field>
+                                <value name="NAME">
+                                  <block type="variables_get" id="n_[wDbrl8F|cnt`EO*Fr">
+                                    <field name="VAR" id="Xg1A%?@40.5oj`/g[|@f">SRS</field>
+                                  </block>
+                                </value>
+                              </block>
+                            </next>
+                          </block>
+                        </statement>
+                        <statement name="Transitions">
+                          <block type="transition" id="aIVde3y+iiQCUd33b8t[">
+                            <field name="State">PRECONDITION</field>
+                            <value name="condition">
+                              <block type="constraint" id="jRWM7L7RNT=#wo7*XF=M">
+                                <field name="arlRule">self.in_SRS&#10;-&gt;forAll(req | req.state.name = 'Released')</field>
+                              </block>
+                            </value>
+                            <next>
+                              <block type="transition" id="T;D^II/T@:=J-,iWQB6y">
+                                <field name="State">POSTCONDITION</field>
+                                <value name="condition">
+                                  <block type="constraint" id="rdC#lmZi*O5%@;jb-Ts*">
+                                    <field name="arlRule">self.in_IssueFD&#10;-&gt;forAll(issue | issue.state.name = 'Released')&#10;and&#10;self.out_FuncSpec-&gt;size() &gt; 0</field>
+                                  </block>
+                                </value>
+                              </block>
+                            </next>
+                          </block>
+                        </statement>
+                        <statement name="Datamappings">
+                          <block type="datamapping" id="s02RGLZDZtnP|E%3y]I9">
+                            <field name="mappingId">FuncSpec</field>
+                            <field name="mappingSpec">self.in_SRS&#10;-&gt;collect(req | req.relatedItems&#10;    -&gt;select(link |  link.linkType.name.equalsIgnoreCase('Successor'))&#10;     -&gt;collect(link2 : &lt;root/types/workitem_link&gt; | link2.linkTo)&#10;     -&gt;select(refitem | refitem.workItemType.name.equalsIgnoreCase('Functional Specification') )&#10;    -&gt;any())&#10;-&gt;asSet()&#10;-&gt;select(fs : &lt;root/types/azure_workitem&gt; | fs.isDefined()) &#10;-&gt;symmetricDifference(self.out_FuncSpec)&#10; -&gt;size() = 0</field>
+                            <comment pinned="false" h="102" w="301">for all input requirements collect via successor trace all function specifications</comment>
+                          </block>
+                        </statement>
+                        <statement name="Output">
+                          <block type="variables_set" id="F]pMLlFqjUq)[V(Iy%{a">
+                            <field name="VAR" id="x[DEUC1Fo-%{4u`GK8vp">FuncSpec</field>
+                            <value name="VALUE">
+                              <block type="artifact" id="4,ujx.)tV=7Sdy4^qZ;y">
+                                <field name="Type">azure_workitem</field>
+                              </block>
+                            </value>
+                            <next>
+                              <block type="artuse" id="~KahsVjOQ4h(_SqbEn[`">
+                                <field name="roletext">Param</field>
+                                <value name="NAME">
+                                  <block type="variables_get" id="=_x0~.LGj#=gJWytC#`k">
+                                    <field name="VAR" id="x[DEUC1Fo-%{4u`GK8vp">FuncSpec</field>
+                                  </block>
+                                </value>
+                              </block>
+                            </next>
+                          </block>
+                        </statement>
+                        <next>
+                          <block type="step" id="fA8Ov**kly!X}:@{lu1j">
+                            <field name="StepId">ReviewFunctionSpecification</field>
+                            <statement name="Input">
+                              <block type="artuse" id="au@;(9;;g*2cchFsxW^8">
+                                <field name="roletext">Param</field>
+                                <value name="NAME">
+                                  <block type="variables_get" id="pjxnqO._5-;-::}0mYDO">
+                                    <field name="VAR" id="x[DEUC1Fo-%{4u`GK8vp">FuncSpec</field>
+                                  </block>
+                                </value>
+                              </block>
+                            </statement>
+                            <statement name="Transitions">
+                              <block type="transition" id="2Erg`t:Yohd/Mz~tVfbW">
+                                <field name="State">PRECONDITION</field>
+                                <value name="condition">
+                                  <block type="constraint" id="qUe+W#f-^?Fkq7_GD:5T">
+                                    <field name="arlRule">self.in_FuncSpec&#10;-&gt;forAll(fs | &#10;fs.state.name='Ready For Review'&#10;or fs.state.name='Reviewed'&#10;or fs.state.name='Released')</field>
+                                  </block>
+                                </value>
+                                <next>
+                                  <block type="transition" id="=u]w26MSOh_$fAmq%:,{">
+                                    <field name="State">POSTCONDITION</field>
+                                    <comment pinned="false" h="125" w="253">for each Functional Specification, there needs to be exactly one review, which eventually need to be resolved</comment>
+                                    <value name="condition">
+                                      <block type="constraint" id="pV~8,F~6nr,Rdy#VISkC">
+                                        <field name="arlRule">self.in_FuncSpec&#10;-&gt;forAll(req | req.relatedItems&#10;    -&gt;select(link |  link.linkType.name.equalsIgnoreCase('Successor'))&#10;     -&gt;collect(link2 : &lt;root/types/workitem_link&gt; | link2.linkTo)&#10;     -&gt;select(refitem | refitem.workItemType.name.equalsIgnoreCase('Review')) &#10;-&gt;size() = 1)&#10;and&#10;self.out_Review&#10;-&gt;forAll(rev | &#10;rev.state.name='Resolved')</field>
+                                      </block>
+                                    </value>
+                                  </block>
+                                </next>
+                              </block>
+                            </statement>
+                            <statement name="Datamappings">
+                              <block type="datamapping" id="n;xlBX=Xzp8Zd_F^QZeI">
+                                <field name="mappingId">Review</field>
+                                <field name="mappingSpec">self.in_FuncSpec&#10;-&gt;collect(req | req.relatedItems&#10;    -&gt;select(link |  link.linkType.name.equalsIgnoreCase('Successor'))&#10;     -&gt;collect(link2 : &lt;root/types/workitem_link&gt; | link2.linkTo)&#10;     -&gt;select(refitem | refitem.workItemType.name.equalsIgnoreCase('Review') )&#10;    -&gt;any())&#10;-&gt;asSet()&#10;-&gt;select(fs : &lt;root/types/azure_workitem&gt; | fs.isDefined()) &#10;-&gt;symmetricDifference(self.out_Review)&#10; -&gt;size() = 0</field>
+                                <comment pinned="false" h="102" w="301">for all input functional specifications collect via successor trace all reviews</comment>
+                              </block>
+                            </statement>
+                            <statement name="Output">
+                              <block type="variables_set" id="};Ja-Q97VBw14GuOV?ew">
+                                <field name="VAR" id="5o505OVo%.@P^`u|31`P">Review</field>
+                                <value name="VALUE">
+                                  <block type="artifact" id="2,$Rev6qae}oQAJvQhT7">
+                                    <field name="Type">azure_workitem</field>
+                                  </block>
+                                </value>
+                                <next>
+                                  <block type="artuse" id="N:njm!YV]f5_*ok-VMdo">
+                                    <field name="roletext">Param</field>
+                                    <value name="NAME">
+                                      <block type="variables_get" id="Aw@jhb]j3[?9Rpwb(]qP">
+                                        <field name="VAR" id="5o505OVo%.@P^`u|31`P">Review</field>
+                                      </block>
+                                    </value>
+                                  </block>
+                                </next>
+                              </block>
+                            </statement>
+                            <next>
+                              <block type="step" id="5b..vf$qL6/pu@Y-uYR)">
+                                <field name="StepId">CreateOrUpdateSRS</field>
+                                <comment pinned="false" h="80" w="160">input not specified but I suppose it's CR</comment>
+                                <statement name="Input">
+                                  <block type="artuse" id="Wr,z?vCj-zylzo!8knh|">
+                                    <field name="roletext">Param</field>
+                                    <value name="NAME">
+                                      <block type="variables_get" id="uZsaHB5)T$I9XQ1gzL$3">
+                                        <field name="VAR" id="n~zSfOoBX_-ZfBjz?5GK">IssueFD</field>
+                                      </block>
+                                    </value>
+                                    <next>
+                                      <block type="artuse" id="@{N-Ny@,+dSUH_GiN!*Y">
+                                        <field name="roletext">Param</field>
+                                        <value name="NAME">
+                                          <block type="variables_get" id="3=?{jZ!6mll_9()}^r`=">
+                                            <field name="VAR" id="Xg1A%?@40.5oj`/g[|@f">SRS</field>
+                                          </block>
+                                        </value>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </statement>
+                                <statement name="Transitions">
+                                  <block type="transition" id="bReaJUz6NgWz}o`@M10R">
+                                    <field name="State">PRECONDITION</field>
+                                    <comment pinned="false" h="52" w="330">SRS may be empty, if created in this step.</comment>
+                                    <value name="condition">
+                                      <block type="constraint" id="lImYIc/r+oC~F3204K[f">
+                                        <field name="arlRule">self.in_IssueFD&#10;-&gt;forAll(issue | issue.workItemType.name = 'CR Issue FD') &#10;and self.in_IssueFD-&gt;size() = 1 &#10;and self.in_SRS&#10;-&gt;forAll(req | req.workItemType.name='Requirement')</field>
+                                      </block>
+                                    </value>
+                                    <next>
+                                      <block type="transition" id="NHX6eY%C)Gy4w%r:nUuX">
+                                        <field name="State">ACTIVATION</field>
+                                        <comment pinned="false" h="96" w="271">Active as soon as any linked requirement is not in state "Released"</comment>
+                                        <value name="condition">
+                                          <block type="constraint" id="v!TO/M-LVc),u[R~zuu4">
+                                            <field name="arlRule">self.in_SRS-&gt;union( &#10;self.in_IssueFD-&gt;any() &#10;-&gt;asType(&lt;root/types/azure_workitem&gt;).relatedItems&#10;-&gt;select(link | link.linkType.name.equalsIgnoreCase('Affects')) &#10;-&gt;collect(link2 : &lt;root/types/workitem_link&gt; | link2.linkTo) &#10;-&gt;select(refitem | refitem.workItemType.name.equalsIgnoreCase('Requirement') ) &#10;-&gt;asSet())&#10;-&gt;select(req : &lt;root/types/azure_workitem&gt; | req.state.name&lt;&gt;'Released')&#10;-&gt;size() &gt; 0</field>
+                                          </block>
+                                        </value>
+                                        <next>
+                                          <block type="transition" id="qmto`*f}i,#}R@/^,8l.">
+                                            <field name="State">POSTCONDITION</field>
+                                            <value name="condition">
+                                              <block type="constraint" id="#fLKXwR*(2$Yxlchb|4/">
+                                                <field name="arlRule">self.in_IssueFD&#10;-&gt;forAll(issue | issue.state.name = 'Released' &#10;                  or  issue.state.name = 'Reviewed')&#10;and &#10;self.out_SRS-&gt;size() &gt; 0</field>
+                                              </block>
+                                            </value>
+                                          </block>
+                                        </next>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </statement>
+                                <statement name="Datamappings">
+                                  <block type="datamapping" id="_J0MmVwhf$p7=8$b6AhP">
+                                    <field name="mappingId">SRS</field>
+                                    <field name="mappingSpec">self.in_SRS-&gt;union(&#10;self.in_IssueFD-&gt;any()&#10;  -&gt;asType(&lt;root/types/azure_workitem&gt;)&#10;.relatedItems&#10;-&gt;select(link | link.linkType.name.equalsIgnoreCase('Related'))&#10;-&gt;collect(link2 : &lt;root/types/workitem_link&gt; | link2.linkTo)&#10;-&gt;select(refitem | refitem.workItemType.name.equalsIgnoreCase('Requirement') )&#10;-&gt;asSet())&#10;-&gt;symmetricDifference(self.out_SRS)&#10; -&gt;size() = 0&#10;&#10;  </field>
+                                    <comment pinned="false" h="98" w="345">Take union (combine) input SRS and those directly linked from IssueFD) and ensure these are put into output SRS.</comment>
+                                  </block>
+                                </statement>
+                                <statement name="Output">
+                                  <block type="artuse" id="T$id^c^020oLJnAlrcdt">
+                                    <field name="roletext">Param</field>
+                                    <value name="NAME">
+                                      <block type="variables_get" id="U:~jYs63SW+MeJm_9E`N">
+                                        <field name="VAR" id="Xg1A%?@40.5oj`/g[|@f">SRS</field>
+                                      </block>
+                                    </value>
+                                  </block>
+                                </statement>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>
