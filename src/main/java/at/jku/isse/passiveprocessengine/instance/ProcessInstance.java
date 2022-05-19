@@ -205,15 +205,6 @@ public class ProcessInstance extends ProcessStep {
 			typeStep.createPropertyType(CoreProperties.processDefinition.toString(), Cardinality.SINGLE, ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws));
 			typeStep.createPropertyType(CoreProperties.stepInstances.toString(), Cardinality.SET, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
 			typeStep.createPropertyType(CoreProperties.decisionNodeInstances.toString(), Cardinality.SET, DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(ws));
-			td.getPrematureTriggers().entrySet().stream()
-			.forEach(entry -> {
-				if (entry.getValue() != null) {
-					String ruleName = generatePrematureRuleName(entry.getKey(), td);
-					ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeStep, ruleName, entry.getValue());
-					//typeStep.createPropertyType("crd_datamapping_"+entry.getKey(), Cardinality.SINGLE, crt);	// not sure we need a property here				
-					td.setPrematureConstraintNameStepDefinition(ruleName, entry.getKey());
-				}
-			});
 			return typeStep;
 		}
 	}

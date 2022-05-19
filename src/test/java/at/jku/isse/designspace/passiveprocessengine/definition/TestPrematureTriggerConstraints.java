@@ -23,6 +23,9 @@ import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
 import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
+import at.jku.isse.passiveprocessengine.definition.serialization.ProcessRegistry;
+import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
+import at.jku.isse.passiveprocessengine.instance.ProcessException;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -36,15 +39,18 @@ class TestPrematureTriggerConstraints {
 	
 
 	@Test
-	void testPrematureRuleGeneration() throws IOException  {
+	void testPrematureRuleGeneration() throws IOException, ProcessException  {
 		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
-		InstanceType typeGitDemo = ws.createInstanceType("git_issue", ws.TYPES_FOLDER);
+		InstanceType typeGitDemo = TestArtifacts.getDemoGitIssueType(ws);
 		String path = ".";
 		String file = path+"/src/test/resources/prematuretest.json"; 
 		String content = Files.readString(Paths.get(file));	
 		DTOs.Process procD = json.fromJson(content);
-		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
-		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
+		ProcessRegistry preg = new ProcessRegistry();
+		preg.inject(ws);
+		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD);
+		// = DefinitionTransformer.fromDTO(procD, ws);
+		//new PrematureTriggerGenerator(ws, pd).generatePrematureConstraints();
 		pd.getPrematureTriggers().entrySet().forEach(entry -> System.out.println(entry.getKey()+":\r\n"+entry.getValue()));
 		assert(pd.getPrematureTriggers().containsKey("WriteOrReviseMMF") == true);
 		assert(pd.getPrematureTriggers().containsKey("RefineToSuc") == true);
@@ -54,15 +60,18 @@ class TestPrematureTriggerConstraints {
 	}
 	
 	@Test
-	void testPrematureRuleGenerationWithSingleHopAcrossOutParam() throws IOException  {
+	void testPrematureRuleGenerationWithSingleHopAcrossOutParam() throws IOException, ProcessException  {
 		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
-		InstanceType typeGitDemo = ws.createInstanceType("git_issue", ws.TYPES_FOLDER);
+		InstanceType typeGitDemo = TestArtifacts.getDemoGitIssueType(ws);
 		String path = ".";
 		String file = path+"/src/test/resources/prematuretestV2.json"; 
 		String content = Files.readString(Paths.get(file));	
 		DTOs.Process procD = json.fromJson(content);
-		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
-		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
+		ProcessRegistry preg = new ProcessRegistry();
+		preg.inject(ws);
+		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD);
+		//ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
+		//new PrematureTriggerGenerator().generatePrematureConstraints(pd);
 		pd.getPrematureTriggers().entrySet().forEach(entry -> System.out.println(entry.getKey()+":\r\n"+entry.getValue()));
 		assert(pd.getPrematureTriggers().containsKey("WriteOrReviseMMF") == true);
 		assert(pd.getPrematureTriggers().containsKey("RefineToSuc") == true);
@@ -72,19 +81,24 @@ class TestPrematureTriggerConstraints {
 	}
 	
 	@Test
-	void testPrematureRuleGenerationWithMultiSource() throws IOException  {
+	void testPrematureRuleGenerationWithMultiSource() throws IOException, ProcessException  {
 		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		InstanceType typeDemo = ws.createInstanceType("azure_workitem", ws.TYPES_FOLDER);
 		String path = ".";
 		String file = path+"/src/test/resources/prematuretestV3.json"; 
 		String content = Files.readString(Paths.get(file));	
 		DTOs.Process procD = json.fromJson(content);
-		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
-		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
+		ProcessRegistry preg = new ProcessRegistry();
+		preg.inject(ws);
+		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD);
+//		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
+//		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
 		pd.getPrematureTriggers().entrySet().forEach(entry -> System.out.println(entry.getKey()+":\r\n"+entry.getValue()));
 		assert(pd.getPrematureTriggers().containsKey("ReviewFunctionSpecification") == true);
 		assert(pd.getPrematureTriggers().containsKey("CreateOrUpdateSRS") == true);
 		
 		
 	}
+	
+
 }

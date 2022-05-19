@@ -59,13 +59,16 @@ public class ProcessRegistry {
 		if (optPD.isEmpty()) {
 			log.debug("Storing new process: "+process.getCode());
 			ProcessDefinition pd = DefinitionTransformer.fromDTO(process, ws);
-			// FIXME: deactivate until RuleRewriting is in place - new PrematureTriggerGenerator().generatePrematureConstraints(pd);
+			
 			pd.initializeInstanceTypes();
 			ws.concludeTransaction();
 			Map<String, Map<String, String>> validity = pd.checkConstraintValidity();
-			if (validity.values().stream().flatMap(vmap -> vmap.values().stream()).allMatch(val -> val.equals("valid")) )
+			if (validity.values().stream().flatMap(vmap -> vmap.values().stream()).allMatch(val -> val.equals("valid")) ) {
+				// now lets also create premature rules here, as we need the process to exist first
+				new PrematureTriggerGenerator(ws, pd).generatePrematureConstraints();
+				ws.concludeTransaction();
 				return pd;
-			else {
+			} else {
 				log.info("Removing newly added process again due to constraint errors: "+process.getCode());
 				ProcessException pex = new ProcessException("Constraints contain at least one error");
 				validity.values().stream()

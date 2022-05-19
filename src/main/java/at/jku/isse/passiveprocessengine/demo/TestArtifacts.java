@@ -58,4 +58,13 @@ public class TestArtifacts {
 		String state= (String) inst.getPropertyAsValueOrElse(CoreProperties.state.toString(), () -> JiraStates.Open.toString());
 		return JiraStates.valueOf(state);
 	}
+	
+	public static InstanceType getDemoGitIssueType(Workspace ws) {
+		InstanceType typeGitDemo = ws.createInstanceType("git_issue", ws.TYPES_FOLDER);
+		typeGitDemo.createPropertyType("linkedIssues", Cardinality.SET, typeGitDemo);
+		typeGitDemo.createPropertyType("labels", Cardinality.SET, Workspace.STRING);
+		typeGitDemo.createPropertyType("state", Cardinality.SINGLE, Workspace.STRING);
+		typeGitDemo.createPropertyType("title", Cardinality.SINGLE, Workspace.STRING);
+		return typeGitDemo;
+	}
 }
