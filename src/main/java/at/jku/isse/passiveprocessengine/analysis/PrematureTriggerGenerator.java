@@ -75,7 +75,6 @@ public class PrematureTriggerGenerator {
 		
 		step.getCondition(Conditions.ACTIVATION).ifPresent(constraint -> {
 			
-			
 			String tempConstr = rewriteConstraint(step, constraint);
 			if (tempConstr != null)
 				prematureConstraints.add(tempConstr);
@@ -92,26 +91,12 @@ public class PrematureTriggerGenerator {
 	}
 	
 	private String rewriteConstraint(StepDefinition step, String constraint) {
+		// we recreate the constraint to ensure we have all the types in iterators available
+		InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, step);
+		ArlEvaluator ae = new ArlEvaluator(stepType, constraint);
+		constraint = ae.syntaxTree.getOriginalARL();
+		
 		List<StepParameter> singleUsage = extractStepParameterUsageFromConstraint(step, constraint);
-			// for all params we determine their source, (none of the params will have this output as source as we check for this above
-//			boolean allMapped = singleUsage.stream()
-//			.filter(param -> !dSource.keySet().contains(param))
-//			.map(param -> { 
-//				if (param.getIo()==IO.IN) {
-//					Optional<DataSource> sOpt = getFirstOccuranceOfInParam(step, param, "");
-//					sOpt.ifPresent(ds -> dSource.put(param, ds));
-//					return sOpt.isPresent();
-//				} else {
-//					DataSource ds = getFirstOccuranceOfOutParam(step, param, "");
-//					if (ds.getSource() != step) {// if the detectable source is this step, which should not be the case, then we cant do any premature triggering
-//						dSource.put(param, ds);
-//						return true;
-//					} else return false;
-//				}
-//			})
-//			.allMatch(result -> result == true);
-//			// then lets replace in the constraint the local param with the source one/path
-//			if (allMapped) {
 				// we need to obtain for every in and out param that we have a source for the location, and then replace from the back every this location with the path from the source
 				// every param can only be at a unique set of position, not shared with any other param, hence location/position index can serve as key
 				Map<Integer, StepParameter> loc2param = new HashMap<>();
@@ -168,7 +153,7 @@ public class PrematureTriggerGenerator {
 //	}
 	
 	private String ensureUniqueVarNames(String query, InstanceType typeStep) {
-		// FIXME: implement: we need to check in any NavPath that it doesnt contain a var name (e.g., in an iteration etc) that occurred before, 
+		// we need to check in any NavPath that it doesnt contain a var name (e.g., in an iteration etc) that occurred before, 
 		// i.e., we need unique var names per constraint
 		ArlEvaluator ae = new ArlEvaluator(typeStep, query);
 		varCount++;
@@ -177,12 +162,7 @@ public class PrematureTriggerGenerator {
 			.forEach(var -> ((VariableExpression)var).name = ((VariableExpression)var).name+varCount);
 		String rewritten = ae.syntaxTree.getOriginalARL();
 		return rewritten;
-		
-		//return query;
 	}
-	
-	//public static String IN = "in";
-	//public static String OUT = "out";
 	
 	// returns all in/out parameters that are used in a constraint
 	private List<StepParameter> extractStepParameterUsageFromConstraint(StepDefinition step, String constraint) {
@@ -221,6 +201,10 @@ public class PrematureTriggerGenerator {
 	private DataSource getFirstOccuranceOfOutParam(StepDefinition step, StepParameter outParam) {
 		String mapping = step.getInputToOutputMappingRules().get(outParam.getName()); // we assume for now that the mapping name is equal to the out param name, (this will be guaranteed in the future)
 		if (mapping != null) { // for now, we need to process the mapping constraints (will not be necessary once these are defines using derived properties)
+			InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, step);
+			ArlEvaluator ae = new ArlEvaluator(stepType, mapping);
+			mapping = ae.syntaxTree.getOriginalARL();;
+			
 			int posSym = mapping.indexOf("->symmetricDifference");
 			if (posSym > 0) {
 				String navPath = mapping.substring(0, posSym); // now lets find which in param this outparam depends on
@@ -230,6 +214,7 @@ public class PrematureTriggerGenerator {
 				for (String inParam : step.getExpectedInput().keySet()) {
 					String extParam = "self.in_"+inParam;
 					// find all locations of these inparam
+					// TODO BIG assumption: there is no parameter that is identical to another but longer, e.g., paramA vs paramALong i.e., we assume we dont run into such 'collisions'
 					int lastFound = 0;
 					while (true) {
 						lastFound = navPath.indexOf(extParam, lastFound);
@@ -253,27 +238,6 @@ public class PrematureTriggerGenerator {
 				// and rewrite, then return
 				String fullPath = ensureUniqueVarNames(navPath, procInstType);
 				return new DataSource(step, outParam.getName(), IoType.stepOut, fullPath);
-				
-				//TODO for now lets assume we only need a single in param
-//				for (String inParam : step.getExpectedInput().keySet()) {
-//					// to support multipe in param as source for output, we need to look further into the rule
-//					// or multiple usage of the same input param, 
-//					// to support this usecase, we cant just concat the navigation paths, but rather need a navigation tree, 
-//					// where each usage of an input is further navigatable and eventually rewritten.
-//					// so we need to ask for each used variable the path to the uttermost root/origin/source we can identify.
-//					// on the way we can then rewrite all variable names to avoid conflicts
-//					
-//					if (navPath.startsWith("self.in_"+inParam)) { // we found the in
-//						String newPath = navPath+" "+prevPath;
-//						// the problem is, that any variables used in e.g., an iterator will be available multiple times when this path is used in multiple locations (very very likely).
-//						// this would result in a non-compiling ARL rule, hence.
-//						String rewritten = ensureUniqueVarNames(newPath, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, step));
-//						// TODO BIG assumption: there is no parameter that is identical to another but longer, e.g., paramA vs paramALong i.e., we assume we dont run into such 'collisions'
-//						newPath = rewritten.replaceFirst("self.in_"+inParam, "");
-//						
-//						return getFirstOccuranceOfInParam(step, new StepParameter(IO.IN, inParam), newPath).orElse(new DataSource(step, inParam, IoType.stepIn, newPath));
-//					}
-//				}
 			}
 		}
 		// otherwise prepare the path to this outparam

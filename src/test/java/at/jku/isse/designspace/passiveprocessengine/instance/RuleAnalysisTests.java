@@ -61,11 +61,11 @@ public class RuleAnalysisTests {
 	
 	@Test
 	public void testAnalyseSimpleRule() {
-		String arl = "self.in_story->select( ref | ref.state.equalsIgnoreCase(\'Open\')).size() > 0";
+		String arl = "self.in_story->select( ref : <root/types/DemoIssue> | ref.state.equalsIgnoreCase(\'Open\')).size() > 0";
 		ArlEvaluator ae = new ArlEvaluator(typeStep, arl);
 		printSyntaxTree(ae.syntaxTree, "");
 		printOriginalSyntaxTree(ae.syntaxTree, "");
-		assert(ae.syntaxTree.getOriginalARL().equalsIgnoreCase(arl));
+		assert(stripForComparison(ae.syntaxTree.getOriginalARL()).equalsIgnoreCase(stripForComparison(arl)));
 	}
 	
 	@Test
@@ -76,10 +76,10 @@ public class RuleAnalysisTests {
 				+ "->first()"
 				+ "->asType(<"+typeJira.getQualifiedName()+">)"
 						+ ".requirementIDs"
-							+ "->forAll(id | self.out_story->exists(art  | art.name = id))"
+							+ "->forAll(id | self.out_story->exists(art : <root/types/DemoIssue> | art.name = id))"
 			+ " and "
 				+ "self.out_story"
-				+ "->forAll(out | self.in_story"
+				+ "->forAll(out : <root/types/DemoIssue> | self.in_story"
 									+ "->asList()"
 									+ "->first()"
 									+ "->asType(<"+typeJira.getQualifiedName()+">)"
@@ -103,10 +103,10 @@ public class RuleAnalysisTests {
 				+ "->first()"
 				+ "->asType(<"+typeJira.getQualifiedName()+">)"
 						+ ".requirementIDs"
-							+ "->forAll(id | self.out_story->exists(art  | art.name = id))"
+							+ "->forAll(id | self.out_story->exists(art : <root/types/DemoIssue> | art.name = id))"
 			+ " and "
 				+ "self.out_story"
-				+ "->forAll(out | self.in_story"
+				+ "->forAll(out : <root/types/DemoIssue> | self.in_story"
 									+ "->asList()"
 									+ "->first()"
 									+ "->asType(<"+typeJira.getQualifiedName()+">)"
@@ -127,10 +127,10 @@ public class RuleAnalysisTests {
 				+ "->first()"
 				+ "->asType(<"+typeJira.getQualifiedName()+">)"
 						+ ".requirementIDs"
-							+ "->forAll(id1 | self.out_story->exists(art1  | art1.name = id1))"
+							+ "->forAll(id1 | self.out_story->exists(art1 : <root/types/DemoIssue> | art1.name = id1))"
 			+ " and "
 				+ "self.out_story"
-				+ "->forAll(out1 | self.in_story"
+				+ "->forAll(out1 : <root/types/DemoIssue> | self.in_story"
 									+ "->asList()"
 									+ "->first()"
 									+ "->asType(<"+typeJira.getQualifiedName()+">)"
@@ -139,7 +139,38 @@ public class RuleAnalysisTests {
 		assert(stripForComparison(recovered).equalsIgnoreCase(stripForComparison(arl1)));
 	}
 	
-	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Test
+	public void testRewriteAndOrComboRule() {
+		
+		String arl = "((self.in_story"
+				+ "->asList()"
+				+ "->first()"
+				+ "->asType(<"+typeJira.getQualifiedName()+">)"
+						+ ".requirementIDs"
+							+ "->forAll(id | self.out_story->exists(art : <root/types/DemoIssue> | art.name = id))"
+			+ " and "
+				+ "self.out_story"
+				+ "->forAll(out : <root/types/DemoIssue> | self.in_story"
+									+ "->asList()"
+									+ "->first()"
+									+ "->asType(<"+typeJira.getQualifiedName()+">)"
+											+ ".requirementIDs"
+											+ "->exists(artId | artId = out.name))"
+											+ ") or "
+											+ "self.out_story"
+											+ "->forAll(out2 : <root/types/DemoIssue> | self.in_story"
+																+ "->asList()"
+																+ "->first()"
+																+ "->asType(<"+typeJira.getQualifiedName()+">)"
+																		+ ".requirementIDs"
+																		+ "->exists(artId2 | not(artId2 = out2.name))))"								
+											;
+		ArlEvaluator ae = new ArlEvaluator(typeStep, arl);
+		String recovered = ae.syntaxTree.getOriginalARL();
+		System.out.println(recovered);
+		assert(stripForComparison(recovered).equalsIgnoreCase(stripForComparison(arl)));
+	}
 	
 	private String stripForComparison(String arl) {
 		return arl

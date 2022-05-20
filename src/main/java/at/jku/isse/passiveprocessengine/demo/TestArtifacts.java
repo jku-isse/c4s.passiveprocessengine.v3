@@ -67,4 +67,21 @@ public class TestArtifacts {
 		typeGitDemo.createPropertyType("title", Cardinality.SINGLE, Workspace.STRING);
 		return typeGitDemo;
 	}
+	
+	public static InstanceType getTestAzureIssueType(Workspace ws) {
+		InstanceType typeAzureTest = ws.createInstanceType("azure_workitem", ws.TYPES_FOLDER);
+		InstanceType typeAzureStateTest = ws.createInstanceType("azure_workitemstate", ws.TYPES_FOLDER);
+		InstanceType typeAzureTypeTest = ws.createInstanceType("azure_workitemstate", ws.TYPES_FOLDER);
+		InstanceType typeAzureLinkTypeTest = ws.createInstanceType("workitem_link", ws.TYPES_FOLDER);
+		
+		typeAzureTest.createPropertyType("relatedItems", Cardinality.SET, typeAzureLinkTypeTest);
+		typeAzureTest.createPropertyType("state", Cardinality.SINGLE, typeAzureStateTest);
+		typeAzureTest.createPropertyType("workItemType", Cardinality.SINGLE, typeAzureTypeTest);
+		
+		typeAzureLinkTypeTest.createPropertyType("linkTo", Cardinality.SINGLE, typeAzureTest);
+		typeAzureLinkTypeTest.createPropertyType("linkType", Cardinality.SINGLE, typeAzureTypeTest);
+		
+		
+		return typeAzureTest;
+	}
 }

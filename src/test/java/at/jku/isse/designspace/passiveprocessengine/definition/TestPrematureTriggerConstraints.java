@@ -83,7 +83,7 @@ class TestPrematureTriggerConstraints {
 	@Test
 	void testPrematureRuleGenerationWithMultiSource() throws IOException, ProcessException  {
 		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
-		InstanceType typeDemo = ws.createInstanceType("azure_workitem", ws.TYPES_FOLDER);
+		InstanceType typeDemo = TestArtifacts.getTestAzureIssueType(ws);
 		String path = ".";
 		String file = path+"/src/test/resources/prematuretestV3.json"; 
 		String content = Files.readString(Paths.get(file));	
@@ -100,5 +100,23 @@ class TestPrematureTriggerConstraints {
 		
 	}
 	
-
+	@Test
+	void testPrematureRuleGenerationWithTypedIterator() throws IOException, ProcessException  {
+		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		InstanceType typeDemo = TestArtifacts.getTestAzureIssueType(ws);
+		String path = ".";
+		String file = path+"/src/test/resources/prematuretestV4.json"; 
+		String content = Files.readString(Paths.get(file));	
+		DTOs.Process procD = json.fromJson(content);
+		ProcessRegistry preg = new ProcessRegistry();
+		preg.inject(ws);
+		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD);
+//		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
+//		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
+		pd.getPrematureTriggers().entrySet().forEach(entry -> System.out.println(entry.getKey()+":\r\n"+entry.getValue()));
+		assert(pd.getPrematureTriggers().containsKey("ReviewFunctionSpecification") == true);
+		
+		
+		
+	}
 }
