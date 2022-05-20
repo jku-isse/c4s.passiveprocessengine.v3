@@ -115,8 +115,41 @@ class TestPrematureTriggerConstraints {
 //		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
 		pd.getPrematureTriggers().entrySet().forEach(entry -> System.out.println(entry.getKey()+":\r\n"+entry.getValue()));
 		assert(pd.getPrematureTriggers().containsKey("ReviewFunctionSpecification") == true);
-		
-		
-		
+	}
+	
+	@Test
+	void testPrematureRuleGenerationWithBranchesWithIdenticalRootSource() throws IOException, ProcessException  {
+		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		InstanceType typeDemo = TestArtifacts.getTestAzureIssueType(ws);
+		String path = ".";
+		String file = path+"/src/test/resources/prematurebranchingtest.json"; 
+		String content = Files.readString(Paths.get(file));	
+		DTOs.Process procD = json.fromJson(content);
+		ProcessRegistry preg = new ProcessRegistry();
+		preg.inject(ws);
+		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD);
+//		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
+//		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
+		pd.getPrematureTriggers().entrySet().forEach(entry -> System.out.println(entry.getKey()+":\r\n"+entry.getValue()));
+		assert(pd.getPrematureTriggers().containsKey("ReviewFunctionSpecification") == true);
+		assert(pd.getPrematureTriggers().get("ReviewFunctionSpecification").indexOf("union") > -1);
+	}
+	
+	@Test
+	void testPrematureRuleGenerationWithBranches() throws IOException, ProcessException  {
+		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		InstanceType typeDemo = TestArtifacts.getTestAzureIssueType(ws);
+		String path = ".";
+		String file = path+"/src/test/resources/prematurebranchingtestV2.json"; 
+		String content = Files.readString(Paths.get(file));	
+		DTOs.Process procD = json.fromJson(content);
+		ProcessRegistry preg = new ProcessRegistry();
+		preg.inject(ws);
+		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD);
+//		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
+//		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
+		pd.getPrematureTriggers().entrySet().forEach(entry -> System.out.println(entry.getKey()+":\r\n"+entry.getValue()));
+		assert(pd.getPrematureTriggers().containsKey("ReviewFunctionSpecification") == true);
+		assert(pd.getPrematureTriggers().get("ReviewFunctionSpecification").indexOf("union") > -1);
 	}
 }

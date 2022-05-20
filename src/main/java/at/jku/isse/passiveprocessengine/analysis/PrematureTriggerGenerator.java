@@ -2,11 +2,14 @@ package at.jku.isse.passiveprocessengine.analysis;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
@@ -95,39 +98,40 @@ public class PrematureTriggerGenerator {
 		InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, step);
 		ArlEvaluator ae = new ArlEvaluator(stepType, constraint);
 		constraint = ae.syntaxTree.getOriginalARL();
-		
+
 		List<StepParameter> singleUsage = extractStepParameterUsageFromConstraint(step, constraint);
-				// we need to obtain for every in and out param that we have a source for the location, and then replace from the back every this location with the path from the source
-				// every param can only be at a unique set of position, not shared with any other param, hence location/position index can serve as key
-				Map<Integer, StepParameter> loc2param = new HashMap<>();
-				for (StepParameter param : singleUsage ) {
-					String extParam = param.getIo()==IO.IN ? "self.in_"+param.getName() : "self.out_"+param.getName();
-					int lastFound = 0;
-					while (true) {
-						lastFound = constraint.indexOf(extParam, lastFound);
-						if (lastFound >= 0) {
-							loc2param.put(lastFound, param);
-							lastFound++;
-						} else
-							break;
-					}
-				}
-				// now check which pos and thus param goes first for replacement.
-				for( int pos : Lists.reverse(loc2param.keySet().stream().sorted().collect(Collectors.toList()))) {
-					StepParameter param = loc2param.get(pos);
-	//				DataSource ds = dSource.get(param); 	
-					String extParam = param.getIo()==IO.IN ? "self.in_"+param.getName() : "self.out_"+param.getName();
-					// create two strings: one before the param to be replaced, the rest after the param 
-					// and then replace the param by the path
-					String pre = constraint.substring(0, pos);
-					String post = constraint.substring(pos+extParam.length());
-					String replacement = param.getIo()==IO.IN ? getFirstOccuranceOfInParam(step, param).navPath : getFirstOccuranceOfOutParam(step, param).navPath;
-					constraint = pre + replacement + post;
-				}
-				return constraint;
-	//		}
-	//		return null;
-		
+		// we need to obtain for every in and out param that we have a source for the location, and then replace from the back every this location with the path from the source
+		// every param can only be at a unique set of position, not shared with any other param, hence location/position index can serve as key
+		Map<Integer, StepParameter> loc2param = new HashMap<>();
+		for (StepParameter param : singleUsage ) {
+			String extParam = param.getIo()==IO.IN ? "self.in_"+param.getName() : "self.out_"+param.getName();
+			int lastFound = 0;
+			while (true) {
+				lastFound = constraint.indexOf(extParam, lastFound);
+				if (lastFound >= 0) {
+					loc2param.put(lastFound, param);
+					lastFound++;
+				} else
+					break;
+			}
+		}
+		// now check which pos and thus param goes first for replacement.
+		for( int pos : Lists.reverse(loc2param.keySet().stream().sorted().collect(Collectors.toList()))) {
+			StepParameter param = loc2param.get(pos);
+			//				DataSource ds = dSource.get(param); 	
+			String extParam = param.getIo()==IO.IN ? "self.in_"+param.getName() : "self.out_"+param.getName();
+			// create two strings: one before the param to be replaced, the rest after the param 
+			// and then replace the param by the path
+			String pre = constraint.substring(0, pos);
+			String post = constraint.substring(pos+extParam.length());
+			String replacement = param.getIo()==IO.IN ? combinePaths(getFirstOccurancesOfInParam(step, param)) : getFirstOccuranceOfOutParam(step, param).navPath;
+			constraint = pre + replacement + post;
+		}
+		// ensure the new constraint is correct
+		ae = new ArlEvaluator(procInstType, constraint);
+		constraint = ae.syntaxTree.getOriginalARL();
+		return constraint;
+
 	}
 	
 //	private String dataSource2arlPathFromProcessInstance(DataSource ds) {
@@ -159,7 +163,7 @@ public class PrematureTriggerGenerator {
 		varCount++;
 		ae.parser.currentEnvironment.locals.values().stream()
 			.filter(var -> !((VariableExpression)var).name.equals("self"))
-			.forEach(var -> ((VariableExpression)var).name = ((VariableExpression)var).name+varCount);
+			.forEach(var -> ((VariableExpression)var).name = ((VariableExpression)var).name+"_"+varCount);
 		String rewritten = ae.syntaxTree.getOriginalARL();
 		return rewritten;
 	}
@@ -178,24 +182,29 @@ public class PrematureTriggerGenerator {
 		return usage;
 	}
 	
-	private DataSource getFirstOccuranceOfInParam(StepDefinition step, StepParameter parameter) { // for now, we just return one out of potentially many sources, e.g., in case of OR or XOR branching
-		return step.getInDND().getMappings().stream()
+	private Set<DataSource> getFirstOccurancesOfInParam(StepDefinition step, StepParameter parameter) { // for now, we just return one out of potentially many sources, e.g., in case of OR or XOR branching
+		Set<DataSource> dsSet = step.getInDND().getMappings().stream()
 			.filter(mapping -> mapping.getToParameter().equals(parameter.getName()) && mapping.getToStepType().equals(step.getName()) )
 			.map(mapping -> { 
 				if (mapping.getFromStepType().equals(step.getProcess().getName()) ) { // we reached the process, stop here for now (we don;t check if we are in a subprocess here for now) 
-					return new DataSource(step.getProcess(), mapping.getFromParameter(), IoType.procIn, "self.in_"+mapping.getFromParameter());
+					DataSource localDS = new DataSource(step.getProcess(), mapping.getFromParameter(), IoType.procIn, "self.in_"+mapping.getFromParameter());
+					localDS.getUpstreamSources().add(localDS);
+					return localDS;
 				} else { // check the output from a previous step
 					StepDefinition prevStep = step.getProcess().getStepDefinitionByName(mapping.getFromStepType());
 					return getFirstOccuranceOfOutParam(prevStep, new StepParameter(IO.OUT, mapping.getFromParameter()));
 				}
 			} )
-			.findAny().orElseGet(() -> {
+			.collect(Collectors.toSet());
+		if (dsSet.isEmpty()) {
 				varCount++;
 				String fullPath = ensureUniqueVarNames(String.format("self.stepInstances->select(step"+varCount+" | step"+varCount+".stepDefinition.name = '%s') \r\n"
 						+ " ->any()->asType(<root/types/"+ProcessStep.getProcessStepName(step)+">).in_%s ", step.getName(), parameter.getName()),
 						procInstType);
-				return new DataSource(step, parameter.getName(), IoType.stepIn, fullPath);
-			}); //for now just return any found one or access to the in param via the process step instance
+				DataSource local = new DataSource(step, parameter.getName(), IoType.stepIn, fullPath);
+				local.getUpstreamSources().add(local); //its its own root node
+				return Set.of(local);
+		} else return dsSet;
 	}
 	
 	private DataSource getFirstOccuranceOfOutParam(StepDefinition step, StepParameter outParam) {
@@ -205,7 +214,7 @@ public class PrematureTriggerGenerator {
 			ArlEvaluator ae = new ArlEvaluator(stepType, mapping);
 			mapping = ae.syntaxTree.getOriginalARL();;
 			
-			int posSym = mapping.indexOf("->symmetricDifference");
+			int posSym = Math.max(mapping.indexOf("->symmetricDifference"), mapping.indexOf(".symmetricDifference"));
 			if (posSym > 0) {
 				String navPath = mapping.substring(0, posSym); // now lets find which in param this outparam depends on
 				// we assume, only inparams are used in datamapping, i.e., we dont derive some output and then derive additional output from that!
@@ -225,6 +234,7 @@ public class PrematureTriggerGenerator {
 							break;
 					}
 				}
+				Set<DataSource> rootSources = new HashSet<>();
 				for( int pos : Lists.reverse(loc2param.keySet().stream().sorted().collect(Collectors.toList()))) {
 					String param = loc2param.get(pos);
 					String extParam = "self.in_"+param;
@@ -232,12 +242,16 @@ public class PrematureTriggerGenerator {
 					// and then replace the param by the path
 					String pre = navPath.substring(0, pos);
 					String post = navPath.substring(pos+extParam.length());
-					String replacement = getFirstOccuranceOfInParam(step, new StepParameter(IO.IN, param)).navPath;
+					Set<DataSource> dsSet = getFirstOccurancesOfInParam(step, new StepParameter(IO.IN, param));
+					String replacement =  combinePaths(dsSet);
 					navPath = pre + replacement + post;
+					rootSources.addAll(dsSet.stream().flatMap(ds -> ds.getUpstreamSources().stream()).collect(Collectors.toSet()));
 				}
 				// and rewrite, then return
 				String fullPath = ensureUniqueVarNames(navPath, procInstType);
-				return new DataSource(step, outParam.getName(), IoType.stepOut, fullPath);
+				DataSource thisDS = new DataSource(step, outParam.getName(), IoType.stepOut, fullPath);
+				thisDS.upstreamSources.addAll(rootSources);
+				return thisDS;
 			}
 		}
 		// otherwise prepare the path to this outparam
@@ -245,8 +259,47 @@ public class PrematureTriggerGenerator {
 		String fullPath = ensureUniqueVarNames(String.format("self.stepInstances->select(step"+varCount+" | step"+varCount+".stepDefinition.name = '%s') \r\n"
 				+ " ->any()->asType(<root/types/"+ProcessStep.getProcessStepName(step)+">).out_%s ", step.getName(), outParam.getName()),
 				procInstType);
-		
-		return new DataSource(step, outParam.getName(), IoType.stepOut, fullPath);
+		DataSource local = new DataSource(step, outParam.getName(), IoType.stepOut, fullPath);
+		local.getUpstreamSources().add(local); //its its own root node
+		return local;
+	}
+	
+	private String combinePaths(Set<DataSource> dsSet) {
+		if (dsSet.isEmpty()) return "";
+		if (dsSet.size() == 1) return dsSet.stream().findAny().get().navPath;
+		else {
+			//determine overlap of root sources, if same source, then we dont need to union anything as we are or-ing anyway. --> might filter out candidates that lead to premature trigger, lets keep union.
+			List<DataSource> dsList = dsSet.stream().sorted(new SourceSizeComparator()).collect(Collectors.toList());
+//			List<DataSource> dsList = new ArrayList<>();
+//			DataSource largestDS = fullList.get(0);
+//			dsList.add(largestDS);
+//			for (int i = 1; i < dsList.size(); i++ ) {
+//				// if one item is not subset of largest list, add to dsList, else drop
+//				DataSource smallerDS = fullList.get(i);
+//				if (largestDS.getUpstreamSources().containsAll(smallerDS.getUpstreamSources()))
+//					; //drop 
+//				else
+//					dsList.add(smallerDS);
+//			}
+//			if (dsList.size() == 1) return dsSet.stream().findAny().get().navPath;
+			
+			StringBuffer prefix= new StringBuffer();
+			StringBuffer union = new StringBuffer();
+			union.append(dsList.get(0).navPath);
+			for (int i = 1; i < dsList.size(); i++ ) {
+				prefix.append("(");
+				union.append(".union("+dsList.get(i).navPath+"))");
+			}
+			prefix.append(union);
+			return prefix.toString();
+		}
+	}
+	
+	public class SourceSizeComparator implements Comparator<DataSource> {
+		@Override
+		public int compare(DataSource o1, DataSource o2) {
+			return Integer.compare(o1.getUpstreamSources().size(), o2.getUpstreamSources().size());
+		}
 	}
 	
 	@Data 
@@ -260,9 +313,42 @@ public class PrematureTriggerGenerator {
 	@Data
 	public static class DataSource{
 		public enum IoType {stepOut, stepIn, procIn, procOut};
-		private final StepDefinition source;
+		private final StepDefinition local;
+		private Set<DataSource> upstreamSources = new HashSet<>();
 		private final String paramName;
 		private final IoType ioType;
 		private final String navPath;
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			DataSource other = (DataSource) obj;
+			if (ioType != other.ioType)
+				return false;
+			if (paramName == null) {
+				if (other.paramName != null)
+					return false;
+			} else if (!paramName.equals(other.paramName))
+				return false;
+			if (local == null) {
+				if (other.local != null)
+					return false;
+			} else if (!local.getName().equals(other.local.getName()))
+				return false;
+			return true;
+		}
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((ioType == null) ? 0 : ioType.hashCode());
+			result = prime * result + ((paramName == null) ? 0 : paramName.hashCode());
+			result = prime * result + ((local == null) ? 0 : local.getId().hashCode());
+			return result;
+		}
 	}
 }
