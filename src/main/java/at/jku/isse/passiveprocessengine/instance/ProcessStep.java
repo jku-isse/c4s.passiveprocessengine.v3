@@ -28,6 +28,7 @@ import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
@@ -590,16 +591,6 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			.forEach(entry -> {
 					typeStep.createPropertyType("out_"+entry.getKey(), Cardinality.SET, entry.getValue());
 			});
-			
-			for (Conditions condition : Conditions.values()) {
-				if (td.getCondition(condition).isPresent()) {
-					if (td.getCondition(condition).get() != null) {
-						ConsistencyRuleType crd = ConsistencyRuleType.create(ws, typeStep, "crd_"+condition+"_"+typeStep.name(), td.getCondition(condition).get());
-						// not evaluated yet here, assert ConsistencyUtils.crdValid(crd);
-						typeStep.createPropertyType(condition.toString(), Cardinality.SINGLE, crd);
-					}
-				}	
-			}
 			td.getInputToOutputMappingRules().entrySet().stream()
 				.forEach(entry -> {
 					if (entry.getValue() != null) {
@@ -607,14 +598,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 						typeStep.createPropertyType("crd_datamapping_"+entry.getKey(), Cardinality.SINGLE, crt);					
 					}//assert ConsistencyUtils.crdValid(crt); as no workspace.concludeTransaction is called here, no need to assert this here, as will never be false here	
 				});
-			//qa constraints:
-			td.getQAConstraints().stream()
-				.forEach(spec -> {
-					String specId = getQASpecId(spec);
-					if (spec.getQaConstraintSpec() != null) {
-						ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeStep, specId, spec.getQaConstraintSpec());
-					}//assert ConsistencyUtils.crdValid(crt); as no workspace.concludeTransaction is called here, no need to assert this here, as will never be false here
-				});
+			
 			typeStep.createPropertyType(CoreProperties.qaState.toString(), Cardinality.MAP, ConstraintWrapper.getOrCreateDesignSpaceCoreSchema(ws));
 			return typeStep;
 		}

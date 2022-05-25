@@ -26,6 +26,7 @@ import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
@@ -252,4 +253,108 @@ class RepairTests {
 		
 	}
 	
+	@Test
+	void testSelectWithAsSetRepair() {
+		StepDefinition s1 = StepDefinition.getInstance("S1", ws);
+		//s1.setCondition(Conditions.PRECONDITION, "self.in_story->size() > 0");
+		InstanceType typeStep = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, s1);
+		InstanceType gitType = TestArtifacts.getDemoGitIssueType(ws);
+		if (typeStep.getPropertyType("in_story") == null) {
+			typeStep.createPropertyType("in_story", Cardinality.SET, gitType);
+		}
+		Instance git1 = ws.createInstance(gitType, "Git1");
+		git1.getPropertyAsSingle("title").set("Git1Title");
+		Instance git2 = ws.createInstance(gitType, "Git2");
+		git2.getPropertyAsSingle("title").set("WriteOrReviseMMF for Git1");
+		git1.getPropertyAsSet("linkedIssues").add(git2);
+		Instance step1 = ws.createInstance(typeStep, "Step1");
+		step1.getPropertyAsSet("in_story").add(git1);
+		ws.concludeTransaction();
+		
+		String arl = "((self.in_story.any().asType( <root/types/git_issue> ).linkedIssues\r\n" + 
+				"->select( ref_3 : <root/types/git_issue> | ref_3.title.substring(1, 16).equalsIgnoreCase('WriteOrReviseMMF')).asSet().size() > 0 \r\n" + 
+				"and self.in_story.any().asType( <root/types/git_issue> ).linkedIssues\r\n" + 
+				"->select( ref_2 : <root/types/git_issue> | ref_2.title.substring(1, 11).equalsIgnoreCase('RefineToSUC')).asSet().size() > 0) \r\n" + 
+				"and self.in_story.any().asType( <root/types/git_issue> ).linkedIssues\r\n" + 
+				"->select( ref_1 : <root/types/git_issue> | ref_1.title.substring(1, 17).equalsIgnoreCase('CreateOrRefineCSC')).asSet().size() > 0)";
+		ConsistencyRuleType crd1 = ConsistencyRuleType.create(ws, typeStep, "crd1", arl);
+		ws.concludeTransaction();
+		
+		crd1.consistencyRuleEvaluations().value.stream()
+		.filter(cr -> !cr.isConsistent())
+		.forEach(cr -> { 
+		RepairNode repairTree = RuleService.repairTree(cr);
+		assert(repairTree != null);
+	});
+		
+	}
+	
+	@Test
+	void testSelectWithoutAsSetRepair() {
+		StepDefinition s1 = StepDefinition.getInstance("S1", ws);
+		//s1.setCondition(Conditions.PRECONDITION, "self.in_story->size() > 0");
+		InstanceType typeStep = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, s1);
+		InstanceType gitType = TestArtifacts.getDemoGitIssueType(ws);
+		if (typeStep.getPropertyType("in_story") == null) {
+			typeStep.createPropertyType("in_story", Cardinality.SET, gitType);
+		}
+		Instance git1 = ws.createInstance(gitType, "Git1");
+		git1.getPropertyAsSingle("title").set("Git1Title");
+		Instance git2 = ws.createInstance(gitType, "Git2");
+		git2.getPropertyAsSingle("title").set("WriteOrReviseMMF");
+		git1.getPropertyAsSet("linkedIssues").add(git2);
+		Instance step1 = ws.createInstance(typeStep, "Step1");
+		step1.getPropertyAsSet("in_story").add(git1);
+		ws.concludeTransaction();
+		
+		String arl = "((self.in_story.any().asType( <root/types/git_issue> ).linkedIssues\r\n" + 
+				"->select( ref_3 : <root/types/git_issue> | ref_3.title='WriteOrReviseMMF').size() > 0 \r\n" + 
+				"and self.in_story.any().asType( <root/types/git_issue> ).linkedIssues\r\n" + 
+				"->select( ref_2 : <root/types/git_issue> | ref_2.title.substring(1, 11).equalsIgnoreCase('RefineToSUC')).size() > 0) \r\n" + 
+				"and self.in_story.any().asType( <root/types/git_issue> ).linkedIssues\r\n" + 
+				"->select( ref_1 : <root/types/git_issue> | ref_1.title='CreateOrRefineCSC').size() > 0)";
+		ConsistencyRuleType crd1 = ConsistencyRuleType.create(ws, typeStep, "crd1", arl);
+		ws.concludeTransaction();
+		
+		crd1.consistencyRuleEvaluations().value.stream()
+		.filter(cr -> !cr.isConsistent())
+		.forEach(cr -> { 
+		RepairNode repairTree = RuleService.repairTree(cr);
+		assert(repairTree != null);
+	});
+		
+	}
+	
+	@Test
+	void testAsSetRepair() {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		//Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		TestArtifacts.addJiraToJira(jiraA, jiraB); 
+		TestArtifacts.addJiraToJira(jiraA, jiraC);
+		TestArtifacts.addJiraToJira(jiraB, jiraC); 
+		
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AsSetTest", "self.requirements.asSet().size() > 2");
+		ws.concludeTransaction();
+		crt.consistencyRuleEvaluations().value.forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr); });
+		;
+	}
+	
+	
+	@Test
+	void testSizeRepair() {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		//Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		TestArtifacts.addJiraToJira(jiraA, jiraB); 
+		TestArtifacts.addJiraToJira(jiraA, jiraC);
+		TestArtifacts.addJiraToJira(jiraB, jiraC); 
+		
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AsSetTest", "self.requirements.size() > 2");
+		ws.concludeTransaction();
+		crt.consistencyRuleEvaluations().value.forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr); });
+		;
+	}
 }

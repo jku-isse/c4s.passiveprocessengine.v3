@@ -42,6 +42,7 @@ class TestPrematureTriggerConstraints {
 	void testPrematureRuleGeneration() throws IOException, ProcessException  {
 		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		InstanceType typeGitDemo = TestArtifacts.getDemoGitIssueType(ws);
+		ws.concludeTransaction();
 		String path = ".";
 		String file = path+"/src/test/resources/prematuretest.json"; 
 		String content = Files.readString(Paths.get(file));	
@@ -63,6 +64,7 @@ class TestPrematureTriggerConstraints {
 	void testPrematureRuleGenerationWithSingleHopAcrossOutParam() throws IOException, ProcessException  {
 		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		InstanceType typeGitDemo = TestArtifacts.getDemoGitIssueType(ws);
+		ws.concludeTransaction();
 		String path = ".";
 		String file = path+"/src/test/resources/prematuretestV2.json"; 
 		String content = Files.readString(Paths.get(file));	
@@ -84,6 +86,7 @@ class TestPrematureTriggerConstraints {
 	void testPrematureRuleGenerationWithMultiSource() throws IOException, ProcessException  {
 		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		InstanceType typeDemo = TestArtifacts.getTestAzureIssueType(ws);
+		ws.concludeTransaction();
 		String path = ".";
 		String file = path+"/src/test/resources/prematuretestV3.json"; 
 		String content = Files.readString(Paths.get(file));	
@@ -104,6 +107,7 @@ class TestPrematureTriggerConstraints {
 	void testPrematureRuleGenerationWithTypedIterator() throws IOException, ProcessException  {
 		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		InstanceType typeDemo = TestArtifacts.getTestAzureIssueType(ws);
+		ws.concludeTransaction();
 		String path = ".";
 		String file = path+"/src/test/resources/prematuretestV4.json"; 
 		String content = Files.readString(Paths.get(file));	
@@ -121,6 +125,7 @@ class TestPrematureTriggerConstraints {
 	void testPrematureRuleGenerationWithBranchesWithIdenticalRootSource() throws IOException, ProcessException  {
 		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		InstanceType typeDemo = TestArtifacts.getTestAzureIssueType(ws);
+		ws.concludeTransaction();
 		String path = ".";
 		String file = path+"/src/test/resources/prematurebranchingtest.json"; 
 		String content = Files.readString(Paths.get(file));	
@@ -139,6 +144,7 @@ class TestPrematureTriggerConstraints {
 	void testPrematureRuleGenerationWithBranches() throws IOException, ProcessException  {
 		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		InstanceType typeDemo = TestArtifacts.getTestAzureIssueType(ws);
+		ws.concludeTransaction();
 		String path = ".";
 		String file = path+"/src/test/resources/prematurebranchingtestV2.json"; 
 		String content = Files.readString(Paths.get(file));	

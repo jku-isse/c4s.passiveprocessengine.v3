@@ -2,6 +2,7 @@ package at.jku.isse.passiveprocessengine.definition;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,11 +18,16 @@ import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator;
+import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition.CoreProperties;
 import at.jku.isse.passiveprocessengine.instance.DecisionNodeInstance;
+import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class ProcessDefinition extends StepDefinition{
 
 	public static enum CoreProperties {decisionNodeDefinitions, stepDefinitions, prematureTriggers, prematureTriggerMappings}
@@ -115,10 +121,48 @@ public class ProcessDefinition extends StepDefinition{
 		super.deleteCascading();
 	}
 	
-	public void initializeInstanceTypes() {
+	public void initializeInstanceTypes() throws ProcessException{
 		ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
 		DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(instance.workspace);
 		this.getStepDefinitions().stream().forEach(sd -> ProcessStep.getOrCreateDesignSpaceInstanceType(instance.workspace, sd));
+		ws.concludeTransaction();
+		List<String> augmentationErrors = new LinkedList<>();
+		try {
+			new RuleAugmentation(ws, this, instance.getInstanceType()).augmentConditions(); 
+		} catch(ProcessException pex) {
+			augmentationErrors.addAll(pex.getErrorMessages());
+		}
+		this.getStepDefinitions().stream().forEach(sd -> {
+			try {
+				new RuleAugmentation(ws, sd, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, sd)).augmentConditions(); 
+			} catch(ProcessException pex) {
+				augmentationErrors.addAll(pex.getErrorMessages());
+			}
+		});
+		Map<String, Map<String, String>> validity = checkConstraintValidity();
+		if (validity.values().stream().flatMap(vmap -> vmap.values().stream()).allMatch(val -> val.equals("valid")) ) {
+			// now lets also create premature rules here, as we need the process to exist first
+			new PrematureTriggerGenerator(ws, this).generatePrematureConstraints();
+			ws.concludeTransaction();
+			// even if there are augementation errors, these were due to unsupported constructs in the constraint during augementation, but the constraints are ok,
+			// thus we store and run the process, but report back that augmentation didn;t work.
+			if (!augmentationErrors.isEmpty()) {
+				ProcessException pex = new ProcessException("Constraint Augmentation unsuccessful, but continuing nevertheless without augmentation.");
+				pex.setErrorMessages(augmentationErrors);
+				throw pex;
+			}
+		} else {
+			log.info("Removing newly added process again due to constraint errors: "+getName());
+			ProcessException pex = new ProcessException("Constraints contain at least one error");
+			// here we dont care if there were augmentation errors, as these are most likely due to the constraint errors anyway.
+			validity.values().stream()
+				.flatMap(vmap -> vmap.entrySet().stream())
+				.filter(entry -> !entry.getValue().equals("valid"))
+				.forEach(entry -> pex.getErrorMessages().add(entry.getKey()+": "+entry.getValue()));
+			deleteCascading();
+			ws.concludeTransaction();
+			throw pex;
+		}
 	}
 	
 	public Map<String, Map<String, String>> checkConstraintValidity() {
