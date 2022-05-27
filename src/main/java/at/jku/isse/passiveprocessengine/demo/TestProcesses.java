@@ -13,13 +13,14 @@ import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.DecisionNo
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Mapping;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Process;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Step;
+import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 public class TestProcesses {
 
 	// process with two parallel subtasks, each taking the same jira issue as input, both completing when that issue is set to closed
 	// no qa constraints applied, datamapping only for one subtask, subproc complete when both subtasks are complete (AND cond)
-	public static ProcessDefinition getSimpleSubprocessDefinition(Workspace ws) {
+	public static ProcessDefinition getSimpleSubprocessDefinition(Workspace ws) throws ProcessException {
 		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
 		ProcessDefinition procDef = ProcessDefinition.getInstance("subproc1", ws);
 		procDef.addExpectedInput("jiraIn", typeJira);	
@@ -48,11 +49,12 @@ public class TestProcesses {
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws)); //into both steps
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd2.getName(), "jiraIn",  ws)); //into both steps
 		dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd1.getName(), "jiraOut", procDef.getName(), "jiraOut",  ws)); //out of the first
+		procDef.initializeInstanceTypes();
 		return procDef;
 	}
 
 	// simple process, two AND branches, on of the subbranches is a subprocess, no QA, simple datamapping, all using same completion condition of step set to closed
-	public static ProcessDefinition getSimpleSuperProcessDefinition(Workspace ws) {
+	public static ProcessDefinition getSimpleSuperProcessDefinition(Workspace ws) throws ProcessException {
 		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
 		ProcessDefinition procDef = ProcessDefinition.getInstance("parentproc1", ws);
 		procDef.addExpectedInput("jiraIn", typeJira);	
@@ -79,10 +81,11 @@ public class TestProcesses {
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws)); //into both steps
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd2.getName(), "jiraIn",  ws)); //into both steps
 		dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd2.getName(), "jiraOut", procDef.getName(), "jiraOut",  ws)); //out of the second
+		procDef.initializeInstanceTypes();
 		return procDef;
 	}
 
-	public static ProcessDefinition getSimple2StepProcessDefinition(Workspace ws) {
+	public static ProcessDefinition getSimple2StepProcessDefinition(Workspace ws) throws ProcessException {
 			InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
 			ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
 			procDef.addExpectedInput("jiraIn", typeJira);	
@@ -146,10 +149,11 @@ public class TestProcesses {
 			
 			dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 			dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd1.getName(), "jiraOut", sd2.getName(), "jiraIn",  ws));
+			procDef.initializeInstanceTypes();
 			return procDef;
 		}
 	
-	public static ProcessDefinition get2StepProcessDefinitionWithSymmetricDiffMapping(Workspace ws) {
+	public static ProcessDefinition get2StepProcessDefinitionWithSymmetricDiffMapping(Workspace ws) throws ProcessException {
 		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
 		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
 		procDef.addExpectedInput("jiraIn", typeJira);		
@@ -172,10 +176,11 @@ public class TestProcesses {
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
+		procDef.initializeInstanceTypes();
 		return procDef;
 	}
 	
-	public static ProcessDefinition get2StepProcessDefinitionWithUnionMapping(Workspace ws) {
+	public static ProcessDefinition get2StepProcessDefinitionWithUnionMapping(Workspace ws) throws ProcessException {
 		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
 		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
 		procDef.addExpectedInput("jiraIn", typeJira);		
@@ -202,11 +207,11 @@ public class TestProcesses {
 		sd1.setOutDND(dnd2);
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn2", sd1.getName(), "jiraIn2",  ws));
-		
+		procDef.initializeInstanceTypes();
 		return procDef;
 	}
 
-	public static ProcessDefinition get2StepProcessDefinitionWithExistsCheck(Workspace ws) {
+	public static ProcessDefinition get2StepProcessDefinitionWithExistsCheck(Workspace ws) throws ProcessException {
 		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
 		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
 		procDef.addExpectedInput("jiraIn", typeJira);		
@@ -236,7 +241,7 @@ public class TestProcesses {
 		sd1.setOutDND(dnd2);
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn2", sd1.getName(), "jiraIn2",  ws));
-		
+		procDef.initializeInstanceTypes();
 		return procDef;
 	}
 	
@@ -281,6 +286,7 @@ public class TestProcesses {
 		dn1.getMapping().add(new DTOs.Mapping(procD.getCode(), "jiraIn", sd1.getCode(), "jiraIn")); //into both steps
 		dn1.getMapping().add(new DTOs.Mapping(procD.getCode(), "jiraIn", sd2.getCode(), "jiraIn")); //into both steps
 		dn2.getMapping().add(new DTOs.Mapping(sd1.getCode(), "jiraOut", procD.getCode(), "jiraOut")); //out of the first
+		
 		return procD;
 	}
 

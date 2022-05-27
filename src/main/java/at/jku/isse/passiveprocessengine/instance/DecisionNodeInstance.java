@@ -29,7 +29,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		super(instance);
 	}
 	
-	protected DecisionNodeDefinition getDefinition() {
+	public DecisionNodeDefinition getDefinition() {
 		return  WrapperCache.getWrappedInstance(DecisionNodeDefinition.class, instance.getPropertyAsInstance(CoreProperties.dnd.toString()));
 	}
 	
@@ -46,7 +46,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		instance.getPropertyAsSingle(CoreProperties.hasPropagated.toString()).set(true);
 	}
 	
-	private boolean hasPropagated() {
+	public boolean hasPropagated() {
 		return (boolean) instance.getPropertyAsValueOrElse(CoreProperties.hasPropagated.toString(), () -> false);
 	}
 	

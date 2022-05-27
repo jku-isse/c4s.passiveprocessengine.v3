@@ -43,7 +43,7 @@ public class RuleTests {
 		RuleService.setEvaluator(new ArlRuleEvaluator());
 		workspace = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		workspace.setAutoUpdate(true);
-		picp = new ProcessInstanceChangeProcessor(workspace);
+		picp = new ProcessInstanceChangeProcessor(workspace, null);
 		typeJira = TestArtifacts.getJiraInstanceType(workspace);
 		StepDefinition s1 = StepDefinition.getInstance("S1", workspace);
 		s1.setCondition(Conditions.PRECONDITION, "self.in_story->size() > 0");

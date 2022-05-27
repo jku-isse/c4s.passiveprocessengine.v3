@@ -41,6 +41,7 @@ import at.jku.isse.passiveprocessengine.instance.messages.Commands.OutputChanged
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.PrematureStepTriggerCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.QAConstraintChangedCmd;
+import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -48,13 +49,15 @@ import lombok.extern.slf4j.Slf4j;
 public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 
 	Workspace ws;
+	EventDistributor distributor = null;
 	// refactor this out later into a schema cache
 	Map<Id, String> instanceIndex = Collections.synchronizedMap(new HashMap<>());
 	//we queue commands and remove some that are undone when lazy fetching of artifacts results in different outcome 
 	protected Map<String, Commands.ProcessScopedCmd> cmdQueue = Collections.synchronizedMap(new HashMap<>());
 	
-	public ProcessInstanceChangeProcessor(Workspace ws) {
+	public ProcessInstanceChangeProcessor(Workspace ws, EventDistributor distributor) {
 		this.ws = ws;
+		this.distributor = distributor;
 		ws.workspaceListeners.add( this);
 	}
 
@@ -271,9 +274,9 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 			procs.addAll(cmdEvents.stream().map(event -> event.getProcScope()).filter(Objects::nonNull).collect(Collectors.toSet()));
 			relevantEffects.clear();
 			cmdQueue.clear();
-			ws.concludeTransaction();
-			//ws.commit();
-			//TODO: do something with the change events from command based effects, if needed, e.g., for LTE-based checking
+			if (distributor  != null)
+				distributor.handleEvents(cmdEvents); //do something with the change events from command based effects, if needed, e.g., for LTE-based checking
+			ws.concludeTransaction(); 
 			return procs;
 		} else
 			return Collections.emptySet();

@@ -196,15 +196,18 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		cw.setCrIfEmpty(cr);
 		//cw.setEvalResult(fulfilled);
 		cw.setLastChanged(getProcess().getCurrentTimestamp());
+		List<Events.ProcessChangedEvent> qaChanges = new LinkedList<>();
+		qaChanges.add(new Events.QAConstraintFulfillmentChanged(this.getProcess(), this, cw));
 		boolean newQaState = areQAconstraintsFulfilled(); // are all QA checks now fulfilled?
 		if (priorQAfulfilled != newQaState) { // a change in qa fulfillment that we might want to react to
 			priorQAfulfilled = newQaState;
-			if (arePostCondFulfilled() && newQaState)  
-				return this.trigger(StepLifecycle.Trigger.MARK_COMPLETE) ;
-			if (!newQaState && actualSM.isInState(State.COMPLETED)) 
-				return this.trigger(StepLifecycle.Trigger.ACTIVATE);
+			if (arePostCondFulfilled() && newQaState)  {
+				qaChanges.addAll(this.trigger(StepLifecycle.Trigger.MARK_COMPLETE)) ;
+			} else if (!newQaState && actualSM.isInState(State.COMPLETED)) {
+				qaChanges.addAll(this.trigger(StepLifecycle.Trigger.ACTIVATE));
+			}
 		}
-		return Collections.emptyList();
+		return qaChanges;
 	}
 	
 	public Set<ConstraintWrapper> getQAstatus() {
@@ -456,10 +459,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			State actualLifecycleState = actualSM.getState();
 			if (actualLifecycleState != prevActualLifecycleState) { // state transition
 				instance.getPropertyAsSingle(CoreProperties.actualLifecycleState.toString()).set(actualSM.getState().toString());
-				events.add(new Events.StepStateTransitionEvent(this.getProcess(), this, actualLifecycleState, true));
-				if (actualSM.getState().equals(State.ACTIVE) && this.getProcess() != null) {
-					getProcess().setActivationConditionsFulfilled();
-				}
+				events.add(new Events.StepStateTransitionEvent(this.getProcess(), this, prevActualLifecycleState, actualLifecycleState, true));
+				events.addAll(triggerProcessTransitions());
 				switch (expectedSM.getState()) { // we only progress in deviating state when postcond fulfilled or cancled or no work expected
 				case CANCELED: //fallthrough
 				case COMPLETED://fallthrough
@@ -476,15 +477,19 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			expectedSM.fire(event);
 			if (expectedSM.getState() != prevExpState) { // state transition
 				instance.getPropertyAsSingle(CoreProperties.expectedLifecycleState.toString()).set(expectedSM.getState().toString());
-				events.add(new Events.StepStateTransitionEvent(this.getProcess(), this, expectedSM.getState(), false));
+				events.add(new Events.StepStateTransitionEvent(this.getProcess(), this, prevExpState, expectedSM.getState(), false));
 				switch(expectedSM.getState()) {
 				case ENABLED:					
 					// handle deviation mitigation --> if actualSM==ACTIVE and expected transitions from Available to Enabled, then should continue to Active
 					if (actualSM.getState().equals(State.ACTIVE)) {
 						expectedSM.fire(Trigger.ACTIVATE);
+						instance.getPropertyAsSingle(CoreProperties.expectedLifecycleState.toString()).set(expectedSM.getState().toString());
+						events.add(new Events.StepStateTransitionEvent(this.getProcess(), this, State.ENABLED, expectedSM.getState(), false));
 						// same fore COMPLETED
 					} else if (actualSM.getState().equals(State.COMPLETED)) {
 						expectedSM.fire(Trigger.MARK_COMPLETE);
+						instance.getPropertyAsSingle(CoreProperties.expectedLifecycleState.toString()).set(expectedSM.getState().toString());
+						events.add(new Events.StepStateTransitionEvent(this.getProcess(), this, State.ENABLED, expectedSM.getState(), false));
 						tryProgress = true;
 					} 
 					//				// what if we have been in No Work Expected and go back to Enabled or Available, shoulnt we also go to Active --> rules should do this automatically
@@ -509,6 +514,21 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			} 
 		}
 		return events;
+	}
+	
+	private List<Events.ProcessChangedEvent> triggerProcessTransitions() {
+		if (this.getProcess() == null)
+			return Collections.emptyList();
+		if (actualSM.getState().equals(State.ENABLED) &&  this.getProcess().getDefinition().getCondition(Conditions.PRECONDITION).isEmpty()) {
+			if (this.getProcess().getActualLifecycleState().equals(State.COMPLETED))
+				return getProcess().setActivationConditionsFulfilled(); // we are back in an enabled state, let the process know that its not COMPLETED anymore
+			return getProcess().setPreConditionsFulfilled(true); // ensure the process is also in an enabled state
+		} else
+		if ((actualSM.getState().equals(State.ACTIVE) || actualSM.getState().equals(State.COMPLETED)) 
+				&& !getProcess().getActualLifecycleState().equals(State.ACTIVE)) {
+			return getProcess().setActivationConditionsFulfilled();
+		} 
+		return Collections.emptyList();
 	}
 	
 	public static Map<String, String> getConstraintValidityStatus(Workspace ws, StepDefinition td) {
@@ -676,7 +696,9 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		String inDNI = getInDNI() != null ? getInDNI().getDefinition().getName() : "NONE" ; 
 		String outDNI = getOutDNI() != null ? getOutDNI().getDefinition().getName() : "NONE";
 		
-		return "Step "+ getName() + " "+states+" "+input+" "+output+" [QAok: "+areQAconstraintsFulfilled()+"] [DNIs: "+inDNI+":"+outDNI+"] in Proc: " + process +" DS: " +getInstance().toString();
+		String cond = String.format("[Pre: %s |Post: %s |Canc: %s |QAok: %s]", arePreCondFulfilled(), arePostCondFulfilled(), areCancelCondFulfilled(), areQAconstraintsFulfilled());
+		
+		return "Step "+ getName() + " "+states+" "+input+" "+output+" "+cond+" [DNIs: "+inDNI+":"+outDNI+"] in Proc: " + process +" DS: " +getInstance().toString();
 	}
 
 

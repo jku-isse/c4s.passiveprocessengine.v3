@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.instance.messages;
 
+import at.jku.isse.passiveprocessengine.instance.ConstraintWrapper;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
@@ -26,15 +27,30 @@ public class Events {
 	
 	@EqualsAndHashCode(callSuper = true)
 	@Data
+	public static class QAConstraintFulfillmentChanged extends ProcessChangedEvent {
+		final ProcessStep step;
+		final ConstraintWrapper qacWrapper;
+		
+		public QAConstraintFulfillmentChanged(ProcessInstance proc, ProcessStep step, ConstraintWrapper qacWrapper) {
+			super(proc);
+			this.step = step;
+			this.qacWrapper = qacWrapper;
+		}
+	}
+	
+	@EqualsAndHashCode(callSuper = true)
+	@Data
 	public static class StepStateTransitionEvent extends ProcessChangedEvent {
 		
 		ProcessStep step;
+		State oldState;
 		State newState;
 		boolean isActualState;
 		
-		public StepStateTransitionEvent(ProcessInstance proc, ProcessStep step, State newState, boolean isActualState) {
+		public StepStateTransitionEvent(ProcessInstance proc, ProcessStep step, State oldState, State newState, boolean isActualState) {
 			super(proc);
 			this.step = step;
+			this.oldState = oldState;
 			this.newState = newState;
 			this.isActualState = isActualState;
 		}

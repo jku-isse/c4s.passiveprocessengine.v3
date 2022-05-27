@@ -17,6 +17,7 @@ import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
 import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
+import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 @ExtendWith(SpringExtension.class)
@@ -83,7 +84,7 @@ public class SerializationTest {
 	}
 	
 	@Test
-	void testOutputFromProcessDef() {
+	void testOutputFromProcessDef() throws ProcessException {
 		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		ProcessDefinition inPD = TestProcesses.getSimple2StepProcessDefinition(ws);
 		DTOs.Process procD = DefinitionTransformer.toDTO(inPD);

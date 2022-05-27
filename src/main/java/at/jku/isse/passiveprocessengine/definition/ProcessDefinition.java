@@ -128,7 +128,7 @@ public class ProcessDefinition extends StepDefinition{
 		ws.concludeTransaction();
 		List<String> augmentationErrors = new LinkedList<>();
 		try {
-			new RuleAugmentation(ws, this, instance.getInstanceType()).augmentConditions(); 
+			new RuleAugmentation(ws, this, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this)).augmentConditions(); 
 		} catch(ProcessException pex) {
 			augmentationErrors.addAll(pex.getErrorMessages());
 		}
@@ -142,9 +142,10 @@ public class ProcessDefinition extends StepDefinition{
 		Map<String, Map<String, String>> validity = checkConstraintValidity();
 		if (validity.values().stream().flatMap(vmap -> vmap.values().stream()).allMatch(val -> val.equals("valid")) ) {
 			// now lets also create premature rules here, as we need the process to exist first
-			new PrematureTriggerGenerator(ws, this).generatePrematureConstraints();
-			ws.concludeTransaction();
-			// even if there are augementation errors, these were due to unsupported constructs in the constraint during augementation, but the constraints are ok,
+			//new PrematureTriggerGenerator(ws, this).generatePrematureConstraints();
+			//ws.concludeTransaction();
+			
+			// even if there are augementation errors, these were due to unsupported constructs in the constraint during augmentation, but the constraints are ok,
 			// thus we store and run the process, but report back that augmentation didn;t work.
 			if (!augmentationErrors.isEmpty()) {
 				ProcessException pex = new ProcessException("Constraint Augmentation unsuccessful, but continuing nevertheless without augmentation.");
