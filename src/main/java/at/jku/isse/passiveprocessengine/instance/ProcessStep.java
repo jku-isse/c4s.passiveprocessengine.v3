@@ -1,6 +1,7 @@
 package at.jku.isse.passiveprocessengine.instance;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -702,6 +703,15 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 
 
+	public static class CompareBySpecOrder  implements Comparator<ProcessStep> {
 
+		@Override
+		public int compare(ProcessStep o1, ProcessStep o2) {
+			if (o1 != null && o1.getDefinition() != null && o2 != null && o2.getDefinition() != null)
+				return o1.getDefinition().getSpecOrderIndex().compareTo(o2.getDefinition().getSpecOrderIndex());
+			else return 0;
+		}
+		
+	}
 
 }

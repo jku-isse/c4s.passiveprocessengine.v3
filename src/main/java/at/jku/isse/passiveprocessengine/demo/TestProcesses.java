@@ -153,6 +153,41 @@ public class TestProcesses {
 			return procDef;
 		}
 	
+	public static ProcessDefinition getComplexSingleStepProcessDefinition(Workspace ws) throws ProcessException {
+		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
+		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
+		procDef.addExpectedInput("jiraIn", typeJira);	
+		procDef.addExpectedOutput("jiraOut", typeJira);
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1", ws);
+		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2", ws);
+		
+		StepDefinition sd1 = procDef.createStepDefinition("sd1", ws);
+		sd1.addExpectedInput("jiraIn", typeJira);
+		sd1.addExpectedOutput("jiraOut", typeJira);
+		sd1.addInputToOutputMappingRule("jiraOut", 
+				"self.in_jiraIn"
+					+ "->any()"
+					+ "->asType(<"+typeJira.getQualifiedName()+">)"
+							+ ".requirements"
+								+ "->asSet() "  
+								+"->symmetricDifference(self.out_jiraOut) " +  
+								"->size() = 0"
+								); 		
+		sd1.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1 "
+				+ "and self.in_jiraIn->forAll( issue | issue.state = 'Open') ");
+		sd1.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->forAll( issue | issue.state = 'Closed') "
+				+ "and self.out_jiraOut->size() > 0 "
+				+ "and self.in_jiraIn->forAll( issue2 | issue2.state <> 'InProgress') ");
+		//QAConstraintSpec qa2 = QAConstraintSpec.createInstance("sd1-qa2-state", "self.out_jiraIn->forAll( issue | issue.state <> 'InProgress')", "None of the issue states must be 'InProgress'", 2,ws);
+		//sd1.addQAConstraint(qa2);
+		sd1.setInDND(dnd1);
+		sd1.setOutDND(dnd2);
+		
+		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
+		procDef.initializeInstanceTypes();
+		return procDef;
+	}
+	
 	public static ProcessDefinition get2StepProcessDefinitionWithSymmetricDiffMapping(Workspace ws) throws ProcessException {
 		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
 		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
@@ -179,6 +214,9 @@ public class TestProcesses {
 		procDef.initializeInstanceTypes();
 		return procDef;
 	}
+	
+	
+	
 	
 	public static ProcessDefinition get2StepProcessDefinitionWithUnionMapping(Workspace ws) throws ProcessException {
 		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);

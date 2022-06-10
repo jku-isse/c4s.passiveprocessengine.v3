@@ -1,20 +1,25 @@
 package at.jku.isse.passiveprocessengine.instance.messages;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
-import at.jku.isse.passiveprocessengine.instance.messages.Events.StepStateTransitionEvent;
-import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 
 public class EventDistributor {
 
-	ProcessQAStatsMonitor monitor;
+	Set<IProcessEventHandler> handlers = new LinkedHashSet<IProcessEventHandler>();
+
 	
-	public EventDistributor(ProcessQAStatsMonitor monitor) {
-		this.monitor = monitor;
+	public EventDistributor() {
+		
+	}
+	
+	public void registerHandler(IProcessEventHandler handler) {
+		handlers.add(handler);
 	}
 	
 	public void handleEvents(Collection<ProcessChangedEvent> events) {
-		monitor.handleEvents(events);
+		handlers.forEach(handler -> handler.handleEvents(events));
 	}
 }

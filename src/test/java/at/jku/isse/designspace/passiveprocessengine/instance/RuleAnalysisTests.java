@@ -71,7 +71,7 @@ public class RuleAnalysisTests {
 	@Test
 	public void testAnalyseComplexRule() {
 		
-		String arl = "self.in_story"
+		String arl = "(self.in_story"
 				+ "->asList()"
 				+ "->first()"
 				+ "->asType(<"+typeJira.getQualifiedName()+">)"
@@ -84,7 +84,7 @@ public class RuleAnalysisTests {
 									+ "->first()"
 									+ "->asType(<"+typeJira.getQualifiedName()+">)"
 											+ ".requirementIDs"
-											+ "->exists(artId | artId = out.name))";
+											+ "->exists(artId | artId = out.name)))";
 		ArlEvaluator ae = new ArlEvaluator(typeStep, arl);
 		//printSyntaxTree(ae.syntaxTree, "");
 		printOriginalSyntaxTree(ae.syntaxTree, "");
@@ -122,7 +122,7 @@ public class RuleAnalysisTests {
 		ArlEvaluator ae2 = new ArlEvaluator(typeStep, recovered);
 		printSyntaxTree(ae2.syntaxTree, "");
 		
-		String arl1 = "self.in_story"
+		String arl1 = "(self.in_story"
 				+ "->asList()"
 				+ "->first()"
 				+ "->asType(<"+typeJira.getQualifiedName()+">)"
@@ -135,7 +135,7 @@ public class RuleAnalysisTests {
 									+ "->first()"
 									+ "->asType(<"+typeJira.getQualifiedName()+">)"
 											+ ".requirementIDs"
-											+ "->exists(artId1 | artId1 = out1.name))";
+											+ "->exists(artId1 | artId1 = out1.name)))";
 		assert(stripForComparison(recovered).equalsIgnoreCase(stripForComparison(arl1)));
 	}
 	

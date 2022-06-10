@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
+import at.jku.isse.passiveprocessengine.instance.messages.IProcessEventHandler;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.QAConstraintFulfillmentChanged;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.StepStateTransitionEvent;
@@ -17,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
-public class ProcessQAStatsMonitor {
+public class ProcessQAStatsMonitor implements IProcessEventHandler {
 
 	@Autowired
 	ITimeStampProvider timeStampProvider;
@@ -31,6 +32,7 @@ public class ProcessQAStatsMonitor {
 		this.timeStampProvider = tsProvider;
 	}
 	
+	@Override
 	public void handleEvents(Collection<ProcessChangedEvent> events) {
 		events.stream()
 		.filter(StepStateTransitionEvent.class::isInstance)
@@ -118,11 +120,11 @@ public class ProcessQAStatsMonitor {
 			entry.getValue().getPerStepStats().values().stream()
 				.peek(stat -> stat.calcEOPqaFulfillment())
 				.forEach(stat -> { 
-					System.out.println(stat.toString());
+					log.debug(stat.toString());
 					
 				});
 			boolean fulfilled = isProcessFulfilled(entry.getKey(), entry.getValue().getPerStepStats().values());
-			System.out.println("Workflow Complete? "+fulfilled);
+			log.debug("Workflow Complete? "+fulfilled);
 			entry.getValue().setProcessCompleted(fulfilled);		
 		});
 	}

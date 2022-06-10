@@ -63,8 +63,10 @@ class InstanceTests {
 		ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, true, false);
 		//ws = WorkspaceService.PUBLIC_WORKSPACE;
 		RuleService.currentWorkspace = ws;
+		EventDistributor eventDistrib = new EventDistributor();
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
-		picp = new ProcessInstanceChangeProcessor(ws, new EventDistributor(monitor));
+		eventDistrib.registerHandler(monitor);
+		picp = new ProcessInstanceChangeProcessor(ws, eventDistrib);
 		typeJira = TestArtifacts.getJiraInstanceType(ws);
 	}
 
