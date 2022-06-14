@@ -121,7 +121,7 @@ public class ProcessDefinition extends StepDefinition{
 		super.deleteCascading();
 	}
 	
-	public void initializeInstanceTypes() throws ProcessException{
+	public void initializeInstanceTypes(boolean doGeneratePrematureDetectionConstraints) throws ProcessException{
 		ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
 		DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(instance.workspace);
 		this.getStepDefinitions().stream().forEach(sd -> ProcessStep.getOrCreateDesignSpaceInstanceType(instance.workspace, sd));
@@ -142,9 +142,10 @@ public class ProcessDefinition extends StepDefinition{
 		Map<String, Map<String, String>> validity = checkConstraintValidity();
 		if (validity.values().stream().flatMap(vmap -> vmap.values().stream()).allMatch(val -> val.equals("valid")) ) {
 			// now lets also create premature rules here, as we need the process to exist first
-			//new PrematureTriggerGenerator(ws, this).generatePrematureConstraints();
-			//ws.concludeTransaction();
-			
+			if (doGeneratePrematureDetectionConstraints) {
+				new PrematureTriggerGenerator(ws, this).generatePrematureConstraints();
+				ws.concludeTransaction();
+			}
 			// even if there are augementation errors, these were due to unsupported constructs in the constraint during augmentation, but the constraints are ok,
 			// thus we store and run the process, but report back that augmentation didn;t work.
 			if (!augmentationErrors.isEmpty()) {

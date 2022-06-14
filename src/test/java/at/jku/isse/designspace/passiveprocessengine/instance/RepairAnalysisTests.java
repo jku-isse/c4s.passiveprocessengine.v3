@@ -229,6 +229,80 @@ class RepairAnalysisTests {
 		
 	}
 	
+	@Test
+	void testCollectionAndPropertyChangeOnQAandPrePost2() throws ProcessException {
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
+		
+		ProcessDefinition procDef = getSingleStepProcessDefinition(ws);
+		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
+		proc.addInput("jiraIn", jiraA);
+		ws.concludeTransaction();
+		repAnalyzer.printImpact();
+		repAnalyzer.getImpact().clear();
+		
+		assert(proc.getProcessSteps().stream()
+				.filter(step -> step.getDefinition().getName().equals("sd1") )
+				.allMatch(step -> (step.getOutput("jiraOut").size() == 0) && step.getActualLifecycleState().equals(State.ENABLED) ));
+		
+		// now lets add reqids to input jira and set it to closed to trigger QA
+		TestArtifacts.addJiraToJira(jiraA, jiraB);
+		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Closed);
+		TestArtifacts.setStateToJiraInstance(jiraA, JiraStates.Closed); 
+		TestArtifacts.setStateToJiraInstance(jiraD, JiraStates.Closed); // lets do this early before adding jira D further below.
+		// this should invalidate the output as we now have a requirement that fulfills part of post condition but postcond is not complete yet
+		// hence we should have a positive impact of adding jiraB, (even though we need (req but not sufficient) it to fulfill the postcond eventually) on postcond
+		ws.concludeTransaction();
+		repAnalyzer.printImpact();
+		repAnalyzer.getImpact().clear();
+		
+		
+		// now lets add more reqids to input jira 
+		TestArtifacts.addJiraToJira(jiraA, jiraC);
+		TestArtifacts.setStateToJiraInstance(jiraA, JiraStates.Open); 
+		// here we should see the adding of jiraC as negative on qaspec1 and neutral/none on outcond
+		ws.concludeTransaction();
+		repAnalyzer.printImpact();
+		repAnalyzer.getImpact().clear();
+		
+		// now lets inverse the things at the same time again, by adding another ref
+		TestArtifacts.addJiraToJira(jiraA, jiraD); 
+		TestArtifacts.setStateToJiraInstance(jiraA, JiraStates.Closed); 
+		// expecting that adding jiraD even if closed, is negative on Postcond, neutral on QA as qa is unfulfilled still
+		// FIXME: NOT THE CASE DUE TO BUG IN REPAIR GENERATION!!!
+		ws.concludeTransaction();
+		repAnalyzer.printImpact();
+		repAnalyzer.getImpact().clear();
+		
+		
+		// now lets wrap things up by removing open ref issue
+		TestArtifacts.removeJiraFromJira(jiraA, jiraC);
+		// expecting this to be positive on Post and QA
+		ws.concludeTransaction();
+		repAnalyzer.printImpact();
+		repAnalyzer.getImpact().clear();
+		
+		System.out.println(proc);
+		proc.getProcessSteps().stream().forEach(step -> System.out.println(step));
+		proc.getDecisionNodeInstances().stream().forEach(dni -> System.out.println(dni));
+		TestUtils.assertAllConstraintsAreValid(proc);
+		assert(proc.getProcessSteps().stream()
+				.filter(step -> step.getDefinition().getName().equals("sd1") )
+				.allMatch(step -> (step.getOutput("jiraOut").size() == 2) && step.getActualLifecycleState().equals(State.COMPLETED) ));
+		
+		
+		monitor.calcFinalStats();
+		ProcessStats stats = monitor.stats.get(proc);
+		
+		repAnalyzer.printRepairSizeStats();
+		
+		assert(stats.isProcessCompleted() == false);
+		System.out.println(repAnalyzer.stats2Json(repAnalyzer.getSerializableStats()));
+		
+	}
+	
 	public static ProcessDefinition getSingleStepProcessDefinition(Workspace ws) throws ProcessException {
 		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
 		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
@@ -259,7 +333,7 @@ class RepairAnalysisTests {
 		sd1.setOutDND(dnd2);
 		
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
-		procDef.initializeInstanceTypes();
+		procDef.initializeInstanceTypes(false);
 		return procDef;
 	}
 }

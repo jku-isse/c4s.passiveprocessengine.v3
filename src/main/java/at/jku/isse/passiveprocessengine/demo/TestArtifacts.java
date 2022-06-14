@@ -11,7 +11,7 @@ public class TestArtifacts {
 
 	public static final String DEMOISSUETYPE = "DemoIssue";
 	public static enum CoreProperties { requirementIDs, state, requirements, parent }
-	public static enum JiraStates { Open, InProgress, Closed}
+	public static enum JiraStates { Open, InProgress, Closed, ReadyForReview, Released}
 	
 	public static InstanceType getJiraInstanceType(Workspace ws) {
 		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()

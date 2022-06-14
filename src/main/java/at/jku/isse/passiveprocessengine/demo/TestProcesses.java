@@ -49,7 +49,7 @@ public class TestProcesses {
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws)); //into both steps
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd2.getName(), "jiraIn",  ws)); //into both steps
 		dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd1.getName(), "jiraOut", procDef.getName(), "jiraOut",  ws)); //out of the first
-		procDef.initializeInstanceTypes();
+		procDef.initializeInstanceTypes(false);
 		return procDef;
 	}
 
@@ -81,7 +81,7 @@ public class TestProcesses {
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws)); //into both steps
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd2.getName(), "jiraIn",  ws)); //into both steps
 		dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd2.getName(), "jiraOut", procDef.getName(), "jiraOut",  ws)); //out of the second
-		procDef.initializeInstanceTypes();
+		procDef.initializeInstanceTypes(false);
 		return procDef;
 	}
 
@@ -149,7 +149,7 @@ public class TestProcesses {
 			
 			dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 			dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd1.getName(), "jiraOut", sd2.getName(), "jiraIn",  ws));
-			procDef.initializeInstanceTypes();
+			procDef.initializeInstanceTypes(false);
 			return procDef;
 		}
 	
@@ -184,7 +184,7 @@ public class TestProcesses {
 		sd1.setOutDND(dnd2);
 		
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
-		procDef.initializeInstanceTypes();
+		procDef.initializeInstanceTypes(false);
 		return procDef;
 	}
 	
@@ -211,7 +211,7 @@ public class TestProcesses {
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
-		procDef.initializeInstanceTypes();
+		procDef.initializeInstanceTypes(false);
 		return procDef;
 	}
 	
@@ -245,7 +245,7 @@ public class TestProcesses {
 		sd1.setOutDND(dnd2);
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn2", sd1.getName(), "jiraIn2",  ws));
-		procDef.initializeInstanceTypes();
+		procDef.initializeInstanceTypes(false);
 		return procDef;
 	}
 
@@ -279,7 +279,7 @@ public class TestProcesses {
 		sd1.setOutDND(dnd2);
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn2", sd1.getName(), "jiraIn2",  ws));
-		procDef.initializeInstanceTypes();
+		procDef.initializeInstanceTypes(false);
 		return procDef;
 	}
 	

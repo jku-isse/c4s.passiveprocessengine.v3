@@ -29,7 +29,7 @@ import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-public class RuleAnalysisTests {
+public class RuleRewritingTests {
 
 	Workspace workspace;
 	InstanceType typeStep, typeJira;

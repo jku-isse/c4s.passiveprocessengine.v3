@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import at.jku.isse.designspace.core.events.Operation;
 import at.jku.isse.designspace.core.events.PropertyUpdate;
 import at.jku.isse.designspace.core.events.PropertyUpdateAdd;
@@ -32,18 +35,25 @@ import at.jku.isse.designspace.rule.model.ReservedNames;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class RepairAnalyzer implements WorkspaceListener {
 
 	Workspace ws;
-	Map<ConsistencyRule, Boolean> changedRuleResult = new HashMap<>();
-	Map<PropertyUpdate, Set<SideEffect<ConsistencyRule>>> latestImpact = new LinkedHashMap<>();
-	Map<PropertyUpdate, Set<SideEffect<ConsistencyRule>>> collectedImpact = new LinkedHashMap<>();
-	Map<ConsistencyRule, RepairNode> repairForRule = new HashMap<>();
-	List<PropertyUpdate> queuedUpdates = Collections.synchronizedList(new LinkedList<PropertyUpdate>());
-	Map<ConsistencyRuleType, List<Integer>> repairSizeStats = new HashMap<>();
+	Map<ConsistencyRule, Boolean> changedRuleResult = new HashMap<>(); // which rules have now a changed result (either now fulfilled, or now unfulfilled)
+	Map<PropertyUpdate, Set<SideEffect<ConsistencyRule>>> latestImpact = new LinkedHashMap<>(); // impact in this iteration (collected changes without rule changes)
+	Map<PropertyUpdate, Set<SideEffect<ConsistencyRule>>> collectedImpact = new LinkedHashMap<>(); // impact since initialization
+	Map<ConsistencyRule, RepairNode> repairForRule = new HashMap<>(); // last/latest repair for rule (updated at the end of previous iteration)
+	List<PropertyUpdate> queuedUpdates = Collections.synchronizedList(new LinkedList<PropertyUpdate>()); // collecting all updates as long as no rule result changes, i.e., no rule was reevaluated resulting in a change
+	
+	Map<ConsistencyRuleType, List<Integer>> repairSizeStats = new HashMap<>(); // how many repair nodes are suggested for each rule, we collect across all rule instances, per type
+	Map<String, Conflict> conflicts = new HashMap<>(); // which rules are part of a conflict, due to which operation
+	Map<ConsistencyRuleType, List<Set<PropertyUpdate>>> conflictCausingNonRepairableOperations = new HashMap<>();
+	Map<ConsistencyRuleType, List<Set<PropertyUpdate>>> notsuggestedRepairOperations = new HashMap<>();
 
 	public RepairAnalyzer(Workspace ws) {
 		this.ws = ws;
@@ -81,7 +91,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 				.forEach(op -> determinePreliminaryImpact(op));
 
 			determineConflictingSideEffects();
-			determineConflictCausingNonRepairableOperations();
+			determineConflictCausingNonRepairableOperations(); // this and the following method measure the same effect, upon inconsistency appearance, the other upon repair.
 			determineNotsuggestedRepairOperations();
 			
 		
@@ -124,7 +134,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 				// now how to deal with repairs:
 				if (!cre.isConsistent()) {
 					// if the rule was so far fulfilled, then some prior change violated it, and we need to determine which change that was by looking at the repair tree
-					// hence lets obtain the repair tree. But filter it down to relevant repairs
+					// hence lets obtain the current repair tree. But filter it down to relevant repairs
 					RepairNode rn = RuleService.repairTree(cre);
 					rtf.filterRepairTree(rn);
 					repairForRule.put(cre, rn);
@@ -200,17 +210,17 @@ public class RepairAnalyzer implements WorkspaceListener {
 			if (cr.isConsistent()) // all is still fine, no further analysis needed
 				return Type.NONE;
 			else {
-				// rule hasn;t changed, TODO thats not to say, that change might now have introduced another inconsistency
+				// rule hasn;t changed, thats not to say, that change might now have introduced another inconsistency
 				// but we would need to determine this first
 				RepairNode rNodeOld = repairForRule.get(cr); // must not be null if its still negative
-				assert(rNodeOld != null);
+				//assert(rNodeOld != null); // NOT USED AS WRONGLY DETECTED NULL repairnode for some reason
 				// this rNodeOld is the prior one, not for the current rule state
-				RepairNode rNodeNow = RuleService.repairTree(cr);
-				rtf.filterRepairTree(rNodeNow); // we need to filter out irrelevant repairs
-				
 				// look whether old repair nodes included this operation, if so then positive
 				if (rNodeOld.getRepairActions().stream().anyMatch(ra -> doesOpMatchRepair(ra, op, id))) 
 					return Type.POSITIVE;
+				// else
+				RepairNode rNodeNow = RuleService.repairTree(cr);
+				rtf.filterRepairTree(rNodeNow); // we need to filter out irrelevant repairs
 				// look whether new repair nodes include this inverse operation, if so then negative
 				if (rNodeNow.getRepairActions().stream().anyMatch(ra -> doesOpMatchInvertedRepair(ra, op, id))) 
 					return Type.NEGATIVE;
@@ -441,8 +451,19 @@ public class RepairAnalyzer implements WorkspaceListener {
 									.flatMap(set -> set.stream())
 									.filter(eff -> eff.getInconsistency().equals(cre))
 									.anyMatch(eff -> eff.getSideEffectType().equals(Type.NEGATIVE));
-					if (!hasNegImpact)
-						log.warn("Inconsistent rule has no repair for any of the action(s) that where part of the root cause: "+cre);
+					if (!hasNegImpact) {
+						// any impact must have been considered Type.NONE, we want to know which, thus collect those operations
+						Set<PropertyUpdate> causes = latestImpact.entrySet().stream()
+							.filter(entry -> entry.getValue().stream().map(se -> se.getInconsistency().id()).anyMatch(incon -> incon.equals(cre.id())))
+							.map(entry -> entry.getKey() )
+							.collect(Collectors.toSet());
+						// if causes are empty, this might happen when step is created with input and QA is unfulfilled, then its not the cause of any user, and this list is empty
+						if (!causes.isEmpty()) {
+							conflictCausingNonRepairableOperations.compute((ConsistencyRuleType) cre.getInstanceType(), (k,v) -> v == null ? new LinkedList<>() : v).add(causes);
+							log.warn("Inconsistent rule has no repair for any of the action(s) ["
+								+causes.stream().map(cause->cause.toString()).collect(Collectors.joining(","))+"] that where part of the root inconsistency cause of: "+cre.name()); 
+						}
+					}
 				}
 			);
 	}
@@ -458,8 +479,19 @@ public class RepairAnalyzer implements WorkspaceListener {
 								.flatMap(set -> set.stream())
 								.filter(eff -> eff.getInconsistency().equals(cre))
 								.anyMatch(eff -> eff.getSideEffectType().equals(Type.POSITIVE));
-				if (!hasPosImpact)
-					log.warn("Consistent rule had no repair suggested for any of the action(s) that repaired the rule: "+cre);
+				if (!hasPosImpact) {
+					// any impact must therefore have Type.NONE, we want to know which, thus collect those operations
+					Set<PropertyUpdate> causes = latestImpact.entrySet().stream()
+							.filter(entry -> entry.getValue().stream().map(se -> se.getInconsistency()).anyMatch(incon -> incon.equals(cre)))
+							.map(entry -> entry.getKey() )
+							.collect(Collectors.toSet());
+					// if causes are empty, this might happen when step is created with input and QA is unfulfilled, then its not the cause of any user, and this list is empty
+					if (!causes.isEmpty()) {
+						notsuggestedRepairOperations.compute((ConsistencyRuleType) cre.getInstanceType(), (k,v) -> v == null ? new LinkedList<>() : v).add(causes);
+						log.warn("Consistent rule had no repair suggested for any of the action(s) ["
+							+causes.stream().map(cause->cause.toString()).collect(Collectors.joining(","))+"] that repaired the rule: "+cre.name()); 
+					}
+				}
 			}
 		);
 	}
@@ -473,10 +505,16 @@ public class RepairAnalyzer implements WorkspaceListener {
 					.collect(Collectors.groupingBy(SideEffect<ConsistencyRule>::getSideEffectType));
 			if (effects.getOrDefault(Type.NEGATIVE, Collections.emptyList()).size() > 0 && effects.getOrDefault(Type.POSITIVE, Collections.emptyList()).size() > 0 ) {
 				// we have conflicting effects
-				log.debug(entry.getKey() + " has following conflicting effects \r\n" +
-				" POS: "+effects.get(Type.POSITIVE).stream().map(se -> se.getInconsistency().name()).collect(Collectors.joining(", ", "[", "]")) + "\r\n" +
+				log.debug(entry.getKey() + " has following conflicting effects " +
+				" POS: "+effects.get(Type.POSITIVE).stream().map(se -> se.getInconsistency().name()).collect(Collectors.joining(", ", "[", "]")) + 
 				" NEG: "+effects.get(Type.NEGATIVE).stream().map(se -> se.getInconsistency().name()).collect(Collectors.joining(", ", "[", "]")) );
-			}
+				effects.get(Type.POSITIVE).stream()
+					.map(se -> (ConsistencyRuleType)se.getInconsistency().getInstanceType())
+					.forEach(crt -> effects.get(Type.NEGATIVE).stream().map(seNeg -> (ConsistencyRuleType)seNeg.getInconsistency().getInstanceType())
+																	.forEach(crtNeg -> {
+																		conflicts.compute(crt.name()+crtNeg.name(), (k,v) -> v == null ? new Conflict(crt, crtNeg) : v).add(entry.getKey());
+																		})); //k, (k,v) -> v == null ? new LinkedList<>() : v
+			} 
 		});
 	}
 
@@ -494,7 +532,6 @@ public class RepairAnalyzer implements WorkspaceListener {
 	private static RepairTreeFilter rtf = new QARepairTreeFilter();
 	
 	private static class QARepairTreeFilter extends RepairTreeFilter {
-
 		@Override
 		public boolean compliesTo(RepairAction ra) {
 			return ra.getProperty() != null 
@@ -503,7 +540,6 @@ public class RepairAnalyzer implements WorkspaceListener {
 					&& !ra.getProperty().equalsIgnoreCase("name"); // typically used to describe key or id outside of designspace
 		
 		}
-		
 	}
 	
 	public void printRepairSizeStats() {
@@ -511,8 +547,6 @@ public class RepairAnalyzer implements WorkspaceListener {
 			// lets print size first, for quicker viewing
 			log.debug(entry.getValue().stream().map(count -> count.toString()).collect(Collectors.joining(", ", "[", "]"))+" : "+entry.getKey());
 		});
-		
-		
 		collectedImpact.entrySet().stream()
 		.forEach(entry -> {
 			Map<Type, List<SideEffect<ConsistencyRule>>> effects = entry.getValue().stream()
@@ -521,6 +555,76 @@ public class RepairAnalyzer implements WorkspaceListener {
 			effects.entrySet().stream().forEach(entry2 -> 
 				log.debug(entry2.getKey() +" on "+entry2.getValue().stream().map(se -> se.getInconsistency().name()).collect(Collectors.joining(", ", "[", "]"))));
 		});
+	}
+	
+	public StatsOutput getSerializableStats() {
+		StatsOutput out = new StatsOutput();
+		//conflicts
+		out.setConflicts(conflicts.values().stream().map(conf -> 
+			new SerializableConflict(conf.getPosRule().name(), conf.getNegRule().name(), conf.getChanges().stream().map(op -> op.name()).collect(Collectors.toList()))
+		).collect(Collectors.toList()));
+		// nonrepairableOperation
+		Map<String, List<Set<String>>> serConflictCausingNonRepairableOperations = new HashMap<>();
+		conflictCausingNonRepairableOperations.entrySet().stream()
+			.forEach(entry -> serConflictCausingNonRepairableOperations.put(entry.getKey().name(), convert(entry.getValue())));
+		out.setConflictCausingNonRepairableOperations(serConflictCausingNonRepairableOperations); 
+		// notsuggestedRepairs
+		Map<String, List<Set<String>>> serNotsuggestedRepairOperations = new HashMap<>();
+		notsuggestedRepairOperations.entrySet().stream()
+			.forEach(entry -> serNotsuggestedRepairOperations.put(entry.getKey().name(), convert(entry.getValue())));
+		out.setNotsuggestedRepairOperations(serNotsuggestedRepairOperations); 
+		Map<String, List<Integer>> serRepairSizeStats = new HashMap<>();
+		repairSizeStats.entrySet().stream()
+			.forEach(entry -> serRepairSizeStats.put(entry.getKey().name(), entry.getValue()));
+		out.setRepairSizeStats(serRepairSizeStats);
+		return out; 
+	}
+	
+	private static Gson gson = new GsonBuilder()
+			 .setPrettyPrinting()
+			 .create();
+	
+	public String stats2Json(StatsOutput out) {
+		return gson.toJson(out);
+	}
+	
+	private List<Set<String>> convert(List<Set<PropertyUpdate>> nestedSet) {
+		return nestedSet.stream()
+				.map(set -> set.stream()
+							.map(op -> op.name())
+							.collect(Collectors.toSet()))
+				.collect(Collectors.toList());
+	}
+	
+	@Data
+	@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+	public static class Conflict {
+		@EqualsAndHashCode.Include
+		private final ConsistencyRuleType posRule;
+		@EqualsAndHashCode.Include
+		private final ConsistencyRuleType negRule;
+		private List<PropertyUpdate> changes = new LinkedList<>();
+		
+		public Conflict add(PropertyUpdate op) {
+			changes.add(op);
+			return this;
+		}
+	}
+	
+	@Data
+	private static class SerializableConflict {
+		private final String posRule;
+		private final String negRule;
+		private final List<String> changes;
+		
+	}
+	
+	@Setter
+	public static class StatsOutput {
+		List<SerializableConflict> conflicts;
+		Map<String, List<Set<String>>> conflictCausingNonRepairableOperations;
+		Map<String, List<Set<String>>> notsuggestedRepairOperations;
+		Map<String, List<Integer>> repairSizeStats; 
 	}
 	
 }

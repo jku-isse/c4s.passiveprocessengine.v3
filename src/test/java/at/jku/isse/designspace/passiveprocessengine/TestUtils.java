@@ -2,6 +2,7 @@ package at.jku.isse.designspace.passiveprocessengine;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 import at.jku.isse.designspace.core.model.Instance;
@@ -9,6 +10,7 @@ import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.Rule;
+import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.instance.ConstraintWrapper;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
@@ -54,6 +56,24 @@ public class TestUtils {
 				}	
 			}
 	});
+		proc.getDefinition().getPrematureTriggers().entrySet().stream()
+		.forEach(entry -> {
+			if (entry.getValue() != null) {
+				String ruleName = ProcessInstance.generatePrematureRuleName(entry.getKey(), proc.getDefinition());
+				Collection<ConsistencyRuleType> ruleDefinitions = proc.getInstance().workspace.its(ConsistencyRuleType.CONSISTENCY_RULE_TYPE).subTypes().get();
+		        if(! ruleDefinitions.isEmpty() && !(ruleDefinitions.stream().filter(inst -> !inst.isDeleted).count() == 0)) {
+		        	for(ConsistencyRuleType crt: ruleDefinitions.stream().filter(inst -> !inst.isDeleted).collect(Collectors.toSet() )){
+		        		if (crt.name().equalsIgnoreCase(ruleName)) {
+		        			assertTrue(ConsistencyUtils.crdValid(crt));
+		        			String eval = (String) crt.ruleEvaluations().get().stream()
+									.map(rule -> ((Rule)rule).result()+"" )
+									.collect(Collectors.joining(",","[","]"));
+							System.out.println("Checking "+crt.name() +" Result: "+ eval);
+		        		}
+		        	}
+		        }
+			}
+		});
 	}
 	
 	public static void printFullProcessToLog(ProcessInstance proc) {

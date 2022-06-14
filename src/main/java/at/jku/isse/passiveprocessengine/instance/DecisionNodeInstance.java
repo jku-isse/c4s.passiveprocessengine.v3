@@ -38,7 +38,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			instance.getPropertyAsSingle(CoreProperties.isInflowFulfilled.toString()).set(isFulfilled);
 	}
 	
-	private boolean isInflowFulfilled() {
+	public boolean isInflowFulfilled() {
 		return (boolean) instance.getPropertyAsValueOrElse(CoreProperties.isInflowFulfilled.toString(), () -> false);
 	}
 	

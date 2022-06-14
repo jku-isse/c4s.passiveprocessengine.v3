@@ -242,6 +242,63 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		return (boolean) instance.getPropertyAsValue(CoreProperties.isWorkExpected.toString());
 	}
 	
+	public List<ProcessStep> isInUnsafeOperationModeDueTo() {
+		List<ProcessStep> unsafeSteps = new LinkedList<>();
+		// returns the list of closest/nearest process steps that are not QA complete prior to it that makes this unsafe to work (i.e., might require rework later on)
+		if (this.getInDNI() != null) {
+			if (this.getInDNI().hasPropagated()) {
+				// when propagated: which of the insteps used for propagation are not QA complete, and if so, perhaps still unsafe from upstream 
+				// note that these steps might also no longer be in state complete hence differentiate between inflow fulfilled or not
+				if (this.getInDNI().isInflowFulfilled()) { // necessary number of steps are complete, i.e., AND: all, OR: at least one, XOR, exactly one
+					//filter for those that are actually and expectedly complete
+					this.getInDNI().getInSteps().stream()
+					.filter(step -> step.getExpectedLifecycleState().equals(State.COMPLETED) && step.getActualLifecycleState().equals(State.COMPLETED))
+					.forEach(step -> {
+						if (step.areQAconstraintsFulfilled()) // the have to be as otherwise we would have inflow fulfilled/resp exp and actual State Completed?!
+							unsafeSteps.addAll(step.isInUnsafeOperationModeDueTo());
+						else 
+							unsafeSteps.add(step);
+					});
+					
+				} else { // not sufficient steps available: AND: not all, OR, none, XOR, none, hence here check all steps as all of them can/must be fulfilled eventually
+					this.getInDNI().getInSteps().stream().forEach(step -> {
+						if (step.areQAconstraintsFulfilled()) 
+							unsafeSteps.addAll(step.isInUnsafeOperationModeDueTo());
+						else 
+							unsafeSteps.add(step);
+					});
+				}
+			} else {
+				// when not propagated --> hence why might this have happened, get all insteps and check their QA constraints, if fine, ask them for isInUsafeOperation
+				this.getInDNI().getInSteps().stream().forEach(step -> {
+					if (step.areQAconstraintsFulfilled()) 
+						unsafeSteps.addAll(step.isInUnsafeOperationModeDueTo());
+					else 
+						unsafeSteps.add(step);
+				});
+			}
+		}
+		return unsafeSteps;
+	}
+	
+	public List<ProcessStep> isInPrematureOperationModeDueTo() {
+		// returns the list of closest/nearest process steps that are not complete prior to it that makes this premature to work (i.e., might require rework later on)
+		List<ProcessStep> premSteps = new LinkedList<>();
+		if (this.getInDNI() != null) {
+			if (!this.getInDNI().hasPropagated() || !this.getInDNI().isInflowFulfilled()) {
+				// when propagated but not fulfilled: which of the insteps used for propagation are not complete, or if not, are perhaps still premature from upstream 
+				// when not propagated --> hence why might this have happened, get all insteps and check their postcon constraints, if fine, ask them for isInPrematureOperation
+				this.getInDNI().getInSteps().stream().forEach(step -> {
+					if (step.arePostCondFulfilled()) 
+						premSteps.addAll(step.isInPrematureOperationModeDueTo());
+					else 
+						premSteps.add(step);
+				});
+			}
+		}
+		return premSteps;
+	}
+	
 	public void deleteCascading() {
 		// remove any lower-level instances this step is managing
 		// DNIs are deleted at process level, not managed here

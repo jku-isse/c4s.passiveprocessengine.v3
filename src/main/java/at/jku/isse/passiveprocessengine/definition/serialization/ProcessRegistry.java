@@ -60,7 +60,7 @@ public class ProcessRegistry {
 		if (optPD.isEmpty()) {
 			log.debug("Storing new process: "+process.getCode());
 			ProcessDefinition pd = DefinitionTransformer.fromDTO(process, ws);
-			pd.initializeInstanceTypes();
+			pd.initializeInstanceTypes(true);
 			return pd;
 		} else {
 			log.debug("Reusing process: "+process.getCode());

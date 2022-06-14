@@ -66,7 +66,7 @@ public class PrematureTriggerGenerator {
 			if (entry.getValue() != null) {
 				String ruleName = ProcessInstance.generatePrematureRuleName(entry.getKey(), pd);
 				ConsistencyRuleType crt = ConsistencyRuleType.create(ws, procType, ruleName, entry.getValue());
-				//typeStep.createPropertyType("crd_datamapping_"+entry.getKey(), Cardinality.SINGLE, crt);	// not sure we need a property here				
+				//typeStep.createPropertyType("crd_premature_"+entry.getKey(), Cardinality.SINGLE, crt);	// not sure we need a property here				
 				pd.setPrematureConstraintNameStepDefinition(ruleName, entry.getKey());
 			}
 		});
@@ -127,10 +127,8 @@ public class PrematureTriggerGenerator {
 			String replacement = param.getIo()==IO.IN ? combinePaths(getFirstOccurancesOfInParam(step, param)) : getFirstOccuranceOfOutParam(step, param).navPath;
 			constraint = pre + replacement + post;
 		}
-		// ensure the new constraint is correct
-		ae = new ArlEvaluator(procInstType, constraint);
-		constraint = ae.syntaxTree.getOriginalARL();
-		return constraint;
+		// ensure the new constraint is correct and has unique var names
+		return ensureUniqueVarNames(constraint, procInstType);
 
 	}
 	

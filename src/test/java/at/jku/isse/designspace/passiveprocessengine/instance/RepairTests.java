@@ -125,7 +125,7 @@ class RepairTests {
 			assert(repairTree != null);
 		});
 		
-		//FIXME: I would expect the repairtree generation not to throw an exception
+		//FIXME: I would expect the repairtree generation to suggest to set the state = closed of the parent not the base issue!
 	}
 	
 	@Test
@@ -158,7 +158,9 @@ class RepairTests {
 			assert(repairTree != null);
 		});
 		
-		//FIXME: I would expect repair to suggest adding to jiraA.parent.requirements as well as setting to state of any jiraA.requirements.parent to ? (and not just removing the instance)
+		//FIXME: I would expect repair to suggest setting jiraD to closed only once, 
+		//													OR to remove the parent of B 
+		// the suggestion to add a A.requirements will not fix the inconsistency 
 	}
 	
 	@Test
@@ -188,7 +190,7 @@ class RepairTests {
 			RepairNode repairTree = RuleService.repairTree(cr);
 			assert(repairTree != null);
 		});
-		
+		// FIXME: I would not expect a NPE in OperationCallExpression.generateRepairTreeCollectionIncludesAll
 		//FIXME: I would expect repair to suggest adding to jiraA.parent.requirements as well as adding to jiraA.requirements (and not just removing the instance)
 	}
 	
@@ -219,8 +221,6 @@ class RepairTests {
 			RepairNode repairTree = RuleService.repairTree(cr);
 			assert(repairTree != null);
 		});
-		
-		//FIXME: I would expect repair to suggest adding also the jiraA.parent.requirements (instead of having adding to jiraA.requirements twice)
 	}
 	
 	@Test
