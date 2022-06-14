@@ -6,7 +6,7 @@
 
     <groupId>at.jku.isse.designspace.passiveprocessengine</groupId>
     <artifactId>c4s.passiveprocessengine.v3</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.3-SNAPSHOT</version>
 
     <distributionManagement>
     	<repository>
@@ -58,7 +58,7 @@
 <dependency>
             <groupId>at.jku.isse.designspace</groupId>
             <artifactId>rule</artifactId>
-            <version>4.0.6-SNAPSHOT</version>
+            <version>4.0.7-SNAPSHOT</version>
         </dependency> 
 
          <dependency>
@@ -134,29 +134,6 @@
 
     <build>
         <plugins>
-<!--         			<plugin> 
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-install-plugin</artifactId>
-				<version>2.5.2</version>
-				<executions>
-					<execution>
-						<id>install-external</id>
-						<phase>initialize</phase>
-						<configuration>
-							<file>${basedir}/libs/main-4.0-jar-with-dependencies_new.jar</file>
-							<repositoryLayout>default</repositoryLayout>
-							<groupId>at.jku.isse.designspace.sdk</groupId>
-                            <artifactId>main</artifactId>
-                            <version>4.0</version>
-							<packaging>jar</packaging>
-							<generatePom>true</generatePom>
-						</configuration>
-						<goals>
-							<goal>install-file</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>  -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
