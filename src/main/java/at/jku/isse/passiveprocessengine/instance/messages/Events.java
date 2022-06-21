@@ -40,6 +40,32 @@ public class Events {
 	
 	@EqualsAndHashCode(callSuper = true)
 	@Data
+	public static class QAFulfillmentChanged extends ProcessChangedEvent {
+		final ProcessStep step;
+		final boolean fulfilled;
+		
+		public QAFulfillmentChanged(ProcessInstance proc, ProcessStep step, boolean fulfilled) {
+			super(proc);
+			this.step = step;
+			this.fulfilled = fulfilled;
+		}
+	}
+	
+	@EqualsAndHashCode(callSuper = true)
+	@Data
+	public static class PostconditionFulfillmentChanged extends ProcessChangedEvent {
+		final ProcessStep step;
+		final boolean fulfilled;
+		
+		public PostconditionFulfillmentChanged(ProcessInstance proc, ProcessStep step, boolean fulfilled) {
+			super(proc);
+			this.step = step;
+			this.fulfilled = fulfilled;
+		}
+	}
+	
+	@EqualsAndHashCode(callSuper = true)
+	@Data
 	public static class StepStateTransitionEvent extends ProcessChangedEvent {
 		
 		ProcessStep step;

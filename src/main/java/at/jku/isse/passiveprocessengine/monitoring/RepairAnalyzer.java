@@ -52,12 +52,15 @@ public class RepairAnalyzer implements WorkspaceListener {
 	
 	Map<ConsistencyRuleType, List<Integer>> repairSizeStats = new HashMap<>(); // how many repair nodes are suggested for each rule, we collect across all rule instances, per type
 	Map<String, Conflict> conflicts = new HashMap<>(); // which rules are part of a conflict, due to which operation
-	Map<ConsistencyRuleType, List<Set<PropertyUpdate>>> conflictCausingNonRepairableOperations = new HashMap<>();
+	Map<ConsistencyRuleType, List<Set<PropertyUpdate>>> inconsistencyCausingNonRepairableOperations = new HashMap<>();
 	Map<ConsistencyRuleType, List<Set<PropertyUpdate>>> notsuggestedRepairOperations = new HashMap<>();
 
 	public RepairAnalyzer(Workspace ws) {
 		this.ws = ws;
-		ws.workspaceListeners.add(this);
+	}
+	
+	public void inject(Workspace ws2) {
+		this.ws = ws2;
 	}
 	
 	// whenever a rule was reevaluated, we need to update the repair tree
@@ -100,9 +103,10 @@ public class RepairAnalyzer implements WorkspaceListener {
 				RepairNode rn = RuleService.repairTree(cre);
 				rtf.filterRepairTree(rn);
 				repairForRule.put(cre, rn); 
+				Set<RepairAction> ras = rn.getRepairActions();
 				// we also calculate stats on how many repairs for this type of rule we suggested
 				ConsistencyRuleType type = (ConsistencyRuleType) cre.getInstanceType();
-				repairSizeStats.compute(type, (k,v) -> v == null ? new LinkedList<>() : v).add(rn.getRepairActions().size());
+				repairSizeStats.compute(type, (k,v) -> v == null ? new LinkedList<>() : v).add(ras.size()); // FIXME this number here does not match the frontend because there are still duplicate repairs listed that the frontend doesnt show
 				});
 
 			// cleanup:
@@ -128,7 +132,9 @@ public class RepairAnalyzer implements WorkspaceListener {
 			String name = el.getInstanceType().name();
 			if (el instanceof ConsistencyRule 
 					&& el.getInstanceType().name().startsWith("crd")
-					&& !el.getInstanceType().name().startsWith("crd_datamapping")) {
+					&& !el.getInstanceType().name().startsWith("crd_datamapping")
+					&& !el.getInstanceType().name().startsWith("crd_prematuretrigger")
+					) {
 				ConsistencyRule cre = (ConsistencyRule)el; 
 				changedRuleResult.put(cre, true);
 				// now how to deal with repairs:
@@ -175,7 +181,10 @@ public class RepairAnalyzer implements WorkspaceListener {
 			el.getPropertyAsSet(ruleScopeProperty).get().stream()
 			.filter(ConsistencyRule.class::isInstance) // all should be ConsistencyRules
 			.map(inst -> (ConsistencyRule)inst)
-			.filter(cr -> ((ConsistencyRule)cr).getInstanceType().name().startsWith("crd") && !((ConsistencyRule)cr).getInstanceType().name().startsWith("crd_datamapping"))
+			.filter(cr -> ((ConsistencyRule)cr).getInstanceType().name().startsWith("crd") 
+					&& !((ConsistencyRule)cr).getInstanceType().name().startsWith("crd_datamapping")
+					&& !((ConsistencyRule)cr).getInstanceType().name().startsWith("crd_prematuretrigger")
+					)
 			.forEach(cr -> { 
 				ConsistencyRule cre = (ConsistencyRule)cr;
 				changedRuleResult.putIfAbsent(cre, false);
@@ -459,7 +468,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 							.collect(Collectors.toSet());
 						// if causes are empty, this might happen when step is created with input and QA is unfulfilled, then its not the cause of any user, and this list is empty
 						if (!causes.isEmpty()) {
-							conflictCausingNonRepairableOperations.compute((ConsistencyRuleType) cre.getInstanceType(), (k,v) -> v == null ? new LinkedList<>() : v).add(causes);
+							inconsistencyCausingNonRepairableOperations.compute((ConsistencyRuleType) cre.getInstanceType(), (k,v) -> v == null ? new LinkedList<>() : v).add(causes);
 							log.warn("Inconsistent rule has no repair for any of the action(s) ["
 								+causes.stream().map(cause->cause.toString()).collect(Collectors.joining(","))+"] that where part of the root inconsistency cause of: "+cre.name()); 
 						}
@@ -557,6 +566,13 @@ public class RepairAnalyzer implements WorkspaceListener {
 		});
 	}
 	
+	public void reset() {
+		inconsistencyCausingNonRepairableOperations.clear();
+		notsuggestedRepairOperations.clear();
+		repairSizeStats.clear();
+		conflicts.clear();
+	}
+	
 	public StatsOutput getSerializableStats() {
 		StatsOutput out = new StatsOutput();
 		//conflicts
@@ -565,9 +581,9 @@ public class RepairAnalyzer implements WorkspaceListener {
 		).collect(Collectors.toList()));
 		// nonrepairableOperation
 		Map<String, List<Set<String>>> serConflictCausingNonRepairableOperations = new HashMap<>();
-		conflictCausingNonRepairableOperations.entrySet().stream()
+		inconsistencyCausingNonRepairableOperations.entrySet().stream()
 			.forEach(entry -> serConflictCausingNonRepairableOperations.put(entry.getKey().name(), convert(entry.getValue())));
-		out.setConflictCausingNonRepairableOperations(serConflictCausingNonRepairableOperations); 
+		out.setInconsistencyCausingNonRepairableOperations(serConflictCausingNonRepairableOperations); 
 		// notsuggestedRepairs
 		Map<String, List<Set<String>>> serNotsuggestedRepairOperations = new HashMap<>();
 		notsuggestedRepairOperations.entrySet().stream()
@@ -622,9 +638,11 @@ public class RepairAnalyzer implements WorkspaceListener {
 	@Setter
 	public static class StatsOutput {
 		List<SerializableConflict> conflicts;
-		Map<String, List<Set<String>>> conflictCausingNonRepairableOperations;
+		Map<String, List<Set<String>>> inconsistencyCausingNonRepairableOperations;
 		Map<String, List<Set<String>>> notsuggestedRepairOperations;
 		Map<String, List<Integer>> repairSizeStats; 
 	}
+
+
 	
 }

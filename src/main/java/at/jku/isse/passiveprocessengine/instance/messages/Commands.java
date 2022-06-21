@@ -171,10 +171,17 @@ public class Commands {
 		private final PropertyUpdate change;
 		
 		public List<Events.ProcessChangedEvent> execute() {
-			if (step.getOutDNI() != null && step.getActualLifecycleState().equals(State.COMPLETED)) // to avoid NPE in case this is a ProcessInstance AND still some unexpected late output change
+			if (step.getOutDNI() != null && step.getActualLifecycleState().equals(State.COMPLETED) ) // to avoid NPE in case this is a ProcessInstance AND still some unexpected late output change
 				return step.getOutDNI().signalPrevTaskDataChanged(step);
-			else
-				return Collections.emptyList();
+			else { 
+				List<Events.ProcessChangedEvent> events = new LinkedList<>();
+				// whenever there is output added or removed, it means someone was active regardless of otherstate (except for COMPLETED)
+				if (!step.getActualLifecycleState().equals(State.ACTIVE) && !step.getActualLifecycleState().equals(State.COMPLETED))
+					events.addAll(step.setActivationConditionsFulfilled());
+				if (step.getOutDNI() != null && step.isImmediateDataPropagationEnabled())
+					events.addAll(step.getOutDNI().tryDataPropagationToPrematurelyTriggeredTask());
+				return events;
+			}
 		}
 
 		@Override

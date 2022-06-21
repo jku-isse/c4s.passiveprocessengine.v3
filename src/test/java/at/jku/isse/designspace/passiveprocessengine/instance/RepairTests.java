@@ -97,6 +97,63 @@ class RepairTests {
 	}
 	
 	@Test
+	void testAnyRepair() {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		TestArtifacts.addJiraToJira(jiraA, jiraB);
+		TestArtifacts.addJiraToJira(jiraA, jiraC);
+		TestArtifacts.addParentToJira(jiraB, jiraD); // only B has a parent, which is D, and D is NOT closed
+	
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AnyTest",
+		"self.requirements->any() \r\n"
+		+ "->asType(<"+typeJira.getQualifiedName()+">)"
+				+ " .requirements.size() = 2"
+		);
+		ws.concludeTransaction();
+		assertTrue(ConsistencyUtils.crdValid(crt));
+		String eval = (String) crt.ruleEvaluations().get().stream()
+				.map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
+				.collect(Collectors.joining(",","[","]"));
+		System.out.println("Checking "+crt.name() +" Result: "+ eval);
+		crt.consistencyRuleEvaluations().value.stream()
+			.filter(cr -> !cr.isConsistent() || cr.contextInstance().equals(jiraA))
+			.forEach(cr -> { 
+			RepairNode repairTree = RuleService.repairTree(cr);
+			assert(repairTree != null);
+		});
+	}
+	
+	@Test
+	void testForAllRepair() {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		TestArtifacts.addJiraToJira(jiraA, jiraB);
+		TestArtifacts.addJiraToJira(jiraA, jiraC);
+		TestArtifacts.addParentToJira(jiraB, jiraD); // only B has a parent, which is D, and D is NOT closed
+	
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "ForAllTest",
+		"self.requirements \r\n"
+				+"->forAll(issue : <"+typeJira.getQualifiedName()+"> | issue.requirements.size() = 2)"
+		);
+		ws.concludeTransaction();
+		assertTrue(ConsistencyUtils.crdValid(crt));
+		String eval = (String) crt.ruleEvaluations().get().stream()
+				.map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
+				.collect(Collectors.joining(",","[","]"));
+		System.out.println("Checking "+crt.name() +" Result: "+ eval);
+		crt.consistencyRuleEvaluations().value.stream()
+			.filter(cr -> !cr.isConsistent() || cr.contextInstance().equals(jiraA))
+			.forEach(cr -> { 
+			RepairNode repairTree = RuleService.repairTree(cr);
+			assert(repairTree != null);
+		});
+	}
+	
+	@Test
 	void testDeepExistsRepair() {
 		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
 		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
@@ -124,8 +181,8 @@ class RepairTests {
 			RepairNode repairTree = RuleService.repairTree(cr);
 			assert(repairTree != null);
 		});
-		
-		//FIXME: I would expect the repairtree generation to suggest to set the state = closed of the parent not the base issue!
+		//FIXME: I would expect the repairtree generation to suggest also to: (re)set the parent of B, 
+		//																	: to add to A.requirements
 	}
 	
 	@Test
@@ -138,7 +195,6 @@ class RepairTests {
 		TestArtifacts.addJiraToJira(jiraA, jiraC);
 		TestArtifacts.addParentToJira(jiraB, jiraD); // only B has a parent, which is D, and D is NOT closed
 	
-		
 		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "MimicExistsTest",
 		"self.requirements \r\n"
 		+"->select(req | req.parent.isDefined() ) \r\n"
@@ -159,8 +215,8 @@ class RepairTests {
 		});
 		
 		//FIXME: I would expect repair to suggest setting jiraD to closed only once, 
-		//													OR to remove the parent of B 
-		// the suggestion to add a A.requirements will not fix the inconsistency 
+		//													as well as to set a parent of C
+		//													as well as to set the parent of B 
 	}
 	
 	@Test
@@ -171,8 +227,8 @@ class RepairTests {
 		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
 		TestArtifacts.addJiraToJira(jiraA, jiraB); // this has B in reqs and C as parent
 		TestArtifacts.addParentToJira(jiraA, jiraC);
-		TestArtifacts.addJiraToJira(jiraC, jiraD); // parent has D in req
-		// calc union as A.reqs = B, and A.parent.reqs = D
+		TestArtifacts.addJiraToJira(jiraC, jiraD); // parent=C has D in req
+		// calc union as A.reqs = B, and A.parent.reqs = D, neither are in state closed
 		
 		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "UnionTest",
 		"self.requirements->union(self.parent.requirements) \r\n"
@@ -190,8 +246,9 @@ class RepairTests {
 			RepairNode repairTree = RuleService.repairTree(cr);
 			assert(repairTree != null);
 		});
-		// FIXME: I would not expect a NPE in OperationCallExpression.generateRepairTreeCollectionIncludesAll
-		//FIXME: I would expect repair to suggest adding to jiraA.parent.requirements as well as adding to jiraA.requirements (and not just removing the instance)
+		
+		//FIXME: I would expect for suggestions to also include: add to C.requirements (the parent of A)
+		//										and not to include to: add D to A.requirements (as this doesnt solve the inconsistency)
 	}
 	
 	@Test

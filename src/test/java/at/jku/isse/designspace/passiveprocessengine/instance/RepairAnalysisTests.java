@@ -47,6 +47,7 @@ import at.jku.isse.passiveprocessengine.instance.ProcessStep.CoreProperties;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
+import at.jku.isse.passiveprocessengine.instance.messages.WorkspaceListenerSequencer;
 import at.jku.isse.passiveprocessengine.monitoring.CurrentSystemTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
@@ -59,7 +60,7 @@ class RepairAnalysisTests {
 
 	static Workspace ws;
 	static InstanceType typeJira;
-	ProcessInstanceChangeProcessor picp;
+	;
 	static JsonDefinitionSerializer json = new JsonDefinitionSerializer();
 	static ProcessQAStatsMonitor monitor;
 	static RepairAnalyzer repAnalyzer;
@@ -73,9 +74,13 @@ class RepairAnalysisTests {
 		EventDistributor eventDistrib = new EventDistributor();
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
 		eventDistrib.registerHandler(monitor);
-		picp = new ProcessInstanceChangeProcessor(ws, eventDistrib);
+		ProcessInstanceChangeProcessor picp = new ProcessInstanceChangeProcessor(ws, eventDistrib);
 		repAnalyzer = new RepairAnalyzer(ws);
+		WorkspaceListenerSequencer wsls = new WorkspaceListenerSequencer(ws);
+		wsls.registerListener(repAnalyzer);
+		wsls.registerListener(picp);
 		typeJira = TestArtifacts.getJiraInstanceType(ws);
+		
 	}
 
 	
@@ -223,8 +228,7 @@ class RepairAnalysisTests {
 		monitor.calcFinalStats();
 		ProcessStats stats = monitor.stats.get(proc);
 		
-		repAnalyzer.printRepairSizeStats();
-		
+		System.out.println(repAnalyzer.stats2Json(repAnalyzer.getSerializableStats()));
 		assert(stats.isProcessCompleted() == false);
 		
 	}
@@ -270,8 +274,6 @@ class RepairAnalysisTests {
 		// now lets inverse the things at the same time again, by adding another ref
 		TestArtifacts.addJiraToJira(jiraA, jiraD); 
 		TestArtifacts.setStateToJiraInstance(jiraA, JiraStates.Closed); 
-		// expecting that adding jiraD even if closed, is negative on Postcond, neutral on QA as qa is unfulfilled still
-		// FIXME: NOT THE CASE DUE TO BUG IN REPAIR GENERATION!!!
 		ws.concludeTransaction();
 		repAnalyzer.printImpact();
 		repAnalyzer.getImpact().clear();
@@ -295,8 +297,6 @@ class RepairAnalysisTests {
 		
 		monitor.calcFinalStats();
 		ProcessStats stats = monitor.stats.get(proc);
-		
-		repAnalyzer.printRepairSizeStats();
 		
 		assert(stats.isProcessCompleted() == false);
 		System.out.println(repAnalyzer.stats2Json(repAnalyzer.getSerializableStats()));

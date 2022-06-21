@@ -42,6 +42,7 @@ import at.jku.isse.passiveprocessengine.instance.ProcessStep.CoreProperties;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
+import at.jku.isse.passiveprocessengine.instance.messages.WorkspaceListenerSequencer;
 import at.jku.isse.passiveprocessengine.monitoring.CurrentSystemTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
@@ -67,6 +68,9 @@ class InstanceTests {
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
 		eventDistrib.registerHandler(monitor);
 		picp = new ProcessInstanceChangeProcessor(ws, eventDistrib);
+		WorkspaceListenerSequencer wsls = new WorkspaceListenerSequencer(ws);
+	//	wsls.registerListener(repAnalyzer);
+		wsls.registerListener(picp);
 		typeJira = TestArtifacts.getJiraInstanceType(ws);
 	}
 

@@ -18,6 +18,9 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
+import at.jku.isse.passiveprocessengine.instance.messages.Events.PostconditionFulfillmentChanged;
+import at.jku.isse.passiveprocessengine.instance.messages.Events.QAFulfillmentChanged;
+import at.jku.isse.passiveprocessengine.instance.messages.Events.StepStateTransitionEvent;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStepStats;
 
@@ -31,6 +34,15 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
         }
         if (type.getRawType() == OffsetDateTime.class) {
             return (TypeAdapter<T>) wrapOffsetDateTimeAdapter(gson, new TypeToken<OffsetDateTime>() {});
+        }
+        if (type.getRawType() == StepStateTransitionEvent.class) {
+        	return (TypeAdapter<T>) wrapStepStateTransitionEvent(gson, new TypeToken<StepStateTransitionEvent>() {});
+        }
+        if (type.getRawType() == PostconditionFulfillmentChanged.class) {
+        	return (TypeAdapter<T>) wrapPostconditionFulfillmentChanged(gson, new TypeToken<PostconditionFulfillmentChanged>() {});
+        }
+        if (type.getRawType() == QAFulfillmentChanged.class) {
+        	return (TypeAdapter<T>) wrapQAFulfillmentChanged(gson, new TypeToken<QAFulfillmentChanged>() {});
         }
         return null;
     }
@@ -91,6 +103,77 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
 		
 	}
  
+	
+	private TypeAdapter<StepStateTransitionEvent> wrapStepStateTransitionEvent(Gson gson, TypeToken<StepStateTransitionEvent> type) {
+		return new TypeAdapter<StepStateTransitionEvent>() {
+
+			@Override
+			public void write(JsonWriter out, StepStateTransitionEvent value) throws IOException {
+				out.beginObject();
+				out.name("event");
+				out.value(value.getClass().getSimpleName());
+				out.name("step");
+				out.value(value.getStep().getDefinition().getName());
+				out.name("oldState");
+				out.value(value.getOldState().toString());
+				out.name("newState");
+				out.value(value.getNewState().toString());
+				out.name("type");
+				out.value(value.isActualState() ? "ACTUAL" : "EXPECTED");
+				out.endObject();
+			}
+
+			@Override
+			public StepStateTransitionEvent read(JsonReader in) throws IOException {	
+				throw new RuntimeException("Adapter not intended to be used for deserialization");
+			}
+		};
+	}
+	
+	private TypeAdapter<PostconditionFulfillmentChanged> wrapPostconditionFulfillmentChanged(Gson gson, TypeToken<PostconditionFulfillmentChanged> type) {
+		return new TypeAdapter<PostconditionFulfillmentChanged>() {
+
+			@Override
+			public void write(JsonWriter out, PostconditionFulfillmentChanged value) throws IOException {
+				out.beginObject();
+				out.name("event");
+				out.value(value.getClass().getSimpleName());
+				out.name("step");
+				out.value(value.getStep().getDefinition().getName());
+				out.name("isFulfilled");
+				out.value(value.isFulfilled());
+				out.endObject();
+			}
+
+			@Override
+			public PostconditionFulfillmentChanged read(JsonReader in) throws IOException {	
+				throw new RuntimeException("Adapter not intended to be used for deserialization");
+			}
+		};
+	}
+	
+	private TypeAdapter<QAFulfillmentChanged> wrapQAFulfillmentChanged(Gson gson, TypeToken<QAFulfillmentChanged> type) {
+		return new TypeAdapter<QAFulfillmentChanged>() {
+
+			@Override
+			public void write(JsonWriter out, QAFulfillmentChanged value) throws IOException {
+				out.beginObject();
+				out.name("event");
+				out.value(value.getClass().getSimpleName());
+				out.name("step");
+				out.value(value.getStep().getDefinition().getName());
+				out.name("isFulfilled");
+				out.value(value.isFulfilled());
+				out.endObject();
+			}
+
+			@Override
+			public QAFulfillmentChanged read(JsonReader in) throws IOException {	
+				throw new RuntimeException("Adapter not intended to be used for deserialization");
+			}
+		};
+	}
+	
     public static Gson gson;
     
 	public static void writeToJSONFile(String pathInclFileName, Collection<ProcessStats> stats) {

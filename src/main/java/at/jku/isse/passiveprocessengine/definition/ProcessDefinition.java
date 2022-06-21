@@ -34,6 +34,8 @@ public class ProcessDefinition extends StepDefinition{
 	
 	public static final String designspaceTypeId = ProcessDefinition.class.getSimpleName();
 	
+	private boolean isImmediateDataPropagationEnabled = false; //TODO make this known to Designspace
+	
 	public ProcessDefinition(Instance instance) {
 		super(instance);
 	}
@@ -208,5 +210,13 @@ public class ProcessDefinition extends StepDefinition{
 		dnd.setProcess(this);
 		this.addDecisionNodeDefinition(dnd);
 		return dnd;
+	}
+
+	public boolean isImmediateDataPropagationEnabled() {
+		return isImmediateDataPropagationEnabled;
+	}
+
+	public void setImmediateDataPropagationEnabled(boolean isImmediateDataPropagationEnabled) {
+		this.isImmediateDataPropagationEnabled = isImmediateDataPropagationEnabled;
 	}
 }

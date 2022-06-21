@@ -163,7 +163,12 @@ public class ProcessInstance extends ProcessStep {
 		instance.getPropertyAsSet(CoreProperties.decisionNodeInstances.toString()).add(dni.getInstance());
 	}
 	
-
+	public boolean isImmediateDataPropagationEnabled() {
+		if (getProcess() == null)
+			return getDefinition() != null ? getDefinition().isImmediateDataPropagationEnabled() : false;
+		else
+			return getProcess().isImmediateDataPropagationEnabled();
+	}
 	
 	
 	public void deleteCascading() {

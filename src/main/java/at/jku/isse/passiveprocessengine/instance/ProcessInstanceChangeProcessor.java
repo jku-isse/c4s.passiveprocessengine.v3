@@ -58,7 +58,6 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 	public ProcessInstanceChangeProcessor(Workspace ws, EventDistributor distributor) {
 		this.ws = ws;
 		this.distributor = distributor;
-		ws.workspaceListeners.add( this);
 	}
 
 	private boolean isOfStepType(Id id) {
@@ -298,10 +297,10 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 				int procBased = o1.getStep().getProcess().getName().compareTo(o2.getStep().getProcess().getName()); // compare via process
 				if (procBased == 0) {
 					// now compare via steps
-					int stepBased = o1.getStep().getName().compareTo(o2.getStep().getName()); 
+					int stepBased = o1.getStep().getDefinition().getSpecOrderIndex().compareTo(o2.getStep().getDefinition().getSpecOrderIndex()); 
 					if (stepBased == 0) { // same step
 						return Integer.compare(getAssignedValue(o1.getCondition(), o1.isFulfilled()), getAssignedValue(o2.getCondition(), o2.isFulfilled()));
-					} else return stepBased; // TODO: compare/sort not by step name but by step order in proc definition 
+					} else return stepBased; // compare/sort by step order in proc definition 
 				} else return procBased; // sort steps from different processes by process first
 			}
 		}

@@ -150,11 +150,13 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			// Note that the adding has already happened, thus there is nothing to report back, this is only for checking whether we need to do something else as well.
 		}
 		else if (op.name().startsWith("out_") // if out added, establish if this is late output, then propagate further
-				&& this.getActualLifecycleState().equals(State.COMPLETED) ){
-			Id addedId = (Id) op.value();
-			Element added = ws.findElement(addedId);
-			log.info(String.format("Step %s received unexpected late output %s %s, queuing for propagation to successors", this.getName(), op.name(), added.name()  ));
-			// we should not just propagate, as the newly added output could be violating completion or qa constraints and we should not propagate the artifact just yet. -->
+				&& ( this.getActualLifecycleState().equals(State.COMPLETED) || isImmediateDataPropagationEnabled() ) ){
+			if (this.getActualLifecycleState().equals(State.COMPLETED)) {
+				Id addedId = (Id) op.value();
+				Element added = ws.findElement(addedId);
+				log.info(String.format("Step %s received unexpected late output %s %s, queuing for propagation to successors", this.getName(), op.name(), added.name()  ));
+			}
+				// we should not just propagate, as the newly added output could be violating completion or qa constraints and we should not propagate the artifact just yet. -->
 			// return a potential propagation cause Command, that is later checked again, whether it is still valid.
 			if (getOutDNI() != null) { // to avoid NPE in case this is a ProcessInstance 
 				return new OutputChangedCmd(this, op);
@@ -202,6 +204,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		boolean newQaState = areQAconstraintsFulfilled(); // are all QA checks now fulfilled?
 		if (priorQAfulfilled != newQaState) { // a change in qa fulfillment that we might want to react to
 			priorQAfulfilled = newQaState;
+			qaChanges.add(new Events.QAFulfillmentChanged(this.getProcess(), this, newQaState));
 			if (arePostCondFulfilled() && newQaState)  {
 				qaChanges.addAll(this.trigger(StepLifecycle.Trigger.MARK_COMPLETE)) ;
 			} else if (!newQaState && actualSM.isInState(State.COMPLETED)) {
@@ -240,6 +243,13 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	
 	public boolean isWorkExpected() {
 		return (boolean) instance.getPropertyAsValue(CoreProperties.isWorkExpected.toString());
+	}
+	
+	public boolean isImmediateDataPropagationEnabled() {
+		if (getProcess() == null)
+			return false;
+		else
+			return getProcess().isImmediateDataPropagationEnabled();
 	}
 	
 	public List<ProcessStep> isInUnsafeOperationModeDueTo() {
@@ -452,11 +462,14 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	
 	public List<Events.ProcessChangedEvent> setPostConditionsFulfilled(boolean isfulfilled) {
 		if (arePostCondFulfilled() != isfulfilled) { // a change
+			List<Events.ProcessChangedEvent> events = new LinkedList<>();
+			events.add(new Events.PostconditionFulfillmentChanged(this.getProcess(), this, isfulfilled));
 			instance.getPropertyAsSingle(CoreProperties.processedPostCondFulfilled.toString()).set(isfulfilled);
 			if (isfulfilled && areQAconstraintsFulfilled())  
-				return this.trigger(StepLifecycle.Trigger.MARK_COMPLETE) ;
+				events.addAll(this.trigger(StepLifecycle.Trigger.MARK_COMPLETE)) ;
 			if (!isfulfilled && actualSM.isInState(State.COMPLETED)) 
-				return this.trigger(StepLifecycle.Trigger.ACTIVATE);
+				events.addAll(this.trigger(StepLifecycle.Trigger.ACTIVATE));
+			return events;
 		}
 		return Collections.emptyList();
 	}
@@ -500,6 +513,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	protected List<Events.ProcessChangedEvent> trigger(Trigger event) {
+		State prevExpectedSM = expectedSM.getState(); // to check whether we were in AVAILABLE before and are not anywhere else
 		// trigger expectedTransition:
 		if (event.equals(Trigger.ACTIVATE)) {
 			if (expectedSM.isInState(State.CANCELED) || expectedSM.isInState(State.NO_WORK_EXPECTED))
@@ -569,6 +583,14 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			case NO_WORK_EXPECTED: 
 				if (this.getOutDNI() != null) //need to check, we might be a process without a parent
 					events.addAll(this.getOutDNI().tryInConditionsFullfilled());
+			} 
+		} else {
+			switch (expectedSM.getState()) { // we trigger downstream early steps when we have just left available and are now in active or enabled
+			case ACTIVE:
+			case ENABLED:
+				if (prevExpectedSM.equals(State.AVAILABLE) && isImmediateDataPropagationEnabled() && this.getOutDNI() != null ) {
+					this.getOutDNI().initiateDownstreamSteps(); // to prepare the next steps further downstream even though they should not start yet.
+				}
 			} 
 		}
 		return events;
@@ -754,7 +776,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		String inDNI = getInDNI() != null ? getInDNI().getDefinition().getName() : "NONE" ; 
 		String outDNI = getOutDNI() != null ? getOutDNI().getDefinition().getName() : "NONE";
 		
-		String cond = String.format("[Pre: %s |Post: %s |Canc: %s |QAok: %s]", arePreCondFulfilled(), arePostCondFulfilled(), areCancelCondFulfilled(), areQAconstraintsFulfilled());
+		
+		String cond = String.format("[Pre: %s |Post: %s |Canc: %s |QAok: %s |Unsafe: %s |Premature: %s]", arePreCondFulfilled(), arePostCondFulfilled(), areCancelCondFulfilled(), areQAconstraintsFulfilled(), isInUnsafeOperationModeDueTo().size(), isInPrematureOperationModeDueTo().size());
 		
 		return "Step "+ getName() + " "+states+" "+input+" "+output+" "+cond+" [DNIs: "+inDNI+":"+outDNI+"] in Proc: " + process +" DS: " +getInstance().toString();
 	}

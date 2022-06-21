@@ -25,6 +25,8 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	public static enum CoreProperties {isInflowFulfilled, hasPropagated, dnd, inSteps, outSteps};
 	public static final String designspaceTypeId = DecisionNodeInstance.class.getSimpleName();
 	
+	private boolean internalPropagation = false;
+	
 	public DecisionNodeInstance(Instance instance) {
 		super(instance);
 	}
@@ -56,7 +58,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected Set<ProcessStep> getOutSteps() {
+	public Set<ProcessStep> getOutSteps() {
 		return (Set<ProcessStep>) instance.getPropertyAsSet(CoreProperties.outSteps.toString()).stream()
 			.map(inst -> WrapperCache.getWrappedInstance(ProcessStep.class, (Instance)inst))
 			.collect(Collectors.toSet());
@@ -272,14 +274,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		// if not yet progressed,
 		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		if (this.isInflowFulfilled() && !this.hasPropagated()) {
-			// get all out task defs, check if they exist or create them
-			// first time activation		
-			this.getProcess().getDefinition().getStepDefinitions().stream()
-				.filter(def -> def.getInDND().equals(this.getDefinition())) //retain only that have this DND as their predecessor
-				.filter(td -> getProcess().getProcessSteps().stream()
-								.map(ProcessStep::getDefinition)
-								.noneMatch(td1 -> td1.equals(td))) // retain those that are not yet instantiated
-				.forEach(td -> getProcess().createAndWireTask(td));		
+			initiateDownstreamSteps();
 			this.setHasPropagated();
 		} 
 		
@@ -298,6 +293,19 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			events.addAll(this.getProcess().setPostConditionsFulfilled(false));
 		}
 		return events;
+	}
+	
+	protected void initiateDownstreamSteps() {
+		if (internalPropagation) return; // to distinguish between official propagation or premature/immediate propagation
+		// get all out task defs, check if they exist or create them
+		// first time activation		
+		this.getProcess().getDefinition().getStepDefinitions().stream()
+		.filter(def -> def.getInDND().equals(this.getDefinition())) //retain only that have this DND as their predecessor
+		.filter(td -> getProcess().getProcessSteps().stream()
+				.map(ProcessStep::getDefinition)
+				.noneMatch(td1 -> td1.equals(td))) // retain those that are not yet instantiated
+		.forEach(td -> getProcess().createAndWireTask(td));		
+		internalPropagation = true;
 	}
 	
 	public List<Events.ProcessChangedEvent> tryDataPropagationToPrematurelyTriggeredTask() {

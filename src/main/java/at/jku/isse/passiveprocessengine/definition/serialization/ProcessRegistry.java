@@ -60,7 +60,10 @@ public class ProcessRegistry {
 		if (optPD.isEmpty()) {
 			log.debug("Storing new process: "+process.getCode());
 			ProcessDefinition pd = DefinitionTransformer.fromDTO(process, ws);
-			pd.initializeInstanceTypes(true);
+			boolean doGeneratePrematureRules = false; //TODO: make configurable per Process by putting this into the DTO
+			pd.initializeInstanceTypes(doGeneratePrematureRules);
+			boolean doImmediatePropagate = !doGeneratePrematureRules;
+			pd.setImmediateDataPropagationEnabled(doImmediatePropagate);
 			return pd;
 		} else {
 			log.debug("Reusing process: "+process.getCode());
