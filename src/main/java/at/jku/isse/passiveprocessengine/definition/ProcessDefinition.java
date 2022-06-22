@@ -30,11 +30,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProcessDefinition extends StepDefinition{
 
-	public static enum CoreProperties {decisionNodeDefinitions, stepDefinitions, prematureTriggers, prematureTriggerMappings}
+	public static enum CoreProperties {decisionNodeDefinitions, stepDefinitions, prematureTriggers, prematureTriggerMappings, isImmediateDataPropagationEnabled}
 	
 	public static final String designspaceTypeId = ProcessDefinition.class.getSimpleName();
-	
-	private boolean isImmediateDataPropagationEnabled = false; //TODO make this known to Designspace
 	
 	public ProcessDefinition(Instance instance) {
 		super(instance);
@@ -189,6 +187,7 @@ public class ProcessDefinition extends StepDefinition{
 				typeStep.createPropertyType(CoreProperties.decisionNodeDefinitions.toString(), Cardinality.SET, DecisionNodeDefinition.getOrCreateDesignSpaceCoreSchema(ws));
 				typeStep.createPropertyType(CoreProperties.prematureTriggers.toString(), Cardinality.MAP, Workspace.STRING);
 				typeStep.createPropertyType(CoreProperties.prematureTriggerMappings.toString(), Cardinality.MAP, Workspace.STRING);
+				typeStep.createPropertyType(CoreProperties.isImmediateDataPropagationEnabled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
 				return typeStep;
 			}
 	}
@@ -213,10 +212,10 @@ public class ProcessDefinition extends StepDefinition{
 	}
 
 	public boolean isImmediateDataPropagationEnabled() {
-		return isImmediateDataPropagationEnabled;
+		return (boolean) instance.getPropertyAsValue(CoreProperties.isImmediateDataPropagationEnabled.toString());
 	}
 
 	public void setImmediateDataPropagationEnabled(boolean isImmediateDataPropagationEnabled) {
-		this.isImmediateDataPropagationEnabled = isImmediateDataPropagationEnabled;
+		instance.getPropertyAsSingle(CoreProperties.isImmediateDataPropagationEnabled.toString()).set(isImmediateDataPropagationEnabled);
 	}
 }

@@ -295,7 +295,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		// returns the list of closest/nearest process steps that are not complete prior to it that makes this premature to work (i.e., might require rework later on)
 		List<ProcessStep> premSteps = new LinkedList<>();
 		if (this.getInDNI() != null) {
-			if (!this.getInDNI().hasPropagated() || !this.getInDNI().isInflowFulfilled()) {
+			//if (!this.getInDNI().hasPropagated() || !this.getInDNI().isInflowFulfilled()) {
 				// when propagated but not fulfilled: which of the insteps used for propagation are not complete, or if not, are perhaps still premature from upstream 
 				// when not propagated --> hence why might this have happened, get all insteps and check their postcon constraints, if fine, ask them for isInPrematureOperation
 				this.getInDNI().getInSteps().stream().forEach(step -> {
@@ -304,7 +304,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 					else 
 						premSteps.add(step);
 				});
-			}
+			//}
 		}
 		return premSteps;
 	}
