@@ -39,13 +39,14 @@ public class TestProcesses {
 				+ " self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);
+		sd1.setSpecOrderIndex(11);
 		StepDefinition sd2 = procDef.createStepDefinition("subtask2", ws);
 		sd2.addExpectedInput("jiraIn", typeJira);
 		sd2.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 		sd2.setCondition(Conditions.POSTCONDITION, "self.in_jiraIn->forAll( issue | issue.state = 'Closed')");
 		sd2.setInDND(dnd1);
 		sd2.setOutDND(dnd2);
-		
+		sd2.setSpecOrderIndex(12);
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws)); //into both steps
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd2.getName(), "jiraIn",  ws)); //into both steps
 		dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd1.getName(), "jiraOut", procDef.getName(), "jiraOut",  ws)); //out of the first
@@ -70,6 +71,7 @@ public class TestProcesses {
 		sd1.setCondition(Conditions.POSTCONDITION, "self.in_jiraIn->forAll( issue | issue.state = 'Closed')");
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);
+		sd1.setSpecOrderIndex(1);
 		StepDefinition sd2 = getSimpleSubprocessDefinition(ws);
 		// we need to wire up the step definiton:
 		sd2.setProcess(procDef);
@@ -77,6 +79,7 @@ public class TestProcesses {
 		//inputs and output set in process/step definition, pre and post cond as well
 		sd2.setInDND(dnd1);
 		sd2.setOutDND(dnd2);
+		sd2.setSpecOrderIndex(2);
 		
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws)); //into both steps
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd2.getName(), "jiraIn",  ws)); //into both steps
@@ -133,6 +136,7 @@ public class TestProcesses {
 			sd1.addQAConstraint(qa2);
 			sd1.setInDND(dnd1);
 			sd1.setOutDND(dnd2);
+			sd1.setSpecOrderIndex(1);
 			
 			StepDefinition sd2 = procDef.createStepDefinition("sd2", ws);
 			sd2.addExpectedInput("jiraIn", typeJira);
@@ -145,7 +149,7 @@ public class TestProcesses {
 			sd2.addQAConstraint(qa3);
 			sd2.setInDND(dnd2);
 			sd2.setOutDND(dnd3);
-			
+			sd2.setSpecOrderIndex(2);
 			
 			dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 			dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd1.getName(), "jiraOut", sd2.getName(), "jiraIn",  ws));
@@ -182,6 +186,7 @@ public class TestProcesses {
 		//sd1.addQAConstraint(qa2);
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);
+		sd1.setSpecOrderIndex(1);
 		
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		procDef.initializeInstanceTypes(false);
@@ -210,6 +215,7 @@ public class TestProcesses {
 							); 		
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);
+		sd1.setSpecOrderIndex(1);
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		procDef.initializeInstanceTypes(false);
 		return procDef;
@@ -243,6 +249,7 @@ public class TestProcesses {
 
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);
+		sd1.setSpecOrderIndex(1);
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn2", sd1.getName(), "jiraIn2",  ws));
 		procDef.initializeInstanceTypes(false);
@@ -277,6 +284,7 @@ public class TestProcesses {
 
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);
+		sd1.setSpecOrderIndex(1);
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn2", sd1.getName(), "jiraIn2",  ws));
 		procDef.initializeInstanceTypes(false);
