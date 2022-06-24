@@ -24,6 +24,7 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.model.WorkspaceListener;
+import at.jku.isse.designspace.rule.arl.exception.RepairException;
 import at.jku.isse.designspace.rule.arl.repair.RepairAction;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.arl.repair.RepairTreeFilter;
@@ -54,7 +55,9 @@ public class RepairAnalyzer implements WorkspaceListener {
 	Map<String, Conflict> conflicts = new HashMap<>(); // which rules are part of a conflict, due to which operation
 	Map<ConsistencyRuleType, List<Set<PropertyUpdate>>> inconsistencyCausingNonRepairableOperations = new HashMap<>();
 	Map<ConsistencyRuleType, List<Set<PropertyUpdate>>> notsuggestedRepairOperations = new HashMap<>();
-
+	Map<String, String> unsupportedRepairs = new HashMap<>();
+	
+	
 	public RepairAnalyzer(Workspace ws) {
 		this.ws = ws;
 	}
@@ -100,6 +103,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 		
 			// prep for next round: for all unfulfilled constraints that where potentially affected now by changes, we store the current repair tree
 			changedRuleResult.keySet().stream().filter(cre -> !cre.isConsistent()).forEach(cre -> { 
+				try {
 				RepairNode rn = RuleService.repairTree(cre);
 				rtf.filterRepairTree(rn);
 				repairForRule.put(cre, rn); 
@@ -107,7 +111,10 @@ public class RepairAnalyzer implements WorkspaceListener {
 				// we also calculate stats on how many repairs for this type of rule we suggested
 				ConsistencyRuleType type = (ConsistencyRuleType) cre.getInstanceType();
 				repairSizeStats.compute(type, (k,v) -> v == null ? new LinkedList<>() : v).add(ras.size()); // FIXME this number here does not match the frontend because there are still duplicate repairs listed that the frontend doesnt show
-				});
+				} catch (RepairException e) {
+					unsupportedRepairs.put(cre.getInstanceType().name(), e.getMessage());
+					e.printStackTrace();
+				}});
 
 			// cleanup:
 			queuedUpdates.clear();
@@ -141,9 +148,14 @@ public class RepairAnalyzer implements WorkspaceListener {
 				if (!cre.isConsistent()) {
 					// if the rule was so far fulfilled, then some prior change violated it, and we need to determine which change that was by looking at the repair tree
 					// hence lets obtain the current repair tree. But filter it down to relevant repairs
+					try {
 					RepairNode rn = RuleService.repairTree(cre);
 					rtf.filterRepairTree(rn);
 					repairForRule.put(cre, rn);
+					} catch (RepairException e) {
+						unsupportedRepairs.put(cre.getInstanceType().name(), e.getMessage());
+						e.printStackTrace();
+					}
 				} else {
 					// now the rule is fulfilled, and we want to check which action might have contributed to the fulfillement, hence we keep the old repair tree, we should have one stored
 				}
@@ -207,6 +219,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 				else
 					return Type.NONE; 
 			}	else { // no longer consistent
+				try {
 				RepairNode rNodeNow = RuleService.repairTree(cr);
 				rtf.filterRepairTree(rNodeNow); // we need to filter out irrelevant repairs
 				//  was this change truly causing (or part of) the inconsistency, see if its inverse action occurs in the repair tree. if so --> negative
@@ -214,6 +227,11 @@ public class RepairAnalyzer implements WorkspaceListener {
 					return Type.NEGATIVE;
 				else
 					return Type.NONE; 
+				} catch (RepairException e) {
+					unsupportedRepairs.put(cr.getInstanceType().name(), e.getMessage());
+					e.printStackTrace();
+					return Type.ERROR; // misuse of ERROR, as this is not about the repair but the being able to repair in the first place.
+				}
 			}
 		} else { 
 			if (cr.isConsistent()) // all is still fine, no further analysis needed
@@ -228,13 +246,20 @@ public class RepairAnalyzer implements WorkspaceListener {
 				if (rNodeOld.getRepairActions().stream().anyMatch(ra -> doesOpMatchRepair(ra, op, id))) 
 					return Type.POSITIVE;
 				// else
-				RepairNode rNodeNow = RuleService.repairTree(cr);
-				rtf.filterRepairTree(rNodeNow); // we need to filter out irrelevant repairs
-				// look whether new repair nodes include this inverse operation, if so then negative
-				if (rNodeNow.getRepairActions().stream().anyMatch(ra -> doesOpMatchInvertedRepair(ra, op, id))) 
-					return Type.NEGATIVE;
-				//else
-				return Type.NONE;
+				try {
+					RepairNode rNodeNow = RuleService.repairTree(cr);
+					rtf.filterRepairTree(rNodeNow); // we need to filter out irrelevant repairs
+					// look whether new repair nodes include this inverse operation, if so then negative
+					if (rNodeNow.getRepairActions().stream().anyMatch(ra -> doesOpMatchInvertedRepair(ra, op, id))) 
+						return Type.NEGATIVE;
+					//else
+					return Type.NONE;
+				} catch (RepairException e) {
+					unsupportedRepairs.put(cr.getInstanceType().name(), e.getMessage());
+					e.printStackTrace();
+					return Type.ERROR; // misuse of ERROR, as this is not about the repair but the being able to repair in the first place.
+				}
+				
 			}
 		}	
 	}
@@ -593,6 +618,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 		repairSizeStats.entrySet().stream()
 			.forEach(entry -> serRepairSizeStats.put(entry.getKey().name(), entry.getValue()));
 		out.setRepairSizeStats(serRepairSizeStats);
+		out.setUnsupportedRepairs(this.unsupportedRepairs);
 		return out; 
 	}
 	
@@ -641,6 +667,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 		Map<String, List<Set<String>>> inconsistencyCausingNonRepairableOperations;
 		Map<String, List<Set<String>>> notsuggestedRepairOperations;
 		Map<String, List<Integer>> repairSizeStats; 
+		Map<String, String> unsupportedRepairs;
 	}
 
 

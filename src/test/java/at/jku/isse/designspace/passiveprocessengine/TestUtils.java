@@ -34,7 +34,7 @@ public class TestUtils {
 			});
 			td.getDefinition().getQAConstraints().stream().forEach(entry -> {
 				//InstanceType type = td.getInstance().getProperty(ProcessStep.getQASpecId(entry, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, td.getDefinition()))).propertyType().referencedInstanceType();
-				String id = ProcessStep.getQASpecId(entry);
+				String id = ProcessStep.getQASpecId(entry, td.getDefinition());
 				ConstraintWrapper cw = WrapperCache.getWrappedInstance(ConstraintWrapper.class, (Instance) td.getInstance().getPropertyAsMap(ProcessStep.CoreProperties.qaState.toString()).get(id));
 				ConsistencyRuleType crt = (ConsistencyRuleType)cw.getCr().getInstanceType();
 				assertTrue(ConsistencyUtils.crdValid(crt));

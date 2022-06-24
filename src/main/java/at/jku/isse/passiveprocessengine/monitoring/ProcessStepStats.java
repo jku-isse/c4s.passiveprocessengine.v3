@@ -93,7 +93,7 @@ public class ProcessStepStats {
 		.forEach(check -> {
 			if (check.getCr() == null) 
 					qaConstraintsUnevaluatedAtEnd.add(check.getQaSpec().getQaConstraintId());
-			if (!check.getCr().isConsistent()) 
+			else if (!check.getCr().isConsistent()) 
 					qaConstraintsUnfulfilledAtEnd.add(check.getQaSpec().getQaConstraintId());
 				else
 					qaConstraintsFulfilledAtEnd.add(check.getQaSpec().getQaConstraintId());

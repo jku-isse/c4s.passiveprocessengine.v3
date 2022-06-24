@@ -57,8 +57,11 @@ public class InputToOutputMapper {
 			return Collections.emptyList();
 		}	
 		// this also works only if all instances that are relevant are somewhere in the designspace prefetched
-		 Set<Repair> repairs = //ConsistencyUtils.getConcreteRepairs(null, objects, 1, crt, crule.contextInstance());//.repairTree.getConcreteRepairs(objects, 1);// 
+		Set<Repair> repairs = null;
+		try {
+		 repairs = //ConsistencyUtils.getConcreteRepairs(null, objects, 1, crt, crule.contextInstance());//.repairTree.getConcreteRepairs(objects, 1);// 
 				 				getConcreteRepairs(objects, 1, crt, crule.contextInstance()); 
+		
 		if (repairs == null) {
 			String state = crule.isConsistent() ? "CONSISTENT" : "INCONSISTENT";
 			log.error("FATAL: No repairs could be created for "+state+" "+crt.name());
@@ -80,6 +83,11 @@ public class InputToOutputMapper {
 				//TODO: THIS NEEDS TO BE FIXED:		throw new RuntimeException("Datamapping could not be repaired");
 					}
 				);
+		
+		}catch(Exception e) {
+			log.error("Error while obtaining repairtree for" +crt.name() +": "+e.getMessage());
+			e.printStackTrace();
+		}
 		return Collections.emptyList(); //FIXME: somehow determine from repairs what was added and removed.
 	}
 	

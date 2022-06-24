@@ -59,14 +59,14 @@ public class RuleAugmentation {
 		//qa constraints:
 		sd.getQAConstraints().stream()
 			.forEach(spec -> {
-				String specId = ProcessStep.getQASpecId(spec);
+				String specId = ProcessStep.getQASpecId(spec, sd);
 				if (spec.getQaConstraintSpec() != null) {
 					String arl = spec.getQaConstraintSpec();
-					try {
-						arl = rewriteConstraint(arl);
-					} catch(Exception e) {
-						pex.getErrorMessages().add(String.format("Error aumenting %s : %s", arl, e.getMessage()));
-					}
+//					try {  TODO reactivate after study once any() operator works
+//						arl = rewriteConstraint(arl);
+//					} catch(Exception e) {
+//						pex.getErrorMessages().add(String.format("Error aumenting %s : %s", arl, e.getMessage()));
+//					}
 					ConsistencyRuleType crt = ConsistencyRuleType.create(ws, stepType, specId, arl);
 				}
 			});

@@ -175,8 +175,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			log.info(String.format("Step %s had some input removed from %s after step start", this.getName(), op.name()));
 		}
 		else if (op.name().startsWith("out_") // if out removed, establish if this is late output removal, then propagate further
-				&& this.getActualLifecycleState().equals(State.COMPLETED) ){
-			log.info(String.format("Step %s had some output removed from %s after step completion, queuing for propagation to successors", this.getName(), op.name()));
+				&& ( this.getActualLifecycleState().equals(State.COMPLETED) || isImmediateDataPropagationEnabled() ) ){
+			
+			if (this.getActualLifecycleState().equals(State.COMPLETED)) {
+				log.info(String.format("Step %s had some output removed from %s after step completion, queuing for propagation to successors", this.getName(), op.name()));
+			}
 			// we should not just propagate, as the newly added output could be violating completion or qa constraints and we should not propagate the artifact just yet. -->
 			// return a potential propagation cause Command, that is later checked again, whether it is still valid.
 			if (getOutDNI() != null) { // to avoid NPE in case this is a ProcessInstance
@@ -184,8 +187,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				//return getOutDNI().signalPrevTaskDataChanged(this);
 			}
 		}
-		else 
-			log.debug(String.format("Step %s had some output removed from %s, not propagating to successors yet", this.getName(), op.name()));
+		//else 
+		//	log.debug(String.format("Step %s had some output removed from %s, not propagating to successors yet", this.getName(), op.name()));
 		return null; //Collections.emptyList();
 	}
 	
@@ -638,7 +641,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		//qa constraints:
 		td.getQAConstraints().stream()
 			.forEach(spec -> {
-				String specId = getQASpecId(spec);
+				String specId = getQASpecId(spec, td);
 				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
 				if (crt == null) {
 					log.error("Expected Rule for existing process not found: "+specId);
@@ -704,8 +707,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 	}
 	
-	public static String getQASpecId(QAConstraintSpec spec) {
-		return "crd_qaspec_"+spec.getQaConstraintId();
+	public static String getQASpecId(QAConstraintSpec spec, StepDefinition context) {
+		return "crd_qaspec_"+spec.getQaConstraintId()+context.getName();
 	}
 
 	public static String getProcessStepName(StepDefinition sd) {
@@ -756,7 +759,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 		sd.getQAConstraints().stream()
 		.forEach(spec -> { 
-			String qid = getQASpecId(spec);
+			String qid = getQASpecId(spec, sd);
 			//qaState.put(qid, ConstraintWrapper.getInstance(ws, spec, getProcess().getCurrentTimestamp(), this.getProcess()));
 			ConstraintWrapper cw = ConstraintWrapper.getInstance(ws, spec, getProcess().getCurrentTimestamp(), this.getProcess());
 			instance.getPropertyAsMap(CoreProperties.qaState.toString()).put(qid, cw.getInstance());

@@ -109,7 +109,7 @@ class RepairTests {
 		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AnyTest",
 		"self.requirements->any() \r\n"
 		+ "->asType(<"+typeJira.getQualifiedName()+">)"
-				+ " .requirements.size() = 2"
+				+ " .state='Closed'"
 		);
 		ws.concludeTransaction();
 		assertTrue(ConsistencyUtils.crdValid(crt));
@@ -123,6 +123,40 @@ class RepairTests {
 			RepairNode repairTree = RuleService.repairTree(cr);
 			assert(repairTree != null);
 		});
+		//FIXME I would expect the repairtree generation to suggest something other than just removing the instance
+	}
+	
+	@Test
+	void testAnyTraversRepair() {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		//TestArtifacts.addJiraToJira(jiraA, jiraB);
+		TestArtifacts.addJiraToJira(jiraA, jiraC);
+		TestArtifacts.addParentToJira(jiraB, jiraD); // only B has a parent, which is D, and D is NOT closed
+	
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AnyTraverseTest",
+		"self.requirements->any() \r\n"
+		+ "->asType(<"+typeJira.getQualifiedName()+">)"
+			+ ".requirements"
+				+ "->select(req | req.state='Closed')"
+				+ "->collect(req2 : <"+typeJira.getQualifiedName()+"> | req2.parent)"
+				+ "->asSet()->size() > 0"
+		);
+		ws.concludeTransaction();
+		assertTrue(ConsistencyUtils.crdValid(crt));
+		String eval = (String) crt.ruleEvaluations().get().stream()
+				.map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
+				.collect(Collectors.joining(",","[","]"));
+		System.out.println("Checking "+crt.name() +" Result: "+ eval);
+		crt.consistencyRuleEvaluations().value.stream()
+			.filter(cr -> !cr.isConsistent() )
+			.forEach(cr -> { 
+			RepairNode repairTree = RuleService.repairTree(cr);
+			assert(repairTree != null);
+		});
+		
 	}
 	
 	@Test
