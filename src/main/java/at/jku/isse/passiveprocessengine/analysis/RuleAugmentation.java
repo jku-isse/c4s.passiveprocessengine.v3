@@ -16,6 +16,7 @@ import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.DataSource;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.DataSource.IoType;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.StepParameter;
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
@@ -57,9 +58,10 @@ public class RuleAugmentation {
 			}	
 		}
 		//qa constraints:
+		ProcessDefinition pd = sd.getProcess() !=null ? sd.getProcess() : (ProcessDefinition)sd;
 		sd.getQAConstraints().stream()
 			.forEach(spec -> {
-				String specId = ProcessStep.getQASpecId(spec, sd);
+				String specId = ProcessStep.getQASpecId(spec, pd);
 				if (spec.getQaConstraintSpec() != null) {
 					String arl = spec.getQaConstraintSpec();
 //					try {  TODO reactivate after study once any() operator works

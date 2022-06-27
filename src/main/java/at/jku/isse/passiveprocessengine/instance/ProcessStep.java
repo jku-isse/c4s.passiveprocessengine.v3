@@ -639,9 +639,10 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 					status.put(name, crt.hasRuleError() ? crt.ruleError() : "valid");
 			});
 		//qa constraints:
+		ProcessDefinition pd = td.getProcess() !=null ? td.getProcess() : (ProcessDefinition)td;
 		td.getQAConstraints().stream()
 			.forEach(spec -> {
-				String specId = getQASpecId(spec, td);
+				String specId = getQASpecId(spec, pd);
 				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
 				if (crt == null) {
 					log.error("Expected Rule for existing process not found: "+specId);
@@ -707,8 +708,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 	}
 	
-	public static String getQASpecId(QAConstraintSpec spec, StepDefinition context) {
-		return "crd_qaspec_"+spec.getQaConstraintId()+context.getName();
+	public static String getQASpecId(QAConstraintSpec spec, ProcessDefinition context) {
+		return "crd_qaspec_"+spec.getQaConstraintId()+"_"+context.getName();
 	}
 
 	public static String getProcessStepName(StepDefinition sd) {
@@ -757,9 +758,10 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		if (sd.getExpectedInput().isEmpty() && sd.getCondition(Conditions.PRECONDITION).isEmpty()) {
 			this.setPreConditionsFulfilled(true);
 		}
+		ProcessDefinition pd = sd.getProcess() !=null ? sd.getProcess() : (ProcessDefinition)sd;
 		sd.getQAConstraints().stream()
 		.forEach(spec -> { 
-			String qid = getQASpecId(spec, sd);
+			String qid = getQASpecId(spec, pd);
 			//qaState.put(qid, ConstraintWrapper.getInstance(ws, spec, getProcess().getCurrentTimestamp(), this.getProcess()));
 			ConstraintWrapper cw = ConstraintWrapper.getInstance(ws, spec, getProcess().getCurrentTimestamp(), this.getProcess());
 			instance.getPropertyAsMap(CoreProperties.qaState.toString()).put(qid, cw.getInstance());

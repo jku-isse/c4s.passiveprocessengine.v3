@@ -196,9 +196,10 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 				if (crt != null) crt.delete();
 			});
 		//delete qa constraints:
+		ProcessDefinition pd = this.getProcess() !=null ? this.getProcess() : (ProcessDefinition)this;
 		this.getQAConstraints().stream()
 			.forEach(spec -> {
-				String specId = ProcessStep.getQASpecId(spec, this);
+				String specId = ProcessStep.getQASpecId(spec, pd);
 				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
 				if (crt != null) crt.delete();
 			});
