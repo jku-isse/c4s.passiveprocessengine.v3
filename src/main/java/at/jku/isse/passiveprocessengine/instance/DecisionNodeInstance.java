@@ -25,7 +25,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	public static enum CoreProperties {isInflowFulfilled, hasPropagated, dnd, inSteps, outSteps};
 	public static final String designspaceTypeId = DecisionNodeInstance.class.getSimpleName();
 	
-	private boolean internalPropagation = false;
+	private boolean isInternalPropagationDone = false;
 	
 	public DecisionNodeInstance(Instance instance) {
 		super(instance);
@@ -274,7 +274,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		// if not yet progressed,
 		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		if (this.isInflowFulfilled() && !this.hasPropagated()) {
-			initiateDownstreamSteps();
+			initiateDownstreamSteps(false);
 			this.setHasPropagated();
 		} 
 		
@@ -295,8 +295,8 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		return events;
 	}
 	
-	protected void initiateDownstreamSteps() {
-		if (internalPropagation) return; // to distinguish between official propagation or premature/immediate propagation
+	protected void initiateDownstreamSteps(boolean includeDataPropagation) {
+		if (isInternalPropagationDone) return; // to distinguish between official propagation or premature/immediate propagation
 		// get all out task defs, check if they exist or create them
 		// first time activation		
 		this.getProcess().getDefinition().getStepDefinitions().stream()
@@ -304,8 +304,12 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		.filter(td -> getProcess().getProcessSteps().stream()
 				.map(ProcessStep::getDefinition)
 				.noneMatch(td1 -> td1.equals(td))) // retain those that are not yet instantiated
-		.forEach(td -> getProcess().createAndWireTask(td));		
-		internalPropagation = true;
+		.forEach(td -> { ProcessStep step = getProcess().createAndWireTask(td);
+					if (includeDataPropagation) {
+						checkAndExecuteDataMappings(false, true);
+					}
+				});		
+		isInternalPropagationDone = true;
 	}
 	
 	public List<Events.ProcessChangedEvent> tryDataPropagationToPrematurelyTriggeredTask() {

@@ -178,8 +178,10 @@ public class Commands {
 				// whenever there is output added or removed, it means someone was active regardless of otherstate (except for COMPLETED)
 				if (!step.getActualLifecycleState().equals(State.ACTIVE) && !step.getActualLifecycleState().equals(State.COMPLETED))
 					events.addAll(step.setActivationConditionsFulfilled());
-				if (step.getOutDNI() != null && step.isImmediateDataPropagationEnabled())
-					events.addAll(step.getOutDNI().tryDataPropagationToPrematurelyTriggeredTask());
+				if (step.getOutDNI() != null && step.isImmediateDataPropagationEnabled()) {
+					events.addAll(step.getOutDNI().tryDataPropagationToPrematurelyTriggeredTask());			
+					//FIXME: there might be instances used in steps further down, thus we also need to trigger their inDNIs as otherwise there wont be any instances added/removed)
+				}
 				return events;
 			}
 		}

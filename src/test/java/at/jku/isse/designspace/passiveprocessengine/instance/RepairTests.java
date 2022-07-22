@@ -126,23 +126,101 @@ class RepairTests {
 		//FIXME I would expect the repairtree generation to suggest something other than just removing the instance
 	}
 	
+    @Test
+    void testAnyRepair2() {
+        Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+        Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+        Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+        TestArtifacts.addJiraToJira(jiraA, jiraC);
+        TestArtifacts.addJiraToJira(jiraA, jiraB);
+       
+
+        ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AnyTest",
+                "self.requirements->any()->asType(<"+typeJira.getQualifiedName()+">).requirements.size() = 2"
+        );
+        ws.concludeTransaction();
+        assertTrue(ConsistencyUtils.crdValid(crt));
+        String eval = (String) crt.ruleEvaluations().get().stream()
+                .map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
+                .collect(Collectors.joining(",","[","]"));
+        System.out.println("Checking "+crt.name() +" Result: "+ eval);
+
+        RepairNode repairTree = ConsistencyUtils.getRepairTree(crt,jiraA);
+        assert(repairTree != null);
+        assert (repairTree.getRepairActions().size() == 3);
+    }
+	
+    @Test
+	void testCollectWithAnyRepair() {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		Instance jiraE = TestArtifacts.getJiraInstance(ws, "jiraE");
+		TestArtifacts.addJiraToJira(jiraA, jiraB);
+		TestArtifacts.addJiraToJira(jiraA, jiraD);
+		TestArtifacts.addJiraToJira(jiraB, jiraC);
+	
+		TestArtifacts.addJiraToJira(jiraD, jiraC);
+		//TestArtifacts.addJiraToJira(jiraC, jiraE);
+		//TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Closed);
+		//TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Closed);
+	
+//		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "CollectWithAnyTest",
+//		"self.requirements"
+//				+ "->select(req3 | req3.state='Closed') \r\n" //from which that are closed		
+//				+ "->collect(req : <"+typeJira.getQualifiedName()+"> | req.requirements \r\n" // take from linked requirements				
+//		+ "		->any()"
+//		+ ") \r\n"		
+//		+ "->asSet() \r\n"				
+//		+ "->select(ra : <"+typeJira.getQualifiedName()+"> | ra.isDefined())" // only if not null
+//		+ "->size() > 1"
+//		);
+		
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AnyTraverseTest",
+		"self.requirements->collect(req | req.requirements \r\n" // take from linked requirements
+		+ "->select(req3 | req3.state='Closed') \r\n" //from which that are closed		JiraC (for B) and non for JiraD
+		+ "->collect( req2 : <"+typeJira.getQualifiedName()+"> | req2.requirements) \r\n" // the requirements, but choose only one, null
+		+ "->any()) \r\n"		
+		+ "->asSet() \r\n"				
+		+ "->select(ra : <"+typeJira.getQualifiedName()+"> | ra.isDefined())" // only if not null
+		+ "->size() > 0"
+		);
+		
+		ws.concludeTransaction();
+		assertTrue(ConsistencyUtils.crdValid(crt));
+//		String eval = (String) crt.ruleEvaluations().get().stream()
+//				.map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
+//				.collect(Collectors.joining(",","[","]"));
+//		System.out.println("Checking "+crt.name() +" Result: "+ eval);
+//		crt.consistencyRuleEvaluations().value.stream()
+//			.filter(cr -> !cr.isConsistent() )
+//			.forEach(cr -> { 
+//			RepairNode repairTree = RuleService.repairTree(cr);
+//			assert(repairTree != null);
+//		});
+		 RepairNode repairTree = ConsistencyUtils.getRepairTree(crt,jiraA);
+	        assert(repairTree != null);
+	}
+    
 	@Test
 	void testAnyTraversRepair() {
 		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
 		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
 		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
 		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
-		//TestArtifacts.addJiraToJira(jiraA, jiraB);
-		TestArtifacts.addJiraToJira(jiraA, jiraC);
-		TestArtifacts.addParentToJira(jiraB, jiraD); // only B has a parent, which is D, and D is NOT closed
+		TestArtifacts.addJiraToJira(jiraA, jiraB);
+		TestArtifacts.addJiraToJira(jiraB, jiraC);
+		
 	
 		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AnyTraverseTest",
 		"self.requirements->any() \r\n"
 		+ "->asType(<"+typeJira.getQualifiedName()+">)"
 			+ ".requirements"
 				+ "->select(req | req.state='Closed')"
-				+ "->collect(req2 : <"+typeJira.getQualifiedName()+"> | req2.parent)"
-				+ "->asSet()->size() > 0"
+				//+ "->collect(req2 : <"+typeJira.getQualifiedName()+"> | req2.parent)"
+				//+ "->asSet()"
+				+ "->size() > 0"
 		);
 		ws.concludeTransaction();
 		assertTrue(ConsistencyUtils.crdValid(crt));
@@ -156,7 +234,8 @@ class RepairTests {
 			RepairNode repairTree = RuleService.repairTree(cr);
 			assert(repairTree != null);
 		});
-		
+//		 RepairNode repairTree = ConsistencyUtils.getRepairTree(crt,jiraA);
+//	        assert(repairTree != null);
 	}
 	
 	@Test
@@ -446,6 +525,34 @@ class RepairTests {
 		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AsSetTest", "self.requirements.size() > 2");
 		ws.concludeTransaction();
 		crt.consistencyRuleEvaluations().value.forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr); });
+		;
+	}
+	
+	@Test
+	void testAndRepair() {
+		//Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		//Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		//Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		//TestArtifacts.addJiraToJira(jiraA, jiraB); 
+		//TestArtifacts.addJiraToJira(jiraA, jiraC);
+		//TestArtifacts.addJiraToJira(jiraB, jiraC); 
+		
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AndTest", "self.requirements->forAll(req | req.parent.name='X')"
+				+ "and self.requirements->size() > 0");
+		ws.concludeTransaction();
+		ws.concludeTransaction();
+		assertTrue(ConsistencyUtils.crdValid(crt));
+		String eval = (String) crt.ruleEvaluations().get().stream()
+				.map(rule -> ((Rule)rule).result()+"" )
+				.collect(Collectors.joining(",","[","]"));
+		System.out.println("Checking "+crt.name() +" Result: "+ eval);
+		crt.consistencyRuleEvaluations().value.stream()
+			.filter(cr -> !cr.isConsistent())
+			.forEach(cr -> { 
+			RepairNode repairTree = RuleService.repairTree(cr);
+			assert(repairTree != null);
+		});
 		;
 	}
 }

@@ -21,7 +21,9 @@ import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class RuleAugmentation {
 
 	
@@ -46,6 +48,7 @@ public class RuleAugmentation {
 					String arl = sd.getCondition(condition).get();
 					try {
 						arl = rewriteConstraint(arl);
+						log.debug(String.format("Augmented %s for %s to %s", condition, sd.getName(), arl));
 					} catch(Exception e) {
 						pex.getErrorMessages().add(String.format("Error aumenting %s : %s", arl, e.getMessage()));
 					}
@@ -64,11 +67,12 @@ public class RuleAugmentation {
 				String specId = ProcessStep.getQASpecId(spec, pd);
 				if (spec.getQaConstraintSpec() != null) {
 					String arl = spec.getQaConstraintSpec();
-//					try {  TODO reactivate after study once any() operator works
-//						arl = rewriteConstraint(arl);
-//					} catch(Exception e) {
-//						pex.getErrorMessages().add(String.format("Error aumenting %s : %s", arl, e.getMessage()));
-//					}
+					try {  
+						arl = rewriteConstraint(arl);
+						log.debug(String.format("Augmented QA for %s to %s", sd.getName(), arl));
+					} catch(Exception e) {
+						pex.getErrorMessages().add(String.format("Error aumenting %s : %s", arl, e.getMessage()));
+					}
 					ConsistencyRuleType crt = ConsistencyRuleType.create(ws, stepType, specId, arl);
 				}
 			});
