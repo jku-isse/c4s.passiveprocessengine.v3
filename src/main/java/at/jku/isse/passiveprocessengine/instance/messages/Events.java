@@ -1,5 +1,7 @@
 package at.jku.isse.passiveprocessengine.instance.messages;
 
+import java.time.OffsetDateTime;
+
 import at.jku.isse.passiveprocessengine.instance.ConstraintWrapper;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
@@ -7,13 +9,16 @@ import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 public class Events {
 
 	@Data
 	@AllArgsConstructor
-	public abstract static class ProcessChangedEvent {
+	public abstract static class ProcessChangedEvent {		
 		ProcessInstance procScope;
+		OffsetDateTime timestamp;
 	}
 	
 	@EqualsAndHashCode(callSuper = true)
@@ -21,7 +26,7 @@ public class Events {
 	public static class DataMappingChangedEvent extends ProcessChangedEvent {
 		
 		public DataMappingChangedEvent(ProcessInstance proc) {
-			super(proc);
+			super(proc, null);
 		}
 	}
 	
@@ -32,7 +37,7 @@ public class Events {
 		final ConstraintWrapper qacWrapper;
 		
 		public QAConstraintFulfillmentChanged(ProcessInstance proc, ProcessStep step, ConstraintWrapper qacWrapper) {
-			super(proc);
+			super(proc, null);
 			this.step = step;
 			this.qacWrapper = qacWrapper;
 		}
@@ -45,7 +50,7 @@ public class Events {
 		final boolean fulfilled;
 		
 		public QAFulfillmentChanged(ProcessInstance proc, ProcessStep step, boolean fulfilled) {
-			super(proc);
+			super(proc, null);
 			this.step = step;
 			this.fulfilled = fulfilled;
 		}
@@ -58,7 +63,7 @@ public class Events {
 		final boolean fulfilled;
 		
 		public PostconditionFulfillmentChanged(ProcessInstance proc, ProcessStep step, boolean fulfilled) {
-			super(proc);
+			super(proc, null);
 			this.step = step;
 			this.fulfilled = fulfilled;
 		}
@@ -74,7 +79,7 @@ public class Events {
 		boolean isActualState;
 		
 		public StepStateTransitionEvent(ProcessInstance proc, ProcessStep step, State oldState, State newState, boolean isActualState) {
-			super(proc);
+			super(proc, null);
 			this.step = step;
 			this.oldState = oldState;
 			this.newState = newState;

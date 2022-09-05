@@ -110,7 +110,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 				Set<RepairAction> ras = rn.getRepairActions();
 				// we also calculate stats on how many repairs for this type of rule we suggested
 				ConsistencyRuleType type = (ConsistencyRuleType) cre.getInstanceType();
-				repairSizeStats.compute(type, (k,v) -> v == null ? new LinkedList<>() : v).add(ras.size()); // FIXME this number here does not match the frontend because there are still duplicate repairs listed that the frontend doesnt show
+				repairSizeStats.compute(type, (k,v) -> v == null ? new LinkedList<>() : v).add(ras.size()); 
 				} catch (RepairException e) {
 					unsupportedRepairs.put(cre.getInstanceType().name(), e.getMessage());
 					e.printStackTrace();
@@ -237,10 +237,13 @@ public class RepairAnalyzer implements WorkspaceListener {
 			if (cr.isConsistent()) // all is still fine, no further analysis needed
 				return Type.NONE;
 			else {
-				// rule hasn;t changed, thats not to say, that change might now have introduced another inconsistency
+				// rule result hasn;t changed, thats not to say, that change might now have introduced another inconsistency
 				// but we would need to determine this first
 				RepairNode rNodeOld = repairForRule.get(cr); // must not be null if its still negative
-				//assert(rNodeOld != null); // NOT USED AS WRONGLY DETECTED NULL repairnode for some reason
+				//assert(rNodeOld != null); //FIXME: NOT USED AS WRONGLY DETECTED NULL repairnode for some reason
+				if (rNodeOld == null ) {					
+					return Type.NONE; //FIXME: hack to avoid NPE for now
+				}
 				// this rNodeOld is the prior one, not for the current rule state
 				// look whether old repair nodes included this operation, if so then positive
 				if (rNodeOld.getRepairActions().stream().anyMatch(ra -> doesOpMatchRepair(ra, op, id))) 
@@ -310,13 +313,19 @@ public class RepairAnalyzer implements WorkspaceListener {
 			if (op instanceof PropertyUpdateSet) {
 				Object rValue = ra.getValue();
 				Object opValue = op.value(); // for Set operation/repair, both need to be present but could be NULL if that is the intended/desired value or the effect of the operation
-				if (rValue == null && opValue == null)
-					return true;
+				//FIXME HACK //if (rValue == null && opValue == null)
+				//	return true;
 				if (opValue instanceof Id && rValue instanceof Instance) {
 					return opValue.equals(((Instance) rValue).id());
-				} else {
+				} 
+				
+				// FIXME: hack to deal with isDefined() repairs
+				else if (opValue != null) return true;
+				
+				else {
 					return opValue.equals(rValue);
 				}
+
 			}
 			break;
 		case MOD_GT:
@@ -415,10 +424,13 @@ public class RepairAnalyzer implements WorkspaceListener {
 			if (op instanceof PropertyUpdateSet) {
 				Object rValue = ra.getValue();
 				Object opValue = op.value(); // for Set operation/repair, both need to be present but could be NULL if that is the intended/desired value or the effect of the operation
-				if (rValue == null)
-					return (opValue != null);
-				if (opValue == null)
-					return (rValue != null);
+				//FIXME: HACK for now as isDefined abstract repair will represent "anything" as null, which is indistinguishable from a repair to actually set something to null
+				// for this we assume there is not rule currently in place that requires something to be null.
+				//if (rValue == null)
+				//	return (opValue != null);								
+				//if (opValue == null)
+				//	return (rValue != null);
+				if (opValue == null) return true;
 				if (opValue instanceof Id && rValue instanceof Instance) {
 					return !opValue.equals(((Instance) rValue).id());
 				} else {
@@ -568,7 +580,12 @@ public class RepairAnalyzer implements WorkspaceListener {
 	private static class QARepairTreeFilter extends RepairTreeFilter {
 		@Override
 		public boolean compliesTo(RepairAction ra) {
-			return ra.getProperty() != null 
+			//FIXME: lets not suggest any repairs that cannot be navigated to in an external tool. 
+			if (ra.getElement() == null) return false;
+			Instance artifact = (Instance) ra.getElement();
+			if (!artifact.hasProperty("html_url") || artifact.getPropertyAsValue("html_url") == null) return false;
+			else			
+				return ra.getProperty() != null 
 					&& !ra.getProperty().startsWith("out_") // no change to input or output
 					&& !ra.getProperty().startsWith("in_")
 					&& !ra.getProperty().equalsIgnoreCase("name"); // typically used to describe key or id outside of designspace

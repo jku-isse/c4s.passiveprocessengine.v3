@@ -212,7 +212,9 @@ public class ProcessDefinition extends StepDefinition{
 	}
 
 	public boolean isImmediateDataPropagationEnabled() {
-		return (boolean) instance.getPropertyAsValue(CoreProperties.isImmediateDataPropagationEnabled.toString());
+		Object value = instance.getPropertyAsValueOrElse(CoreProperties.isImmediateDataPropagationEnabled.toString(), () -> false);
+		if (value == null) return false;
+		else return (boolean) value; 
 	}
 
 	public void setImmediateDataPropagationEnabled(boolean isImmediateDataPropagationEnabled) {

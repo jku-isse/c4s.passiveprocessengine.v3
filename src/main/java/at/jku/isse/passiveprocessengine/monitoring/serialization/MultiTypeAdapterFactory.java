@@ -120,6 +120,8 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
 				out.value(value.getNewState().toString());
 				out.name("type");
 				out.value(value.isActualState() ? "ACTUAL" : "EXPECTED");
+				out.name("timestamp");
+				out.value(value.getTimestamp().toString());
 				out.endObject();
 			}
 
@@ -142,6 +144,8 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
 				out.value(value.getStep().getDefinition().getName());
 				out.name("isFulfilled");
 				out.value(value.isFulfilled());
+				out.name("timestamp");
+				out.value(value.getTimestamp().toString());
 				out.endObject();
 			}
 
@@ -164,6 +168,8 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
 				out.value(value.getStep().getDefinition().getName());
 				out.name("isFulfilled");
 				out.value(value.isFulfilled());
+				out.name("timestamp");
+				out.value(value.getTimestamp().toString());
 				out.endObject();
 			}
 

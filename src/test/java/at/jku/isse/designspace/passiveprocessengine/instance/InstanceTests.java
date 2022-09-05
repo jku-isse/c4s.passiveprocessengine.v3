@@ -269,24 +269,24 @@ class InstanceTests {
 		assert(proc.getOutput("jiraOut").size() == 1);
 	}
 	
-	@Test
-	void testSimpleParentProcessFromSerializationForm() {
-		Instance jiraF =  TestArtifacts.getJiraInstance(ws, "jiraF");
-		DTOs.Process procD = TestProcesses.getSimpleSuperDTOProcessDefinition(ws);
-		String jsonProc = json.toJson(procD);
-		DTOs.Process deSer = json.fromJson(jsonProc);
-		ProcessDefinition procDef = DefinitionTransformer.fromDTO(deSer, ws);
-		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
-		proc.addInput("jiraIn", jiraF);
-		ws.concludeTransaction();
-		TestArtifacts.setStateToJiraInstance(jiraF, JiraStates.Closed);
-		ws.concludeTransaction();
-		
-		InstanceTests.printFullProcessToLog(proc); 
-		assert(proc.getExpectedLifecycleState().equals(State.COMPLETED));
-		assert(proc.getActualLifecycleState().equals(State.COMPLETED));
-		assert(proc.getOutput("jiraOut").size() == 1);
-	}
+//	@Test
+//	void testSimpleParentProcessFromSerializationForm() {
+//		Instance jiraF =  TestArtifacts.getJiraInstance(ws, "jiraF");
+//		DTOs.Process procD = TestProcesses.getSimpleSuperDTOProcessDefinition(ws);
+//		String jsonProc = json.toJson(procD);
+//		DTOs.Process deSer = json.fromJson(jsonProc);
+//		ProcessDefinition procDef = DefinitionTransformer.fromDTO(deSer, ws);
+//		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
+//		proc.addInput("jiraIn", jiraF);
+//		ws.concludeTransaction();
+//		TestArtifacts.setStateToJiraInstance(jiraF, JiraStates.Closed);
+//		ws.concludeTransaction();
+//		
+//		InstanceTests.printFullProcessToLog(proc); 
+//		assert(proc.getExpectedLifecycleState().equals(State.COMPLETED));
+//		assert(proc.getActualLifecycleState().equals(State.COMPLETED));
+//		assert(proc.getOutput("jiraOut").size() == 1);
+//	}
 	
 	@Test
 	void testSymmetricDifferenceDatamapping() throws ProcessException {

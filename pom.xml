@@ -1,117 +1,112 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <groupId>at.jku.isse.designspace.passiveprocessengine</groupId>
-    <artifactId>c4s.passiveprocessengine.v3</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
+	<groupId>at.jku.isse.designspace.passiveprocessengine</groupId>
+	<artifactId>c4s.passiveprocessengine.v3</artifactId>
+	<version>0.2.0-SNAPSHOT</version>
 
-    <distributionManagement>
-    	<repository>
-        	<id>JKU.ISSE</id>
-        	<url>http://3.66.206.6:9999/snapshots</url>
-    	</repository>
-    </distributionManagement>
+	<distributionManagement>
+		<repository>
+			<id>JKU.ISSE</id>
+			<url>http://3.66.206.6:9999/snapshots</url>
+		</repository>
+	</distributionManagement>
 
-    <properties>
-        <lombok.version>1.18.0</lombok.version>
-        <java.version>11</java.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
-        <logback.version>1.2.10</logback.version>
-    </properties>
+	<properties>
+		<lombok.version>1.18.0</lombok.version>
+		<java.version>11</java.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
+		<logback.version>1.2.10</logback.version>
+	</properties>
 
-    <repositories>
-        <!-- The order of definitions matters. Explicitly defining central here to make sure it has the highest priority. -->
-        <!-- Main Maven repository -->
-        <repository>
-            <id>central</id>
-            <url>https://repo.maven.apache.org/maven2</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <!-- own ones -->
-        <repository>
-            <id>JKU.ISSE</id>
-            <url>http://3.66.206.6:9999/snapshots</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
+	<repositories>
+		<!-- The order of definitions matters. Explicitly defining central here 
+			to make sure it has the highest priority. -->
+		<!-- Main Maven repository -->
+		<repository>
+			<id>central</id>
+			<url>https://repo.maven.apache.org/maven2</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<!-- own ones -->
+		<repository>
+			<id>JKU.ISSE</id>
+			<url>http://3.66.206.6:9999/snapshots</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
 
-    <dependencies>
-    	<dependency>
+	<dependencies>
+		<dependency>
 			<groupId>JKU.ISSE</groupId>
 			<artifactId>c4s.artifact.api</artifactId>
 			<version>4.1.12-SNAPSHOT</version>
 		</dependency>
-        <dependency>
+		<dependency>
 			<groupId>at.jku.isse.designspace</groupId>
 			<artifactId>core</artifactId>
 			<version>4.1.0-SNAPSHOT</version>
 		</dependency>
-<dependency>
-            <groupId>at.jku.isse.designspace</groupId>
-            <artifactId>rule</artifactId>
-            <version>4.1.1-SNAPSHOT</version>
-        </dependency> 
+		<dependency>
+			<groupId>at.jku.isse.designspace</groupId>
+			<artifactId>rule</artifactId>
+			<version>4.1.1-SNAPSHOT</version>
+		</dependency>
 
-         <dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<version>2.2.3.RELEASE</version>
 			<scope>test</scope>
 		</dependency>
-<!--		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-autoconfigure</artifactId>
-			<version>2.2.3.RELEASE</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-logging</artifactId>
-			<version>2.2.3.RELEASE</version>
-		</dependency>-->
+		<!-- <dependency> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-autoconfigure</artifactId> 
+			<version>2.2.3.RELEASE</version> <scope>compile</scope> </dependency> <dependency> 
+			<groupId>org.springframework.boot</groupId> <artifactId>spring-boot-starter-logging</artifactId> 
+			<version>2.2.3.RELEASE</version> </dependency> -->
 
-		<!-- Spring RestController 
+		<!-- Spring RestController <dependency> <groupId>org.springframework.boot</groupId> 
+			<artifactId>spring-boot-starter-web</artifactId> <version>2.2.3.RELEASE</version> 
+			</dependency> -->
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-			<version>2.2.3.RELEASE</version>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.11.0</version>
 		</dependency>
-        -->
-        <!-- Lombok -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-        </dependency>
-        <!-- Statemachine -->
-        <dependency>
-            <groupId>com.github.oxo42</groupId>
-            <artifactId>stateless4j</artifactId>
-            <version>2.5.0</version>
-        </dependency>
-        <!-- Inject -->
-        <dependency>
-            <groupId>com.google.inject</groupId>
-            <artifactId>guice</artifactId>
-            <version>4.2.3</version>
-        </dependency>
-        <!-- JSON -->
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.8.6</version>
-        </dependency>
-        
-        		<!-- Test suite -->
+		<!-- Lombok -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>${lombok.version}</version>
+		</dependency>
+		<!-- Statemachine -->
+		<dependency>
+			<groupId>com.github.oxo42</groupId>
+			<artifactId>stateless4j</artifactId>
+			<version>2.5.0</version>
+		</dependency>
+		<!-- Inject -->
+		<dependency>
+			<groupId>com.google.inject</groupId>
+			<artifactId>guice</artifactId>
+			<version>4.2.3</version>
+		</dependency>
+		<!-- JSON -->
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.8.6</version>
+		</dependency>
+
+		<!-- Test suite -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
@@ -130,20 +125,20 @@
 			<version>5.4.2</version>
 			<scope>test</scope>
 		</dependency>
-    </dependencies>
+	</dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>11</source>
-                    <target>11</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>11</source>
+					<target>11</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 
 </project>

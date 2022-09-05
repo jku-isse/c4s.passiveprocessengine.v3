@@ -26,6 +26,9 @@ public class ProcessStepStats {
 	Set<String> qaConstraintsFulfilledAtSomeTime = new HashSet<>();
 	Set<String> qaConstraintsUnfulfilledAtSomeTime = new HashSet<>();
 	Set<String> qaConstraintsUnevaluatedAtSomeTime = new HashSet<>();
+	Set<String> qaConstraintsFulfilledAtStepCompletion = new HashSet<>();
+	Set<String> qaConstraintsUnfulfilledAtStepCompletion = new HashSet<>();
+	Set<String> qaConstraintsUnevaluatedAtStepCompletion = new HashSet<>();
 	
 	Set<String> qaConstraintsFulfilledAtEnd = new HashSet<>();
 	Set<String> qaConstraintsUnfulfilledAtEnd = new HashSet<>();
@@ -40,9 +43,7 @@ public class ProcessStepStats {
 		this.stepId = step.getDefinition().getName();
 	}
 	
-	public void calcMidQaFulfillment() { // check for a completion ready step whether any QA constraint is fulfilled or not
-		if (!step.arePostCondFulfilled() || step.getActualLifecycleState().equals(State.CANCELED) || step.getActualLifecycleState().equals(State.NO_WORK_EXPECTED))
-			return; // but ignore if canceled or no work expected
+	public void calcMidQaFulfillment() { 
 		
 		step.getQAstatus().stream()
 		.forEach(check -> {
@@ -53,7 +54,22 @@ public class ProcessStepStats {
 			else
 				qaConstraintsFulfilledAtSomeTime.add(check.getQaSpec().getQaConstraintId());
 		});
+		// check for a completion ready step whether any QA constraint is fulfilled or not
+		if (!step.arePostCondFulfilled() || step.getActualLifecycleState().equals(State.CANCELED) || step.getActualLifecycleState().equals(State.NO_WORK_EXPECTED)) {
+			return; // but ignore if canceled or no work expected
+		}
+		step.getQAstatus().stream()
+		.forEach(check -> {
+			if (check.getCr() == null) 				
+				qaConstraintsUnevaluatedAtStepCompletion.add(check.getQaSpec().getQaConstraintId());			
+			if (!check.getCr().isConsistent()) 
+				qaConstraintsUnfulfilledAtStepCompletion.add(check.getQaSpec().getQaConstraintId());
+			else
+				qaConstraintsFulfilledAtStepCompletion.add(check.getQaSpec().getQaConstraintId());
+		});
 	}
+	
+	
 	
 	protected void setUnsafeStarted(OffsetDateTime odt) {
 		if (unsafeStarted == null)
