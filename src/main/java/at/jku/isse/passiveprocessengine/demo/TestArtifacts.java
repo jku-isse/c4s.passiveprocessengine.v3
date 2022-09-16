@@ -71,7 +71,7 @@ public class TestArtifacts {
 	public static InstanceType getTestAzureIssueType(Workspace ws) {
 		InstanceType typeAzureTest = ws.createInstanceType("azure_workitem", ws.TYPES_FOLDER);
 		InstanceType typeAzureStateTest = ws.createInstanceType("azure_workitemstate", ws.TYPES_FOLDER);
-		InstanceType typeAzureTypeTest = ws.createInstanceType("azure_workitemstate", ws.TYPES_FOLDER);
+		InstanceType typeAzureTypeTest = ws.createInstanceType("azure_workitemtype", ws.TYPES_FOLDER);
 		InstanceType typeAzureLinkTypeTest = ws.createInstanceType("workitem_link", ws.TYPES_FOLDER);
 		
 		typeAzureTest.createPropertyType("relatedItems", Cardinality.SET, typeAzureLinkTypeTest);
