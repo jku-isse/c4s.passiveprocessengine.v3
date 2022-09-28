@@ -36,7 +36,23 @@ public class SerializationTest {
 	//	Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 	}
 	
-
+	@Test
+	void testSerializeHtmlUrlAndDescription()
+	{
+		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		DTOs.Process procD = TestProcesses.getSimpleDTOSubprocess(ws);
+		procD.setHtml_url("www.google.com");
+		procD.setDescription("Description");
+		String jsonProc = json.toJson(procD);
+		System.out.println(jsonProc);
+		DTOs.Process deSer = json.fromJson(jsonProc);
+		ProcessDefinition procDef = DefinitionTransformer.fromDTO(deSer, ws);
+		assert(procDef.getName().equals(procD.getCode()));
+		assert(procDef.getStepDefinitions().size() == procD.getSteps().size());
+		assert(procDef.getCondition(Conditions.PRECONDITION).get().equals(procD.getConditions().get(Conditions.PRECONDITION)));
+		assert(procDef.getHtml_url().equals(procD.getHtml_url()));
+		assert(procDef.getDescription().equals(procD.getDescription()));
+	}
 	@Test
 	void testSerializeAndBackSimpleProcessDefinition() {
 		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);

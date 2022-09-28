@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.management.RuntimeErrorException;
+
 import at.jku.isse.designspace.core.model.Cardinality;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
@@ -27,7 +29,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	public static enum CoreProperties {expectedInput, expectedOutput, ioMappingRules, 
 							conditions,
 							qaConstraints,
-							inDND, outDND, specOrderIndex};
+							inDND, outDND, specOrderIndex,html_url,description};
 	
 	public static final String designspaceTypeId = StepDefinition.class.getSimpleName();
 	
@@ -177,6 +179,24 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		return (Integer) instance.getPropertyAsValueOrElse(CoreProperties.specOrderIndex.toString(), () -> 0);
 	}
 	
+	public void setHtml_url(String html_url)
+	{
+		instance.getPropertyAsSingle(CoreProperties.html_url.toString()).set(html_url);
+	}
+	
+	public String getHtml_url()
+	{
+		return (String) instance.getPropertyAsValueOrElse(CoreProperties.html_url.toString(), () -> "");
+	}
+	public void setDescription(String des)
+	{
+		instance.getPropertyAsSingle(CoreProperties.description.toString()).set(des);
+	}
+	
+	public String getDescription()
+	{
+		return (String) instance.getPropertyAsValueOrElse(CoreProperties.description.toString(), () -> "");
+	}
 	@Override
 	public void deleteCascading() {
 		// deleting constraints:
@@ -225,6 +245,8 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 				typeStep.createPropertyType(CoreProperties.outDND.toString(), Cardinality.SINGLE, Workspace.STRING);
 				typeStep.createPropertyType((CoreProperties.ioMappingRules.toString()), Cardinality.MAP, Workspace.STRING);
 				typeStep.createPropertyType((CoreProperties.specOrderIndex.toString()), Cardinality.SINGLE, Workspace.INTEGER);
+				typeStep.createPropertyType((CoreProperties.html_url.toString()), Cardinality.SINGLE, Workspace.STRING);
+				typeStep.createPropertyType((CoreProperties.description.toString()), Cardinality.SINGLE, Workspace.STRING);
 				return typeStep;
 			}
 	}
