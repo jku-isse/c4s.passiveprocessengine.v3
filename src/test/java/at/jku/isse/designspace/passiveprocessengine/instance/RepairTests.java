@@ -200,11 +200,10 @@ class RepairTests {
 		
 		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "TraverseTest", "self.parent.parent.name = 'jiraD'");
 		ws.concludeTransaction();
-		crt.consistencyRuleEvaluations().value.forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr);
-		});
-		crt.consistencyRuleEvaluations().value.forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr);
-			printRepairActions(repairTree);
-		});
+		RepairNode rnodeA = crt.consistencyRuleEvaluations().value.stream()
+				.filter(cr -> cr.contextInstance().equals(jiraA))
+				.map(cr -> RuleService.repairTree(cr))
+				.findAny().get();		
 		// repairs are incorrect
 		/* Expected repairs:
 		 * 
@@ -1322,7 +1321,7 @@ class RepairTests {
 		;
 		
 		// TODO: adding to requirements does not consider the constraint of the requirements property in the other AND branch
-		// TODO: size not proberly handles, how to understand that the size should not lead to any restriction "output"
+		// TODO: size not properly handled, how to understand that the size should not lead to any restriction "output"
 	}
 	
 	@Test
@@ -1334,13 +1333,46 @@ class RepairTests {
 		TestArtifacts.addJiraToJira(jiraA, jiraB); 
 		TestArtifacts.addJiraToJira(jiraA, jiraC);
 		TestArtifacts.addJiraToJira(jiraB, jiraD); 
-		// for all issues in requirements that themselves have only a single requirement, ensure that this does not occur
-		//FIXME: throws classcast exception
+		// for all issues in requirements select those that have all their requirements name != to jiraD, ensure that this does occur more than once
+
 		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AndTest", 
 				"self.requirements"
 				+ "->select(req2 | "
-				+          "req2->forAll(req | req.requirements->size() = 1))"
-			  + "->size() < 1");
+				+          "req2.requirements->forAll(req | req.name <> 'jiraD'))"
+			  + "->size() > 1");
+		ws.concludeTransaction();
+		assertTrue(ConsistencyUtils.crdValid(crt));
+		String eval = (String) crt.ruleEvaluations().get().stream()
+				.map(rule -> ((Rule)rule).result()+"" )
+				.collect(Collectors.joining(",","[","]"));
+		System.out.println("Checking "+crt.name() +" Result: "+ eval);
+		crt.consistencyRuleEvaluations().value.stream()
+			.filter(cr -> !cr.isConsistent())
+			.filter(cr -> cr.contextInstance().equals(jiraA))
+			.forEach(cr -> { 
+			RepairNode repairTree = RuleService.repairTree(cr);
+			printRepairActions(repairTree);
+			assert(repairTree != null);
+		});
+		;
+		// OK repair should suggest to change jiraD.name to something else than jiraD
+		// OK repair should suggest to remove JiraD from jira C.reqs
+		// TODO repair should suggest to add to A where requirements are empty or all have name not jiraD
+	}
+	
+	@Test
+	void testForAllSizeRepair() {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		TestArtifacts.addJiraToJira(jiraA, jiraB); 
+		TestArtifacts.addJiraToJira(jiraA, jiraC);
+		TestArtifacts.addJiraToJira(jiraB, jiraD); 
+
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AndTest", 
+				"self.requirements"
+				+"->forAll(req | req.requirements->size() = 1)");
 		ws.concludeTransaction();
 		assertTrue(ConsistencyUtils.crdValid(crt));
 		String eval = (String) crt.ruleEvaluations().get().stream()
@@ -1355,7 +1387,77 @@ class RepairTests {
 			assert(repairTree != null);
 		});
 		;
-		// expect to add remove jira B or to add to jiraB or to remove requirement from jiraB
+//works
+	}
+	
+	@Test
+	void testIncludesRepair() {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		TestArtifacts.addParentToJira(jiraA, jiraB); 
+		TestArtifacts.addJiraToJira(jiraA, jiraC);
+		TestArtifacts.addJiraToJira(jiraA, jiraB);
+		TestArtifacts.addJiraToJira(jiraB, jiraD); 
+		// at least one element in parent requirements must be also found in self.requirements
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "IncludesTest",
+				"self.parent.requirements" 
+		 + "->exists(refitem |  self.requirements->includes(refitem) ) "
+		);
+		ws.concludeTransaction();
+		assertTrue(ConsistencyUtils.crdValid(crt));
+		String eval = (String) crt.ruleEvaluations().get().stream()
+				.map(rule -> ((Rule)rule).result()+"" )
+				.collect(Collectors.joining(",","[","]"));
+		System.out.println("Checking "+crt.name() +" Result: "+ eval);
+		crt.consistencyRuleEvaluations().value.stream()
+			.filter(cr -> !cr.isConsistent())
+			.filter(cr -> cr.contextInstance().equals(jiraA))
+			.forEach(cr -> { 
+			RepairNode repairTree = RuleService.repairTree(cr);
+			printRepairActions(repairTree);
+			assert(repairTree != null);
+		});
+		
+		/* expected repairs:
+		 * TODO: set as a.parent a demoissue with requirements containing a demo issue that is one of [jiraC, jiraB]
+		 * TODO: add to jiraB.requirements a Demoissue where SELF/jiraA.requirements contains/includes that demoissue  
+		 * */
+	}
+	
+	@Test
+	void testIncludesRepair2() {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		TestArtifacts.addParentToJira(jiraA, jiraB); 		
+		TestArtifacts.addJiraToJira(jiraB, jiraD); 
+		// at least one element in parent requirements must be also found in self.requirements
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "IncludesTest",
+				"self.parent.requirements" 
+		 + "->exists(refitem |  self.requirements->includes(refitem) ) "
+		);
+		ws.concludeTransaction();
+		assertTrue(ConsistencyUtils.crdValid(crt));
+		String eval = (String) crt.ruleEvaluations().get().stream()
+				.map(rule -> ((Rule)rule).result()+"" )
+				.collect(Collectors.joining(",","[","]"));
+		System.out.println("Checking "+crt.name() +" Result: "+ eval);
+		crt.consistencyRuleEvaluations().value.stream()
+			.filter(cr -> !cr.isConsistent())
+			.filter(cr -> cr.contextInstance().equals(jiraA))
+			.forEach(cr -> { 
+			RepairNode repairTree = RuleService.repairTree(cr);
+			printRepairActions(repairTree);
+			assert(repairTree != null);
+		});
+		
+		/* expected repairs:
+		 * TODO: set as a.parent a demoissue with requirements containing a demo issue that is one of []
+		 * TODO: add to jiraB.requirments a Demoissue with SELF.requirements containing/including that demoissue  
+		 * */
 	}
 	
 	public static boolean matchesRestriction(RepairNode rn, Instance subject, RestrictionNode treeToMatch) {
