@@ -48,6 +48,7 @@ public class DTOs {
 		Map<Conditions,String> conditions = new HashMap<>();
 		Set<QAConstraint> qaConstraints = new HashSet<>();
 		int specOrderIndex = 0;
+		String html_url;
 	} 
 
 	@ToString(doNotUseGetters = true)

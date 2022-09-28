@@ -54,6 +54,8 @@ public class DefinitionTransformer {
 		step.getIoMapping().entrySet().stream().forEach(entry -> pStep.addInputToOutputMappingRule(entry.getKey(),  entry.getValue()));
 		step.getQaConstraints().stream().forEach(qac -> pStep.addQAConstraint(QAConstraintSpec.createInstance(qac.getCode(), qac.getArlRule(), qac.getDescription(), qac.getSpecOrderIndex(), ws)));
 		pStep.setSpecOrderIndex(step.getSpecOrderIndex());
+		pStep.setHtml_url(step.getHtml_url());
+		pStep.setDescription(step.getDescription());
 		//FIXME: description field is not used in specification (only in persistance)
 	}
 	
@@ -75,7 +77,7 @@ public class DefinitionTransformer {
 				initDTOfromStep(step, pStep);
 				proc.getSteps().add(step);
 			}
-			//TODO: description
+			
 		});
 		pDef.getDecisionNodeDefinitions().stream().forEach(dnd -> {
 			DTOs.DecisionNode dn = new DTOs.DecisionNode();
@@ -112,6 +114,8 @@ public class DefinitionTransformer {
 		for (Conditions cond : Conditions.values()) {
 			pStep.getCondition(cond).ifPresent(condARL -> step.getConditions().put(cond, condARL));
 		}
+		step.setHtml_url(pStep.getHtml_url());
+		step.setDescription(pStep.getDescription());
 		//TODO: description field
 	}
 }
