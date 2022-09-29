@@ -41,8 +41,8 @@ public class SerializationTest {
 	{
 		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		DTOs.Process procD = TestProcesses.getSimpleDTOSubprocess(ws);
-		procD.setHtml_url("www.google.com");
-		procD.setDescription("Description");
+		procD.setHtml_url("https://www.google.com/");
+		procD.setDescription("<ul><li>Inform participants about scope, review criteria, etc</li><li>Send work products to be reviewed to all participants</li><li>Schedule joint review</li><li>Set up mechanism to handle review outcomes</li></ul>");
 		String jsonProc = json.toJson(procD);
 		System.out.println(jsonProc);
 		DTOs.Process deSer = json.fromJson(jsonProc);
