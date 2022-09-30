@@ -1,11 +1,14 @@
 package at.jku.isse.passiveprocessengine.definition.serialization;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
@@ -87,8 +90,22 @@ public class DTOs {
 			return steps.stream().filter(step -> step.getCode().equals(code)).findAny().orElse(null);
 		}
 		
+		public DecisionNode getDecisionNodeByCode(String code) {
+			return dns.stream().filter(dn -> dn.getCode().equals(code)).findAny().orElse(null);
+		}
+		
 		public DecisionNode getInDNof(Step step) {
 			return dns.stream().filter(dn -> dn.getCode().equals(step.getInDNDid())).findAny().orElse(null);
+		}	
+		
+		public DecisionNode getOutDNof(Step step) {
+			return dns.stream().filter(dn -> dn.getCode().equals(step.getOutDNDid())).findAny().orElse(null);
+		}
+		
+		public Set<Step> getSuccessorOf(Step step) {
+			DecisionNode nextDN = getOutDNof(step);
+			if (nextDN == null) return Collections.emptySet();
+			return steps.stream().filter(succstep -> succstep.getInDNDid().equals(nextDN.getCode())).collect(Collectors.toSet());			
 		}
 	}
 }
