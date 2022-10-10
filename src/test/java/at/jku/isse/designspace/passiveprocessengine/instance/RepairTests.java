@@ -1,10 +1,8 @@
 package at.jku.isse.designspace.passiveprocessengine.instance;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +20,6 @@ import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.designspace.rule.arl.repair.AbstractRepairAction;
 import at.jku.isse.designspace.rule.arl.repair.Operator;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
-import at.jku.isse.designspace.rule.arl.repair.RestrictedSingleValueOption;
 import at.jku.isse.designspace.rule.arl.repair.RestrictionNode;
 import at.jku.isse.designspace.rule.arl.repair.RestrictionNode.SubtreeCombinatorNode;
 import at.jku.isse.designspace.rule.checker.ArlRuleEvaluator;
@@ -31,23 +28,10 @@ import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.DerivedPropertyRuleType;
 import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
-import at.jku.isse.passiveprocessengine.WrapperCache;
-import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
-import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
-import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
-import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
-import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts.JiraStates;
-import at.jku.isse.passiveprocessengine.instance.ConstraintWrapper;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep.CoreProperties;
-import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
-import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -109,8 +93,9 @@ class RepairTests {
 		RepairNode rnodeA = crt.consistencyRuleEvaluations().value.stream()
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.map(cr -> RuleService.repairTree(cr))
-			.findAny().get();			
-		//TODO: somehow express that the parent name needs to match, in either direction 
+			.findAny().get();		
+		printRepairActions(rnodeA);
+		//TODO: somehow express that the parent name needs to match, in either direction 		
 	}
 	
 	@Test
@@ -130,6 +115,7 @@ class RepairTests {
 		
 		crt.consistencyRuleEvaluations().value.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
+			printRepairActions(repairTree);
 		});		
 		//TODO: propagate req.name into repair description (otherwise only the term 'name' is confusing)
 	}
@@ -185,7 +171,7 @@ class RepairTests {
 								.setNextNodeFluent(new RestrictionNode.ValueNode("'jiraX'"))));
 		assert(matchesRestriction(rnodeA, jiraA, comp));
 		
-		// this works, the next test with one more traversal step does not correctly work
+		// this works, the next test with one now as well
 	}
 	
 	@Test
@@ -203,13 +189,27 @@ class RepairTests {
 		RepairNode rnodeA = crt.consistencyRuleEvaluations().value.stream()
 				.filter(cr -> cr.contextInstance().equals(jiraA))
 				.map(cr -> RuleService.repairTree(cr))
-				.findAny().get();		
-		// repairs are incorrect
+				.findAny().get();	
+		printRepairActions(rnodeA);	
+		
+		RestrictionNode comp1 = new RestrictionNode.PropertyNode("parent", null)				
+						.setNextNodeFluent(new RestrictionNode.PropertyNode("parent", null)
+								.setNextNodeFluent(new RestrictionNode.PropertyNode("name", null)						
+										.setNextNodeFluent(new RestrictionNode.OnlyComparatorNode(Operator.MOD_EQ)
+												.setNextNodeFluent(new RestrictionNode.ValueNode("'jiraD'")))));
+		assert(matchesRestriction(rnodeA, jiraA, comp1));
+		
+		RestrictionNode comp = new RestrictionNode.PropertyNode("parent", null)
+				.setNextNodeFluent(new RestrictionNode.PropertyNode("name", null)
+						.setNextNodeFluent(new RestrictionNode.OnlyComparatorNode(Operator.MOD_EQ)
+								.setNextNodeFluent(new RestrictionNode.ValueNode("'jiraD'"))));
+		assert(matchesRestriction(rnodeA, jiraB, comp));
+		
 		/* Expected repairs:
 		 * 
-		 * FIXME jiraC change name = jiraD
-		 * FIXME jiraB change parent to name with jiraD
-		 * OK jiraA change parent to Issue with parent with name = jiraD BUT FIXME: duplicated
+		 * OK jiraC change name = jiraD
+		 * OK jiraB change parent to name with jiraD
+		 * OK jiraA change parent to Issue with parent with name = jiraD 
 		 * 
 		 * */
 	}
@@ -233,24 +233,69 @@ class RepairTests {
 				.map(cr -> RuleService.repairTree(cr))
 				.findAny().get();		
 		printRepairActions(rnodeA);	
+			
+		RestrictionNode comp = new RestrictionNode.PropertyNode("parent", null)
+				.setNextNodeFluent(new RestrictionNode.PropertyNode("parent", null)
+				.setNextNodeFluent(new RestrictionNode.PropertyNode("name", null)
+						.setNextNodeFluent(new RestrictionNode.OperationNode("equalsignorecase")						
+								.setNextNodeFluent(new RestrictionNode.ValueNode("'jiraD'")))));
+		assert(matchesRestriction(rnodeA, jiraA, comp));
 		
-		// repairs are incorrect
+		RestrictionNode comp1 = new RestrictionNode.PropertyNode("parent", null)				
+				.setNextNodeFluent(new RestrictionNode.PropertyNode("name", null)
+						.setNextNodeFluent(new RestrictionNode.OperationNode("equalsignorecase")						
+								.setNextNodeFluent(new RestrictionNode.ValueNode("'jiraD'"))));
+		assert(matchesRestriction(rnodeA, jiraB, comp1));
+		
 		/* Expected repairs:
 		 * 
 		 * OK jiraC change name = jiraD
-		 * FIXME change jiraB.parent to name with jiraD
-		 * OK jiraA change parent to Issue with parent with name = jiraD FIXME but duplicated
+		 * OK change jiraB.parent to name with jiraD
+		 * OK jiraA change parent to Issue with parent with name = jiraD 
 		 * 
 		 * */
+	}
+	
+	@Test
+	void testTraversalStartsWithChange() {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		TestArtifacts.addParentToJira(jiraA, jiraB); //link from A to B (as parent
+		TestArtifacts.addParentToJira(jiraB, jiraC);
+		TestArtifacts.addParentToJira(jiraC, jiraD); 
 		
-//		;
-//		System.out.println("UPDATING PARENT");
-//		TestArtifacts.addParentToJira(jiraB, jiraD);
-//		ws.concludeTransaction();
-//		crt.consistencyRuleEvaluations().value.forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr);
-//			printRepairActions(repairTree);
-//		});
-		// 
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "TranverseTest", "self.parent.parent.name.startsWith('jiraD')");
+		ws.concludeTransaction();
+		crt.consistencyRuleEvaluations().value.forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr);
+		});
+		RepairNode rnodeA = crt.consistencyRuleEvaluations().value.stream()
+				.filter(cr -> cr.contextInstance().equals(jiraA))
+				.map(cr -> RuleService.repairTree(cr))
+				.findAny().get();		
+		printRepairActions(rnodeA);	
+			
+		RestrictionNode comp = new RestrictionNode.PropertyNode("parent", null)
+				.setNextNodeFluent(new RestrictionNode.PropertyNode("parent", null)
+				.setNextNodeFluent(new RestrictionNode.PropertyNode("name", null)
+						.setNextNodeFluent(new RestrictionNode.OperationNode("startswith")						
+								.setNextNodeFluent(new RestrictionNode.ValueNode("'jiraD'")))));
+		assert(matchesRestriction(rnodeA, jiraA, comp));
+		
+		RestrictionNode comp1 = new RestrictionNode.PropertyNode("parent", null)				
+				.setNextNodeFluent(new RestrictionNode.PropertyNode("name", null)
+						.setNextNodeFluent(new RestrictionNode.OperationNode("startswith")						
+								.setNextNodeFluent(new RestrictionNode.ValueNode("'jiraD'"))));
+		assert(matchesRestriction(rnodeA, jiraB, comp1));
+		
+		/* Expected repairs:
+		 * 
+		 * OK jiraC change name = jiraD
+		 * OK change jiraB.parent to name with jiraD
+		 * OK jiraA change parent to Issue with parent with name = jiraD 
+		 * 
+		 * */
 	}
 	
 	@Test
@@ -278,22 +323,27 @@ class RepairTests {
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
-			//printRepairActions(repairTree);
-			RestrictionNode comp = new RestrictionNode.PropertyNode("requirements", null)
-					.setNextNodeFluent(new RestrictionNode.PropertyNode("parent", null)
-							.setNextNodeFluent(new RestrictionNode.PropertyNode("state", null)
-							.setNextNodeFluent(new RestrictionNode.OnlyComparatorNode(Operator.MOD_EQ)
-									.setNextNodeFluent(new RestrictionNode.ValueNode("'Closed'")))));
-			assert(matchesRestriction(repairTree, jiraA, comp));
+			printRepairActions(repairTree);
+			
 			RestrictionNode comp2 = new RestrictionNode.PropertyNode("parent", null)
 					.setNextNodeFluent(new RestrictionNode.PropertyNode("state", null)
 							.setNextNodeFluent(new RestrictionNode.OnlyComparatorNode(Operator.MOD_EQ)
 									.setNextNodeFluent(new RestrictionNode.ValueNode("'Closed'"))));
 			assert(matchesRestriction(repairTree, jiraB, comp2));
-			
-			assert(repairTree != null);
+			RestrictionNode comp =  new RestrictionNode.PropertyNode("requirements", null)
+					.setNextNodeFluent(new RestrictionNode.OperationNode("any")
+					.setNextNodeFluent(new RestrictionNode.PropertyNode("parent", null)
+							.setNextNodeFluent(new RestrictionNode.PropertyNode("state", null)
+							.setNextNodeFluent(new RestrictionNode.OnlyComparatorNode(Operator.MOD_EQ)
+									.setNextNodeFluent(new RestrictionNode.ValueNode("'Closed'"))))));
+			assert(matchesRestriction(repairTree, jiraA, comp));
 		});
-		//FIXME missing setting of jiraD.state to closed
+		/*
+		 * expected repairs:
+		 * OK  setting of jiraD.state to closed
+		 * OK set parent of B to issue with state = closed
+		 * TODO DISCUSS: adding something to requirements does not make sense as any
+		 */
 	}
 	
     @Test
@@ -318,57 +368,84 @@ class RepairTests {
         RepairNode repairTree = ConsistencyUtils.getRepairTree(crt,jiraA);
         printRepairActions(repairTree);
         assert(repairTree != null);
-        assert (repairTree.getRepairActions().size() == 3);
-        //FIXME: second Add a Demoissue to B/C is missing
+
+        // works but size handling not accurate yet as we need to detail that any req added to jiraA needs to have two requirements linked, 
+        // although adding to jiraA in combination with any() is not that sensical, see better version in next test below 
     }
 	
     @Test
-	void testCollectWithAnyRepair() {
-		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
-		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
-		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
-		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
-		Instance jiraE = TestArtifacts.getJiraInstance(ws, "jiraE");
-		TestArtifacts.addJiraToJira(jiraA, jiraB);
-		TestArtifacts.addJiraToJira(jiraA, jiraD);
-		TestArtifacts.addJiraToJira(jiraB, jiraC);
-	
-		//TestArtifacts.addJiraToJira(jiraD, jiraC);
-		//TestArtifacts.addJiraToJira(jiraC, jiraE);
-		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Closed);
-		//TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Closed);
-	
-//		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "CollectWithAnyTest",
-//		"self.requirements"
-//				+ "->select(req3 | req3.state='Closed') \r\n" //from which that are closed		
-//				+ "->collect(req : <"+typeJira.getQualifiedName()+"> | req.requirements \r\n" // take from linked requirements				
-//		+ "		->any()"
-//		+ ") \r\n"		
+    void testExistsSizeRepair() {
+        Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+        Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+        Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+        TestArtifacts.addJiraToJira(jiraA, jiraC);
+        TestArtifacts.addJiraToJira(jiraA, jiraB);
+       
+
+        ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AnyTest",
+                "self.requirements->exists(req | req.requirements.size() = 2)"
+        );
+        ws.concludeTransaction();
+        assertTrue(ConsistencyUtils.crdValid(crt));
+        String eval = (String) crt.ruleEvaluations().get().stream()
+                .map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
+                .collect(Collectors.joining(",","[","]"));
+        System.out.println("Checking "+crt.name() +" Result: "+ eval);
+
+        RepairNode repairTree = ConsistencyUtils.getRepairTree(crt,jiraA);
+        printRepairActions(repairTree);
+        assert(repairTree != null);
+
+        //works
+    }
+    
+//    @Test
+//	void testCollectWithAnyRepair() {
+//		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+//		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+//		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
+//		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+//		Instance jiraE = TestArtifacts.getJiraInstance(ws, "jiraE");
+//		TestArtifacts.addJiraToJira(jiraA, jiraB);
+//		TestArtifacts.addJiraToJira(jiraA, jiraD);
+//		TestArtifacts.addJiraToJira(jiraB, jiraC);
+//	
+//		//TestArtifacts.addJiraToJira(jiraD, jiraC);
+//		//TestArtifacts.addJiraToJira(jiraC, jiraE);
+//		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Closed);
+//		//TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Closed);
+//	
+////		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "CollectWithAnyTest",
+////		"self.requirements"
+////				+ "->select(req3 | req3.state='Closed') \r\n" //from which that are closed		
+////				+ "->collect(req : <"+typeJira.getQualifiedName()+"> | req.requirements \r\n" // take from linked requirements				
+////		+ "		->any()"
+////		+ ") \r\n"		
+////		+ "->asSet() \r\n"				
+////		+ "->select(ra : <"+typeJira.getQualifiedName()+"> | ra.isDefined())" // only if not null
+////		+ "->size() > 1"
+////		);
+//		
+//		// Essentially, select from every linked,closed requirements one random linked requirement and ensure there is at least one
+//		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AnyTraverseTest",
+//		"self.requirements->collect(req | req.requirements \r\n" // take all linked requirements
+//		+ "   ->select(req3 | req3.state='Closed') \r\n" //then those which that are closed		JiraC (for B) and non for JiraD
+//		+ "   ->collect( req2 : <"+typeJira.getQualifiedName()+"> | req2.requirements) \r\n" // again all their requirements, but choose only one, null
+//		+ "   ->any()) \r\n"		
 //		+ "->asSet() \r\n"				
 //		+ "->select(ra : <"+typeJira.getQualifiedName()+"> | ra.isDefined())" // only if not null
-//		+ "->size() > 1"
+//		+ "->size() > 0"
 //		);
-		
-		// Essentially, select from every linked,closed requirements one random linked requirement and ensure there is at least one
-		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AnyTraverseTest",
-		"self.requirements->collect(req | req.requirements \r\n" // take all linked requirements
-		+ "   ->select(req3 | req3.state='Closed') \r\n" //then those which that are closed		JiraC (for B) and non for JiraD
-		+ "   ->collect( req2 : <"+typeJira.getQualifiedName()+"> | req2.requirements) \r\n" // again all their requirements, but choose only one, null
-		+ "   ->any()) \r\n"		
-		+ "->asSet() \r\n"				
-		+ "->select(ra : <"+typeJira.getQualifiedName()+"> | ra.isDefined())" // only if not null
-		+ "->size() > 0"
-		);
-		
-		ws.concludeTransaction();
-		assertTrue(ConsistencyUtils.crdValid(crt));
-
-		 RepairNode repairTree = ConsistencyUtils.getRepairTree(crt,jiraA);
-		 printRepairActions(repairTree);
-	        assert(repairTree != null);
-	        
-	        //FIXME: too complicated what this actually should do
-	}
+//		
+//		ws.concludeTransaction();
+//		assertTrue(ConsistencyUtils.crdValid(crt));
+//
+//		 RepairNode repairTree = ConsistencyUtils.getRepairTree(crt,jiraA);
+//		 printRepairActions(repairTree);
+//	        assert(repairTree != null);
+//	        
+//	        //fIXME: too complicated what this actually should do
+//	}
     
 	@Test
 	void testAnyTraversRepair() {
@@ -403,13 +480,14 @@ class RepairTests {
 			RestrictionNode comp = new RestrictionNode.PropertyNode("requirements", null)
 							.setNextNodeFluent(new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
 									new RestrictionNode.PropertyNode("state", null), 
-									new RestrictionNode.ValueNode("Closed"))
+									new RestrictionNode.ValueNode("'Closed'"))
 									);
+			printRepairActions(repairTree);
 			assert(matchesRestriction(repairTree, jiraB, comp));
 			assert(repairTree != null);
 		});		
-		// FIXME No longer: B requirements is no longer suggested as a repair
-		// WORKS, we dont propose to add to A as its not guarnateed that any() would select it
+		// 
+		// WORKS, TODO decide upon: we dont propose to add to A as its not guarnateed that any() would select it
 	}
 	
 	@Test
@@ -440,11 +518,11 @@ class RepairTests {
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
-			//printRepairActions(repairTree);
+			printRepairActions(repairTree);
 			assert(repairTree != null);
 			
 			/* Expect repairs:
-			 * OK remove B 
+			 * OK remove C from B 
 			 * OK add to a.requirments Issue with its requirements containing at least one issue state that is not in state open
 			 * OK change c.state to <> open
 			 * */			
@@ -489,7 +567,7 @@ class RepairTests {
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
-			//printRepairActions(repairTree);
+			printRepairActions(repairTree);
 			assert(repairTree != null);
 			
 			/* Expect repairs:
@@ -544,18 +622,27 @@ class RepairTests {
 		crt.consistencyRuleEvaluations().value.stream()
 			.filter(cr -> !cr.isConsistent() )
 			.forEach(cr -> { 
-			RepairNode repairTree = RuleService.repairTree(cr);			
+			RepairNode repairTree = RuleService.repairTree(cr);
+			printRepairActions(repairTree);
 			assert(repairTree != null);
 		});
-		 RepairNode repairTree = ConsistencyUtils.getRepairTree(crt,jiraA);
+		 RepairNode repairTree = ConsistencyUtils.getRepairTree(crt,jiraA);		 
 		 RestrictionNode comp2 = new RestrictionNode.PropertyNode("requirements", null)											
 					.setNextNodeFluent(	new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
 																	new RestrictionNode.PropertyNode("state", null), 
 																	new RestrictionNode.ValueNode("'Closed'")
 											));
 		assert(matchesRestriction(repairTree, jiraB, comp2));
-		// FIXME No longer: B requirements is no longer suggested as a repair
-		// FIXME: repair broken when no requirements are set at all
+	 
+		 RestrictionNode comp1 = new RestrictionNode.PropertyNode("requirements", null)	
+				 .setNextNodeFluent(new RestrictionNode.OperationNode("any")
+				 	.setNextNodeFluent( new RestrictionNode.PropertyNode("requirements", null)
+					.setNextNodeFluent(	new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
+																	new RestrictionNode.PropertyNode("state", null), 
+																	new RestrictionNode.ValueNode("'Closed'")
+											))));
+		assert(matchesRestriction(repairTree, jiraA, comp1));
+		// works
 	}
 	
 	@Test
@@ -584,6 +671,7 @@ class RepairTests {
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
+			printRepairActions(repairTree);
 			RestrictionNode comp = new RestrictionNode.PropertyNode("requirements", null)											
 					.setNextNodeFluent(new RestrictionNode.NotNode(
 											new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
@@ -623,6 +711,7 @@ class RepairTests {
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
+			printRepairActions(repairTree);
 			RestrictionNode comp = new RestrictionNode.PropertyNode("requirements", null)											
 					.setNextNodeFluent(new RestrictionNode.NotNode(
 											new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
@@ -664,6 +753,7 @@ class RepairTests {
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
+			printRepairActions(repairTree);
 			RestrictionNode comp = new RestrictionNode.PropertyNode("requirements", null)											
 					.setNextNodeFluent(new RestrictionNode.NotNode(
 											new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
@@ -704,6 +794,7 @@ class RepairTests {
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
+			printRepairActions(repairTree);
 			RestrictionNode comp = new RestrictionNode.PropertyNode("requirements", null)											
 					.setNextNodeFluent(						new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
 																	new RestrictionNode.PropertyNode("state", null), 
@@ -731,7 +822,7 @@ class RepairTests {
 		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "CollectTest",
 		"self.requirements"
 				+ "->select(req2 | req2.state<>'Open')"
-				+"->collect(req3 : <"+typeJira.getQualifiedName()+"> | req3.state)" // this collect is not really sensical, thus also restrictions not that sensible
+				+"->collect(req3 : <"+typeJira.getQualifiedName()+"> | req3.state)" // this collect is not really sensical, but restrictions work
 				+ "->size() > 0"
 		);
 		ws.concludeTransaction();
@@ -745,6 +836,7 @@ class RepairTests {
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
+			printRepairActions(repairTree);
 			RestrictionNode comp = new RestrictionNode.PropertyNode("requirements", null)											
 					.setNextNodeFluent(new RestrictionNode.NotNode(
 											new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
@@ -753,7 +845,7 @@ class RepairTests {
 							));
 			assert(matchesRestriction(repairTree, jiraA, comp));
 			/* Expect repairs:			 
-			 * OK add to a.requirements one issue with state is not open //TODO: avoid the orphan 'and state'
+			 * OK add to a.requirements one issue with state is not open
 			 * OK change c/b.state to not open
 			 * */			
 		});
@@ -787,7 +879,7 @@ class RepairTests {
 			assert(repairTree != null);
 		});
 		
-		//FIXME: adding second time to B and C is missing
+		//works, no restrictions to create
 	}
 	
 	@Test
@@ -821,21 +913,7 @@ class RepairTests {
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
-			RestrictionNode comp2 = new RestrictionNode.PropertyNode("parent", null)											
-					.setNextNodeFluent(	new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
-																	new RestrictionNode.PropertyNode("state", null), 
-																	new RestrictionNode.ValueNode("'Closed'")
-											));
-			assert(matchesRestriction(repairTree, jiraB, comp2));
-			
-			RestrictionNode comp3 = new RestrictionNode.SubtreeCombinatorNode(
-					new RestrictionNode.PropertyNode("parent", null), 
-					new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
-							new RestrictionNode.PropertyNode("state", null), 
-							new RestrictionNode.ValueNode("'Closed'")
-											));
-			assert(matchesRestriction(repairTree, jiraC, comp3));
-			
+			printRepairActions(repairTree);
 			RestrictionNode comp1 = new RestrictionNode.PropertyNode("requirements", null)	
 					.setNextNodeFluent(new RestrictionNode.AndNode(
 							new RestrictionNode.PropertyNode("parent", null)
@@ -848,8 +926,22 @@ class RepairTests {
 							)		
 					));
 			assert(matchesRestriction(repairTree, jiraA, comp1));
+			RestrictionNode comp2 = new RestrictionNode.PropertyNode("parent", null)	
+					.setNextNodeFluent(new RestrictionNode.AndNode(
+										new RestrictionNode.OperationNode("isdefined"),
+										new RestrictionNode.SubtreeCombinatorNode(
+												new RestrictionNode.PropertyNode("parent", null), 
+												new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
+														new RestrictionNode.PropertyNode("state", null), 
+														new RestrictionNode.ValueNode("'Closed'")																		
+											))));
+			assert(matchesRestriction(repairTree, jiraB, comp2));
+			assert(matchesRestriction(repairTree, jiraC, comp2));
+			
+
+			
 		});
-		/* expected repairs:
+		/* expected repairs: 
 		 * OK jiraA.req add an issue that has a parent that is in state closed
 		 * OK set B parent that is in state closed
 		 * OK set C.parent that is in state closed
@@ -887,32 +979,38 @@ class RepairTests {
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
+			printRepairActions(repairTree);
+
+			RestrictionNode comp1 = new RestrictionNode.PropertyNode("requirements", null)	
+					.setNextNodeFluent(new RestrictionNode.AndNode(
+							new RestrictionNode.PropertyNode("parent", null)
+								.setNextNodeFluent(new RestrictionNode.OperationNode("isdefined"))	, 
+							new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
+									new RestrictionNode.PropertyNode("state", null), 
+									new RestrictionNode.ValueNode("'Closed'")
+							))		
+					);
+			assert(matchesRestriction(repairTree, jiraA, comp1));
+			
 			RestrictionNode comp2 = new RestrictionNode.PropertyNode("parent", null)											
 					.setNextNodeFluent(new RestrictionNode.PropertyNode("state", null)
 							.setNextNodeFluent(new RestrictionNode.OnlyComparatorNode(Operator.MOD_EQ)
 									.setNextNodeFluent(new RestrictionNode.ValueNode("'Closed'")
 											)));
 			assert(matchesRestriction(repairTree, jiraB, comp2));
-			RestrictionNode comp3 = new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
-					new RestrictionNode.PropertyNode("parent", null).setNextNodeFluent(new RestrictionNode.PropertyNode("state", null)), 
-					new RestrictionNode.ValueNode("'Closed'")
-											);
-			//assert(matchesRestriction(repairTree, jiraB, comp3));
-			assert(matchesRestriction(repairTree, jiraC, comp3));
 			
-			RestrictionNode comp1 = new RestrictionNode.PropertyNode("requirements", null)	
+			RestrictionNode comp3 =  new RestrictionNode.PropertyNode("parent", null)	
 					.setNextNodeFluent(new RestrictionNode.AndNode(
-							new RestrictionNode.PropertyNode("parent", null)
-								.setNextNodeFluent(new RestrictionNode.OperationNode("isdefined"))	, 
+							new RestrictionNode.OperationNode("isdefined"),
 							new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
-									new RestrictionNode.PropertyNode("parent", null)
-										.setNextNodeFluent(new RestrictionNode.PropertyNode("state", null)), 
+									new RestrictionNode.PropertyNode("state", null), 
 									new RestrictionNode.ValueNode("'Closed'")
-							))		
-					);
-			assert(matchesRestriction(repairTree, jiraA, comp1));
+											)));			
+			assert(matchesRestriction(repairTree, jiraC, comp3));
+			assert(matchesRestriction(repairTree, jiraB, comp3));
+
 		});
-		/* expected repairs:
+		/* expected repairs: 
 		 * OK jiraA.req add an issue that has a parent that is in state closed
 		 * OK set B parent that is in state closed
 		 * OK set C.parent that is in state closed
@@ -949,20 +1047,7 @@ class RepairTests {
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
-			
-			RestrictionNode comp2 = new RestrictionNode.PropertyNode("parent", null)		
-					.setNextNodeFluent(new RestrictionNode.PropertyNode("state", null)
-						.setNextNodeFluent(	new RestrictionNode.OperationNode("equalsignorecase")
-							.setNextNodeFluent(new RestrictionNode.ValueNode("'Closed'")
-											) ));
-			assert(matchesRestriction(repairTree, jiraB, comp2));
-			RestrictionNode comp3 = new RestrictionNode.SubtreeCombinatorNode( 
-					new RestrictionNode.PropertyNode("parent", null), 
-					new RestrictionNode.PropertyNode("state", null)
-						.setNextNodeFluent(new RestrictionNode.OperationNode("equalsignorecase")
-								.setNextNodeFluent(new RestrictionNode.ValueNode("'Closed'")))) ;
-			assert(matchesRestriction(repairTree, jiraC, comp3));
-			
+			printRepairActions(repairTree);
 			RestrictionNode comp1 = new RestrictionNode.PropertyNode("requirements", null)	
 					.setNextNodeFluent(new RestrictionNode.AndNode(
 							new RestrictionNode.PropertyNode("parent", null)
@@ -974,6 +1059,18 @@ class RepairTests {
 													.setNextNodeFluent(new RestrictionNode.ValueNode("'Closed'")) )  
 							)));
 			assert(matchesRestriction(repairTree, jiraA, comp1));
+			
+			RestrictionNode comp2 = new RestrictionNode.PropertyNode("parent", null)
+					.setNextNodeFluent(new RestrictionNode.AndNode(
+							new RestrictionNode.OperationNode("isdefined")	, 
+							new RestrictionNode.SubtreeCombinatorNode( 
+										new RestrictionNode.PropertyNode("parent", null),
+										new RestrictionNode.PropertyNode("state", null)
+											.setNextNodeFluent(new RestrictionNode.OperationNode("equalsignorecase")
+													.setNextNodeFluent(new RestrictionNode.ValueNode("'Closed'")) )  
+							)));					
+			assert(matchesRestriction(repairTree, jiraB, comp2));
+			assert(matchesRestriction(repairTree, jiraC, comp2));			
 		});
 		
 		/* expected repairs:
@@ -1010,13 +1107,25 @@ class RepairTests {
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
-			//printRepairActions(repairTree);
-			assert(repairTree != null);
+			printRepairActions(repairTree);
+			
+			RestrictionNode comp1 = new RestrictionNode.PropertyNode("parent", null)
+					.setNextNodeFluent(new RestrictionNode.PropertyNode("requirements", null)
+					.setNextNodeFluent(new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
+							new RestrictionNode.PropertyNode("state", null), 
+							new RestrictionNode.ValueNode("'Closed'")))) ;
+			assert(matchesRestriction(repairTree, jiraA, comp1));
+			
+			RestrictionNode comp3 = new RestrictionNode.PropertyNode("requirements", null)
+					.setNextNodeFluent(new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
+							new RestrictionNode.PropertyNode("state", null), 
+							new RestrictionNode.ValueNode("'Closed'"))) ;
+			assert(matchesRestriction(repairTree, jiraC, comp3));
 		});
-		/* Expected repairs to include:
+		/* Expected repairs to include: 
 		 * OK close b
 		 * OK add to a.req demoissue with state = closed
-		 * OK add to C.req demoissue with state = close 
+		 * OK add to C.req demoissue with state = closed 
 		 * OK close d
 		 * OK add to a.parent requirements with state = closed
 		 * */
@@ -1051,10 +1160,22 @@ class RepairTests {
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
-			//printRepairActions(repairTree);
-			assert(repairTree != null);
+			printRepairActions(repairTree);
+			
+			RestrictionNode comp1 = new RestrictionNode.PropertyNode("parent", null)
+					.setNextNodeFluent(new RestrictionNode.PropertyNode("requirements", null)
+					.setNextNodeFluent(new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
+							new RestrictionNode.PropertyNode("state", null), 
+							new RestrictionNode.ValueNode("'Closed'")))) ;
+			assert(matchesRestriction(repairTree, jiraA, comp1));
+			
+			RestrictionNode comp3 = new RestrictionNode.PropertyNode("requirements", null)
+					.setNextNodeFluent(new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
+							new RestrictionNode.PropertyNode("state", null), 
+							new RestrictionNode.ValueNode("'Closed'"))) ;
+			assert(matchesRestriction(repairTree, jiraC, comp3));
 		});
-		/* Expected repairs to include:
+		/* Expected repairs to include: 
 		 * OK close b
 		 * OK add to a.req demoissue with state = closed
 		 * OK add to C.req demoissue with state = close 
@@ -1095,10 +1216,22 @@ class RepairTests {
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
 			printRepairActions(repairTree);
-			assert(repairTree != null);
+			
+			RestrictionNode comp1 = new RestrictionNode.PropertyNode("parent", null)
+					.setNextNodeFluent(new RestrictionNode.PropertyNode("requirements", null)
+					.setNextNodeFluent(new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
+							new RestrictionNode.PropertyNode("state", null), 
+							new RestrictionNode.ValueNode("'Closed'")))) ;
+			assert(matchesRestriction(repairTree, jiraA, comp1));
+			
+			RestrictionNode comp3 = new RestrictionNode.PropertyNode("requirements", null)
+					.setNextNodeFluent(new RestrictionNode.BipartComparatorNode(Operator.MOD_EQ, 
+							new RestrictionNode.PropertyNode("state", null), 
+							new RestrictionNode.ValueNode("'Closed'"))) ;
+			assert(matchesRestriction(repairTree, jiraC, comp3));
 		});
 		
-		/* Expected repairs to include:
+		/* Expected repairs to include: 
 		 * OK close b
 		 * OK add to a.req demoissue with state = closed
 		 * OK add to C a req with state = close -
@@ -1177,7 +1310,6 @@ class RepairTests {
 	@Test
 	void testStartsWithRepair() {
 		StepDefinition s1 = StepDefinition.getInstance("S1", ws);
-		//s1.setCondition(Conditions.PRECONDITION, "self.in_story->size() > 0");
 		InstanceType typeStep = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, s1);
 		InstanceType gitType = TestArtifacts.getDemoGitIssueType(ws);
 		if (typeStep.getPropertyType("in_story") == null) {
@@ -1192,12 +1324,6 @@ class RepairTests {
 		step1.getPropertyAsSet("in_story").add(git1);
 		ws.concludeTransaction();
 		
-//		String arl = "((self.in_story.any().asType( <root/types/git_issue> ).linkedIssues\r\n" + 
-//				"->select( ref_3 : <root/types/git_issue> | ref_3.title.startsWith('WriteOrReviseMMF')).asSet().size() > 0 \r\n" + 
-//				"and self.in_story.any().asType( <root/types/git_issue> ).linkedIssues\r\n" + 
-//				"->select( ref_2 : <root/types/git_issue> | ref_2.title.startsWith('RefineToSUC')).asSet().size() > 0) \r\n" + 
-//				"and self.in_story.any().asType( <root/types/git_issue> ).linkedIssues\r\n" + 
-//				"->select( ref_1 : <root/types/git_issue> | ref_1.title.startsWith('CreateOrRefineCSC')).asSet().size() > 0)";
 		String arl = "self.in_story.any().asType( <root/types/git_issue> )"
 				+ ".linkedIssues\r\n" + 
 				"->select( ref_3 : <root/types/git_issue> | ref_3.title.startsWith('CreateOrRefineCSC'))"
@@ -1211,9 +1337,31 @@ class RepairTests {
 		.forEach(cr -> { 
 		RepairNode repairTree = RuleService.repairTree(cr);
 		printRepairActions(repairTree);
+		
+		RestrictionNode comp1 =  new RestrictionNode.PropertyNode("in_story", null)		
+				.setNextNodeFluent(new RestrictionNode.OperationNode("any")
+				.setNextNodeFluent(new RestrictionNode.PropertyNode("linkedIssues", null)		
+				.setNextNodeFluent(new RestrictionNode.PropertyNode("title", null)
+					.setNextNodeFluent(	new RestrictionNode.OperationNode("startswith")
+						.setNextNodeFluent(new RestrictionNode.ValueNode("'CreateOrRefineCSC'")
+										) ))));
+		assert(matchesRestriction(repairTree, step1, comp1));
+		
+		RestrictionNode comp2 = new RestrictionNode.PropertyNode("linkedIssues", null)		
+				.setNextNodeFluent(new RestrictionNode.PropertyNode("title", null)
+					.setNextNodeFluent(	new RestrictionNode.OperationNode("startswith")
+						.setNextNodeFluent(new RestrictionNode.ValueNode("'CreateOrRefineCSC'")
+										) ));
+		assert(matchesRestriction(repairTree, git1, comp2));
+		
 		assert(repairTree != null);
 	});
-		// misses adding to Git 1 a gitissue with the restrictions
+		/* expected repairs
+		 * OK add to Step1 gitissue wiht linkedIssues containing gitissue title startng with 'createor refin...
+		 * OK add to git1 linked issues a gitissue with title startng with 'createor refin...
+		 * OK set title of Git2 to CreateOrRefine ...
+		 * */
+		
 	}
 	
 	@Test
@@ -1268,7 +1416,7 @@ class RepairTests {
 		crt.consistencyRuleEvaluations().value.forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr); 
 		printRepairActions(repairTree);});
 		;
-		//FIXME: insufficient amout of repairs, should be at least 2x add to requirements, but only one is provided, same issue below
+		//works
 	}
 	
 	
@@ -1287,7 +1435,7 @@ class RepairTests {
 		crt.consistencyRuleEvaluations().value.forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr);
 		printRepairActions(repairTree);});
 		;
-		//FIXME: insufficient amout of repairs, should be at least 2x add to requirements, but only one is provided
+		//works
 	}
 	
 	@Test
@@ -1356,8 +1504,8 @@ class RepairTests {
 		});
 		;
 		// OK repair should suggest to change jiraD.name to something else than jiraD
-		// OK repair should suggest to remove JiraD from jira C.reqs
-		// TODO repair should suggest to add to A where requirements are empty or all have name not jiraD
+		// OK repair should suggest to remove JiraD from jira B.reqs
+		// OK repair should suggest to add to A where requirements all have name not jiraD (TODO: alternative to have reqs empty is missing)
 	}
 	
 	@Test
@@ -1387,7 +1535,8 @@ class RepairTests {
 			assert(repairTree != null);
 		});
 		;
-//works
+		//works
+
 	}
 	
 	@Test
@@ -1464,9 +1613,10 @@ class RepairTests {
 		return rn.getRepairActions().stream()
 		.filter(ra -> ra instanceof AbstractRepairAction)
 		.map(AbstractRepairAction.class::cast)
-		.filter(ra -> ra.getRepairValueOption() instanceof RestrictedSingleValueOption)
+		.filter(ra -> ra.getRepairValueOption().getRestriction() != null )
 		.filter(ra -> subject.equals(ra.getElement()))
-		.filter(ra -> (((RestrictedSingleValueOption) ra.getRepairValueOption()).getRestrictionRootNode().matches(treeToMatch)))
+		.filter(ra -> ra.getRepairValueOption().getRestriction().getRootNode() != null)
+		.filter(ra -> (ra.getRepairValueOption().getRestriction().getRootNode().matches(treeToMatch)))
 		.count() == 1l;		
 	}
 	
@@ -1474,7 +1624,7 @@ class RepairTests {
 		return rnode.getRepairActions().stream()
 		.filter(ra -> ra instanceof AbstractRepairAction)
 		.map(AbstractRepairAction.class::cast)
-		.filter(ra -> ra.getRepairValueOption() instanceof RestrictedSingleValueOption)
+		.filter(ra -> ra.getRepairValueOption().getRestriction() != null )
 		.count();
 	}
 	
@@ -1483,38 +1633,78 @@ class RepairTests {
 		rnode.getRepairActions().stream()
 		.filter(ra -> ra instanceof AbstractRepairAction)
 		.map(AbstractRepairAction.class::cast)
-		.forEach(ra -> { 
-			String inst = ra.getElement() != null ? ra.getElement().toString() : "null";			
-			String changeType = "Change ";
-			String opType = "";
-			String instType = "";
-			if (ra.getRepairValueOption().operator.equals(Operator.ADD)) {
-				changeType = "Add to ";
-				instType = "a "+getTypeOfProperty((Instance)ra.getElement(), ra.getProperty())+" ";
-			} else if (ra.getRepairValueOption().operator.equals(Operator.REMOVE)) {
-				changeType = "Remove from ";
-				instType = "a "+getTypeOfProperty((Instance)ra.getElement(), ra.getProperty())+" ";
-			} else {
-				switch(ra.getRepairValueOption().operator) {
-				case MOD_EQ:
-					opType = "";
-					break;
-				case MOD_GT:
-					opType = Operator.MOD_GT.toString();
-					break;
-				case MOD_LT:
-					opType = Operator.MOD_LT.toString();
-					break;
-				case MOD_NEQ:
-					opType = "not";
-					break;				
-				}				
+		.forEach(ra -> {
+			RestrictionNode rootNode =  ra.getRepairValueOption().getRestriction() != null ? ra.getRepairValueOption().getRestriction().getRootNode() : null;
+			String value = ra.getValue() != null ? " "+ra.getOperator().toString()+" "+ra.getValue().toString() : " NO VALUE";
+			String restriction = rootNode != null ? rootNode.printNodeTree(false) : value;					
+			String inst = ra.getElement() != null ? ra.getElement().toString() : "null";
+			StringBuffer sb = new StringBuffer();
+			switch(ra.getOperator()) {
+			case ADD:						 
+				sb.append(String.format("Add to %s of ", ra.getProperty()));
+				sb.append(inst);							
+				sb.append(restriction);			
+				break;
+			case MOD_EQ:
+			case MOD_GT:
+			case MOD_LT:
+			case MOD_NEQ:
+				sb.append(String.format("Set the %s of ", ra.getProperty()));
+				sb.append(inst);			
+				sb.append(" to");
+				sb.append(restriction);
+				break;
+			case REMOVE:
+				sb.append(String.format("Remove from %s of ", ra.getProperty()));
+				sb.append(inst);
+				sb.append(restriction);
+				break;
+			default:
+				break;		
 			}
-			String restriction = ra.getRepairValueOption() instanceof RestrictedSingleValueOption ? ((RestrictedSingleValueOption) ra.getRepairValueOption()).getRestriction() : ra.getRepairValueOption().toString();			
-			String out = changeType+inst+restriction;
-			System.out.println(out);
-			});
+			System.out.println(sb.toString());
+		});
 	}
+	
+//	public static void printRepairActions(RepairNode rnode) {
+//		if (rnode == null || rnode.getRepairs() == null) return;
+//		rnode.getRepairActions().stream()
+//		.filter(ra -> ra instanceof AbstractRepairAction)
+//		.map(AbstractRepairAction.class::cast)
+//		.filter(ra -> ra.getRepairValueOption().getRestriction() != null )
+//		.forEach(ra -> { 
+//			String inst = ra.getElement() != null ? ra.getElement().toString() : "null";			
+//			String changeType = "Change ";
+//			String opType = "";
+//			String instType = "";
+//			if (ra.getRepairValueOption().operator.equals(Operator.ADD)) {
+//				changeType = "Add to ";
+//				instType = "a "+getTypeOfProperty((Instance)ra.getElement(), ra.getProperty())+" ";
+//			} else if (ra.getRepairValueOption().operator.equals(Operator.REMOVE)) {
+//				changeType = "Remove from ";
+//				instType = "a "+getTypeOfProperty((Instance)ra.getElement(), ra.getProperty())+" ";
+//			} else {
+//				switch(ra.getRepairValueOption().operator) {
+//				case MOD_EQ:
+//					opType = "";
+//					break;
+//				case MOD_GT:
+//					opType = Operator.MOD_GT.toString();
+//					break;
+//				case MOD_LT:
+//					opType = Operator.MOD_LT.toString();
+//					break;
+//				case MOD_NEQ:
+//					opType = "not";
+//					break;				
+//				}				
+//			}
+//			RestrictionNode rootNode =  ra.getRepairValueOption().getRestriction() != null ? ra.getRepairValueOption().getRestriction().getRootNode() : null;
+//			String restriction = rootNode != null ? rootNode.printNodeTree(false) : "";			
+//			String out = changeType+inst+restriction;
+//			System.out.println(out);
+//			});
+//	}
 	
 	public static String getTypeOfProperty(Instance subject, String property) {		
 		if (subject != null && subject.hasProperty(property)) {
