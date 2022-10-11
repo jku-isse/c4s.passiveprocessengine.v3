@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.definition;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -17,6 +18,7 @@ import at.jku.isse.designspace.core.model.MapProperty;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
+import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator;
 import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
@@ -42,7 +44,7 @@ public class ProcessDefinition extends StepDefinition{
 		ListProperty<?> stepList = instance.getPropertyAsList(CoreProperties.stepDefinitions.toString());
 		if (stepList != null && stepList.get() != null) {
 			return stepList.get().stream()
-					.map(inst -> WrapperCache.getWrappedInstance(StepDefinition.class, (Instance) inst))
+					.map(inst -> WrapperCache.getWrappedInstance(getMostSpecializedClass((Instance)inst), (Instance) inst))
 					.filter(StepDefinition.class::isInstance) 
 					.map(StepDefinition.class::cast)
 					.collect(Collectors.toList());	
@@ -124,7 +126,21 @@ public class ProcessDefinition extends StepDefinition{
 	public void initializeInstanceTypes(boolean doGeneratePrematureDetectionConstraints) throws ProcessException{
 		ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
 		DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(instance.workspace);
-		this.getStepDefinitions().stream().forEach(sd -> ProcessStep.getOrCreateDesignSpaceInstanceType(instance.workspace, sd));
+		List<ProcessException> subProcessExceptions = new ArrayList<>();
+		this.getStepDefinitions().stream().forEach(sd -> { 
+			//FIXME: wrong abstraction level, this should be don in process definition and step definition, as here we now need to distinguish between steps and process
+			if (sd instanceof ProcessDefinition) {
+				//ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, (ProcessDefinition)sd);
+				try {
+					((ProcessDefinition)sd).initializeInstanceTypes(doGeneratePrematureDetectionConstraints);
+				} catch (ProcessException e) {
+					subProcessExceptions.add(e);
+				}
+			} else
+				ProcessStep.getOrCreateDesignSpaceInstanceType(instance.workspace, sd); 			
+		});
+		if (!subProcessExceptions.isEmpty())
+			throw subProcessExceptions.get(0);
 		ws.concludeTransaction();
 		List<String> augmentationErrors = new LinkedList<>();
 		try {
@@ -190,6 +206,15 @@ public class ProcessDefinition extends StepDefinition{
 				typeStep.createPropertyType(CoreProperties.isImmediateDataPropagationEnabled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
 				return typeStep;
 			}
+	}
+	
+	protected static Class<? extends InstanceWrapper> getMostSpecializedClass(Instance inst) {
+		// we have the problem, that the WrapperCache will only return a type we ask for (which might be a general type) rather than the most specialized one, hence we need to obtain that type here
+		// we assume that this is used only in here within, and thus that inst is only ProcessDefinition or StepDefinition
+		if (inst.getInstanceType().name().startsWith(designspaceTypeId.toString())) // its a process
+			return ProcessDefinition.class;
+		else 
+			return StepDefinition.class; // for now only those two types
 	}
 
 	public static ProcessDefinition getInstance(String stepId, Workspace ws) {

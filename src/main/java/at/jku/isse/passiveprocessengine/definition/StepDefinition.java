@@ -211,7 +211,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		}
 		this.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
-				String name = "crd_datamapping_"+entry.getKey()+"_"+instType.name();
+				String name = ProcessStep.getDataMappingId(entry, this);
 				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, entry.getValue());
 				if (crt != null) crt.delete();
 			});

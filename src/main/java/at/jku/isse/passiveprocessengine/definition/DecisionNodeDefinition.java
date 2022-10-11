@@ -64,7 +64,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 		return (Set<StepDefinition>) instance.getPropertyAsSet(CoreProperties.inSteps.toString()).stream()
 			.filter(Instance.class::isInstance)
 			.map(Instance.class::cast)
-			.map(inst -> WrapperCache.getWrappedInstance(StepDefinition.class, (Instance) inst))
+			.map(inst -> WrapperCache.getWrappedInstance(ProcessDefinition.getMostSpecializedClass((Instance) inst), (Instance) inst))
 			.collect(Collectors.toSet());
 	}
 	
@@ -73,7 +73,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 		return (Set<StepDefinition>) instance.getPropertyAsSet(CoreProperties.outSteps.toString()).stream()
 			.filter(Instance.class::isInstance)
 			.map(Instance.class::cast)
-			.map(inst -> WrapperCache.getWrappedInstance(StepDefinition.class, (Instance) inst))
+			.map(inst -> WrapperCache.getWrappedInstance(ProcessDefinition.getMostSpecializedClass((Instance) inst), (Instance) inst))
 			.collect(Collectors.toSet());
 	}
 	

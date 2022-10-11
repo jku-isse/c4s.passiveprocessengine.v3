@@ -16,6 +16,7 @@ import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
+import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
@@ -29,6 +30,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProcessInstance extends ProcessStep {
 
+	private static final String CRD_PREMATURETRIGGER_PREFIX = "crd_prematuretrigger_";
+
 	static enum CoreProperties {stepInstances, decisionNodeInstances, processDefinition};
 	
 	public static final String designspaceTypeId = ProcessInstance.class.getSimpleName();
@@ -36,7 +39,7 @@ public class ProcessInstance extends ProcessStep {
 		
 	public ProcessInstance(Instance instance) {
 		super(instance);
-	}
+	}			
 	
 	public ZonedDateTime getCurrentTimestamp() {
 		return ZonedDateTime.now(); //default value, to be replaced with time provider
@@ -44,7 +47,7 @@ public class ProcessInstance extends ProcessStep {
 	
 	public ProcessScopedCmd prepareRuleEvaluationChange(ConsistencyRule cr, PropertyUpdateSet op) {
 		ConsistencyRuleType crt = (ConsistencyRuleType)cr.getInstanceType();
-		if (crt.name().startsWith("crd_prematuretrigger_") ) { 
+		if (crt.name().startsWith(CRD_PREMATURETRIGGER_PREFIX) ) { 
 			log.debug(String.format("Queuing execution of Premature Trigger of step %s , trigger is now %s ", crt.name(), op.value().toString()));
 			StepDefinition sd = getDefinition().getStepDefinitionForPrematureConstraint(crt.name());
 			if (this.getProcessSteps().stream().anyMatch(step -> step.getDefinition().equals(sd)))
@@ -142,7 +145,7 @@ public class ProcessInstance extends ProcessStep {
 		SetProperty<?> stepList = instance.getPropertyAsSet(CoreProperties.stepInstances.toString());
 		if (stepList != null && stepList.get() != null) {
 			return (Set<ProcessStep>) stepList.get().stream()
-					.map(inst -> WrapperCache.getWrappedInstance(ProcessStep.class, (Instance) inst))
+					.map(inst -> WrapperCache.getWrappedInstance(ProcessInstance.getMostSpecializedClass((Instance) inst), (Instance) inst))
 					.collect(Collectors.toSet());	
 		} else return Collections.emptySet();
 		
@@ -214,8 +217,17 @@ public class ProcessInstance extends ProcessStep {
 		}
 	}
 	
+	protected static Class<? extends InstanceWrapper> getMostSpecializedClass(Instance inst) {
+		// we have the problem, that the WrapperCache will only return a type we ask for (which might be a general type) rather than the most specialized one, hence we need to obtain that type here
+		// we assume that this is used only in here within, and thus that inst is only ProcessDefinition or StepDefinition
+		if (inst.getInstanceType().name().startsWith(designspaceTypeId.toString())) // its a process
+			return ProcessInstance.class;
+		else 
+			return ProcessStep.class; // for now only those two types
+	}
+	
 	public static String generatePrematureRuleName(String stepTypeName, ProcessDefinition pd) {
-		return "crd_prematuretrigger_"+stepTypeName+"_"+pd.getName();
+		return CRD_PREMATURETRIGGER_PREFIX+stepTypeName+"_"+pd.getName();
 	}
 		
 	public static ProcessInstance getInstance(Workspace ws, ProcessDefinition sd) {

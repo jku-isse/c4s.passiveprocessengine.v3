@@ -45,6 +45,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProcessStep extends ProcessInstanceScopedElement{
 
+	private static final String CRD_QASPEC_PREFIX = "crd_qaspec_";
+
+	private static final String CRD_DATAMAPPING_PREFIX = "crd_datamapping_";
+
+
 	public static enum CoreProperties {actualLifecycleState, expectedLifecycleState, stepDefinition, inDNI, outDNI, qaState, 
 		processedPreCondFulfilled, processedPostCondFulfilled, processedCancelCondFulfilled, isWorkExpected};
 	
@@ -101,7 +106,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		// if premature conditions, then delegate to process instance, resp often will need to be on process level anyway
 		
 			// input to putput mappings
-			if (crt.name().startsWith("crd_datamapping") ) { 
+			if (crt.name().startsWith(CRD_DATAMAPPING_PREFIX) ) { 
 				if (Boolean.valueOf(op.value().toString()) == false) { // an unfulfilled datamapping rules
 				// now we need to "repair" this, i.e., set the output accordingly
 					log.debug(String.format("Datamapping %s queued for repair", crt.name()));
@@ -110,7 +115,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 					log.debug(String.format("Datamapping %s now consistent", crt.name()));
 					return new IOMappingConsistencyCmd(this, cr, false);
 				}
-			} else if (crt.name().startsWith("crd_qaspec_") ) { // a qa constraint
+			} else if (crt.name().startsWith(CRD_QASPEC_PREFIX) ) { // a qa constraint
 				log.debug(String.format("QA Constraint %s now %s ", crt.name(), op.value().toString()));
 				//processQAEvent(cr, op); Boolean.parseBoolean(op.value().toString())
 				return new QAConstraintChangedCmd(this, cr, Boolean.parseBoolean(op.value().toString()));
@@ -131,7 +136,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		else if (crt.name().startsWith("crd_"+Conditions.CANCELATION.toString()+"_")) 
 			return Conditions.CANCELATION;
 		else {
-			if (!crt.name().startsWith("crd_datamapping_") && !crt.name().startsWith("crd_qaspec_"))
+			if (!crt.name().startsWith(CRD_DATAMAPPING_PREFIX) && !crt.name().startsWith(CRD_QASPEC_PREFIX))
 					log.error("Unknown consistency rule: "+crt.name());
 			return null;
 		}
@@ -630,7 +635,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 		td.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
-				String name = "crd_datamapping_"+entry.getKey()+"_"+instType.name();
+				String name = CRD_DATAMAPPING_PREFIX+entry.getKey()+"_"+instType.name();
 				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, entry.getValue());
 				if (crt == null) {
 					log.error("Expected Rule for existing process not found: "+name);
@@ -698,8 +703,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			td.getInputToOutputMappingRules().entrySet().stream()
 				.forEach(entry -> {
 					if (entry.getValue() != null) {
-						ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeStep, "crd_datamapping_"+entry.getKey()+"_"+typeStep.name(), entry.getValue());
-						typeStep.createPropertyType("crd_datamapping_"+entry.getKey(), Cardinality.SINGLE, crt);					
+						ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeStep, getDataMappingId(entry, td), entry.getValue()); 
+						typeStep.createPropertyType(CRD_DATAMAPPING_PREFIX+entry.getKey(), Cardinality.SINGLE, crt);					
 					}//assert ConsistencyUtils.crdValid(crt); as no workspace.concludeTransaction is called here, no need to assert this here, as will never be false here	
 				});
 			
@@ -708,8 +713,13 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 	}
 	
+	public static String getDataMappingId(Map.Entry<String,String> ioMapping, StepDefinition sd) {
+		String procId = sd.getProcess() != null ? sd.getProcess().getName() : "";
+		return CRD_DATAMAPPING_PREFIX+ioMapping.getKey()+"_"+sd.getName()+"_"+procId;
+	}
+	
 	public static String getQASpecId(QAConstraintSpec spec, ProcessDefinition context) {
-		return "crd_qaspec_"+spec.getQaConstraintId()+"_"+context.getName();
+		return CRD_QASPEC_PREFIX+spec.getQaConstraintId()+"_"+context.getName();
 	}
 
 	public static String getProcessStepName(StepDefinition sd) {

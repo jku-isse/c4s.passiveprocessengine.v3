@@ -60,7 +60,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getOutSteps() {
 		return (Set<ProcessStep>) instance.getPropertyAsSet(CoreProperties.outSteps.toString()).stream()
-			.map(inst -> WrapperCache.getWrappedInstance(ProcessStep.class, (Instance)inst))
+			.map(inst -> WrapperCache.getWrappedInstance(ProcessInstance.getMostSpecializedClass((Instance) inst), (Instance)inst))
 			.collect(Collectors.toSet());
 	}
 	
@@ -72,7 +72,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	@SuppressWarnings("unchecked")
 	protected Set<ProcessStep> getInSteps() {
 		return (Set<ProcessStep>) instance.getPropertyAsSet(CoreProperties.inSteps.toString()).stream()
-			.map(inst -> WrapperCache.getWrappedInstance(ProcessStep.class, (Instance)inst))
+			.map(inst -> WrapperCache.getWrappedInstance(ProcessInstance.getMostSpecializedClass((Instance) inst), (Instance)inst))
 			.collect(Collectors.toSet());
 	}
 		
