@@ -235,7 +235,7 @@ class InstanceTests {
 	@Test
 	void testSimpleSubprocess() throws ProcessException {
 		Instance jiraE =  TestArtifacts.getJiraInstance(ws, "jiraE");
-		ProcessDefinition procDef = TestProcesses.getSimpleSubprocessDefinition(ws);
+		ProcessDefinition procDef = TestProcesses.getSimpleSubprocessDefinition(ws, true);
 		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
 		proc.addInput("jiraIn", jiraE);
 		ws.concludeTransaction();

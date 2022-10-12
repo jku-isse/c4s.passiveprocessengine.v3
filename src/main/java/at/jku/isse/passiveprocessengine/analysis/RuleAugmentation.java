@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 
 import at.jku.isse.designspace.core.model.Cardinality;
 import at.jku.isse.designspace.core.model.InstanceType;
+import at.jku.isse.designspace.core.model.ReservedNames;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.arl.expressions.VariableExpression;
 import at.jku.isse.designspace.rule.checker.ArlEvaluator;
@@ -43,6 +44,10 @@ public class RuleAugmentation {
 		for (Conditions condition : Conditions.values()) {
 			if (sd.getCondition(condition).isPresent()) {
 				if (sd.getCondition(condition).get() != null) {
+					//with subprocesses we might have run augmentation before, thus check and skip				
+					if (stepType.hasProperty(ReservedNames.PROPERTY_DEFINITION_PREFIX+condition.toString()))
+						break;
+					
 					// as the output cannot be changed directly (except in rare cases when set manually)
 					// repairing the output makes no sense, but rather its datamapping definition, so we replace all out_xxx occurences with the datamapping definition
 					String arl = sd.getCondition(condition).get();
@@ -55,7 +60,7 @@ public class RuleAugmentation {
 					// if the error is from augmentation, still keep the original rule (with perhaps not as useful repairs)
 					// if the original rule has error, then this will be captured later anyway.
 					ConsistencyRuleType crd = ConsistencyRuleType.create(ws, stepType, "crd_"+condition+"_"+stepType.name(), arl);
-					// not evaluated yet here, assert ConsistencyUtils.crdValid(crd);
+					// not evaluated yet here, assert ConsistencyUtils.crdValid(crd);																					
 					stepType.createPropertyType(condition.toString(), Cardinality.SINGLE, crd);
 				}
 			}	

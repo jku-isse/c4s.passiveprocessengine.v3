@@ -20,7 +20,7 @@ public class TestProcesses {
 
 	// process with two parallel subtasks, each taking the same jira issue as input, both completing when that issue is set to closed
 	// no qa constraints applied, datamapping only for one subtask, subproc complete when both subtasks are complete (AND cond)
-	public static ProcessDefinition getSimpleSubprocessDefinition(Workspace ws) throws ProcessException {
+	public static ProcessDefinition getSimpleSubprocessDefinition(Workspace ws, boolean doInitType) throws ProcessException {
 		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
 		ProcessDefinition procDef = ProcessDefinition.getInstance("subproc1", ws);
 		procDef.addExpectedInput("jiraIn", typeJira);	
@@ -50,7 +50,8 @@ public class TestProcesses {
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws)); //into both steps
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd2.getName(), "jiraIn",  ws)); //into both steps
 		dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd1.getName(), "jiraOut", procDef.getName(), "jiraOut",  ws)); //out of the first
-		procDef.initializeInstanceTypes(false);
+		if (doInitType)
+			procDef.initializeInstanceTypes(false);
 		return procDef;
 	}
 
@@ -72,7 +73,7 @@ public class TestProcesses {
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);
 		sd1.setSpecOrderIndex(1);
-		StepDefinition sd2 = getSimpleSubprocessDefinition(ws);
+		StepDefinition sd2 = getSimpleSubprocessDefinition(ws, false);
 		// we need to wire up the step definiton:
 		sd2.setProcess(procDef);
 		procDef.addStepDefinition(sd2);
