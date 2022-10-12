@@ -765,7 +765,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 		// only if no input and no preconditions --> automatically go into enabled, (if there is input, then there needs to be a precondition checking for presence of input)
 		// but this implies that only manual output can be set as there is no input to derive output from (as there cannot be any io mapping)
-		if (sd.getExpectedInput().isEmpty() && sd.getCondition(Conditions.PRECONDITION).isEmpty()) {
+		// --> UPDATE: if there is no precondition then we assume the input is optional, 
+		if (/*DEL-UPDATE: sd.getExpectedInput().isEmpty() &&*/ sd.getCondition(Conditions.PRECONDITION).isEmpty()) {
 			this.setPreConditionsFulfilled(true);
 		}
 		ProcessDefinition pd = sd.getProcess() !=null ? sd.getProcess() : (ProcessDefinition)sd;

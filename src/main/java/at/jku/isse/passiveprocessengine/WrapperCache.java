@@ -24,8 +24,12 @@ public class WrapperCache {
 		} else {
 		if (cache.containsKey(instance.id())) {
 			InstanceWrapper iw = cache.get(instance.id()).get();
-			if (iw != null)
-				return (T) iw; // else we reenter this
+			if (iw != null) {
+				// ensure cast safety
+				if (clazz.isInstance(iw)) {
+					return (T) iw; // else we reenter this	
+				} // if we, e.g., ask for a ProcessInstance and get a ProcessStep here, we just continue below to create a new wrapper, and store that.									
+			}
 		}
 		try {
 			// otherwise we take the constructor of that class that takes an Instance object as parameter
