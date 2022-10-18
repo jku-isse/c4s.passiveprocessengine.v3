@@ -372,7 +372,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				instance.getPropertyAsSet("in_"+inParam).add(artifact);
 				return IOResponse.okResponse();
 			} else {
-				String msg = String.format("Cannot add input %s to %s with nonmatching artifact type %s of id % %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name());
+				String msg = String.format("Cannot add input %s to %s with nonmatching artifact type %s of id %s %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name());
 				log.warn(msg);
 				return IOResponse.errorResponse(msg);
 			}
