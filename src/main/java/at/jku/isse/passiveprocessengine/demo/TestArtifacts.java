@@ -25,7 +25,7 @@ public class TestArtifacts {
 				typeJira.createPropertyType(CoreProperties.state.toString(), Cardinality.SINGLE, Workspace.STRING);
 				typeJira.createPropertyType(CoreProperties.requirements.toString(), Cardinality.SET, typeJira);
 				typeJira.createPropertyType(CoreProperties.parent.toString(), Cardinality.SINGLE, typeJira);
-				typeJira.createPropertyType(CoreProperties.html_url.toString(), Cardinality.SINGLE, typeJira);
+				typeJira.createPropertyType(CoreProperties.html_url.toString(), Cardinality.SINGLE, Workspace.STRING);
 				return typeJira;
 			}
 	}
