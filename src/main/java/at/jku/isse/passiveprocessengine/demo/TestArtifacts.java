@@ -10,7 +10,7 @@ import at.jku.isse.designspace.core.model.Workspace;
 public class TestArtifacts {
 
 	public static final String DEMOISSUETYPE = "DemoIssue";
-	public static enum CoreProperties { requirementIDs, state, requirements, parent }
+	public static enum CoreProperties { requirementIDs, state, requirements, parent, html_url }
 	public static enum JiraStates { Open, InProgress, Closed, ReadyForReview, Released}
 	
 	public static InstanceType getJiraInstanceType(Workspace ws) {
@@ -25,12 +25,14 @@ public class TestArtifacts {
 				typeJira.createPropertyType(CoreProperties.state.toString(), Cardinality.SINGLE, Workspace.STRING);
 				typeJira.createPropertyType(CoreProperties.requirements.toString(), Cardinality.SET, typeJira);
 				typeJira.createPropertyType(CoreProperties.parent.toString(), Cardinality.SINGLE, typeJira);
+				typeJira.createPropertyType(CoreProperties.html_url.toString(), Cardinality.SINGLE, typeJira);
 				return typeJira;
 			}
 	}
 	
 	public static Instance getJiraInstance(Workspace ws, String name, String... reqIds) {
 		Instance jira = ws.createInstance(getJiraInstanceType(ws), name);
+		jira.getProperty(CoreProperties.html_url.toString()).set("http://localhost:7171/home");
 		setStateToJiraInstance(jira, JiraStates.Open);
 		for(String id : reqIds) {
 			jira.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add(id);
