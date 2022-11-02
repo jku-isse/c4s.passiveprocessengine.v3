@@ -166,7 +166,7 @@ public class InputToOutputMapper {
 
   protected static Set<Repair> getConcreteRepairs(Set<Object> objects, int limit,ConsistencyRuleType crd, Instance contextInstance) {
   if(childW == null)
-  	childW = WorkspaceService.createWorkspace("childWorkspace",crd.workspace,
+  	childW = WorkspaceService.getOrCreateWorkspaceByName("childWorkspace",crd.workspace,
               WorkspaceService.ANY_USER, null, false, false);
   else {
   	childW.update();

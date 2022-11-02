@@ -40,7 +40,7 @@ class TestPrematureTriggerConstraints {
 
 	@Test
 	void testPrematureRuleGeneration() throws IOException, ProcessException  {
-		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		Workspace ws = WorkspaceService.getOrCreateWorkspaceByName("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		InstanceType typeGitDemo = TestArtifacts.getDemoGitIssueType(ws);
 		ws.concludeTransaction();
 		String path = ".";
@@ -62,7 +62,7 @@ class TestPrematureTriggerConstraints {
 	
 	@Test
 	void testPrematureRuleGenerationWithSingleHopAcrossOutParam() throws IOException, ProcessException  {
-		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		Workspace ws = WorkspaceService.getOrCreateWorkspaceByName("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		InstanceType typeGitDemo = TestArtifacts.getDemoGitIssueType(ws);
 		ws.concludeTransaction();
 		String path = ".";
@@ -84,7 +84,7 @@ class TestPrematureTriggerConstraints {
 	
 	@Test
 	void testPrematureRuleGenerationWithMultiSource() throws IOException, ProcessException  {
-		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		Workspace ws = WorkspaceService.getOrCreateWorkspaceByName("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		InstanceType typeDemo = TestArtifacts.getTestAzureIssueType(ws);
 		ws.concludeTransaction();
 		String path = ".";
@@ -105,7 +105,7 @@ class TestPrematureTriggerConstraints {
 	
 	@Test
 	void testPrematureRuleGenerationWithTypedIterator() throws IOException, ProcessException  {
-		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		Workspace ws = WorkspaceService.getOrCreateWorkspaceByName("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		InstanceType typeDemo = TestArtifacts.getTestAzureIssueType(ws);
 		ws.concludeTransaction();
 		String path = ".";
@@ -123,7 +123,7 @@ class TestPrematureTriggerConstraints {
 	
 	@Test
 	void testPrematureRuleGenerationWithBranchesWithIdenticalRootSource() throws IOException, ProcessException  {
-		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		Workspace ws = WorkspaceService.getOrCreateWorkspaceByName("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		InstanceType typeDemo = TestArtifacts.getTestAzureIssueType(ws);
 		ws.concludeTransaction();
 		String path = ".";
@@ -142,7 +142,7 @@ class TestPrematureTriggerConstraints {
 	
 	@Test
 	void testPrematureRuleGenerationWithBranches() throws IOException, ProcessException  {
-		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		Workspace ws = WorkspaceService.getOrCreateWorkspaceByName("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		InstanceType typeDemo = TestArtifacts.getTestAzureIssueType(ws);
 		ws.concludeTransaction();
 		String path = ".";

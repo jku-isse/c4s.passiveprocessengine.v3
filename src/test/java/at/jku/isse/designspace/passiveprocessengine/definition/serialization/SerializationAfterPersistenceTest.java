@@ -1,15 +1,5 @@
 package at.jku.isse.designspace.passiveprocessengine.definition.serialization;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
@@ -19,10 +9,16 @@ import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionS
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-public class SerializationTest {
+public class SerializationAfterPersistenceTest {
 
 	
 	@Autowired
@@ -55,8 +51,8 @@ public class SerializationTest {
 	}
 	@Test
 	void testSerializeAndBackSimpleProcessDefinition() {
-		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
-		
+		Workspace ws = WorkspaceService.getOrCreateWorkspaceByName("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+
 		DTOs.Process procD = TestProcesses.getSimpleDTOSubprocess(ws);
 		String jsonProc = json.toJson(procD);
 		System.out.println(jsonProc);
@@ -69,7 +65,7 @@ public class SerializationTest {
 	
 	@Test
 	void testSerializeAndBackParentChildProcessDefinition() {
-		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		Workspace ws = WorkspaceService.getOrCreateWorkspaceByName("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		
 		DTOs.Process procChild = TestProcesses.getSimpleDTOSubprocess(ws);
 		DTOs.Process procD = TestProcesses.getSimpleSuperDTOProcessDefinition(ws);
@@ -101,7 +97,7 @@ public class SerializationTest {
 	
 	@Test
 	void testOutputFromProcessDef() throws ProcessException {
-		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		Workspace ws = WorkspaceService.getOrCreateWorkspaceByName("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		ProcessDefinition inPD = TestProcesses.getSimple2StepProcessDefinition(ws);
 		DTOs.Process procD = DefinitionTransformer.toDTO(inPD);
 		String jsonProc = json.toJson(procD);

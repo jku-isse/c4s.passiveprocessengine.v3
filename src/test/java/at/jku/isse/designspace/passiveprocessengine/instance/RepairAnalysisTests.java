@@ -6,9 +6,11 @@ import static org.junit.Assert.assertTrue;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import at.jku.isse.designspace.core.controlflow.ControlEventEngine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -60,15 +62,17 @@ class RepairAnalysisTests {
 
 	static Workspace ws;
 	static InstanceType typeJira;
-	;
 	static JsonDefinitionSerializer json = new JsonDefinitionSerializer();
 	static ProcessQAStatsMonitor monitor;
 	static RepairAnalyzer repAnalyzer;
+
+	@Autowired
+	ControlEventEngine controlEventEngine;
 	
 	@BeforeEach
 	void setup() throws Exception {
 		RuleService.setEvaluator(new ArlRuleEvaluator());
-		ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, true, false);
+		ws = WorkspaceService.getOrCreateWorkspaceByName("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, true, false);
 		//ws = WorkspaceService.PUBLIC_WORKSPACE;
 		RuleService.currentWorkspace = ws;
 		EventDistributor eventDistrib = new EventDistributor();
@@ -84,8 +88,7 @@ class RepairAnalysisTests {
 	}
 
 	
-	
-	
+
 	@Test
 	void testCollectionAndPropertyChange() throws ProcessException {
 		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
