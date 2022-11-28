@@ -42,7 +42,7 @@ public class RuleRewritingTests {
 	@BeforeEach
 	void setup() {
 		//RuleService.setEvaluator(new ArlRuleEvaluator());
-		workspace = WorkspaceService.getOrCreateWorkspaceByName("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		workspace = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		workspace.setAutoUpdate(true);
 		
 		typeJira = TestArtifacts.getJiraInstanceType(workspace);

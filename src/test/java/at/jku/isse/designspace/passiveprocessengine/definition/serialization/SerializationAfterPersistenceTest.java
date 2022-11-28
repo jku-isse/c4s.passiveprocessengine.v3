@@ -51,7 +51,7 @@ public class SerializationAfterPersistenceTest {
 	}
 	@Test
 	void testSerializeAndBackSimpleProcessDefinition() {
-		Workspace ws = WorkspaceService.getOrCreateWorkspaceByName("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 
 		DTOs.Process procD = TestProcesses.getSimpleDTOSubprocess(ws);
 		String jsonProc = json.toJson(procD);
@@ -65,7 +65,7 @@ public class SerializationAfterPersistenceTest {
 	
 	@Test
 	void testSerializeAndBackParentChildProcessDefinition() {
-		Workspace ws = WorkspaceService.getOrCreateWorkspaceByName("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		
 		DTOs.Process procChild = TestProcesses.getSimpleDTOSubprocess(ws);
 		DTOs.Process procD = TestProcesses.getSimpleSuperDTOProcessDefinition(ws);
@@ -97,7 +97,7 @@ public class SerializationAfterPersistenceTest {
 	
 	@Test
 	void testOutputFromProcessDef() throws ProcessException {
-		Workspace ws = WorkspaceService.getOrCreateWorkspaceByName("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		ProcessDefinition inPD = TestProcesses.getSimple2StepProcessDefinition(ws);
 		DTOs.Process procD = DefinitionTransformer.toDTO(inPD);
 		String jsonProc = json.toJson(procD);
