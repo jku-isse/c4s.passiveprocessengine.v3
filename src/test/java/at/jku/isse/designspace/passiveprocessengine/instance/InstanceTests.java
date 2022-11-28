@@ -6,16 +6,15 @@ import static org.junit.Assert.assertTrue;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import at.jku.isse.designspace.core.controlflow.ControlEventEngine;
+import at.jku.isse.designspace.core.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import at.jku.isse.designspace.core.model.Cardinality;
-import at.jku.isse.designspace.core.model.Instance;
-import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.checker.ArlRuleEvaluator;
@@ -47,6 +46,8 @@ import at.jku.isse.passiveprocessengine.monitoring.CurrentSystemTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
 
+import javax.swing.text.html.Option;
+
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 public
@@ -57,11 +58,14 @@ class InstanceTests {
 	ProcessInstanceChangeProcessor picp;
 	static JsonDefinitionSerializer json = new JsonDefinitionSerializer();
 	static ProcessQAStatsMonitor monitor;
+
+	@Autowired
+	ControlEventEngine controlEventEngine;
 	
 	@BeforeEach
 	void setup() throws Exception {
 		RuleService.setEvaluator(new ArlRuleEvaluator());
-		ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, true, false);
+		ws = WorkspaceService.getOrCreateWorkspaceByName("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, true, false);
 		//ws = WorkspaceService.PUBLIC_WORKSPACE;
 		RuleService.currentWorkspace = ws;
 		EventDistributor eventDistrib = new EventDistributor();
@@ -74,25 +78,25 @@ class InstanceTests {
 		typeJira = TestArtifacts.getJiraInstanceType(ws);
 	}
 
-	
+
 	@Test
 	void testComplexDataMapping() throws ProcessException {
 		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
 		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
 		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
 		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA", "jiraB", "jiraC");
-		
+
 		ProcessDefinition procDef = TestProcesses.getSimple2StepProcessDefinition(ws);
 		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
 		proc.addInput("jiraIn", jiraA);
 		ws.concludeTransaction();
-		
+
 		System.out.println(proc);
 		proc.getProcessSteps().stream().forEach(step -> System.out.println(step));
-		
+
 		assert(proc.getProcessSteps().stream()
-			.filter(step -> step.getDefinition().getName().equals("sd1") )
-			.allMatch(step -> step.getOutput("jiraOut").size() == 2));
+				.filter(step -> step.getDefinition().getName().equals("sd1") )
+				.allMatch(step -> step.getOutput("jiraOut").size() == 2));
 	}
 	
 	@Test
@@ -145,6 +149,12 @@ class InstanceTests {
 		monitor.calcFinalStats();
 		ProcessStats stats = monitor.stats.get(proc);
 		assert(stats.isProcessCompleted() == false);
+
+		Element element = ws.findElement(Id.of(244l));
+		System.out.println(element);
+
+		Element element1 = ws.findElement(Id.of(252l));
+		System.out.println(element1);
 	}
 	
 	@Test
@@ -231,7 +241,7 @@ class InstanceTests {
 				.allMatch(step -> step.getActualLifecycleState().equals(State.COMPLETED) ));
 	
 	}
-	
+
 	@Test
 	void testSimpleSubprocess() throws ProcessException {
 		Instance jiraE =  TestArtifacts.getJiraInstance(ws, "jiraE");
@@ -257,7 +267,8 @@ class InstanceTests {
 	void testSimpleParentprocess() throws ProcessException {
 		Instance jiraF =  TestArtifacts.getJiraInstance(ws, "jiraF");
 		ProcessDefinition procDef = TestProcesses.getSimpleSuperProcessDefinition(ws);
-		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
+		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef, "SimpleParentprocess");
+
 		proc.addInput("jiraIn", jiraF);
 		ws.concludeTransaction();
 		TestArtifacts.setStateToJiraInstance(jiraF, JiraStates.Closed);
@@ -268,7 +279,7 @@ class InstanceTests {
 		assert(proc.getActualLifecycleState().equals(State.COMPLETED));
 		assert(proc.getOutput("jiraOut").size() == 1);
 	}
-	
+
 //	@Test
 //	void testSimpleParentProcessFromSerializationForm() {
 //		Instance jiraF =  TestArtifacts.getJiraInstance(ws, "jiraF");
@@ -287,7 +298,7 @@ class InstanceTests {
 //		assert(proc.getActualLifecycleState().equals(State.COMPLETED));
 //		assert(proc.getOutput("jiraOut").size() == 1);
 //	}
-	
+
 	@Test
 	void testSymmetricDifferenceDatamapping() throws ProcessException {
 		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
@@ -395,8 +406,8 @@ class InstanceTests {
 //				.allMatch(step -> step.getOutput("jiraOut").size() == 1 ));
 		
 	}
-	
-	
+
+
 	
 	
 	public static void assertAllConstraintsAreValid(ProcessInstance proc) {
