@@ -9,8 +9,6 @@ import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 public class Events {
 

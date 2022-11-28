@@ -1,7 +1,6 @@
 package at.jku.isse.passiveprocessengine.definition.serialization;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -9,11 +8,8 @@ import java.util.stream.Collectors;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.WrapperCache;
-import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator;
-import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

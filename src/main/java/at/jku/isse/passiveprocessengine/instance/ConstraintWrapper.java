@@ -14,7 +14,6 @@ import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
-import lombok.Data;
 
 //@Data
 public class ConstraintWrapper extends ProcessInstanceScopedElement {

@@ -22,7 +22,6 @@ import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator;
 import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
-import at.jku.isse.passiveprocessengine.definition.StepDefinition.CoreProperties;
 import at.jku.isse.passiveprocessengine.instance.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;

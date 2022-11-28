@@ -9,10 +9,6 @@ import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.DecisionNode;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Mapping;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Process;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Step;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
