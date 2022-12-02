@@ -54,7 +54,7 @@
 		<dependency>
 			<groupId>at.jku.isse.designspace</groupId>
 			<artifactId>core</artifactId>
-			<version>4.3.2-SNAPSHOT</version>
+			<version>4.3.3-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>at.jku.isse.designspace</groupId>

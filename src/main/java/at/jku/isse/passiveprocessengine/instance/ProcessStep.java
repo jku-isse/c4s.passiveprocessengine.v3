@@ -119,9 +119,10 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 					return new IOMappingConsistencyCmd(this, cr, false);
 				}
 			} else if (crt.name().startsWith(CRD_QASPEC_PREFIX) ) { // a qa constraint
-				log.debug(String.format("QA Constraint %s now %s ", crt.name(), op.value().toString()));
+				log.debug(String.format("QA Constraint %s now %s ", crt.name(), op.value() != null ? op.value().toString() : "NULL"));
 				//processQAEvent(cr, op); Boolean.parseBoolean(op.value().toString())
-				return new QAConstraintChangedCmd(this, cr, Boolean.parseBoolean(op.value().toString()));
+				return op.value() != null ? new QAConstraintChangedCmd(this, cr, Boolean.parseBoolean(op.value().toString())) : 
+					new QAConstraintChangedCmd(this, cr, true);			
 			}	else
 				log.debug(String.format("Step %s has rule %s evaluate to %s", this.getName(), crt.name(), op.value().toString()));
 		}

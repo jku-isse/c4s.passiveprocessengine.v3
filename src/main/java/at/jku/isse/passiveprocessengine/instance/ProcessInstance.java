@@ -236,6 +236,7 @@ public class ProcessInstance extends ProcessStep {
 	}
 	
 	public static ProcessInstance getInstance(Workspace ws, ProcessDefinition sd, String namePostfix) {
+		//TODO: not to create duplicate process instances somehow
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+namePostfix);
 		ProcessInstance pi = WrapperCache.getWrappedInstance(ProcessInstance.class, instance);
 		pi.init(sd, null, null, ws);
@@ -267,5 +268,18 @@ public class ProcessInstance extends ProcessStep {
 	}
 
 
-	
+	public void printProcessToConsole(String prefix) {
+		
+		System.out.println(prefix+this.toString());
+		String nextIndent = "  "+prefix;
+		this.getProcessSteps().stream().forEach(step -> {
+			if (step instanceof ProcessInstance) {
+				((ProcessInstance) step).printProcessToConsole(nextIndent);
+			} else {
+				
+				System.out.println(nextIndent+step.toString());
+			}
+		});
+		this.getDecisionNodeInstances().stream().forEach(dni -> System.out.println(nextIndent+dni.toString()));
+	}
 }
