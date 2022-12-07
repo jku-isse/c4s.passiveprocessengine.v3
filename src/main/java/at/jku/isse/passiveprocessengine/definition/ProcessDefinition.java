@@ -31,7 +31,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProcessDefinition extends StepDefinition{
 
-	public static enum CoreProperties {decisionNodeDefinitions, stepDefinitions, prematureTriggers, prematureTriggerMappings, isImmediateDataPropagationEnabled}
+	public static enum CoreProperties {decisionNodeDefinitions, stepDefinitions, prematureTriggers, prematureTriggerMappings, 
+		isImmediateDataPropagationEnabled,
+		isImmediateInstantiateAllSteps}
 	
 	public static final String designspaceTypeId = ProcessDefinition.class.getSimpleName();
 	
@@ -203,6 +205,7 @@ public class ProcessDefinition extends StepDefinition{
 				typeStep.createPropertyType(CoreProperties.prematureTriggers.toString(), Cardinality.MAP, Workspace.STRING);
 				typeStep.createPropertyType(CoreProperties.prematureTriggerMappings.toString(), Cardinality.MAP, Workspace.STRING);
 				typeStep.createPropertyType(CoreProperties.isImmediateDataPropagationEnabled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
+				typeStep.createPropertyType(CoreProperties.isImmediateInstantiateAllSteps.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
 				return typeStep;
 			}
 	}
@@ -235,6 +238,16 @@ public class ProcessDefinition extends StepDefinition{
 		return dnd;
 	}
 
+	public boolean isImmediateInstantiateAllStepsEnabled() {
+		Object value = instance.getPropertyAsValueOrElse(CoreProperties.isImmediateInstantiateAllSteps.toString(), () -> false);
+		if (value == null) return false;
+		else return (boolean) value; 
+	}
+
+	public void setImmediateInstantiateAllStepsEnabled(boolean isImmediateInstantiateAllStepsEnabled) {
+		instance.getPropertyAsSingle(CoreProperties.isImmediateInstantiateAllSteps.toString()).set(isImmediateInstantiateAllStepsEnabled);
+	}
+	
 	public boolean isImmediateDataPropagationEnabled() {
 		Object value = instance.getPropertyAsValueOrElse(CoreProperties.isImmediateDataPropagationEnabled.toString(), () -> false);
 		if (value == null) return false;

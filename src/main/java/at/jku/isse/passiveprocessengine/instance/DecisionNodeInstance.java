@@ -22,6 +22,7 @@ import at.jku.isse.passiveprocessengine.instance.RuntimeMapping.FlowDir;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.DataMappingChangedEvent;
+import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -280,7 +281,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		// if not yet progressed,
 		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		if (this.isInflowFulfilled() && !this.hasPropagated()) {
-			initiateDownstreamSteps(false);
+			events.addAll(initiateDownstreamSteps(false)); //check and execute datamappings will be called below anyway
 			this.setHasPropagated();
 		} 
 		
@@ -301,10 +302,11 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		return events;
 	}
 	
-	protected void initiateDownstreamSteps(boolean includeDataPropagation) {
-		if (isInternalPropagationDone) return; // to distinguish between official propagation or premature/immediate propagation
+	protected List<ProcessChangedEvent> initiateDownstreamSteps(boolean includeDataPropagation) {
+		if (isInternalPropagationDone) return Collections.emptyList(); // to distinguish between official propagation or premature/immediate propagation
 		// get all out task defs, check if they exist or create them
 		// first time activation		
+		List<ProcessChangedEvent> events = new LinkedList<>();
 		this.getProcess().getDefinition().getStepDefinitions().stream()
 		.filter(def -> def.getInDND().equals(this.getDefinition())) //retain only that have this DND as their predecessor
 		.filter(td -> getProcess().getProcessSteps().stream()
@@ -312,10 +314,11 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 				.noneMatch(td1 -> td1.equals(td))) // retain those that are not yet instantiated
 		.forEach(td -> { ProcessStep step = getProcess().createAndWireTask(td);
 					if (includeDataPropagation) {
-						checkAndExecuteDataMappings(false, true);
+						events.addAll(checkAndExecuteDataMappings(false, true));
 					}
 				});		
 		isInternalPropagationDone = true;
+		return events;
 	}
 	
 	public List<Events.ProcessChangedEvent> tryDataPropagationToPrematurelyTriggeredTask() {

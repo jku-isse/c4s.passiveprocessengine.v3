@@ -84,6 +84,7 @@ public class DTOs {
 		List<Step> steps = new LinkedList<>();
 		List<DecisionNode> dns = new LinkedList<>();
 		Map<String, String> prematureStepConditions = new HashMap<>();
+		Map<String, String> processConfig = new HashMap();
 		
 		public Step getStepByCode(String code) {
 			return steps.stream().filter(step -> step.getCode().equals(code)).findAny().orElse(null);

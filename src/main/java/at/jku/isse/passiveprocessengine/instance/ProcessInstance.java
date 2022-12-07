@@ -174,6 +174,12 @@ public class ProcessInstance extends ProcessStep {
 			return getProcess().isImmediateDataPropagationEnabled();
 	}
 	
+	public boolean isImmediateInstantiateAllStepsEnabled() {
+		if (getProcess() == null)
+			return getDefinition() != null ? getDefinition().isImmediateInstantiateAllStepsEnabled() : false;
+		else
+			return getProcess().isImmediateInstantiateAllStepsEnabled();
+	}
 	
 	public void deleteCascading() {
 		// remove any lower-level instances this step is managing
@@ -255,15 +261,17 @@ public class ProcessInstance extends ProcessStep {
 		// init first DNI, there should be only one. Needs to be checked earlier with definition creation
 		// we assume consistent, correct specification/definition here
 		instance.getPropertyAsSingle(CoreProperties.processDefinition.toString()).set(pdef.getInstance());
-		super.init(ws, pdef, inDNI, outDNI);
+		super.init(ws, pdef, inDNI, outDNI);		
+		if (isImmediateInstantiateAllStepsEnabled()) {
+			// instantiate all steps and thereby the DNIs
+			pdef.getStepDefinitions().stream().forEach(sd -> createAndWireTask(sd));			
+		} // now also activate first
 		pdef.getDecisionNodeDefinitions().stream()
 			.filter(dnd -> dnd.getInSteps().size() == 0)
 			.forEach(dnd -> {
-				DecisionNodeInstance dni = DecisionNodeInstance.getInstance(ws, dnd);
-				dni.setProcess(this);
-				this.addDecisionNodeInstance(dni);
+				DecisionNodeInstance dni = getOrCreateDNI(dnd);		
 				dni.tryActivationPropagation(); // to trigger instantiation of initial steps
-			});
+			});		
 		// datamapping from proc to DNI is triggered upon adding input, which is not available at this stage
 	}
 

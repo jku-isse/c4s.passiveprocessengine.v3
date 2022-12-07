@@ -601,7 +601,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			case ACTIVE:
 			case ENABLED:
 				if (prevExpectedSM.equals(State.AVAILABLE) && isImmediateDataPropagationEnabled() && this.getOutDNI() != null ) {
-					this.getOutDNI().initiateDownstreamSteps(true); // to prepare the next steps further downstream even though they should not start yet.
+					events.addAll(this.getOutDNI().initiateDownstreamSteps(true)); // to prepare the next steps further downstream even though they should not start yet.
 				}
 			} 
 		}
