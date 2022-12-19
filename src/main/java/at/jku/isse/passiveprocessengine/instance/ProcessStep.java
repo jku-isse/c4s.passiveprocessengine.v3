@@ -22,6 +22,7 @@ import at.jku.isse.designspace.core.model.Id;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Property;
+import at.jku.isse.designspace.core.model.PropertyType;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.SingleProperty;
 import at.jku.isse.designspace.core.model.Workspace;
@@ -639,13 +640,21 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 		td.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
-				String name = CRD_DATAMAPPING_PREFIX+entry.getKey()+"_"+instType.name();
-				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, entry.getValue());
-				if (crt == null) {
-					log.error("Expected Rule for existing process not found: "+name);
-					status.put(name, "Corrupt data - Expected Rule not found");
-				} else
+				String name = getDataMappingId(entry, td);
+				String propName = CRD_DATAMAPPING_PREFIX+entry.getKey();
+				InstanceType stepType = getOrCreateDesignSpaceInstanceType(ws, td);
+				PropertyType ioPropType = stepType.getPropertyType(propName);
+				InstanceType ruleType = ioPropType.referencedInstanceType();
+				if (ruleType == null) 	{			
+//				String name = CRD_DATAMAPPING_PREFIX+entry.getKey()+"_"+instType.name();
+//				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, entry.getValue());
+//				if (crt == null) {					
+					log.error("Expected Datamapping Rule for existing process not found: "+name);
+					status.put(name, "Corrupt data - Expected Datamapping Rule not found");
+				} else {
+					ConsistencyRuleType crt = (ConsistencyRuleType)ruleType;
 					status.put(name, crt.hasRuleError() ? crt.ruleError() : "valid");
+				}
 			});
 		//qa constraints:
 		ProcessDefinition pd = td.getProcess() !=null ? td.getProcess() : (ProcessDefinition)td;
@@ -707,7 +716,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			td.getInputToOutputMappingRules().entrySet().stream()
 				.forEach(entry -> {
 					if (entry.getValue() != null) {
-						ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeStep, getDataMappingId(entry, td), entry.getValue()); 
+						ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeStep, getDataMappingId(entry, td), completeDatamappingRule(entry.getKey(), entry.getValue())); 
 						typeStep.createPropertyType(CRD_DATAMAPPING_PREFIX+entry.getKey(), Cardinality.SINGLE, crt);					
 					}//assert ConsistencyUtils.crdValid(crt); as no workspace.concludeTransaction is called here, no need to assert this here, as will never be false here	
 				});
@@ -715,6 +724,14 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			typeStep.createPropertyType(CoreProperties.qaState.toString(), Cardinality.MAP, ConstraintWrapper.getOrCreateDesignSpaceCoreSchema(ws));
 			return typeStep;
 		}
+	}
+	
+	private static String completeDatamappingRule(String param, String rule) {
+		return rule
+				+"\r\n"
+				+"->asSet()\r\n"  
+				+"->symmetricDifference(self.out_"+param+")\r\n"  
+				+"->size() = 0";
 	}
 	
 	public static String getDataMappingId(Map.Entry<String,String> ioMapping, StepDefinition sd) {

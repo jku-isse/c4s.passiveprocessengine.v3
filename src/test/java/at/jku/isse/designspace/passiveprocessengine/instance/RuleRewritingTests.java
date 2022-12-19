@@ -26,6 +26,7 @@ import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import static at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer.stripForComparison;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -172,13 +173,7 @@ public class RuleRewritingTests {
 		assert(stripForComparison(recovered).equalsIgnoreCase(stripForComparison(arl)));
 	}
 	
-	private String stripForComparison(String arl) {
-		return arl
-			.replace("->", "")
-			.replace(".", "")
-			.replaceAll("[\\n\\t ]", "")
-			.trim();
-	}
+
 	
 	private void printSyntaxTree(Expression ep, String indent) {
 		if (ep == null) return;

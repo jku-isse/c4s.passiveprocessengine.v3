@@ -151,15 +151,15 @@ public class RuleAugmentation {
 			ArlEvaluator ae = new ArlEvaluator(stepType, mapping);
 			mapping = ae.syntaxTree.getOriginalARL();
 			
-			int posSym = Math.max(mapping.indexOf("->symmetricDifference"), mapping.indexOf(".symmetricDifference"));
-			if (posSym > 0) {
-				String navPath = mapping.substring(0, posSym); // now lets find which in param this outparam depends on
+			//int posSym = Math.max(mapping.indexOf("->symmetricDifference"), mapping.indexOf(".symmetricDifference")); //Symmetric difference is removed upon loading from DTOs and added extra upon creating mapping rules
+			//if (posSym > 0) {
+				String navPath = mapping;//.substring(0, posSym); // now lets find which in param this outparam depends on
 				// we assume, only inparams are used in datamapping, i.e., we dont derive some output and then derive additional output from that!
 				// and rewrite, then return
 				String fullPath = ensureUniqueVarNames(navPath, stepType);
 				DataSource thisDS = new DataSource(step, outParam.getName(), IoType.stepIn, fullPath);
 				return thisDS;
-			}
+			//}
 		}
 		// otherwise keep this outparam
 		return new DataSource(step, outParam.getName(), IoType.stepOut, "self.out_"+outParam.getName());

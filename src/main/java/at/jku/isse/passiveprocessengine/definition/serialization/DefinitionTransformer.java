@@ -51,7 +51,7 @@ public class DefinitionTransformer {
 		step.getInput().entrySet().stream().forEach(entry -> pStep.addExpectedInput(entry.getKey(), resolveInstanceType(entry.getValue(), ws)));
 		step.getOutput().entrySet().stream().forEach(entry -> pStep.addExpectedOutput(entry.getKey(), resolveInstanceType(entry.getValue(), ws)));
 		step.getConditions().entrySet().stream().forEach(entry -> pStep.setCondition(entry.getKey(), entry.getValue()));
-		step.getIoMapping().entrySet().stream().forEach(entry -> pStep.addInputToOutputMappingRule(entry.getKey(),  entry.getValue()));
+		step.getIoMapping().entrySet().stream().forEach(entry -> pStep.addInputToOutputMappingRule(entry.getKey(),  trimLegacyIOMappingRule(entry.getValue())));
 		step.getQaConstraints().stream().forEach(qac -> pStep.addQAConstraint(QAConstraintSpec.createInstance(qac.getCode(), qac.getArlRule(), qac.getDescription(), qac.getSpecOrderIndex(), ws)));
 		pStep.setSpecOrderIndex(step.getSpecOrderIndex());
 		pStep.setHtml_url(step.getHtml_url());
@@ -117,5 +117,21 @@ public class DefinitionTransformer {
 		step.setHtml_url(pStep.getHtml_url());
 		step.setDescription(pStep.getDescription());
 		//TODO: description field
+	}
+	
+	private static String trimLegacyIOMappingRule(String ruleString) {
+		int posLegacySymDiff = stripForComparison(ruleString).indexOf("asSet()symmetricDifference(self.out");
+		if (posLegacySymDiff > 0) {
+			return ruleString.substring(0, posLegacySymDiff);
+		} else
+			return ruleString;
+	}
+	
+	public static String stripForComparison(String arl) {
+		return arl
+			.replace("->", "")
+			.replace(".", "")
+			.replaceAll("[\\n\\t ]", "")
+			.trim();
 	}
 }
