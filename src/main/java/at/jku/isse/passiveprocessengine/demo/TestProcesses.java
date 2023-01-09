@@ -31,7 +31,7 @@ public class TestProcesses {
 		sd1.addExpectedOutput("jiraOut", typeJira);
 		sd1.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 		sd1.setCondition(Conditions.POSTCONDITION, "self.in_jiraIn->forAll( issue | issue.state = 'Closed')");
-		sd1.addInputToOutputMappingRule("jiraIn2jiraOut", "self.in_jiraIn"); //->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and "
+		sd1.addInputToOutputMappingRule("jiraOut", "self.in_jiraIn"); //->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and "
 				//+ " self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);

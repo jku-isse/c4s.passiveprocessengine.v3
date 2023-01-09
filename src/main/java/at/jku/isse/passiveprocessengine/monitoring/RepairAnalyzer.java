@@ -322,8 +322,8 @@ public class RepairAnalyzer implements WorkspaceListener {
 				// FIXME: hack to deal with isDefined() repairs
 				else if (opValue != null) return true;
 				
-				else {
-					return opValue.equals(rValue);
+				else { //opValue == null
+					return rValue==null;
 				}
 
 			}
