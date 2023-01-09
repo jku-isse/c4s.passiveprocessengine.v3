@@ -38,7 +38,7 @@ public class FilesystemProcessDefinitionLoader {
                 	try {
 						registry.storeProcessDefinitionIfNotExists(procD);
 						i++;
-					} catch (ProcessException e) {
+					} catch (ProcessException | NullPointerException e) {
 						e.printStackTrace();
 						log.error(e.getMessage());
 					}

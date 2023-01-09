@@ -16,11 +16,11 @@ public class DefinitionTransformer {
 
 	public static ProcessDefinition fromDTO(DTOs.Process procDTO, Workspace ws) {
 		ProcessDefinition procDef = ProcessDefinition.getInstance(procDTO.getCode(), ws);
-		initProcessFromDTO(procDTO, procDef, ws);
+		initProcessFromDTO(procDTO, procDef, ws, 0);
 		return procDef;
 	}
 	
-	private static void initProcessFromDTO(DTOs.Process procDTO, ProcessDefinition pDef, Workspace ws) {
+	private static void initProcessFromDTO(DTOs.Process procDTO, ProcessDefinition pDef, Workspace ws, int depth) {
 		// first DNDs
 		procDTO.getDns().stream().forEach(dn -> { 
 			DecisionNodeDefinition dnd = pDef.createDecisionNodeDefinition(dn.getCode(), ws);
@@ -45,9 +45,12 @@ public class DefinitionTransformer {
 		});
 		// then process itself
 		initStepFromDTO(procDTO, pDef, ws);
+		
+		pDef.setDepthIndexRecursive(depth);
 	}
 	
 	private static void initStepFromDTO(DTOs.Step step, StepDefinition pStep, Workspace ws) {
+		
 		step.getInput().entrySet().stream().forEach(entry -> pStep.addExpectedInput(entry.getKey(), resolveInstanceType(entry.getValue(), ws)));
 		step.getOutput().entrySet().stream().forEach(entry -> pStep.addExpectedOutput(entry.getKey(), resolveInstanceType(entry.getValue(), ws)));
 		step.getConditions().entrySet().stream().forEach(entry -> pStep.setCondition(entry.getKey(), entry.getValue()));

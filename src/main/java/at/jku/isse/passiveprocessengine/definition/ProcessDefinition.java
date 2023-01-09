@@ -110,6 +110,14 @@ public class ProcessDefinition extends StepDefinition{
 		instance.getPropertyAsMap(CoreProperties.prematureTriggerMappings.toString()).put(constraintName, stepDefinitionName);
 	}
 	
+	public void setDepthIndexRecursive(int indexToSet) {
+		super.setDepthIndexRecursive(indexToSet);
+		// make sure we also update the child process steps		
+		// find first DNI
+		DecisionNodeDefinition startDND = this.getDecisionNodeDefinitions().stream().filter(dnd -> dnd.getInSteps().isEmpty()).findFirst().get();
+		startDND.setDepthIndexRecursive(indexToSet+1);
+	}
+	
 	@Override
 	public void deleteCascading() {
 		getDecisionNodeDefinitions().forEach(dnd -> dnd.deleteCascading());
