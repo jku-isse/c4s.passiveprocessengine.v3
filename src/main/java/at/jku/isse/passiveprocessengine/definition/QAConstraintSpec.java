@@ -8,7 +8,6 @@ import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.WrapperCache;
-import at.jku.isse.passiveprocessengine.definition.StepDefinition.CoreProperties;
 
 public class QAConstraintSpec extends InstanceWrapper{
 

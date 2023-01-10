@@ -22,7 +22,6 @@ import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator;
 import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
-import at.jku.isse.passiveprocessengine.definition.StepDefinition.CoreProperties;
 import at.jku.isse.passiveprocessengine.instance.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
@@ -32,7 +31,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProcessDefinition extends StepDefinition{
 
-	public static enum CoreProperties {decisionNodeDefinitions, stepDefinitions, prematureTriggers, prematureTriggerMappings, isImmediateDataPropagationEnabled}
+	public static enum CoreProperties {decisionNodeDefinitions, stepDefinitions, prematureTriggers, prematureTriggerMappings, 
+		isImmediateDataPropagationEnabled,
+		isImmediateInstantiateAllSteps}
 	
 	public static final String designspaceTypeId = ProcessDefinition.class.getSimpleName();
 	
@@ -107,6 +108,14 @@ public class ProcessDefinition extends StepDefinition{
 	@SuppressWarnings("unchecked")
 	public void setPrematureConstraintNameStepDefinition(String constraintName, String stepDefinitionName) {
 		instance.getPropertyAsMap(CoreProperties.prematureTriggerMappings.toString()).put(constraintName, stepDefinitionName);
+	}
+	
+	public void setDepthIndexRecursive(int indexToSet) {
+		super.setDepthIndexRecursive(indexToSet);
+		// make sure we also update the child process steps		
+		// find first DNI
+		DecisionNodeDefinition startDND = this.getDecisionNodeDefinitions().stream().filter(dnd -> dnd.getInSteps().isEmpty()).findFirst().get();
+		startDND.setDepthIndexRecursive(indexToSet+1);
 	}
 	
 	@Override
@@ -204,6 +213,7 @@ public class ProcessDefinition extends StepDefinition{
 				typeStep.createPropertyType(CoreProperties.prematureTriggers.toString(), Cardinality.MAP, Workspace.STRING);
 				typeStep.createPropertyType(CoreProperties.prematureTriggerMappings.toString(), Cardinality.MAP, Workspace.STRING);
 				typeStep.createPropertyType(CoreProperties.isImmediateDataPropagationEnabled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
+				typeStep.createPropertyType(CoreProperties.isImmediateInstantiateAllSteps.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
 				return typeStep;
 			}
 	}
@@ -236,6 +246,16 @@ public class ProcessDefinition extends StepDefinition{
 		return dnd;
 	}
 
+	public boolean isImmediateInstantiateAllStepsEnabled() {
+		Object value = instance.getPropertyAsValueOrElse(CoreProperties.isImmediateInstantiateAllSteps.toString(), () -> false);
+		if (value == null) return false;
+		else return (boolean) value; 
+	}
+
+	public void setImmediateInstantiateAllStepsEnabled(boolean isImmediateInstantiateAllStepsEnabled) {
+		instance.getPropertyAsSingle(CoreProperties.isImmediateInstantiateAllSteps.toString()).set(isImmediateInstantiateAllStepsEnabled);
+	}
+	
 	public boolean isImmediateDataPropagationEnabled() {
 		Object value = instance.getPropertyAsValueOrElse(CoreProperties.isImmediateDataPropagationEnabled.toString(), () -> false);
 		if (value == null) return false;

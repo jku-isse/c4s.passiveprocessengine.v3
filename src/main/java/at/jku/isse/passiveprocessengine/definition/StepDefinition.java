@@ -7,8 +7,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.management.RuntimeErrorException;
-
 import at.jku.isse.designspace.core.model.Cardinality;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
@@ -18,7 +16,6 @@ import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +26,8 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	public static enum CoreProperties {expectedInput, expectedOutput, ioMappingRules, 
 							conditions,
 							qaConstraints,
-							inDND, outDND, specOrderIndex,html_url,description};
+							inDND, outDND, specOrderIndex,html_url,description,
+							hierarchyDepth};
 	
 	public static final String designspaceTypeId = StepDefinition.class.getSimpleName();
 	
@@ -175,8 +173,22 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		instance.getPropertyAsSingle(CoreProperties.specOrderIndex.toString()).set(index);
 	}
 	
+	public void setDepthIndexRecursive(int indexToSet) {				
+		instance.getPropertyAsSingle(CoreProperties.hierarchyDepth.toString()).set(indexToSet);
+		DecisionNodeDefinition dnd = this.getOutDND();
+		if (dnd != null) { //avoid NPE on process without outDND					
+			int newIndex = (dnd.getInSteps().size() > 1) ? indexToSet - 1 : indexToSet; // if in branching, reduction of index, otherwise same index as just a sequence				
+			if (dnd.getDepthIndex() < newIndex) // this allows to override the index when this is used as a subprocess
+				dnd.setDepthIndexRecursive(newIndex);
+		}
+	}
+	
 	public Integer getSpecOrderIndex() {
-		return (Integer) instance.getPropertyAsValueOrElse(CoreProperties.specOrderIndex.toString(), () -> 0);
+		return (Integer) instance.getPropertyAsValueOrElse(CoreProperties.specOrderIndex.toString(), () -> -1);
+	}	
+	
+	public Integer getDepthIndex() {
+		return (Integer) instance.getPropertyAsValueOrElse(CoreProperties.hierarchyDepth.toString(), () -> -1);
 	}
 	
 	public void setHtml_url(String html_url)
@@ -245,6 +257,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 				typeStep.createPropertyType(CoreProperties.outDND.toString(), Cardinality.SINGLE, Workspace.STRING);
 				typeStep.createPropertyType((CoreProperties.ioMappingRules.toString()), Cardinality.MAP, Workspace.STRING);
 				typeStep.createPropertyType((CoreProperties.specOrderIndex.toString()), Cardinality.SINGLE, Workspace.INTEGER);
+				typeStep.createPropertyType((CoreProperties.hierarchyDepth.toString()), Cardinality.SINGLE, Workspace.INTEGER);
 				typeStep.createPropertyType((CoreProperties.html_url.toString()), Cardinality.SINGLE, Workspace.STRING);
 				typeStep.createPropertyType((CoreProperties.description.toString()), Cardinality.SINGLE, Workspace.STRING);
 				return typeStep;
@@ -259,3 +272,4 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 
 }
+

@@ -1,14 +1,11 @@
 package at.jku.isse.passiveprocessengine.analysis;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -212,9 +209,9 @@ public class PrematureTriggerGenerator {
 			ArlEvaluator ae = new ArlEvaluator(stepType, mapping);
 			mapping = ae.syntaxTree.getOriginalARL();;
 			
-			int posSym = Math.max(mapping.indexOf("->symmetricDifference"), mapping.indexOf(".symmetricDifference"));
-			if (posSym > 0) {
-				String navPath = mapping.substring(0, posSym); // now lets find which in param this outparam depends on
+			//int posSym = Math.max(mapping.indexOf("->symmetricDifference"), mapping.indexOf(".symmetricDifference"));
+			//if (posSym > 0) {
+				String navPath = mapping;//.substring(0, posSym); // now lets find which in param this outparam depends on
 				// we assume, only inparams are used in datamapping, i.e., we dont derive some output and then derive additional output from that!
 				Map<Integer, String> loc2param = new HashMap<>();
 				
@@ -250,7 +247,7 @@ public class PrematureTriggerGenerator {
 				DataSource thisDS = new DataSource(step, outParam.getName(), IoType.stepOut, fullPath);
 				thisDS.upstreamSources.addAll(rootSources);
 				return thisDS;
-			}
+			//}
 		}
 		// otherwise prepare the path to this outparam
 		varCount++;

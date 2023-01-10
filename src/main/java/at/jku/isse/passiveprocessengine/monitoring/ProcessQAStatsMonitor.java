@@ -17,12 +17,12 @@ import com.google.gson.GsonBuilder;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
-import at.jku.isse.passiveprocessengine.instance.messages.IProcessEventHandler;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.PostconditionFulfillmentChanged;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.QAConstraintFulfillmentChanged;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.QAFulfillmentChanged;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.StepStateTransitionEvent;
+import at.jku.isse.passiveprocessengine.instance.messages.IProcessEventHandler;
 import lombok.extern.slf4j.Slf4j;
 
 

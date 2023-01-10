@@ -5,6 +5,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,7 +45,7 @@ public class FilesystemProcessDefinitionLoader {
                 	try {
 						registry.storeProcessDefinitionIfNotExists(procD);
 						i++;
-					} catch (ProcessException e) {
+					} catch (ProcessException | NullPointerException e) {
 						e.printStackTrace();
 						log.error(e.getMessage());
 					}

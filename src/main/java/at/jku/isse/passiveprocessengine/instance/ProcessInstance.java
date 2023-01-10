@@ -21,8 +21,9 @@ import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
+import at.jku.isse.passiveprocessengine.instance.messages.Commands.PrematureStepTriggerCmd;
+import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses;
-import at.jku.isse.passiveprocessengine.instance.messages.Commands.*;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
 import lombok.extern.slf4j.Slf4j;
 
@@ -173,6 +174,12 @@ public class ProcessInstance extends ProcessStep {
 			return getProcess().isImmediateDataPropagationEnabled();
 	}
 	
+	public boolean isImmediateInstantiateAllStepsEnabled() {
+		if (getProcess() == null)
+			return getDefinition() != null ? getDefinition().isImmediateInstantiateAllStepsEnabled() : false;
+		else
+			return getProcess().isImmediateInstantiateAllStepsEnabled();
+	}
 	
 	public void deleteCascading() {
 		// remove any lower-level instances this step is managing
@@ -235,6 +242,7 @@ public class ProcessInstance extends ProcessStep {
 	}
 	
 	public static ProcessInstance getInstance(Workspace ws, ProcessDefinition sd, String namePostfix) {
+		//TODO: not to create duplicate process instances somehow
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+namePostfix);
 		ProcessInstance pi = WrapperCache.getWrappedInstance(ProcessInstance.class, instance);
 		pi.init(sd, null, null, ws);
@@ -253,18 +261,33 @@ public class ProcessInstance extends ProcessStep {
 		// init first DNI, there should be only one. Needs to be checked earlier with definition creation
 		// we assume consistent, correct specification/definition here
 		instance.getPropertyAsSingle(CoreProperties.processDefinition.toString()).set(pdef.getInstance());
-		super.init(ws, pdef, inDNI, outDNI);
+		super.init(ws, pdef, inDNI, outDNI);		
+		if (isImmediateInstantiateAllStepsEnabled()) {
+			// instantiate all steps and thereby the DNIs
+			pdef.getStepDefinitions().stream().forEach(sd -> createAndWireTask(sd));			
+		} // now also activate first
 		pdef.getDecisionNodeDefinitions().stream()
 			.filter(dnd -> dnd.getInSteps().size() == 0)
 			.forEach(dnd -> {
-				DecisionNodeInstance dni = DecisionNodeInstance.getInstance(ws, dnd);
-				dni.setProcess(this);
-				this.addDecisionNodeInstance(dni);
+				DecisionNodeInstance dni = getOrCreateDNI(dnd);		
 				dni.tryActivationPropagation(); // to trigger instantiation of initial steps
-			});
+			});		
 		// datamapping from proc to DNI is triggered upon adding input, which is not available at this stage
 	}
 
 
-	
+	public void printProcessToConsole(String prefix) {
+		
+		System.out.println(prefix+this.toString());
+		String nextIndent = "  "+prefix;
+		this.getProcessSteps().stream().forEach(step -> {
+			if (step instanceof ProcessInstance) {
+				((ProcessInstance) step).printProcessToConsole(nextIndent);
+			} else {
+				
+				System.out.println(nextIndent+step.toString());
+			}
+		});
+		this.getDecisionNodeInstances().stream().forEach(dni -> System.out.println(nextIndent+dni.toString()));
+	}
 }

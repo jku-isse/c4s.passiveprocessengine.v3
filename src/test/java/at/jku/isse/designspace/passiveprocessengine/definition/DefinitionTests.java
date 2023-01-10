@@ -16,6 +16,7 @@ import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
+import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
@@ -80,6 +81,12 @@ class DefinitionTests {
 		assertTrue(dnd2.getMappings().size() == 1);
 	}
 
-	
+	@Test
+	void testHierarchyIndex() throws Exception {
+		ProcessDefinition pDef = TestProcesses.getSimpleSuperProcessDefinition(ws);
+		pDef.getDecisionNodeDefinitions().parallelStream().forEach(dnd -> System.out.println(dnd.getName()+" "+dnd.getDepthIndex()));
+		pDef.getStepDefinitions().parallelStream().forEach(step -> System.out.println(step.getName()+" "+step.getDepthIndex()));
+		
+	}
 
 }

@@ -22,6 +22,7 @@ import at.jku.isse.designspace.core.model.Id;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Property;
+import at.jku.isse.designspace.core.model.PropertyType;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.SingleProperty;
 import at.jku.isse.designspace.core.model.Workspace;
@@ -29,16 +30,19 @@ import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
-import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Trigger;
+import at.jku.isse.passiveprocessengine.instance.messages.Commands.ConditionChangedCmd;
+import at.jku.isse.passiveprocessengine.instance.messages.Commands.IOMappingConsistencyCmd;
+import at.jku.isse.passiveprocessengine.instance.messages.Commands.OutputChangedCmd;
+import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
+import at.jku.isse.passiveprocessengine.instance.messages.Commands.QAConstraintChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses;
-import at.jku.isse.passiveprocessengine.instance.messages.Commands.*;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
 import lombok.extern.slf4j.Slf4j;
 
@@ -116,9 +120,10 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 					return new IOMappingConsistencyCmd(this, cr, false);
 				}
 			} else if (crt.name().startsWith(CRD_QASPEC_PREFIX) ) { // a qa constraint
-				log.debug(String.format("QA Constraint %s now %s ", crt.name(), op.value().toString()));
+				log.debug(String.format("QA Constraint %s now %s ", crt.name(), op.value() != null ? op.value().toString() : "NULL"));
 				//processQAEvent(cr, op); Boolean.parseBoolean(op.value().toString())
-				return new QAConstraintChangedCmd(this, cr, Boolean.parseBoolean(op.value().toString()));
+				return op.value() != null ? new QAConstraintChangedCmd(this, cr, Boolean.parseBoolean(op.value().toString())) : 
+					new QAConstraintChangedCmd(this, cr, true);			
 			}	else
 				log.debug(String.format("Step %s has rule %s evaluate to %s", this.getName(), crt.name(), op.value().toString()));
 		}
@@ -597,7 +602,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			case ACTIVE:
 			case ENABLED:
 				if (prevExpectedSM.equals(State.AVAILABLE) && isImmediateDataPropagationEnabled() && this.getOutDNI() != null ) {
-					this.getOutDNI().initiateDownstreamSteps(true); // to prepare the next steps further downstream even though they should not start yet.
+					events.addAll(this.getOutDNI().initiateDownstreamSteps(true)); // to prepare the next steps further downstream even though they should not start yet.
 				}
 			} 
 		}
@@ -635,13 +640,21 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 		td.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
-				String name = CRD_DATAMAPPING_PREFIX+entry.getKey()+"_"+instType.name();
-				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, entry.getValue());
-				if (crt == null) {
-					log.error("Expected Rule for existing process not found: "+name);
-					status.put(name, "Corrupt data - Expected Rule not found");
-				} else
+				String name = getDataMappingId(entry, td);
+				String propName = CRD_DATAMAPPING_PREFIX+entry.getKey();
+				InstanceType stepType = getOrCreateDesignSpaceInstanceType(ws, td);
+				PropertyType ioPropType = stepType.getPropertyType(propName);
+				InstanceType ruleType = ioPropType.referencedInstanceType();
+				if (ruleType == null) 	{			
+//				String name = CRD_DATAMAPPING_PREFIX+entry.getKey()+"_"+instType.name();
+//				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, entry.getValue());
+//				if (crt == null) {					
+					log.error("Expected Datamapping Rule for existing process not found: "+name);
+					status.put(name, "Corrupt data - Expected Datamapping Rule not found");
+				} else {
+					ConsistencyRuleType crt = (ConsistencyRuleType)ruleType;
 					status.put(name, crt.hasRuleError() ? crt.ruleError() : "valid");
+				}
 			});
 		//qa constraints:
 		ProcessDefinition pd = td.getProcess() !=null ? td.getProcess() : (ProcessDefinition)td;
@@ -703,7 +716,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			td.getInputToOutputMappingRules().entrySet().stream()
 				.forEach(entry -> {
 					if (entry.getValue() != null) {
-						ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeStep, getDataMappingId(entry, td), entry.getValue()); 
+						ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeStep, getDataMappingId(entry, td), completeDatamappingRule(entry.getKey(), entry.getValue())); 
 						typeStep.createPropertyType(CRD_DATAMAPPING_PREFIX+entry.getKey(), Cardinality.SINGLE, crt);					
 					}//assert ConsistencyUtils.crdValid(crt); as no workspace.concludeTransaction is called here, no need to assert this here, as will never be false here	
 				});
@@ -711,6 +724,14 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			typeStep.createPropertyType(CoreProperties.qaState.toString(), Cardinality.MAP, ConstraintWrapper.getOrCreateDesignSpaceCoreSchema(ws));
 			return typeStep;
 		}
+	}
+	
+	private static String completeDatamappingRule(String param, String rule) {
+		return rule
+				+"\r\n"
+				+"->asSet()\r\n"  
+				+"->symmetricDifference(self.out_"+param+")\r\n"  
+				+"->size() = 0";
 	}
 	
 	public static String getDataMappingId(Map.Entry<String,String> ioMapping, StepDefinition sd) {

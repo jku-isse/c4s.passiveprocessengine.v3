@@ -46,11 +46,11 @@
 	</repositories>
 
 	<dependencies>
-		<dependency>
+<!-- 		<dependency>
 			<groupId>JKU.ISSE</groupId>
 			<artifactId>c4s.artifact.api</artifactId>
 			<version>4.1.12-SNAPSHOT</version>
-		</dependency>
+		</dependency> -->
 		<dependency>
 			<groupId>at.jku.isse.designspace</groupId>
 			<artifactId>core</artifactId>

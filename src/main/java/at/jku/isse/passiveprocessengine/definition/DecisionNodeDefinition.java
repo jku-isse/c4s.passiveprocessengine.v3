@@ -1,7 +1,6 @@
 package at.jku.isse.passiveprocessengine.definition;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -11,14 +10,13 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
-import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition.CoreProperties;
 
 public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 
-	public static enum CoreProperties {inFlowType, dataMappingDefinitions, inSteps, outSteps}
+	public static enum CoreProperties {inFlowType, dataMappingDefinitions, inSteps, outSteps, hierarchyDepth}
 	
 	public static final String designspaceTypeId = DecisionNodeDefinition.class.getSimpleName();
 	
@@ -77,6 +75,16 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 			.collect(Collectors.toSet());
 	}
 	
+	public void setDepthIndexRecursive(int indexToSet) {		
+		instance.getPropertyAsSingle(CoreProperties.hierarchyDepth.toString()).set(indexToSet);
+		int newIndex = this.getOutSteps().size() > 1 ? indexToSet +1 : indexToSet; // we only increase the depth when we branch out	
+		this.getOutSteps().stream().forEach(step -> step.setDepthIndexRecursive(newIndex));				
+	}
+	
+	public Integer getDepthIndex() {
+		return (Integer) instance.getPropertyAsValueOrElse(CoreProperties.hierarchyDepth.toString(), () -> -1);
+	}
+	
 	@Override
 	public void deleteCascading() {
 		this.getMappings().forEach(md -> md.deleteCascading());
@@ -96,6 +104,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 				typeStep.createPropertyType(CoreProperties.inSteps.toString(), Cardinality.SET, StepDefinition.getOrCreateDesignSpaceCoreSchema(ws));
 				typeStep.createPropertyType(CoreProperties.outSteps.toString(), Cardinality.SET, StepDefinition.getOrCreateDesignSpaceCoreSchema(ws));
 				typeStep.createPropertyType(CoreProperties.dataMappingDefinitions.toString(), Cardinality.SET, MappingDefinition.getOrCreateDesignSpaceCoreSchema(ws));
+				typeStep.createPropertyType((CoreProperties.hierarchyDepth.toString()), Cardinality.SINGLE, Workspace.INTEGER);
 				return typeStep;
 			}
 	}
@@ -104,6 +113,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), dndId);
 		// default AND
 		instance.getPropertyAsSingle(CoreProperties.inFlowType.toString()).set(InFlowType.AND.toString());
+		instance.getPropertyAsSingle(CoreProperties.hierarchyDepth.toString()).set(-1);
 		return WrapperCache.getWrappedInstance(DecisionNodeDefinition.class, instance);
 	}
 	

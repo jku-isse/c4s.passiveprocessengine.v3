@@ -1,7 +1,6 @@
 package at.jku.isse.passiveprocessengine.definition.serialization;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -9,11 +8,8 @@ import java.util.stream.Collectors;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.WrapperCache;
-import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator;
-import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -24,6 +20,9 @@ public class ProcessRegistry {
 	
 	protected Set<DTOs.Process> cachePD = new HashSet<>();
 	protected boolean isInit = false;
+	
+	public static final String CONFIG_KEY_doGeneratePrematureRules = "doGeneratePrematureRules";
+	public static final String CONFIG_KEY_doImmediateInstantiateAllSteps = "doImmediateInstantiateAllSteps";
 	
 	public ProcessRegistry() {
 		
@@ -66,11 +65,18 @@ public class ProcessRegistry {
 		Optional<ProcessDefinition> optPD = getProcessDefinition(process.getCode());
 		if (optPD.isEmpty()) {
 			log.debug("Storing new process: "+process.getCode());
-			ProcessDefinition pd = DefinitionTransformer.fromDTO(process, ws);
-			boolean doGeneratePrematureRules = false; //TODO: make configurable per Process by putting this into the DTO
+			ProcessDefinition pd = DefinitionTransformer.fromDTO(process, ws);						
+			boolean doGeneratePrematureRules = false; 
+			if (Boolean.parseBoolean(process.getProcessConfig().getOrDefault(CONFIG_KEY_doGeneratePrematureRules, "false")))
+				doGeneratePrematureRules = true;
 			pd.initializeInstanceTypes(doGeneratePrematureRules);
 			boolean doImmediatePropagate = !doGeneratePrematureRules;
 			pd.setImmediateDataPropagationEnabled(doImmediatePropagate);
+			
+			boolean doImmediateInstantiateAllSteps = false; 
+			if (Boolean.parseBoolean(process.getProcessConfig().getOrDefault(CONFIG_KEY_doImmediateInstantiateAllSteps, "true")))
+				doImmediateInstantiateAllSteps = true;
+			pd.setImmediateInstantiateAllStepsEnabled(doImmediateInstantiateAllSteps);
 			return pd;
 		} else {
 			log.debug("Reusing process: "+process.getCode());
