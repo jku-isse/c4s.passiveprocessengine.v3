@@ -172,7 +172,9 @@ public class InputToOutputMapper {
   	childW.update();
       childW.concludeTransaction();
   }
+ 
   ConsistencyRuleType childCRD =  childW.findElement(crd.id());
+ 
   RuleService.currentWorkspace = childW;
   RuleService.evaluator.evaluateAll();
   ConsistencyRule inconsistency = childCRD.consistencyRuleEvaluation(contextInstance);
@@ -190,6 +192,7 @@ public class InputToOutputMapper {
   convertRepairsToWorkspace(crd.workspace,concreteRepairs);
   RuleService.currentWorkspace = crd.workspace;
   return concreteRepairs;
+ 
 }
 	
 	

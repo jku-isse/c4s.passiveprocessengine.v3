@@ -29,6 +29,13 @@ public class ProcessRegistry {
 		
 	}
 	
+	//Added Code
+	public Workspace getWorkspace()
+	{
+		return this.ws;
+	}
+	//End
+	
 	public void inject(Workspace ws) {
 		this.ws=ws;
 		procDefType = ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);	
