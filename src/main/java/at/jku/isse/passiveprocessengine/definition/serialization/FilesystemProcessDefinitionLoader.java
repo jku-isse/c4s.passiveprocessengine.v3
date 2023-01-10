@@ -16,6 +16,13 @@ public class FilesystemProcessDefinitionLoader {
 	
 	protected ProcessRegistry registry;
 	
+	// Added Code
+	public ProcessRegistry getRegistry()
+	{
+		return this.registry;
+	}
+	// END
+	
 	public FilesystemProcessDefinitionLoader(ProcessRegistry registry) {
 		this.registry = registry;
 	}

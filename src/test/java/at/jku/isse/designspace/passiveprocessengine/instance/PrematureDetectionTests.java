@@ -25,6 +25,9 @@ import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.Rule;
+import at.jku.isse.designspace.rule.repair.order.RepairNodeScorer;
+import at.jku.isse.designspace.rule.repair.order.RepairStats;
+import at.jku.isse.designspace.rule.repair.order.SortOnRepairPercentage;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
@@ -54,6 +57,7 @@ import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStepStats;
 import at.jku.isse.passiveprocessengine.monitoring.RepairAnalyzer;
+import at.jku.isse.passiveprocessengine.monitoring.ReplayTimeProvider;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -66,6 +70,9 @@ class PrematureDetectionTests {
 	static JsonDefinitionSerializer json = new JsonDefinitionSerializer();
 	static ProcessQAStatsMonitor monitor;
 	static RepairAnalyzer repAnalyzer;
+	static RepairStats rs=new RepairStats();
+	static RepairNodeScorer scorer=new SortOnRepairPercentage();
+	static ReplayTimeProvider timeProvider=new ReplayTimeProvider();
 	
 	@BeforeEach
 	void setup() throws Exception {
@@ -77,7 +84,7 @@ class PrematureDetectionTests {
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
 		eventDistrib.registerHandler(monitor);
 		picp = new ProcessInstanceChangeProcessor(ws, eventDistrib);
-		repAnalyzer = new RepairAnalyzer(ws);
+		repAnalyzer = new RepairAnalyzer(ws,rs,scorer,timeProvider);
 		WorkspaceListenerSequencer wsls = new WorkspaceListenerSequencer(ws);
 		wsls.registerListener(repAnalyzer);
 		wsls.registerListener(picp);
