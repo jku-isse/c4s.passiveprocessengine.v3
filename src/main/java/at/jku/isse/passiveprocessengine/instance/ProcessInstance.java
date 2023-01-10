@@ -2,6 +2,8 @@ package at.jku.isse.passiveprocessengine.instance;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -23,6 +25,7 @@ import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.PrematureStepTriggerCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
+import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -123,7 +126,9 @@ public class ProcessInstance extends ProcessStep {
 		if (isOk.getError() == null) {
 			// now see if we need to map this to first DNI - we assume all went well
 			getDecisionNodeInstances().stream()
-			.filter(dni -> dni.getInSteps().size() == 0)
+			.filter(dni -> this.isImmediateInstantiateAllStepsEnabled() || dni.getInSteps().size() == 0)
+			//when all steps are immediately enabled trigger all dnis to propagate, just to be on the safe side, we would actually only need to trigger those that obtain data from this param at process level
+			// otherwise just first
 			.forEach(dni -> {
 				//dni.tryActivationPropagation(); // to trigger mapping to first steps
 				dni.signalPrevTaskDataChanged(this);
@@ -264,7 +269,10 @@ public class ProcessInstance extends ProcessStep {
 		super.init(ws, pdef, inDNI, outDNI);		
 		if (isImmediateInstantiateAllStepsEnabled()) {
 			// instantiate all steps and thereby the DNIs
-			pdef.getStepDefinitions().stream().forEach(sd -> createAndWireTask(sd));			
+			pdef.getStepDefinitions().stream().forEach(sd -> { 
+				ProcessStep step = createAndWireTask(sd); 				
+				//step.getInDNI().tryDataPropagationToPrematurelyTriggeredTask(); no point in triggering as there is no input available at this stage
+			});			
 		} // now also activate first
 		pdef.getDecisionNodeDefinitions().stream()
 			.filter(dnd -> dnd.getInSteps().size() == 0)
