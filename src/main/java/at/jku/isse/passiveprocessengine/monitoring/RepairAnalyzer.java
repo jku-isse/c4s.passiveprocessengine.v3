@@ -35,6 +35,7 @@ import at.jku.isse.designspace.rule.arl.repair.RepairAction;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.arl.repair.RepairTreeFilter;
 import at.jku.isse.designspace.rule.arl.repair.SideEffect;
+import at.jku.isse.designspace.rule.arl.repair.UnknownRepairValue;
 import at.jku.isse.designspace.rule.arl.repair.SideEffect.Type;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
@@ -86,10 +87,10 @@ public class RepairAnalyzer implements WorkspaceListener {
 	Map<ConsistencyRule, Set<RepairAction>> unselectedRepairstemp = new HashMap<>();
 	RepairAction_LogStats ra_Log = new RepairAction_LogStats();
 	RepairNodeScorer scorer;
-	ReplayTimeProvider time;
+	ITimeStampProvider time;
 	// end
 
-	public RepairAnalyzer(Workspace ws, RepairStats rs, RepairNodeScorer scorer, ReplayTimeProvider timeprovider) {
+	public RepairAnalyzer(Workspace ws, RepairStats rs, RepairNodeScorer scorer, ITimeStampProvider timeprovider) {
 
 		this.ws = ws;
 		this.node_counter = new NodeCounter(rs);
@@ -164,7 +165,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 		}
 	}
 
-	public ReplayTimeProvider getTime() {
+	public ITimeStampProvider getTime() {
 		return time;
 	}
 
@@ -344,7 +345,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 		case ADD:
 			if (op instanceof PropertyUpdateAdd) {
 				Object rValue = ra.getValue();
-				if (rValue == null) { // if null, then any value to ADD is fine
+				if (rValue == UnknownRepairValue.UNKNOWN) { // if null, then any value to ADD is fine
 					return true;
 				} else { // we have a concrete repair that we need to compare values for
 					Object opValue = op.value(); // should be an id for instances to be removed, otherwise the face
@@ -360,7 +361,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 		case REMOVE:
 			if (op instanceof PropertyUpdateRemove) {
 				Object rValue = ra.getValue();
-				if (rValue == null) { // if null, then any value to REMOVE is fine
+				if (rValue == UnknownRepairValue.UNKNOWN) { // if null, then any value to REMOVE is fine
 					return true;
 				} else { // we have a concrete repair that we need to compare values for
 					Object opValue = op.value(); // should be an id for instances to be added, otherwise the face value
@@ -383,15 +384,13 @@ public class RepairAnalyzer implements WorkspaceListener {
 				if (opValue instanceof Id && rValue instanceof Instance) {
 					return opValue.equals(((Instance) rValue).id());
 				}
-
-				// FIXME: hack to deal with isDefined() repairs
+				else if (rValue == UnknownRepairValue.UNKNOWN) // if repair suggest to set anything, any value set is fine TODO: (ignoring restrictions for now)
+					return true;				
 				else if (opValue != null)
 					return opValue.equals(rValue);
-
 				else {
 					return rValue==null;
 				}
-
 			}
 			break;
 		case MOD_GT:
@@ -462,7 +461,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 				Object rValue = ra.getValue();
 				// if this repair is suggesting to add ANY then true as this removal operation
 				// matches,
-				if (rValue == null) {
+				if (rValue == UnknownRepairValue.UNKNOWN) {
 					return true;
 				} else { // we have a concrete repair that we need to compare values for
 					Object opValue = op.value(); // should be an id for instances to be added, otherwise the face value
@@ -476,10 +475,10 @@ public class RepairAnalyzer implements WorkspaceListener {
 			}
 			break;
 		case REMOVE:
-			if (op instanceof PropertyUpdateAdd && ra.getValue() == null) { // if repair is suggesting to remove
+			if (op instanceof PropertyUpdateAdd) { // if repair is suggesting to remove
 				Object rValue = ra.getValue();
 				// if this repair is suggesting to remove any ANY then true,
-				if (rValue == null) {
+				if (rValue == UnknownRepairValue.UNKNOWN) {
 					return true;
 				} else { // we have a concrete repair that we need to compare values for
 					Object opValue = op.value(); // should be an id for instances to be added, otherwise the face value
@@ -496,17 +495,12 @@ public class RepairAnalyzer implements WorkspaceListener {
 			if (op instanceof PropertyUpdateSet) {
 				Object rValue = ra.getValue();
 				Object opValue = op.value(); // for Set operation/repair, both need to be present but could be NULL if
-												// that is the intended/desired value or the effect of the operation
-				// FIXME: HACK for now as isDefined abstract repair will represent "anything" as
-				// null, which is indistinguishable from a repair to actually set something to
-				// null
-				// for this we assume there is not rule currently in place that requires
-				// something to be null.
-				// if (rValue == null)
-				// return (opValue != null);
-				// if (opValue == null)
-				// return (rValue != null);
-				if (opValue == null)
+												// that is the intended/desired value or the effect of the operation								
+				if (opValue == null && rValue == null)
+					return false;
+				if (opValue == null && rValue != null)
+					return true;
+				if (rValue == null && opValue != null)
 					return true;
 				if (opValue instanceof Id && rValue instanceof Instance) {
 					return !opValue.equals(((Instance) rValue).id());
@@ -552,6 +546,10 @@ public class RepairAnalyzer implements WorkspaceListener {
 												// that is the intended/desired value or the effect of the operation
 				if (rValue == null && opValue == null)
 					return true;
+				if (opValue == null && rValue != null)
+					return false;
+				if (rValue == null && opValue != null)
+					return false;
 				if (opValue instanceof Id && rValue instanceof Instance) {
 					return opValue.equals(((Instance) rValue).id());
 				} else {
@@ -569,7 +567,9 @@ public class RepairAnalyzer implements WorkspaceListener {
 		// check for every consistency rule that is now newly inconsistent whether there
 		// is at least one NEGATIVE impact,
 		changedRuleResult.entrySet().stream().filter(entry -> entry.getValue() == true)
-				.filter(entry -> !entry.getKey().isConsistent()).map(entry -> entry.getKey()).forEach(cre -> {
+				.filter(entry -> !entry.getKey().isConsistent())
+				.map(entry -> entry.getKey())
+				.forEach(cre -> {
 					boolean hasNegImpact = latestImpact.values().stream().flatMap(set -> set.stream())
 							.filter(eff -> eff.getInconsistency().equals(cre))
 							.anyMatch(eff -> eff.getSideEffectType().equals(Type.NEGATIVE));
