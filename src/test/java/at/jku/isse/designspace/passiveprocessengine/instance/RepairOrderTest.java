@@ -143,6 +143,8 @@ public class RepairOrderTest {
 		repAnalyzer.printImpact();
 		repAnalyzer.getImpact().clear();
 		this.helperFunction();
+		rs.display_SelectedRep_DS();
+		rs.display_UnSelectedRep_DS();
 	}
 
 	//The test checks for the inverse operations in case of add and remove.
@@ -166,14 +168,45 @@ public class RepairOrderTest {
 		ws.concludeTransaction();
 		repAnalyzer.printImpact();
 		repAnalyzer.getImpact().clear();
+		rs.display_SelectedRep_DS();
+		rs.display_UnSelectedRep_DS();
 		TestArtifacts.addJiraToJira(jiraA, jiraB);
 		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Closed);
 		ws.concludeTransaction();
 		repAnalyzer.printImpact();
 		repAnalyzer.getImpact().clear();
 		this.helperFunction();
+		rs.display_SelectedRep_DS();
+		rs.display_UnSelectedRep_DS();
 	}
-
+// The test to check if remove template can become a part of the select nodes. Test Pass
+	@Test
+	void testClientOperationRemoveToFullfillCRE() throws ProcessException {
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		Instance jiraB = TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		ProcessDefinition procDef = TestProcesses.getComplexSingleStepProcessDefinition(ws);
+		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
+		proc.addInput("jiraIn", jiraA);
+		ws.concludeTransaction();
+		repAnalyzer.printImpact();
+		repAnalyzer.getImpact().clear();
+		TestArtifacts.setStateToJiraInstance(jiraA, JiraStates.Closed);
+		TestArtifacts.addJiraToJira(jiraA, jiraB);
+		TestArtifacts.addJiraToJira(jiraA, jiraC);
+		ws.concludeTransaction();
+		repAnalyzer.printImpact();
+		repAnalyzer.getImpact().clear();
+		TestArtifacts.setStateToJiraInstance(jiraA, JiraStates.Open);
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Closed);
+		TestArtifacts.removeJiraFromJira(jiraA, jiraB);
+		ws.concludeTransaction();
+		repAnalyzer.printImpact();
+		repAnalyzer.getImpact().clear();
+		rs.display_SelectedRep_DS();
+		rs.display_UnSelectedRep_DS();
+	}
+	
 	// The test check for the inverse operation in case of update.
 	@Test
 	void testOperationInverseUpdate() throws ProcessException {
@@ -217,6 +250,7 @@ public class RepairOrderTest {
 			Iterator<Rule> it_rule = rule.iterator();
 			while (it_rule.hasNext()) {
 				ConsistencyRule cre = (ConsistencyRule) it_rule.next();
+				System.out.println("Rule"+cre.ruleDefinition());
 				if(!cre.isConsistent())
 				{
 				RepairNode rn = RuleService.repairTree(cre);

@@ -25,6 +25,7 @@ import at.jku.isse.designspace.core.model.Element;
 import at.jku.isse.designspace.core.model.Id;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
+import at.jku.isse.designspace.core.model.Property;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.model.WorkspaceListener;
@@ -385,10 +386,10 @@ public class RepairAnalyzer implements WorkspaceListener {
 
 				// FIXME: hack to deal with isDefined() repairs
 				else if (opValue != null)
-					return true;
+					return opValue.equals(rValue);
 
 				else {
-					return opValue.equals(rValue);
+					return rValue==null;
 				}
 
 			}
@@ -670,18 +671,23 @@ public class RepairAnalyzer implements WorkspaceListener {
 			Set<SideEffect<ConsistencyRule>> effects = entryL.getValue();
 			// Client Operation
 			PropertyUpdate clientop = entryL.getKey();
-			// traverse through effects; so we can get to the cre
-			Iterator<SideEffect<ConsistencyRule>> itEffects = effects.iterator();
-			while (itEffects.hasNext()) {
-				SideEffect<ConsistencyRule> se_cre = itEffects.next();
+			for(SideEffect<ConsistencyRule> se_cre: effects) {
 				ConsistencyRule cre = se_cre.getInconsistency();
 				/*
 				 * Checks if the current operation is the inverse of any previous operation. if
 				 * yes; then removes the previous operation. As in other words, the user has
 				 * undo the operation
 				 */
-				if (se_cre.getSideEffectType() != SideEffect.Type.NONE)
-					checkClientOP(cre, clientop);
+				/*if (se_cre.getSideEffectType() != SideEffect.Type.NONE)
+					checkClientOP(cre, clientop);*/
+				Instance stepInst = cre.contextInstance();
+				Property nameInst=cre.getProperty("name");
+				Instance procInst = stepInst.getPropertyAsInstance("process");
+				if(procInst.name().equals("dronology-task-v2_UAV-847") || procInst.name().equals("dronology-task-v2_UAV-335"))
+				{
+					System.out.println("Process= "+procInst.name());
+					System.out.println("CP= "+clientop.toString());
+				}
 				// In Case the side effect type is positive
 				if (se_cre.getSideEffectType() == SideEffect.Type.POSITIVE) {
 					calculatepositiveSideEffect(se_cre, clientop);
@@ -694,28 +700,33 @@ public class RepairAnalyzer implements WorkspaceListener {
 		ConsistencyRule cre = se_cre.getInconsistency();
 		RepairNode rn = repairForRule.get(cre);
 		double highestRank=-1;
+		/*Instance stepInst = cre.contextInstance();
+		Property nameInst=cre.getProperty("name");
+		Instance procInst = stepInst.getPropertyAsInstance("process");
+		if(procInst.name().equals("dronology-task-v2_UAV-847") || procInst.name().equals("dronology-task-v2_UAV-335"))
+		{
+			System.out.println("Process= "+procInst.name());
+			System.out.println("CP= "+clientop.toString());
+		}*/
 		/*
 		 * if the repair node is not null which means that the repair for the cre was
 		 * suggested
 		 */
 		if (rn != null) {
-			this.scorer.calculateAndSetScore(rn, node_counter.getRepairStats());
+			//this.scorer.calculateAndSetScore(rn, node_counter.getRepairStats());
 			RepairTreeSorter rts = new RepairTreeSorter(node_counter.getRepairStats(), scorer);
 			rts.setScoreAndRanks(rn);
 			rts.printSortedRepairTree(rn, 1);
 			highestRank=rts.getMaxRank(rn);
 			
-			System.out.println("Maximum Rank is:\t"+highestRank);
-			
 			// get the previously suggested repairs
 			Set<RepairAction> ras = rn.getRepairActions();
-			Iterator<RepairAction> it = ras.iterator();
 			Set<RepairAction> unselected = new HashSet<RepairAction>();
 			boolean flag = true;
 			// Traverse through repair actions to find the one which have been chosen by the
 			// client
-			while (it.hasNext()) {
-				RepairAction ra = it.next();
+			for(RepairAction ra: ras) {
+				
 				// Checks if clientop matches the repair suggested by the repair tree
 				if (flag == true && this.doesOpMatchRepair(ra, clientop, clientop.elementId())) {
 					// add the matched ra into the list
@@ -729,6 +740,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 				} else
 					unselected.add(ra);
 			}
+			//Might be a bug. ToDo: get the unselected against a cre and add to the list then put the updated list.
 			unselectedRepairstemp.put(cre, unselected);
 		}
 		if (cre.isConsistent()) // CRE is fulfilled
@@ -813,9 +825,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 			node_counter.addtoSelectedRepairScore(loc);
 			// Add the unselected repairs into the list as well
 			Set<RepairAction> ras = unselectedRepairstemp.get(cre);
-			Iterator<RepairAction> it = ras.iterator();
-			while (it.hasNext()) {
-				RepairAction ra = it.next();
+			for(RepairAction ra:ras) {
 				node_counter.addtoUnSelectedRepairScore(ra);
 			}
 			node_counter.removeCRE(loc);
