@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.analysis;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,7 @@ import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.DataS
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.DataSource.IoType;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.StepParameter;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
@@ -68,6 +70,11 @@ public class RuleAugmentation {
 		//qa constraints:
 		ProcessDefinition pd = sd.getProcess() !=null ? sd.getProcess() : (ProcessDefinition)sd;
 		sd.getQAConstraints().stream()
+			.sorted(new Comparator<QAConstraintSpec>() {
+				@Override
+				public int compare(QAConstraintSpec o1, QAConstraintSpec o2) {					
+					return o1.getOrderIndex().compareTo(o2.getOrderIndex()) ;
+				}})
 			.forEach(spec -> {
 				String specId = ProcessStep.getQASpecId(spec, pd);
 				if (spec.getQaConstraintSpec() != null) {
