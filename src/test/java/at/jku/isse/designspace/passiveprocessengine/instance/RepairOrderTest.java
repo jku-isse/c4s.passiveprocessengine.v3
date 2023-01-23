@@ -57,7 +57,7 @@ public class RepairOrderTest {
 	static ProcessQAStatsMonitor monitor;
 	static RepairAnalyzer repAnalyzer;
 	static RepairStats rs = new RepairStats();
-	static RepairNodeScorer scorer=new SortOnRepairPercentage();
+	static RepairNodeScorer scorer=new SortOnRestriction();
 	static ReplayTimeProvider timeProvider=new ReplayTimeProvider();
 	@BeforeEach
 	void setup() throws Exception {

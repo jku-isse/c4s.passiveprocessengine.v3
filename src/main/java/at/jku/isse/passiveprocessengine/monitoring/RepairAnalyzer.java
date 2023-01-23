@@ -49,6 +49,7 @@ import at.jku.isse.designspace.rule.repair.order.OperationStats;
 import at.jku.isse.designspace.rule.repair.order.RepairNodeScorer;
 import at.jku.isse.designspace.rule.repair.order.RepairStats;
 import at.jku.isse.designspace.rule.repair.order.RepairTreeSorter;
+import at.jku.isse.designspace.rule.repair.order.Repair_template;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
@@ -85,7 +86,8 @@ public class RepairAnalyzer implements WorkspaceListener {
 	// Added field
 	NodeCounter node_counter;
 	Map<ConsistencyRule, Set<RepairAction>> unselectedRepairstemp = new HashMap<>();
-	RepairAction_LogStats ra_Log = new RepairAction_LogStats();
+	RepairAction_LogStats selected_ra_Log = new RepairAction_LogStats();
+	RepairAction_LogStats unselected_ra_Log = new RepairAction_LogStats();
 	RepairNodeScorer scorer;
 	ITimeStampProvider time;
 	// end
@@ -680,14 +682,14 @@ public class RepairAnalyzer implements WorkspaceListener {
 				 */
 				/*if (se_cre.getSideEffectType() != SideEffect.Type.NONE)
 					checkClientOP(cre, clientop);*/
-				Instance stepInst = cre.contextInstance();
+				/*Instance stepInst = cre.contextInstance();
 				Property nameInst=cre.getProperty("name");
 				Instance procInst = stepInst.getPropertyAsInstance("process");
-				if(procInst.name().equals("dronology-task-v2_UAV-847") || procInst.name().equals("dronology-task-v2_UAV-335"))
+				if(procInst.name().equals("dronology-task-v2_UAV-169"))
 				{
 					System.out.println("Process= "+procInst.name());
 					System.out.println("CP= "+clientop.toString());
-				}
+				}*/
 				// In Case the side effect type is positive
 				if (se_cre.getSideEffectType() == SideEffect.Type.POSITIVE) {
 					calculatepositiveSideEffect(se_cre, clientop);
@@ -700,14 +702,6 @@ public class RepairAnalyzer implements WorkspaceListener {
 		ConsistencyRule cre = se_cre.getInconsistency();
 		RepairNode rn = repairForRule.get(cre);
 		double highestRank=-1;
-		/*Instance stepInst = cre.contextInstance();
-		Property nameInst=cre.getProperty("name");
-		Instance procInst = stepInst.getPropertyAsInstance("process");
-		if(procInst.name().equals("dronology-task-v2_UAV-847") || procInst.name().equals("dronology-task-v2_UAV-335"))
-		{
-			System.out.println("Process= "+procInst.name());
-			System.out.println("CP= "+clientop.toString());
-		}*/
 		/*
 		 * if the repair node is not null which means that the repair for the cre was
 		 * suggested
@@ -718,7 +712,6 @@ public class RepairAnalyzer implements WorkspaceListener {
 			rts.setScoreAndRanks(rn);
 			rts.printSortedRepairTree(rn, 1);
 			highestRank=rts.getMaxRank(rn);
-			
 			// get the previously suggested repairs
 			Set<RepairAction> ras = rn.getRepairActions();
 			Set<RepairAction> unselected = new HashSet<RepairAction>();
@@ -726,11 +719,10 @@ public class RepairAnalyzer implements WorkspaceListener {
 			// Traverse through repair actions to find the one which have been chosen by the
 			// client
 			for(RepairAction ra: ras) {
-				
 				// Checks if clientop matches the repair suggested by the repair tree
 				if (flag == true && this.doesOpMatchRepair(ra, clientop, clientop.elementId())) {
 					// add the matched ra into the list
-					node_counter.addCREClientOP(cre, clientop, ra);
+					node_counter.addCREClientOP(se_cre.getInconsistency(), clientop, ra);
 					flag = false; // For now; we will change it later.
 					/*
 					 * For now it only takes the first repair action that matches and set the flag
@@ -740,24 +732,38 @@ public class RepairAnalyzer implements WorkspaceListener {
 				} else
 					unselected.add(ra);
 			}
-			//Might be a bug. ToDo: get the unselected against a cre and add to the list then put the updated list.
-			unselectedRepairstemp.put(cre, unselected);
+			//Resolved but keep an eye for now. Might be a bug. ToDo: get the unselected against a cre and add to the list then put the updated list.
+			unselectedRepairstemp.put(se_cre.getInconsistency(), unselected);
+			/*if(unselected.size()>0)
+			{
+			Set<RepairAction> temp=unselectedRepairstemp.get(cre);
+			if(temp!=null)
+			{
+				temp.addAll(unselected);
+				unselectedRepairstemp.put(cre, temp);
+			}
+			else
+				unselectedRepairstemp.put(cre, unselected);
+			}*/
 		}
 		if (cre.isConsistent()) // CRE is fulfilled
 		{
-			RepairAction_LogDS temp = new RepairAction_LogDS();
-			temp.setCRE(cre);
 			int loc = node_counter.getCRELocation(cre);
 			if (loc != -1) // Means repair action does exist and we had a repairTree
 			{
+				double r=highestRank;
 				Map<RepairAction, PropertyUpdate> allClientOp = node_counter.getClientOp(loc);
 				allClientOp.entrySet().stream().forEach(entry -> {
+					RepairAction_LogDS temp = new RepairAction_LogDS();
+					temp.setCRE(cre);
 					RepairAction raTemp=entry.getKey();
 					temp.setRa(raTemp);
-					temp.setOriginalARL(raTemp.getEvalNode().expression.getOriginalARL());
-					temp.setOperator(raTemp.getOperator().toString());
-					if(raTemp.getValue()!=null)
-						temp.setConcreteValue(raTemp.getValue().toString());
+					Repair_template rt=new Repair_template();
+					rt=rt.toRepairTemplate(raTemp);
+					temp.setOriginalARL(rt.getOriginalARL());
+					temp.setOperator(rt.getOperator());
+					if(rt.getConcreteValue()!=null)
+						temp.setConcreteValue(rt.getConcreteValue());
 					else
 						temp.setConcreteValue(null);
 					temp.setClientOp(entry.getValue());
@@ -774,11 +780,13 @@ public class RepairAnalyzer implements WorkspaceListener {
 						temp.setDate("");
 						temp.setTime("");
 					}
-					
+					temp.setHighest_rank(r);
+					selected_ra_Log.addData(temp);
 				});
-				temp.setHighest_rank(highestRank);
 			} else // Means we didn't have the repair tree
 			{
+				RepairAction_LogDS temp = new RepairAction_LogDS();
+				temp.setCRE(cre);
 				temp.setRa(null);
 				temp.setConcreteValue(null);
 				temp.setOriginalARL(null);
@@ -798,9 +806,8 @@ public class RepairAnalyzer implements WorkspaceListener {
 					temp.setDate("");
 					temp.setTime("");
 				}
-				
+				selected_ra_Log.addData(temp);
 			}
-			ra_Log.addData(temp);
 			// ra_Log.viewData();
 			cre_Fulfilled(cre);
 		}
@@ -823,14 +830,38 @@ public class RepairAnalyzer implements WorkspaceListener {
 		 */
 		if (loc != -1) {
 			node_counter.addtoSelectedRepairScore(loc);
-			// Add the unselected repairs into the list as well
+			// Add the unselected repairs into the list as well as into the log
 			Set<RepairAction> ras = unselectedRepairstemp.get(cre);
+			if(ras!=null)
+			{
 			for(RepairAction ra:ras) {
+				RepairAction_LogDS temp = new RepairAction_LogDS();
+				temp.setCRE(cre);
+				// adding to the templates
 				node_counter.addtoUnSelectedRepairScore(ra);
+				// adding to the log
+				temp.setRa(ra);
+				Repair_template rt=new Repair_template();
+				rt=rt.toRepairTemplate(ra);
+				System.out.println(rt.getOriginalARL()+" "+rt.getOperator()+" "+rt.getConcreteValue());
+				temp.setOriginalARL(rt.getOriginalARL());
+				temp.setOperator(rt.getOperator());
+				if(rt.getConcreteValue()!=null)
+					temp.setConcreteValue(rt.getConcreteValue());
+				else
+					temp.setConcreteValue(null);
+				temp.setClientOp(null);
+				temp.setRank(ra.getRank());
+				temp.setScore(ra.getScore());
+				temp.setDate("");
+				temp.setTime("");
+				temp.setHighest_rank(0);
+				unselected_ra_Log.addData(temp);
+			}
 			}
 			node_counter.removeCRE(loc);
+			unselectedRepairstemp.remove(cre);
 		}
-
 	}
 
 	public void checkClientOP(ConsistencyRule cre, PropertyUpdate clientop) {
@@ -985,8 +1016,12 @@ public class RepairAnalyzer implements WorkspaceListener {
 		Map<String, String> unsupportedRepairs;
 	}
 
-	public RepairAction_LogStats getRepairLogStats() {
-		return this.ra_Log;
+	public RepairAction_LogStats getSelected_RepairLogStats() {
+		return this.selected_ra_Log;
+	}
+	
+	public RepairAction_LogStats getUnSelected_RepairLogStats() {
+		return this.unselected_ra_Log;
 	}
 
 	public NodeCounter getnodeCounter() {
@@ -1000,5 +1035,9 @@ public class RepairAnalyzer implements WorkspaceListener {
 	public void setRepairNodeScorer(RepairNodeScorer scorer) {
 		this.scorer = scorer;
 	}
+
+	public Map<ConsistencyRule, Set<RepairAction>> getUnselectedRepairstemp() {
+		return unselectedRepairstemp;
+	}	
 
 }
