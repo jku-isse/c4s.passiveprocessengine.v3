@@ -707,68 +707,35 @@ public class RepairAnalyzer implements WorkspaceListener {
 		 * suggested
 		 */
 		if (rn != null) {
-			//this.scorer.calculateAndSetScore(rn, node_counter.getRepairStats());
 			RepairTreeSorter rts = new RepairTreeSorter(node_counter.getRepairStats(), scorer);
 			rts.setScoreAndRanks(rn);
-			//rts.printSortedRepairTree(rn, 1);
 			highestRank=rts.getMaxRank(rn);
-			// get the previously suggested repairs
-			Set<RepairAction> ras = rn.getRepairActions();
-			//Set<RepairAction> unselected = new HashSet<RepairAction>();
-			Set<RepairAction> temp=unselectedRepairstemp.get(cre);
-			//boolean flag = true;
-			// Traverse through repair actions to find the one which have been chosen by the
-			// client
-			for(RepairAction ra: ras) {
-				// Checks if clientop matches the repair suggested by the repair tree
-				if (/*flag == true &&*/ this.doesOpMatchRepair(ra, clientop, clientop.elementId())) {
-					// add the matched ra into the list
-					node_counter.addCREClientOP(se_cre.getInconsistency(), clientop, ra);
-				//	flag = false; // For now; we will change it later.
-					if(temp!=null)
-					{
-						if(temp.contains(ra))
-						{
-							temp.remove(ra);
-						}
-					}
-					/*
-					 * For now it only takes the first repair action that matches and set the flag
-					 * to false so that it doesn't check for others. Ideally only one repair action
-					 * should match with the client op.
-					 */
-				} else
+			if(unselectedRepairstemp.containsKey(cre))
+			{
+				for(RepairAction ra: rn.getRepairActions())
 				{
-					if(temp!=null)
-					{
-						if(!temp.contains(ra))
-						{
-						temp.add(ra);
-						}
-					}
-					else {
-						Set<RepairAction> unselected = new HashSet<RepairAction>();
-						unselected.add(ra);
-						temp=unselected;
-					}
-					//unselected.add(ra);
+					if(!unselectedRepairstemp.get(cre).contains(ra) && !node_counter.doesRAExistAgainstCRE(cre, ra))
+						unselectedRepairstemp.get(cre).add(ra);
 				}
-					
-			}
-			unselectedRepairstemp.put(se_cre.getInconsistency(), temp);
-			//Resolved but keep an eye for now. Might be a bug. ToDo: get the unselected against a cre and add to the list then put the updated list.
-			//unselectedRepairstemp.put(se_cre.getInconsistency(), unselected);
-			/*if(unselected.size()>0)
-			{
-			Set<RepairAction> temp=unselectedRepairstemp.get(cre);
-			if(temp!=null)
-			{
-				temp.addAll(unselected);
-				unselectedRepairstemp.put(cre, temp);
 			}
 			else
-				unselectedRepairstemp.put(cre, unselected);
-			}*/
+			{
+				unselectedRepairstemp.put(cre, rn.getRepairActions());
+			}
+			// Traverse through repair actions to find the one which have been chosen by the
+			// client
+			for(RepairAction ra: rn.getRepairActions()) {
+				// Checks if clientop matches the repair suggested by the repair tree
+				if (this.doesOpMatchRepair(ra, clientop, clientop.elementId())) {
+					// add the matched ra into the list
+					node_counter.addCREClientOP(se_cre.getInconsistency(), clientop, ra);
+					if(unselectedRepairstemp.containsKey(cre))
+					{
+						unselectedRepairstemp.get(cre).remove(ra);
+					}
+								
+				}		
+			}
 		}
 		if (cre.isConsistent()) // CRE is fulfilled
 		{
