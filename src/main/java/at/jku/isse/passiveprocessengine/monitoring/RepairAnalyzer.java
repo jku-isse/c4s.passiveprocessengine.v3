@@ -45,11 +45,11 @@ import at.jku.isse.designspace.rule.repair.Evaluation.RepairAction_LogDS;
 import at.jku.isse.designspace.rule.repair.Evaluation.RepairAction_LogStats;
 import at.jku.isse.designspace.rule.repair.order.CRE_DS;
 import at.jku.isse.designspace.rule.repair.order.NodeCounter;
-import at.jku.isse.designspace.rule.repair.order.OperationStats;
 import at.jku.isse.designspace.rule.repair.order.RepairNodeScorer;
 import at.jku.isse.designspace.rule.repair.order.RepairStats;
 import at.jku.isse.designspace.rule.repair.order.RepairTreeSorter;
 import at.jku.isse.designspace.rule.repair.order.Repair_template;
+import at.jku.isse.designspace.rule.repair.order.trigger;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
@@ -84,6 +84,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 	Map<String, String> unsupportedRepairs = new HashMap<>();
 
 	// Added field
+	trigger td=new trigger();
 	NodeCounter node_counter;
 	Map<ConsistencyRule, Set<RepairAction>> unselectedRepairstemp = new HashMap<>();
 	RepairAction_LogStats selected_ra_Log = new RepairAction_LogStats();
@@ -138,7 +139,8 @@ public class RepairAnalyzer implements WorkspaceListener {
 			determineConflictCausingNonRepairableOperations(); // this and the following method measure the same effect,
 																// upon inconsistency appearance, the other upon repair.
 			determineNotsuggestedRepairOperations();
-			this.calculateStats(latestImpact, repairForRule);
+			td.changeRuleTrigger(latestImpact,repairForRule);
+			//this.calculateStats(latestImpact, repairForRule);
 			// prepare for next round: for all unfulfilled constraints that were potentially
 			// affected now by changes, we store the current repair tree
 			changedRuleResult.keySet().stream().filter(cre -> !cre.isConsistent()).forEach(cre -> {
