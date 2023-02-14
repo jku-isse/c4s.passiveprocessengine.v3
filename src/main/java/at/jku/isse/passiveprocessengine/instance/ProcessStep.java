@@ -67,13 +67,6 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		initState();
 	}
 	
-	//check if those transient properties are correctly reset upon loading
-	//protected transient boolean arePreCondFulfilled = false;
-	//protected transient boolean arePostCondFulfilled = false;
-	//protected transient boolean areCancelCondFulfilled = false;
-	//protected transient boolean isWorkExpected = true;
-//	protected transient Map<String, ConstraintWrapper> qaState = new HashMap<>();
-	
 	protected transient boolean priorQAfulfilled = false;
 	
 	private void initState() {

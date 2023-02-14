@@ -27,6 +27,8 @@ public class Commands {
 		public abstract ProcessInstance getScope();
 		
 		public abstract List<Events.ProcessChangedEvent> execute();
+		
+		public abstract String getId();
 	}
 
     @Slf4j
@@ -69,6 +71,11 @@ public class Commands {
 			return "PrematureStepTriggerCmd [" + sd.getName() + " in "+procInst.getName()+" premature triggered: " + isFulfilled
 					+ "]";
 		}
+		
+		@Override
+		public String getId() {
+			return "PrematureStepTriggerCmd [" +procInst.getName()+sd.getName();
+		}
 	}
 	
 	@EqualsAndHashCode(callSuper=false)
@@ -91,6 +98,11 @@ public class Commands {
 		public ProcessInstance getScope() {
 			return step.getProcess();
 		}
+
+		@Override
+		public String getId() {
+			return "QAConstraintChangedCmd [" +step.getName()+crule.getInstanceType().name();
+		}				
 	}
 	
 	@EqualsAndHashCode(callSuper=false)
@@ -117,7 +129,10 @@ public class Commands {
 			return step.getProcess();
 		}
 		
-		
+		@Override
+		public String getId() {
+			return "IOMappingInconsistentCmd [" +step.getName()+crule.getInstanceType().name();
+		}
 	}
     
 	@EqualsAndHashCode(callSuper=false)
@@ -154,6 +169,11 @@ public class Commands {
 		public ProcessInstance getScope() {
 			return step.getProcess();
 		}
+		
+		@Override
+		public String getId() {
+			return "ConditionChangedCmd ["+step.getName()+condition.toString();
+		}
     }
     
 	@Data
@@ -187,7 +207,10 @@ public class Commands {
 			return step.getProcess();
 		}
 		
-		
+		@Override
+		public String getId() {
+			return "OutputChangedCmd [" +step.getName()+change.name();
+		}
 	}
     
     
