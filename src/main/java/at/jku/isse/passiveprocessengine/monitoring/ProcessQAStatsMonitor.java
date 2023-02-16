@@ -16,8 +16,9 @@ import com.google.gson.GsonBuilder;
 
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
+import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
-import at.jku.isse.passiveprocessengine.instance.messages.Events.PostconditionFulfillmentChanged;
+import at.jku.isse.passiveprocessengine.instance.messages.Events.ConditionFulfillmentChanged;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.QAConstraintFulfillmentChanged;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.QAFulfillmentChanged;
@@ -99,8 +100,9 @@ public class ProcessQAStatsMonitor implements IProcessEventHandler {
 		});
 		
 		events.stream()
-		.filter(PostconditionFulfillmentChanged.class::isInstance)
-		.map(PostconditionFulfillmentChanged.class::cast)
+		.filter(ConditionFulfillmentChanged.class::isInstance)
+		.map(ConditionFulfillmentChanged.class::cast)
+		.filter(e -> e.getCondition().equals(Conditions.POSTCONDITION))
 		.forEach(pfc -> { 
 			// if we are not in canceled or no work expected then signal downstream
 			if (pfc.getStep().getExpectedLifecycleState().equals(State.CANCELED) || pfc.getStep().getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED))

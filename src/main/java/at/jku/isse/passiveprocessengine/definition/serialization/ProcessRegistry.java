@@ -5,6 +5,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.WrapperCache;
@@ -23,6 +26,8 @@ public class ProcessRegistry {
 	
 	public static final String CONFIG_KEY_doGeneratePrematureRules = "doGeneratePrematureRules";
 	public static final String CONFIG_KEY_doImmediateInstantiateAllSteps = "doImmediateInstantiateAllSteps";
+	
+	
 	
 	public ProcessRegistry() {
 		

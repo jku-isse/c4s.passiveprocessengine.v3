@@ -38,7 +38,7 @@ public class InputToOutputMapper {
 		RepairNode repairTree = RuleService.repairTree(crule);
 		RepairTreeFilter rtf = new OutputUpdateRepairTreeFilter();
 		rtf.filterRepairTree(repairTree);
-		
+		//TODO: if there are (only) concrete repair actions (which should be the case with symmentric difference)
 		
 //		RepairNode rn = RuleService.repairTree(crule);
 //		if (!pruneRepairNode(rn, null)) {

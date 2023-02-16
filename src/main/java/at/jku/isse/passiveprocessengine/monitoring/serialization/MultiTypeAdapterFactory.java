@@ -16,7 +16,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-import at.jku.isse.passiveprocessengine.instance.messages.Events.PostconditionFulfillmentChanged;
+import at.jku.isse.passiveprocessengine.instance.messages.Events.ConditionFulfillmentChanged;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.QAFulfillmentChanged;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.StepStateTransitionEvent;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
@@ -36,8 +36,8 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
         if (type.getRawType() == StepStateTransitionEvent.class) {
         	return (TypeAdapter<T>) wrapStepStateTransitionEvent(gson, new TypeToken<StepStateTransitionEvent>() {});
         }
-        if (type.getRawType() == PostconditionFulfillmentChanged.class) {
-        	return (TypeAdapter<T>) wrapPostconditionFulfillmentChanged(gson, new TypeToken<PostconditionFulfillmentChanged>() {});
+        if (type.getRawType() == ConditionFulfillmentChanged.class) {
+        	return (TypeAdapter<T>) wrapPostconditionFulfillmentChanged(gson, new TypeToken<ConditionFulfillmentChanged>() {});
         }
         if (type.getRawType() == QAFulfillmentChanged.class) {
         	return (TypeAdapter<T>) wrapQAFulfillmentChanged(gson, new TypeToken<QAFulfillmentChanged>() {});
@@ -130,16 +130,18 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
 		};
 	}
 	
-	private TypeAdapter<PostconditionFulfillmentChanged> wrapPostconditionFulfillmentChanged(Gson gson, TypeToken<PostconditionFulfillmentChanged> type) {
-		return new TypeAdapter<PostconditionFulfillmentChanged>() {
+	private TypeAdapter<ConditionFulfillmentChanged> wrapPostconditionFulfillmentChanged(Gson gson, TypeToken<ConditionFulfillmentChanged> type) {
+		return new TypeAdapter<ConditionFulfillmentChanged>() {
 
 			@Override
-			public void write(JsonWriter out, PostconditionFulfillmentChanged value) throws IOException {
+			public void write(JsonWriter out, ConditionFulfillmentChanged value) throws IOException {
 				out.beginObject();
 				out.name("event");
 				out.value(value.getClass().getSimpleName());
 				out.name("step");
 				out.value(value.getStep().getDefinition().getName());
+				out.name("condition");
+				out.value(value.getCondition().toString());
 				out.name("isFulfilled");
 				out.value(value.isFulfilled());
 				out.name("timestamp");
@@ -148,7 +150,7 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
 			}
 
 			@Override
-			public PostconditionFulfillmentChanged read(JsonReader in) throws IOException {	
+			public ConditionFulfillmentChanged read(JsonReader in) throws IOException {	
 				throw new RuntimeException("Adapter not intended to be used for deserialization");
 			}
 		};
