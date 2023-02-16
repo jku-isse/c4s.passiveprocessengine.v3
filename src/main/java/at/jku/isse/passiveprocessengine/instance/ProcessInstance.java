@@ -172,6 +172,14 @@ public class ProcessInstance extends ProcessStep {
 		instance.getPropertyAsSet(CoreProperties.decisionNodeInstances.toString()).add(dni.getInstance());
 	}
 	
+	public Set<DecisionNodeInstance> getInstantiatedDNIsHavingStepsOutputAsInput(ProcessStep step, String output) {
+		String stepType = step.getDefinition().getName();
+		return this.getDecisionNodeInstances().stream()
+			.filter(dni -> dni.getDefinition().getMappings().stream()
+					.anyMatch(md -> md.getFromStepType().equals(stepType) && md.getFromParameter().equals(output)))
+			.collect(Collectors.toSet());
+	}
+	
 	public boolean isImmediateDataPropagationEnabled() {
 		if (getProcess() == null)
 			return getDefinition() != null ? getDefinition().isImmediateDataPropagationEnabled() : false;
