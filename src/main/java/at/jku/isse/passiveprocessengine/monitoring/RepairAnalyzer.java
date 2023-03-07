@@ -83,10 +83,6 @@ public class RepairAnalyzer implements WorkspaceListener {
 
 	// Added field
 	ProcessChangeEvents pce;
-	//NodeCounter node_counter;
-	//Map<ConsistencyRule, Set<RepairAction>> unselectedRepairstemp = new HashMap<>();
-	//RepairAction_LogStats selected_ra_Log = new RepairAction_LogStats();
-	//RepairAction_LogStats unselected_ra_Log = new RepairAction_LogStats();
 	RepairNodeScorer scorer;
 	ITimeStampProvider time;
 	// end
