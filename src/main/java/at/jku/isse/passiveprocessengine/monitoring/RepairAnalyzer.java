@@ -746,8 +746,8 @@ public class RepairAnalyzer implements WorkspaceListener {
 			});
 		} // else CRE doesn't exist
 	}
-
-	public boolean doesOperationsAreInverse(PropertyUpdate pu1, PropertyUpdate pu2) {
+*/
+	/*public boolean doesOperationsAreInverse(PropertyUpdate pu1, PropertyUpdate pu2) {
 		if (pu1.elementId() == pu2.elementId()) {
 			if (pu1.name().equals(pu2.name())) {
 				if (pu1 instanceof PropertyUpdateAdd && pu2 instanceof PropertyUpdateRemove)
