@@ -223,6 +223,41 @@ class InstanceTests {
 	}
 	
 	@Test
+	void testComplexDataMappingImmediateRemoveInput() throws ProcessException {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");//, "jiraB", "jiraC");
+		TestArtifacts.addJiraToJira(jiraA, jiraB);
+		TestArtifacts.addJiraToJira(jiraA, jiraC);	
+		
+		ProcessDefinition procDef = TestProcesses.getSimple2StepProcessDefinition(ws);
+		procDef.setImmediateInstantiateAllStepsEnabled(true);
+		procDef.setImmediateDataPropagationEnabled(true);
+		
+		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
+		proc.addInput("jiraIn", jiraA);
+		ws.concludeTransaction();
+		System.out.println(proc);
+		proc.getProcessSteps().stream().forEach(step -> System.out.println(step));
+		assert(proc.getExpectedLifecycleState().equals(State.ACTIVE)); 
+		
+		proc.addInput("jiraIn", jiraD);
+		proc.removeInput("jiraIn", jiraA);
+		assert(proc.getProcessSteps().stream()
+				.filter(step -> step.getDefinition().getName().equals("sd1") )
+				.allMatch(step -> step.getInput("jiraIn").size() == 1));
+		assert(proc.getProcessSteps().stream()
+				.filter(step -> step.getDefinition().getName().equals("sd1") )
+				.allMatch(step -> step.getOutput("jiraOut").size() == 2));
+		ws.concludeTransaction();
+		
+		assert(proc.getProcessSteps().stream()
+			.filter(step -> step.getDefinition().getName().equals("sd1") )
+			.allMatch(step -> step.getOutput("jiraOut").size() == 0));				
+	}
+	
+	@Test
 	void testRules() throws ProcessException {
 		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
 		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");

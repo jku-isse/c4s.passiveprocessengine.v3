@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import at.jku.isse.passiveprocessengine.instance.messages.Events.PostconditionFulfillmentChanged;
+import at.jku.isse.passiveprocessengine.instance.messages.Events.ConditionFulfillmentChanged;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.QAFulfillmentChanged;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.StepStateTransitionEvent;
@@ -25,7 +25,7 @@ public class ProcessStateChangeLog implements IProcessEventHandler{
 	@Override
 	public void handleEvents(Collection<ProcessChangedEvent> events) {
 		events.stream()
-		.filter(event -> event instanceof QAFulfillmentChanged || event instanceof PostconditionFulfillmentChanged || event instanceof StepStateTransitionEvent)
+		.filter(event -> event instanceof QAFulfillmentChanged || event instanceof ConditionFulfillmentChanged || event instanceof StepStateTransitionEvent)
 		.filter(event -> event.getProcScope() != null) // wont handle process instance events
 		.forEach(event -> {
 			event.setTimestamp(timeStampProvider.getLastChangeTimeStamp());
@@ -33,7 +33,6 @@ public class ProcessStateChangeLog implements IProcessEventHandler{
 			list.add(event);
 		});
 	}
-
 	
 	public Map<Long, List<ProcessChangedEvent>> logs = new HashMap<>();
 	

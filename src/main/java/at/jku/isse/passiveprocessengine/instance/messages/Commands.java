@@ -3,10 +3,12 @@ package at.jku.isse.passiveprocessengine.instance.messages;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import at.jku.isse.designspace.core.events.PropertyUpdate;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
+import at.jku.isse.passiveprocessengine.instance.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
@@ -27,6 +29,8 @@ public class Commands {
 		public abstract ProcessInstance getScope();
 		
 		public abstract List<Events.ProcessChangedEvent> execute();
+		
+		public abstract String getId();
 	}
 
     @Slf4j
@@ -69,6 +73,11 @@ public class Commands {
 			return "PrematureStepTriggerCmd [" + sd.getName() + " in "+procInst.getName()+" premature triggered: " + isFulfilled
 					+ "]";
 		}
+		
+		@Override
+		public String getId() {
+			return "PrematureStepTriggerCmd [" +procInst.getName()+sd.getName();
+		}
 	}
 	
 	@EqualsAndHashCode(callSuper=false)
@@ -91,6 +100,11 @@ public class Commands {
 		public ProcessInstance getScope() {
 			return step.getProcess();
 		}
+
+		@Override
+		public String getId() {
+			return "QAConstraintChangedCmd [" +step.getName()+crule.getInstanceType().name();
+		}				
 	}
 	
 	@EqualsAndHashCode(callSuper=false)
@@ -117,7 +131,10 @@ public class Commands {
 			return step.getProcess();
 		}
 		
-		
+		@Override
+		public String getId() {
+			return "IOMappingInconsistentCmd [" +step.getName()+crule.getInstanceType().name();
+		}
 	}
     
 	@EqualsAndHashCode(callSuper=false)
@@ -154,6 +171,11 @@ public class Commands {
 		public ProcessInstance getScope() {
 			return step.getProcess();
 		}
+		
+		@Override
+		public String getId() {
+			return "ConditionChangedCmd ["+step.getName()+condition.toString();
+		}
     }
     
 	@Data
@@ -162,19 +184,24 @@ public class Commands {
 		private final PropertyUpdate change;
 		
 		public List<Events.ProcessChangedEvent> execute() {
-			if (step.getOutDNI() != null && step.getActualLifecycleState().equals(State.COMPLETED) ) // to avoid NPE in case this is a ProcessInstance AND still some unexpected late output change
-				return step.getOutDNI().signalPrevTaskDataChanged(step);
-			else { 
-				List<Events.ProcessChangedEvent> events = new LinkedList<>();
-				// whenever there is output added or removed, it means someone was active regardless of otherstate (except for COMPLETED)
-				if (!step.getActualLifecycleState().equals(State.ACTIVE) && !step.getActualLifecycleState().equals(State.COMPLETED))
-					events.addAll(step.setActivationConditionsFulfilled());
-				if (step.getOutDNI() != null && step.isImmediateDataPropagationEnabled()) {
-					events.addAll(step.getOutDNI().tryDataPropagationToPrematurelyTriggeredTask());			
-					//FIXME: there might be instances used in steps further down, thus we also need to trigger their inDNIs as otherwise there wont be any instances added/removed)
-				}
-				return events;
+			List<Events.ProcessChangedEvent> events = new LinkedList<>();
+			// whenever there is output added or removed, it means someone was active regardless of otherstate (except for COMPLETED)
+			if (!step.getActualLifecycleState().equals(State.ACTIVE) && !step.getActualLifecycleState().equals(State.COMPLETED))
+				events.addAll(step.setActivationConditionsFulfilled());
+			// now lets take care of datapropagation
+			if (step.isImmediateDataPropagationEnabled() && step.getProcess() != null) {
+				// there might be instances used in steps further down (not just the outDNI, thus we also need to trigger their inDNIs as otherwise there wont be any instances added/removed)
+				// we find all DNIs that have this as input //TODO: are there any DNIs that should not be triggered? perhaps if two exclusive steps deliver the same output, both are active and have output mapped, then triggering might result in unpredictable mappings 
+				Set<DecisionNodeInstance> downstreamDNIs = step.getProcess().getInstantiatedDNIsHavingStepsOutputAsInput(step, change.name().substring(4));
+				downstreamDNIs.stream()
+					.forEach(dni -> events.addAll(dni.tryDataPropagationToPrematurelyTriggeredTask()));						
+			} else {
+				// just inform outDNI, if it exists and we are in state completed:
+				if (step.getOutDNI() != null && step.getActualLifecycleState().equals(State.COMPLETED)) {
+					return step.getOutDNI().signalPrevTaskDataChanged(step);											
+				}	
 			}
+			return events;
 		}
 
 		@Override
@@ -187,7 +214,10 @@ public class Commands {
 			return step.getProcess();
 		}
 		
-		
+		@Override
+		public String getId() {
+			return "OutputChangedCmd [" +step.getName()+change.name();
+		}
 	}
     
     
