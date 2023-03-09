@@ -55,7 +55,7 @@ public class WrapperCache {
 	public static <T extends InstanceWrapper> T getWrappedInstance(Class<? extends InstanceWrapper> clazz, Instance instance) {
 		//assert(instance != null);
 		if (instance == null) { 
-			log.error("WrapperCache was invoked with null instance");
+			log.debug("WrapperCache was invoked with null instance");
 			return null;
 		} else {
 		if (cache.containsKey(instance.id())) {
