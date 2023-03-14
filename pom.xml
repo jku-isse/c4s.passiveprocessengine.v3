@@ -59,7 +59,7 @@
 		<dependency>
 			<groupId>at.jku.isse.designspace</groupId>
 			<artifactId>rule</artifactId>
-			<version>4.3.1-SNAPSHOT</version>
+			<version>4.4.0-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>

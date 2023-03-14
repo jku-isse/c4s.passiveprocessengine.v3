@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
@@ -41,6 +42,7 @@ public class RuleAugmentation {
 		this.stepType = stepType;
 	}
 	
+	// This works for non-temporal constraints only
 	public void augmentConditions() throws ProcessException {
 		ProcessException pex = new ProcessException("Error augmenting transition conditions and/or QA constraints");
 		for (Conditions condition : Conditions.values()) {
@@ -172,4 +174,25 @@ public class RuleAugmentation {
 		return new DataSource(step, outParam.getName(), IoType.stepOut, "self.out_"+outParam.getName());
 	}
 	
+	// experiment with Temporal constraints
+	private void augmentTemporalPrecondition() {
+		Optional<String> preconditionOpt = sd.getCondition(Conditions.PRECONDITION);
+		if ( preconditionOpt.isEmpty() || sd.getInDND().getInSteps().isEmpty()) 			
+			return;// there is no precondition or this is the first process step
+		// for each prior step, if the completion status changes, then we reenable
+		// rule is something like for an AND:
+		// eventually(always( self.inDNI.inSteps->forAll(priorStep | priorStep.expectedLifecycleState='COMPLETED') -> eventually(EXISTINGPRECONDITION) ))
+		// once the prior step is complete (or complete again) then the step is ready as soon as the EXISTINGPRECONDITION holds, and 
+		// then we dont care if it no longer holds once it has hold, as we assume that any change to the input is reflected also in a change of the prior step's post conditions
+		// for an OR:
+		// eventually(always( self.inDNI.inSteps->select(priorStep | priorStep.expectedLifecycleState='COMPLETED' and priorStep.actualLifecycleState='COMPLETED').size()>0 -> eventually(EXISTINGPRECONDITION) )
+		//NOTE: this however will not result in failure as long at least one step is fulfilled, if one wants to signal that redoing a particular step should cause a rework of a subsequent step, then an OR is not suitable, but rather an AND is necessary
+		// rule for an XOR:
+		// eventually(always( self.inDNI.inSteps->select(priorStep | priorStep.expectedLifecycleState='COMPLETED' and priorStep.actualLifecycleState='COMPLETED').size()=1 -> eventually(EXISTINGPRECONDITION) )
+		//TODO: check is a switch over between two branches always results in a violation of this constraint --> is DNI.isInflowFulfilled temporarily violated when this happens?
+		
+		//we can just simplify this by checking the inDNI isInflowFullfilled flag
+		// eventually(always(self.inDNI.isInflowFulfilled=True -> eventually(EXISTINGPRECONDITION) ))
+		
+	}
 }

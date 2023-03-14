@@ -51,6 +51,7 @@ import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
+import at.jku.isse.passiveprocessengine.modeling.ElementInspectionUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Setter;
