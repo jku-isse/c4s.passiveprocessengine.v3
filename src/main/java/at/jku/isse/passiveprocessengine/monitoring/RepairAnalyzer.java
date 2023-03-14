@@ -36,20 +36,18 @@ import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.arl.repair.RepairTreeFilter;
 import at.jku.isse.designspace.rule.arl.repair.SideEffect;
 import at.jku.isse.designspace.rule.arl.repair.UnknownRepairValue;
+import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.arl.repair.SideEffect.Type;
+import at.jku.isse.designspace.rule.arl.repair.order.Event_DS;
+import at.jku.isse.designspace.rule.arl.repair.order.ProcessChangeEvents;
+import at.jku.isse.designspace.rule.arl.repair.order.RepairNodeScorer;
+import at.jku.isse.designspace.rule.arl.repair.order.RepairStats;
+import at.jku.isse.designspace.rule.arl.repair.order.RepairTreeSorter;
+import at.jku.isse.designspace.rule.arl.repair.order.Repair_template;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.ReservedNames;
 import at.jku.isse.designspace.rule.model.Rule;
-import at.jku.isse.designspace.rule.repair.Evaluation.RepairAction_LogDS;
-import at.jku.isse.designspace.rule.repair.Evaluation.RepairAction_LogStats;
-import at.jku.isse.designspace.rule.repair.order.CRE_DS;
-import at.jku.isse.designspace.rule.repair.order.NodeCounter;
-import at.jku.isse.designspace.rule.repair.order.OperationStats;
-import at.jku.isse.designspace.rule.repair.order.RepairNodeScorer;
-import at.jku.isse.designspace.rule.repair.order.RepairStats;
-import at.jku.isse.designspace.rule.repair.order.RepairTreeSorter;
-import at.jku.isse.designspace.rule.repair.order.Repair_template;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
@@ -84,10 +82,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 	Map<String, String> unsupportedRepairs = new HashMap<>();
 
 	// Added field
-	NodeCounter node_counter;
-	Map<ConsistencyRule, Set<RepairAction>> unselectedRepairstemp = new HashMap<>();
-	RepairAction_LogStats selected_ra_Log = new RepairAction_LogStats();
-	RepairAction_LogStats unselected_ra_Log = new RepairAction_LogStats();
+	ProcessChangeEvents pce;
 	RepairNodeScorer scorer;
 	ITimeStampProvider time;
 	// end
@@ -95,7 +90,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 	public RepairAnalyzer(Workspace ws, RepairStats rs, RepairNodeScorer scorer, ITimeStampProvider timeprovider) {
 
 		this.ws = ws;
-		this.node_counter = new NodeCounter(rs);
+		this.pce=new ProcessChangeEvents(rs);
 		this.scorer = scorer;
 		this.time=timeprovider;
 	}
@@ -138,7 +133,8 @@ public class RepairAnalyzer implements WorkspaceListener {
 			determineConflictCausingNonRepairableOperations(); // this and the following method measure the same effect,
 																// upon inconsistency appearance, the other upon repair.
 			determineNotsuggestedRepairOperations();
-			this.calculateStats(latestImpact, repairForRule);
+			//td.changeRuleTrigger(latestImpact,repairForRule,time.getLastChangeTimeStamp());
+			this.processLatestChanges();
 			// prepare for next round: for all unfulfilled constraints that were potentially
 			// affected now by changes, we store the current repair tree
 			changedRuleResult.keySet().stream().filter(cre -> !cre.isConsistent()).forEach(cre -> {
@@ -167,13 +163,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 		}
 	}
 
-	public ITimeStampProvider getTime() {
-		return time;
-	}
 
-	public void setTime(ReplayTimeProvider time) {
-		this.time = time;
-	}
 
 	private void determineChangedRuleEvaluations(List<Operation> operations) {
 		// has the status/result of this rule changed
@@ -665,230 +655,82 @@ public class RepairAnalyzer implements WorkspaceListener {
 
 	// Code by AB
 
-	public void calculateStats(Map<PropertyUpdate, Set<SideEffect<ConsistencyRule>>> latestImpact,
-			Map<ConsistencyRule, RepairNode> repairForRule) {
-		// temp();
-		latestImpact.entrySet().stream().forEach(entryL -> {
-			// Set of effects
-			Set<SideEffect<ConsistencyRule>> effects = entryL.getValue();
-			// Client Operation
-			PropertyUpdate clientop = entryL.getKey();
-			for(SideEffect<ConsistencyRule> se_cre: effects) {
+	public void processLatestChanges() {
+		
+		latestImpact.entrySet().stream().forEach(entryPU->{
+			
+			for(SideEffect<ConsistencyRule> se_cre: entryPU.getValue())
+			{
+				/*Storing the data of all changes along with  their details i.e. effectType, constraint, operation, process, etc. */
 				ConsistencyRule cre = se_cre.getInconsistency();
-				/*
-				 * Checks if the current operation is the inverse of any previous operation. if
-				 * yes; then removes the previous operation. As in other words, the user has
-				 * undo the operation
-				 */
-				/*if (se_cre.getSideEffectType() != SideEffect.Type.NONE)
-					checkClientOP(cre, clientop);*/
-				/*Instance stepInst = cre.contextInstance();
-				Property nameInst=cre.getProperty("name");
-				Instance procInst = stepInst.getPropertyAsInstance("process");
-				if(procInst.name().equals("dronology-task-v2_UAV-169"))
+				Instance stepInst = cre.contextInstance();
+				String rule=cre.getProperty("name").value.toString();
+				Event_DS event=new Event_DS(entryPU.getKey(), null, se_cre,cre, cre.isConsistent(), stepInst, null, time.getLastChangeTimeStamp(), null, 0, 0, 0);
+				this.pce.addExecuteEventLog(event);
+				this.pce.identifyUndo(event);
+				if(se_cre.getSideEffectType()==SideEffect.Type.POSITIVE)
 				{
-					System.out.println("Process= "+procInst.name());
-					System.out.println("CP= "+clientop.toString());
-				}*/
-				// In Case the side effect type is positive
-				if (se_cre.getSideEffectType() == SideEffect.Type.POSITIVE) {
-					calculatepositiveSideEffect(se_cre, clientop);
+				
+					/*For ranking we are only counting these changes w.r.t the constraint. As they are the ones
+					 * that are leading the rule towards the fulfillment.*/
+					updateCRE_matrix(se_cre, entryPU.getKey(),stepInst,time.getLastChangeTimeStamp());
+					if(cre.isConsistent())// change lead to cre fulfillment
+					{
+						// ToDo: Detect UnDo Operations and mitigate them from the list
+						this.pce.updateRepairTemplateScores(cre);
+					}
+				}
+				else if(se_cre.getSideEffectType()==SideEffect.Type.NEGATIVE)
+				{
+					/*The change has lead the constraint away from fulfillment or have introduced more inconsistencies.*/
+				}
+				else if(se_cre.getSideEffectType()==SideEffect.Type.NONE)
+				{
+					/*The change has no effect neither fulfilling nor unfulfilling.*/
+				}
+				else  // Assurance Check
+				{
+					System.out.println("Check It Out");
 				}
 			}
-		});
+			
+		});	
 	}
 
-	public void calculatepositiveSideEffect(SideEffect<ConsistencyRule> se_cre, PropertyUpdate clientop) {
+	public void updateCRE_matrix(SideEffect<ConsistencyRule> se_cre, PropertyUpdate clientop, Instance stepInst, OffsetDateTime dateTime)
+	{
 		ConsistencyRule cre = se_cre.getInconsistency();
+		String rule=cre.getProperty("name").value.toString();
 		RepairNode rn = repairForRule.get(cre);
-		double highestRank=-1;
+		int highestRank=-1;
 		/*
-		 * if the repair node is not null which means that the repair for the cre was
-		 * suggested
+		 * if the repair node is not null that means the repair for the cre was suggested
 		 */
 		if (rn != null) {
-			//this.scorer.calculateAndSetScore(rn, node_counter.getRepairStats());
-			RepairTreeSorter rts = new RepairTreeSorter(node_counter.getRepairStats(), scorer);
-			rts.setScoreAndRanks(rn);
-			//rts.printSortedRepairTree(rn, 1);
+			RepairTreeSorter rts=new RepairTreeSorter(this.pce.getRs(), scorer);
+			rts.updateTreeOnScores(rn,rule);
 			highestRank=rts.getMaxRank(rn);
-			// get the previously suggested repairs
-			Set<RepairAction> ras = rn.getRepairActions();
-			//Set<RepairAction> unselected = new HashSet<RepairAction>();
-			Set<RepairAction> temp=unselectedRepairstemp.get(cre);
-			//boolean flag = true;
-			// Traverse through repair actions to find the one which have been chosen by the
-			// client
-			for(RepairAction ra: ras) {
+			for(RepairAction ra: rn.getRepairActions()) {
 				// Checks if clientop matches the repair suggested by the repair tree
-				if (/*flag == true &&*/ this.doesOpMatchRepair(ra, clientop, clientop.elementId())) {
-					// add the matched ra into the list
-					node_counter.addCREClientOP(se_cre.getInconsistency(), clientop, ra);
-				//	flag = false; // For now; we will change it later.
-					if(temp!=null)
-					{
-						if(temp.contains(ra))
-						{
-							temp.remove(ra);
-						}
-					}
-					/*
-					 * For now it only takes the first repair action that matches and set the flag
-					 * to false so that it doesn't check for others. Ideally only one repair action
-					 * should match with the client op.
-					 */
-				} else
+				if (this.doesOpMatchRepair(ra, clientop, clientop.elementId())) 
 				{
-					if(temp!=null)
-					{
-						if(!temp.contains(ra))
-						{
-						temp.add(ra);
-						}
-					}
-					else {
-						Set<RepairAction> unselected = new HashSet<RepairAction>();
-						unselected.add(ra);
-						temp=unselected;
-					}
-					//unselected.add(ra);
-				}
-					
-			}
-			unselectedRepairstemp.put(se_cre.getInconsistency(), temp);
-			//Resolved but keep an eye for now. Might be a bug. ToDo: get the unselected against a cre and add to the list then put the updated list.
-			//unselectedRepairstemp.put(se_cre.getInconsistency(), unselected);
-			/*if(unselected.size()>0)
-			{
-			Set<RepairAction> temp=unselectedRepairstemp.get(cre);
-			if(temp!=null)
-			{
-				temp.addAll(unselected);
-				unselectedRepairstemp.put(cre, temp);
-			}
-			else
-				unselectedRepairstemp.put(cre, unselected);
-			}*/
-		}
-		if (cre.isConsistent()) // CRE is fulfilled
-		{
-			int loc = node_counter.getCRELocation(cre);
-			if (loc != -1) // Means repair action does exist and we had a repairTree
-			{
-				double r=highestRank;
-				Map<RepairAction, PropertyUpdate> allClientOp = node_counter.getClientOp(loc);
-				allClientOp.entrySet().stream().forEach(entry -> {
-					RepairAction_LogDS temp = new RepairAction_LogDS();
-					temp.setCRE(cre);
-					RepairAction raTemp=entry.getKey();
-					temp.setRa(raTemp);
 					Repair_template rt=new Repair_template();
-					rt=rt.toRepairTemplate(raTemp);
-					temp.setOriginalARL(rt.getOriginalARL());
-					temp.setOperator(rt.getOperator());
-					if(rt.getConcreteValue()!=null)
-						temp.setConcreteValue(rt.getConcreteValue());
-					else
-						temp.setConcreteValue(null);
-					temp.setClientOp(entry.getValue());
-					temp.setRank(entry.getKey().getRank());
-					temp.setScore(entry.getKey().getScore());
-					OffsetDateTime odt_=this.time.getLastChangeTimeStamp();
-					if(odt_!=null)
-					{
-						temp.setDate(odt_.toLocalDate().toString());
-						temp.setTime(odt_.toLocalTime().toString());
-					}
-					else
-					{
-						temp.setDate("");
-						temp.setTime("");
-					}
-					temp.setHighest_rank(r);
-					selected_ra_Log.addData(temp);
-				});
-			} else // Means we didn't have the repair tree
-			{
-				RepairAction_LogDS temp = new RepairAction_LogDS();
-				temp.setCRE(cre);
-				temp.setRa(null);
-				temp.setConcreteValue(null);
-				temp.setOriginalARL(null);
-				temp.setOperator(null);
-				temp.setClientOp(clientop);
-				temp.setRank(0);
-				temp.setHighest_rank(0);
-				temp.setScore(0);
-				OffsetDateTime odt_=this.time.getLastChangeTimeStamp();
-				if(odt_!=null)
-				{
-					temp.setDate(odt_.toLocalDate().toString());
-					temp.setTime(odt_.toLocalTime().toString());
+					rt=rt.toRepairTemplate(ra);
+					this.pce.updateExecutedEventLog(se_cre,clientop,stepInst,dateTime,rt,rn,ra,highestRank);
 				}
-				else
+				else // Storing the repairs suggested but not selected by the developer.
 				{
-					temp.setDate("");
-					temp.setTime("");
+					Repair_template rt=new Repair_template();
+					rt=rt.toRepairTemplate(ra);
+					Event_DS event=new Event_DS(null, ra,null, cre, cre.isConsistent(), stepInst, rt, time.getLastChangeTimeStamp(), ConsistencyUtils.getRepairTreeText(rn, 1, ""), highestRank, ra.getRank(), ra.getScore());
+					this.pce.addUnSelectRepairLog(event);
 				}
-				selected_ra_Log.addData(temp);
 			}
-			// ra_Log.viewData();
-			cre_Fulfilled(cre);
 		}
 	}
+	
 
-	public void cre_Fulfilled(ConsistencyRule cre) {
-		/*
-		 * Now the rule has been fulfilled so we need to store the repair templates
-		 * against all the operations that leaded to the cre fulfillment. ToDo: the
-		 * client operation list might contain the operations which were done by the
-		 * user against the cre but didn't take part into the fulfillment of the cre.
-		 * Will also be part of the repair template for now. Sticky notes have an
-		 * example of them.
-		 */
-		int loc = node_counter.getCRELocation(cre);
-		/*
-		 * loc will give -1 if the cre doesn't exist in the list in which case we do not
-		 * need to anything. but if it returns the location of the cre than we need to
-		 * store the repair template and remove the cre from the list
-		 */
-		if (loc != -1) {
-			node_counter.addtoSelectedRepairScore(loc);
-			// Add the unselected repairs into the list as well as into the log
-			Set<RepairAction> ras = unselectedRepairstemp.get(cre);
-			if(ras!=null)
-			{
-			for(RepairAction ra:ras) {
-				RepairAction_LogDS temp = new RepairAction_LogDS();
-				temp.setCRE(cre);
-				// adding to the templates
-				node_counter.addtoUnSelectedRepairScore(ra);
-				// adding to the log
-				temp.setRa(ra);
-				Repair_template rt=new Repair_template();
-				rt=rt.toRepairTemplate(ra);
-				//System.out.println(rt.getOriginalARL()+" "+rt.getOperator()+" "+rt.getConcreteValue());
-				temp.setOriginalARL(rt.getOriginalARL());
-				temp.setOperator(rt.getOperator());
-				if(rt.getConcreteValue()!=null)
-					temp.setConcreteValue(rt.getConcreteValue());
-				else
-					temp.setConcreteValue(null);
-				temp.setClientOp(null);
-				temp.setRank(ra.getRank());
-				temp.setScore(ra.getScore());
-				temp.setDate("");
-				temp.setTime("");
-				temp.setHighest_rank(0);
-				unselected_ra_Log.addData(temp);
-			}
-			}
-			node_counter.removeCRE(loc);
-			unselectedRepairstemp.remove(cre);
-		}
-	}
-
-	public void checkClientOP(ConsistencyRule cre, PropertyUpdate clientop) {
+	/*public void checkClientOP(ConsistencyRule cre, PropertyUpdate clientop) {
 		int loc_cre = node_counter.getCRELocation(cre);
 		if (loc_cre != -1) // Means the CRE exists in the list.
 		{
@@ -904,8 +746,8 @@ public class RepairAnalyzer implements WorkspaceListener {
 			});
 		} // else CRE doesn't exist
 	}
-
-	public boolean doesOperationsAreInverse(PropertyUpdate pu1, PropertyUpdate pu2) {
+*/
+	/*public boolean doesOperationsAreInverse(PropertyUpdate pu1, PropertyUpdate pu2) {
 		if (pu1.elementId() == pu2.elementId()) {
 			if (pu1.name().equals(pu2.name())) {
 				if (pu1 instanceof PropertyUpdateAdd && pu2 instanceof PropertyUpdateRemove)
@@ -917,7 +759,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 			return false;
 		}
 		return false;
-	}
+	}*/
 	// Code By AB
 	// End
 
@@ -1039,19 +881,7 @@ public class RepairAnalyzer implements WorkspaceListener {
 		Map<String, List<Integer>> repairSizeStats;
 		Map<String, String> unsupportedRepairs;
 	}
-
-	public RepairAction_LogStats getSelected_RepairLogStats() {
-		return this.selected_ra_Log;
-	}
 	
-	public RepairAction_LogStats getUnSelected_RepairLogStats() {
-		return this.unselected_ra_Log;
-	}
-
-	public NodeCounter getnodeCounter() {
-		return this.node_counter;
-	}
-
 	public RepairNodeScorer getRepairNodeScorer() {
 		return this.scorer;
 	}
@@ -1059,9 +889,20 @@ public class RepairAnalyzer implements WorkspaceListener {
 	public void setRepairNodeScorer(RepairNodeScorer scorer) {
 		this.scorer = scorer;
 	}
+	
+	public ProcessChangeEvents getTd() {
+		return this.pce;
+	}
 
-	public Map<ConsistencyRule, Set<RepairAction>> getUnselectedRepairstemp() {
-		return unselectedRepairstemp;
-	}	
+	public void setTd(ProcessChangeEvents td) {
+		this.pce = td;
+	}
+	public ITimeStampProvider getTime() {
+		return time;
+	}
+
+	public void setTime(ReplayTimeProvider time) {
+		this.time = time;
+	}
 
 }

@@ -16,16 +16,16 @@ import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
+import at.jku.isse.designspace.rule.arl.repair.order.RepairNodeScorer;
+import at.jku.isse.designspace.rule.arl.repair.order.RepairStats;
+import at.jku.isse.designspace.rule.arl.repair.order.RepairTreeSorter;
+import at.jku.isse.designspace.rule.arl.repair.order.SortOnRepairPercentage;
+import at.jku.isse.designspace.rule.arl.repair.order.SortOnRestriction;
 import at.jku.isse.designspace.rule.checker.ArlRuleEvaluator;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.ReservedNames;
 import at.jku.isse.designspace.rule.model.Rule;
-import at.jku.isse.designspace.rule.repair.order.RepairNodeScorer;
-import at.jku.isse.designspace.rule.repair.order.RepairStats;
-import at.jku.isse.designspace.rule.repair.order.RepairTreeSorter;
-import at.jku.isse.designspace.rule.repair.order.SortOnRepairPercentage;
-import at.jku.isse.designspace.rule.repair.order.SortOnRestriction;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
@@ -89,22 +89,22 @@ public class RepairOrderTest {
 		ws.concludeTransaction();
 		repAnalyzer.printImpact();
 		repAnalyzer.getImpact().clear();
-		rs.display_SelectedRep_DS();
-		rs.display_UnSelectedRep_DS();
+		//rs.display_SelectedRep_DS();
+		//rs.display_UnSelectedRep_DS();
 		TestArtifacts.addJiraToJira(jiraA, jiraB);
 		TestArtifacts.setStateToJiraInstance(jiraA, JiraStates.Closed);
 		ws.concludeTransaction();
 		repAnalyzer.printImpact();
 		repAnalyzer.getImpact().clear();
-		rs.display_SelectedRep_DS();
-		rs.display_UnSelectedRep_DS();
+		//rs.display_SelectedRep_DS();
+		//rs.display_UnSelectedRep_DS();
 		TestArtifacts.setStateToJiraInstance(jiraA, JiraStates.Open);
 		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Closed);
 		ws.concludeTransaction();
 		repAnalyzer.printImpact();
 		repAnalyzer.getImpact().clear();
-		rs.display_SelectedRep_DS();
-		rs.display_UnSelectedRep_DS();
+		//rs.display_SelectedRep_DS();
+		//rs.display_UnSelectedRep_DS();
 		
 	}
 
@@ -130,8 +130,8 @@ public class RepairOrderTest {
 		ws.concludeTransaction();
 		repAnalyzer.printImpact();
 		repAnalyzer.getImpact().clear();
-		rs.display_SelectedRep_DS();
-		rs.display_UnSelectedRep_DS();
+		//rs.display_SelectedRep_DS();
+		//rs.display_UnSelectedRep_DS();
 		
 		// Here the repair tree should show the add repair on top with high percentage.
 		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
@@ -143,8 +143,8 @@ public class RepairOrderTest {
 		repAnalyzer.printImpact();
 		repAnalyzer.getImpact().clear();
 		this.helperFunction();
-		rs.display_SelectedRep_DS();
-		rs.display_UnSelectedRep_DS();
+		//rs.display_SelectedRep_DS();
+		//rs.display_UnSelectedRep_DS();
 	}
 
 	//The test checks for the inverse operations in case of add and remove.
@@ -168,16 +168,16 @@ public class RepairOrderTest {
 		ws.concludeTransaction();
 		repAnalyzer.printImpact();
 		repAnalyzer.getImpact().clear();
-		rs.display_SelectedRep_DS();
-		rs.display_UnSelectedRep_DS();
+		//rs.display_SelectedRep_DS();
+		//rs.display_UnSelectedRep_DS();
 		TestArtifacts.addJiraToJira(jiraA, jiraB);
 		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Closed);
 		ws.concludeTransaction();
 		repAnalyzer.printImpact();
 		repAnalyzer.getImpact().clear();
 		this.helperFunction();
-		rs.display_SelectedRep_DS();
-		rs.display_UnSelectedRep_DS();
+		//rs.display_SelectedRep_DS();
+		//rs.display_UnSelectedRep_DS();
 	}
 // The test to check if remove template can become a part of the select nodes. Test Pass
 	@Test
@@ -203,8 +203,8 @@ public class RepairOrderTest {
 		ws.concludeTransaction();
 		repAnalyzer.printImpact();
 		repAnalyzer.getImpact().clear();
-		rs.display_SelectedRep_DS();
-		rs.display_UnSelectedRep_DS();
+		//rs.display_SelectedRep_DS();
+		//rs.display_UnSelectedRep_DS();
 	}
 	
 	// The test check for the inverse operation in case of update.
