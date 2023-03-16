@@ -94,7 +94,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		ConsistencyRuleType crt = (ConsistencyRuleType)cr.getInstanceType();
 		Conditions cond = determineCondition(crt);
 		if (cond != null ) {
-			log.debug(String.format("Step %s has %s evaluate to %s", this.getName(), cond, op.value().toString()));
+			log.debug(String.format("Step %s has %s evaluate to %s in transaction %s ", this.getName(), cond, op.value().toString(), op.getConclusionId()));
 			SingleProperty prop = instance.getPropertyAsSingle(cond.toString());
 			if (prop.get() == null) 
 				prop.set(cr);
@@ -630,6 +630,29 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			return getProcess().setActivationConditionsFulfilled();
 		} 
 		return Collections.emptyList();
+	}
+	
+	public List<ProcessScopedCmd> ensureRuleToStateConsistency() {
+		// ensure that the rule state is correctly reflected in the process step properties.
+		// bey checking every condition
+		List<ProcessScopedCmd> inconsistencies = new LinkedList<>();
+		if (this.getDefinition().getCondition(Conditions.PRECONDITION).isPresent()) {
+			Optional<ConsistencyRule> crOpt = this.getConditionStatus(Conditions.PRECONDITION);					
+			if (crOpt.isPresent()) {
+				ConsistencyRule cr = crOpt.get();
+				if (cr.isConsistent() != this.arePreCondFulfilled())
+					inconsistencies.add(new ConditionChangedCmd(this, Conditions.PRECONDITION, cr.isConsistent()));				
+			}						
+		}
+		if (this.getDefinition().getCondition(Conditions.POSTCONDITION).isPresent()) {
+			Optional<ConsistencyRule> crOpt = this.getConditionStatus(Conditions.POSTCONDITION);					
+			if (crOpt.isPresent()) {
+				ConsistencyRule cr = crOpt.get();
+				if (cr.isConsistent() != this.arePostCondFulfilled())
+					inconsistencies.add(new ConditionChangedCmd(this, Conditions.POSTCONDITION, cr.isConsistent()));				
+			}						
+		}
+		return inconsistencies;
 	}
 	
 	public static Map<String, String> getConstraintValidityStatus(Workspace ws, StepDefinition td) {

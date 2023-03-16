@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import at.jku.isse.designspace.core.events.ElementCreate;
@@ -43,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 //@Service
 public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 
+	private AtomicLong latestTransaction = new AtomicLong(0);
 	Workspace ws;
 	EventDistributor distributor = null;
 	//Map<Id, String> instanceIndex = Collections.synchronizedMap(new HashMap<>());
@@ -177,11 +179,22 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 		handleUpdates(operations);
 	}
 	
+	private void checkTransactionId(long id) {
+		long local = latestTransaction.getAcquire();
+		if (local > id) { 
+			log.error(String.format("Encountered Operation with an outdated transaction id: top current known id %s vs obtained id %s", local, id));
+		}
+		if (latestTransaction.getAcquire() < id) {
+			latestTransaction.set(id);
+		}
+	}
+	
 	protected Set<ProcessInstance> handleUpdates(List<Operation> operations) {
 		@SuppressWarnings("unchecked")
 		
 		List<ProcessScopedCmd> queuedEffects = (List<ProcessScopedCmd>) operations.stream()
 		 .map(operation -> {
+//			checkTransactionId(operation.getConclusionId());
  			Element element = ws.findElement(operation.elementId());
 				if (operation instanceof PropertyUpdateAdd) {
 					 return processPropertyUpdateAdd((PropertyUpdateAdd) operation, element);

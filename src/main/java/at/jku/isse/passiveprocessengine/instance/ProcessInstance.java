@@ -23,6 +23,7 @@ import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
+import at.jku.isse.passiveprocessengine.instance.messages.Commands.ConditionChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.PrematureStepTriggerCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
@@ -202,6 +203,15 @@ public class ProcessInstance extends ProcessStep {
 		// we are not deleting input and output artifacts as we are just referencing them!
 		// finally delete self via super call
 		super.deleteCascading();
+	}
+	
+	public List<ProcessScopedCmd> ensureRuleToStateConsistency() {
+		List<ProcessScopedCmd> incons = new LinkedList<>();
+		incons.addAll(super.ensureRuleToStateConsistency());
+		incons.addAll(getProcessSteps().stream()
+				.flatMap(step -> step.ensureRuleToStateConsistency().stream())
+				.collect(Collectors.toList()));
+		return incons;
 	}
 	
 	public static Map<String, String> getConstraintValidityStatus(Workspace ws, ProcessDefinition pd) {
