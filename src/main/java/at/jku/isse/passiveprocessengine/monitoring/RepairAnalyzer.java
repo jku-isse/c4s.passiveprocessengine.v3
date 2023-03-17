@@ -723,7 +723,9 @@ public class RepairAnalyzer implements WorkspaceListener {
 				{
 					Repair_template rt=new Repair_template();
 					rt=rt.toRepairTemplate(ra);
-					Event_DS event=new Event_DS(null, ra,null, cre, cre.isConsistent(), stepInst, rt, time.getLastChangeTimeStamp(), ConsistencyUtils.getRepairTreeText(rn, 1, ""), highestRank, ra.getRank(), ra.getScore());
+					Event_DS event=new Event_DS(null, ra,null, cre, cre.isConsistent(), stepInst, rt, time.getLastChangeTimeStamp(), 
+							"", //ConsistencyUtils.getRepairTreeText(rn, 1, ""), 
+							highestRank, ra.getRank(), ra.getScore());
 					this.pce.addUnSelectRepairLog(event);
 				}
 			}

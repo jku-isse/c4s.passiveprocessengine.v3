@@ -93,9 +93,10 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
-		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
-				.filter(it -> it.name().contentEquals(designspaceTypeId))
-				.findAny();
+		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId)); 
+		//= ws.debugInstanceTypes().stream()
+		//		.filter(it -> it.name().contentEquals(designspaceTypeId))
+		//		.findAny();
 			if (thisType.isPresent())
 				return thisType.get();
 			else {

@@ -41,13 +41,14 @@ public class QAConstraintSpec extends InstanceWrapper{
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
-		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
-				.filter(it -> it.name().contentEquals(designspaceTypeId))
-				.findAny();
+		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId)); 
+//		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
+//				.filter(it -> it.name().contentEquals(designspaceTypeId))
+//				.findAny();
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
-				InstanceType typeStep = ws.createInstanceType(designspaceTypeId, ws.ROOT_FOLDER);
+				InstanceType typeStep = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER);
 				// constraintId maps to Instance name property
 				typeStep.createPropertyType(CoreProperties.qaConstraintSpec.toString(), Cardinality.SINGLE, Workspace.STRING);
 				typeStep.createPropertyType(CoreProperties.humanReadableDescription.toString(), Cardinality.SINGLE, Workspace.STRING);

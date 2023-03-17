@@ -703,9 +703,10 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
-		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
-			.filter(it -> it.name().equals(ProcessStep.designspaceTypeId))
-			.findAny();
+		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId)); 
+//		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
+//			.filter(it -> it.name().equals(ProcessStep.designspaceTypeId))
+//			.findAny();
 		if (thisType.isPresent())
 			return thisType.get();
 		else {
@@ -727,10 +728,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	
 	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws, StepDefinition td) {
 		String stepName = getProcessStepName(td);
-		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
-				.filter(it -> !it.isDeleted)
-				.filter(it -> it.name().equals(stepName))
-				.findAny();
+//		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
+//				.filter(it -> !it.isDeleted)
+//				.filter(it -> it.name().equals(stepName))
+//				.findAny();
+		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(stepName));
 		if (thisType.isPresent())
 			return thisType.get();
 		else {

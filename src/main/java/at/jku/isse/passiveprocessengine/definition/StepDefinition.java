@@ -241,10 +241,11 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
-		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
-				.filter(it -> !it.isDeleted)
-				.filter(it -> it.name().contentEquals(designspaceTypeId))
-				.findAny();
+		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId)); 
+//		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
+//				.filter(it -> !it.isDeleted)
+//				.filter(it -> it.name().contentEquals(designspaceTypeId))
+//				.findAny();
 			if (thisType.isPresent())
 				return thisType.get();
 			else {

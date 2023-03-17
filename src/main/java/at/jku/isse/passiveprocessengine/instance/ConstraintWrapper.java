@@ -85,9 +85,10 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws){
-		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
-				.filter(it -> it.name().equals(designspaceTypeId))
-				.findAny();
+//		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
+//				.filter(it -> it.name().equals(designspaceTypeId))
+//				.findAny();
+		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId));
 			if (thisType.isPresent())
 				return thisType.get();
 			else {

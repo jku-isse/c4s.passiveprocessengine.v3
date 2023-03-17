@@ -232,10 +232,11 @@ public class ProcessInstance extends ProcessStep {
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws, ProcessDefinition td) {
-		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
-				.filter(it -> !it.isDeleted)
-				.filter(it -> it.name().equals(designspaceTypeId+td.getName()))
-				.findAny();
+//		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
+//				.filter(it -> !it.isDeleted)
+//				.filter(it -> it.name().equals(designspaceTypeId+td.getName()))
+//				.findAny();
+		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId+td.getName())); 
 		if (thisType.isPresent())
 			return thisType.get();
 		else {
