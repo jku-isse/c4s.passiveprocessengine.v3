@@ -666,19 +666,18 @@ public class RepairAnalyzer implements WorkspaceListener {
 				ConsistencyRule cre = se_cre.getInconsistency();
 				Instance stepInst = cre.contextInstance();
 				String rule=cre.getProperty("name").value.toString();
-				Event_DS event=new Event_DS(entryPU.getKey(), null, se_cre,cre, cre.isConsistent(), stepInst, null, time.getLastChangeTimeStamp(), null, 0, 0, 0);
-				this.pce.addExecuteEventLog(event);
+				Event_DS event=new Event_DS(entryPU.getKey(), null, se_cre,cre, cre.isConsistent(), stepInst, null, time.getLastChangeTimeStamp(), 0, 0, 0);
+				this.pce.addAllExecuteEventLog(event);
 				this.pce.identifyUndo(event);
+				//ToDo: generate Signals for these special calls
 				if(se_cre.getSideEffectType()==SideEffect.Type.POSITIVE)
 				{
-				
 					/*For ranking we are only counting these changes w.r.t the constraint. As they are the ones
 					 * that are leading the rule towards the fulfillment.*/
 					updateCRE_matrix(se_cre, entryPU.getKey(),stepInst,time.getLastChangeTimeStamp());
 					if(cre.isConsistent())// change lead to cre fulfillment
 					{
-						// ToDo: Detect UnDo Operations and mitigate them from the list
-						this.pce.updateRepairTemplateScores(cre);
+						this.pce.updateRepairTemplateSelectScores(cre);
 					}
 				}
 				else if(se_cre.getSideEffectType()==SideEffect.Type.NEGATIVE)
@@ -688,10 +687,6 @@ public class RepairAnalyzer implements WorkspaceListener {
 				else if(se_cre.getSideEffectType()==SideEffect.Type.NONE)
 				{
 					/*The change has no effect neither fulfilling nor unfulfilling.*/
-				}
-				else  // Assurance Check
-				{
-					System.out.println("Check It Out");
 				}
 			}
 			
@@ -717,14 +712,15 @@ public class RepairAnalyzer implements WorkspaceListener {
 				{
 					Repair_template rt=new Repair_template();
 					rt=rt.toRepairTemplate(ra);
-					this.pce.updateExecutedEventLog(se_cre,clientop,stepInst,dateTime,rt,rn,ra,highestRank);
+					Event_DS event=new Event_DS(clientop, ra, se_cre,cre, cre.isConsistent(), stepInst, rt, dateTime, highestRank,ra.getRank(),ra.getScore());
+					this.pce.addCRE_CurrentEventList(event);
+					this.pce.updateExecutedEventLog(se_cre,clientop,stepInst,dateTime,rt,ra);
 				}
 				else // Storing the repairs suggested but not selected by the developer.
 				{
 					Repair_template rt=new Repair_template();
 					rt=rt.toRepairTemplate(ra);
 					Event_DS event=new Event_DS(null, ra,null, cre, cre.isConsistent(), stepInst, rt, time.getLastChangeTimeStamp(), 
-							"", //ConsistencyUtils.getRepairTreeText(rn, 1, ""), 
 							highestRank, ra.getRank(), ra.getScore());
 					this.pce.addUnSelectRepairLog(event);
 				}
