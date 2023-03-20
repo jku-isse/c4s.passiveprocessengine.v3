@@ -544,6 +544,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		
 		ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
 		List<Events.ProcessChangedEvent> events = new LinkedList<>();
+		boolean doSignalRegression = false;
 		boolean tryProgress = false;		
 		if (actualSM.canFire(event)) {
 			State prevActualLifecycleState = actualSM.getState();
@@ -559,7 +560,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				case COMPLETED://fallthrough
 				case NO_WORK_EXPECTED: 
 					tryProgress = true;
-				}				
+				}
+				if (prevActualLifecycleState.equals(State.COMPLETED)) {
+					// we are no longer complete
+					doSignalRegression = true;
+				}
 			}
 		} else {
 			log.info(String.format("Step %s received (and ignored) for 'expectedSM' unexpected Event %s for State %s ", this.getName(),  event,  actualSM.getState()));			
@@ -612,7 +617,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				if (prevExpectedSM.equals(State.AVAILABLE) && isImmediateDataPropagationEnabled() && this.getOutDNI() != null ) {
 					events.addAll(this.getOutDNI().initiateDownstreamSteps(true)); // to prepare the next steps further downstream even though they should not start yet.
 				}
-			} 
+			}
+		}
+		// signal downstream if we are no longer complete
+		if (doSignalRegression && this.getOutDNI() != null) {
+			events.addAll(this.getOutDNI().signalPrevTaskNolongerComplete(this));
 		}
 		return events;
 	}

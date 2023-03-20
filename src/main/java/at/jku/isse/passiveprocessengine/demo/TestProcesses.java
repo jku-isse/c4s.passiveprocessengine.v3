@@ -205,7 +205,7 @@ public class TestProcesses {
 		sd1.addExpectedInput("jiraIn", typeJira);
 		sd1.addExpectedOutput("jiraOut", typeJira);
 
-		sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", 
+		sd1.addInputToOutputMappingRule("jiraOut", 
 			"self.in_jiraIn"
 				+ "->any()"
 				+ "->asType(<"+typeJira.getQualifiedName()+">)"

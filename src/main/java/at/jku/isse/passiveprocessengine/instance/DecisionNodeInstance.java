@@ -83,6 +83,10 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			.collect(Collectors.toSet());
 	}
 		
+	public List<Events.ProcessChangedEvent> signalPrevTaskNolongerComplete(ProcessStep prevTask) {
+		return tryInConditionsFullfilled();
+	}
+	
 	public List<Events.ProcessChangedEvent> signalPrevTaskDataChanged(ProcessStep prevTask) {
 		boolean isEndOfProcess = false;
 		if (this.getDefinition().getOutSteps().size() == 0 ) {
@@ -101,7 +105,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			boolean inFlowANDok = getInSteps().stream()
 				.filter(step -> !step.getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED) )
 				.filter(step -> !step.getExpectedLifecycleState().equals(State.CANCELED) )
-				.allMatch(step -> step.getExpectedLifecycleState().equals(State.COMPLETED) );
+				.allMatch(step -> step.getExpectedLifecycleState().equals(State.COMPLETED) && step.getActualLifecycleState().equals(State.COMPLETED) );
 			setInflowFulfilled(inFlowANDok);
 			return tryActivationPropagation(); // we can always trigger, check for inflowfulfilled is done there
 			
@@ -128,7 +132,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			boolean inFlowORok = getInSteps().stream()
 				.filter(step -> !step.getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED) )
 				.filter(step -> !step.getExpectedLifecycleState().equals(State.CANCELED) )
-				.anyMatch(step -> step.getExpectedLifecycleState().equals(State.COMPLETED) );
+				.anyMatch(step -> step.getExpectedLifecycleState().equals(State.COMPLETED) && step.getActualLifecycleState().equals(State.COMPLETED));
 			setInflowFulfilled(inFlowORok);
 			return tryActivationPropagation(); // we can always trigger, check for inflowfulfilled is done there
 			
@@ -155,7 +159,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			List<ProcessStep> steps = getInSteps().stream()
 			.filter(step -> !step.getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED) )
 			.filter(step -> !step.getExpectedLifecycleState().equals(State.CANCELED) )
-			.filter(step -> step.getExpectedLifecycleState().equals(State.COMPLETED) )
+			.filter(step -> step.getExpectedLifecycleState().equals(State.COMPLETED) && step.getActualLifecycleState().equals(State.COMPLETED) )
 			.collect(Collectors.toList());
 			setInflowFulfilled(steps.size() == 1);
 			
