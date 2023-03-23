@@ -45,11 +45,11 @@ public class Commands {
 				if (getScope().getProcessSteps().stream().noneMatch(t -> t.getDefinition().getId().equals(sd.getId()))) {
 					ProcessStep step = getScope().createAndWireTask(sd);
 					if (step != null) {
-						//TODO: set more precise inputs (or from further distance)
-						//TODO: trigger correct step transitions
+						// set more precise inputs (or from further distance) --> DNI will use input from further away if defined so in the inter-step data mappings
+						//: trigger correct step transitions --> adding input will result in proper constraint evaluation and hence step status
 						List<Events.ProcessChangedEvent> events = new LinkedList<>();
-						events.addAll(step.getInDNI().tryDataPropagationToPrematurelyTriggeredTask());
-						events.addAll(step.setActivationConditionsFulfilled());
+						events.addAll(step.getInDNI().doDataPropagationToPrematurelyTriggeredTask());
+						events.addAll(step.setActivationConditionsFulfilled(true));
 						return events;
 					} else {
 						log.warn(String.format("No step created while trying to execute premature invocation of %s in %s ", sd.getName(), procInst.getName()));
@@ -146,10 +146,8 @@ public class Commands {
 		@Override
 		public List<Events.ProcessChangedEvent> execute() {
 			switch(condition) {
-			case ACTIVATION:
-				if (isFulfilled)
-					return step.setActivationConditionsFulfilled();
-				else return Collections.emptyList();
+			case ACTIVATION:				
+				return step.setActivationConditionsFulfilled(isFulfilled);
 			case CANCELATION:
 				return step.setCancelConditionsFulfilled(isFulfilled);
 			case POSTCONDITION:
@@ -184,24 +182,7 @@ public class Commands {
 		private final PropertyUpdate change;
 		
 		public List<Events.ProcessChangedEvent> execute() {
-			List<Events.ProcessChangedEvent> events = new LinkedList<>();
-			// whenever there is output added or removed, it means someone was active regardless of otherstate (except for COMPLETED)
-			if (!step.getActualLifecycleState().equals(State.ACTIVE) && !step.getActualLifecycleState().equals(State.COMPLETED))
-				events.addAll(step.setActivationConditionsFulfilled());
-			// now lets take care of datapropagation
-			if (step.isImmediateDataPropagationEnabled() && step.getProcess() != null) {
-				// there might be instances used in steps further down (not just the outDNI, thus we also need to trigger their inDNIs as otherwise there wont be any instances added/removed)
-				// we find all DNIs that have this as input //TODO: are there any DNIs that should not be triggered? perhaps if two exclusive steps deliver the same output, both are active and have output mapped, then triggering might result in unpredictable mappings 
-				Set<DecisionNodeInstance> downstreamDNIs = step.getProcess().getInstantiatedDNIsHavingStepsOutputAsInput(step, change.name().substring(4));
-				downstreamDNIs.stream()
-					.forEach(dni -> events.addAll(dni.tryDataPropagationToPrematurelyTriggeredTask()));						
-			} else {
-				// just inform outDNI, if it exists and we are in state completed:
-				if (step.getOutDNI() != null && step.getActualLifecycleState().equals(State.COMPLETED)) {
-					return step.getOutDNI().signalPrevTaskDataChanged(step);											
-				}	
-			}
-			return events;
+			return step.processOutputChangedCmd(change.name().substring(4));
 		}
 
 		@Override
@@ -218,47 +199,7 @@ public class Commands {
 		public String getId() {
 			return "OutputChangedCmd [" +step.getName()+change.name();
 		}
-	}
-    
-    
-//    @Data
-//    public static class SetPostConditionsFulfillmentCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//        private final String wftId;
-//        private final boolean isFulfilled;
-//    }
-//    @Data
-//    public static class ActivateTaskCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//        private final String wftId;
-//    }
-//    
-//    @Data
-//    public static class ChangeCanceledStateOfTaskCmd extends TrackableCmd {
-//    	@TargetAggregateIdentifier
-//        private final String id;
-//        private final String wftId; // or wfi Id if whole process is to be canceled or uncanceled
-//        private final boolean isCanceled;
-//    }
-//    
-//    @Data
-//    public static class SetPropertiesCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//        private final String iwftId;
-//        private final Map<String, String> properties;
-//    }
-//    @Data
-//    public static class InstantiateTaskCmd extends TrackableCmd {
-//        @TargetAggregateIdentifier
-//        private final String id;
-//        private final String taskDefinitionId;
-//        private final List<ArtifactInput> optionalInputs;
-//        private final List<ArtifactOutput> optionalOutputs;
-//    }
-//    
+	} 
 
 }
 

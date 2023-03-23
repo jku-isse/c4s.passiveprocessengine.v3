@@ -10,7 +10,7 @@ import at.jku.isse.designspace.core.model.Workspace;
 public class TestArtifacts {
 
 	public static final String DEMOISSUETYPE = "DemoIssue";
-	public static enum CoreProperties { requirementIDs, state, requirements, parent, html_url }
+	public static enum CoreProperties { requirementIDs, state, requirements, bugs, parent, html_url }
 	public static enum JiraStates { Open, InProgress, Closed, ReadyForReview, Released}
 	
 	public static InstanceType getJiraInstanceType(Workspace ws) {
@@ -24,6 +24,7 @@ public class TestArtifacts {
 				typeJira.createPropertyType(CoreProperties.requirementIDs.toString(), Cardinality.SET, Workspace.STRING);
 				typeJira.createPropertyType(CoreProperties.state.toString(), Cardinality.SINGLE, Workspace.STRING);
 				typeJira.createPropertyType(CoreProperties.requirements.toString(), Cardinality.SET, typeJira);
+				typeJira.createPropertyType(CoreProperties.bugs.toString(), Cardinality.SET, typeJira);
 				typeJira.createPropertyType(CoreProperties.parent.toString(), Cardinality.SINGLE, typeJira);
 				typeJira.createPropertyType(CoreProperties.html_url.toString(), Cardinality.SINGLE, Workspace.STRING);
 				return typeJira;
@@ -50,6 +51,14 @@ public class TestArtifacts {
 	
 	public static void setStateToJiraInstance(Instance inst, JiraStates state) {
 		inst.getProperty(CoreProperties.state.toString()).set(state.toString());
+	}
+	
+	public static void addJiraToJiraBug(Instance jira, Instance bugToAdd) {
+		jira.getPropertyAsSet(TestArtifacts.CoreProperties.bugs.toString()).add(bugToAdd);
+	}
+	
+	public static void removeJiraFromJiraBug(Instance jira, Instance bugToRemove) {
+		jira.getPropertyAsSet(TestArtifacts.CoreProperties.bugs.toString()).remove(bugToRemove);
 	}
 	
 	public static void addParentToJira(Instance inst, Instance parent) {
