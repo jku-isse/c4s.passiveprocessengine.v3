@@ -12,7 +12,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.github.oxo42.stateless4j.StateMachine;
-
 import at.jku.isse.designspace.core.events.PropertyUpdateAdd;
 import at.jku.isse.designspace.core.events.PropertyUpdateRemove;
 import at.jku.isse.designspace.core.events.PropertyUpdateSet;
@@ -55,7 +54,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 
 
 	public static enum CoreProperties {actualLifecycleState, expectedLifecycleState, stepDefinition, inDNI, outDNI, qaState, 
-		processedPreCondFulfilled, processedPostCondFulfilled, processedCancelCondFulfilled, isWorkExpected};
+		processedPreCondFulfilled, processedPostCondFulfilled, processedCancelCondFulfilled, processedActivationCondFulfilled, isWorkExpected};
 	
 	public static final String designspaceTypeId = ProcessStep.class.getSimpleName();
 	
@@ -152,8 +151,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			log.info(String.format("Step %s received unexpected late input %s %s", this.getName(), op.name(), added.name()  ));
 			// Note that the adding has already happened, thus there is nothing to report back, this is only for checking whether we need to do something else as well.
 		}
-		else if (op.name().startsWith("out_") // if out added, establish if this is late output, then propagate further
-				&& ( this.getActualLifecycleState().equals(State.COMPLETED) || isImmediateDataPropagationEnabled() ) ){
+		else if (op.name().startsWith("out_")) { // if out added, establish if this is late output, then propagate further
+				//&& ( this.getActualLifecycleState().equals(State.COMPLETED) || isImmediateDataPropagationEnabled() ) ){
 			if (this.getActualLifecycleState().equals(State.COMPLETED)) {
 				Id addedId = (Id) op.value();
 				Element added = ws.findElement(addedId);
@@ -177,11 +176,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			//(if so, then do something about this)
 			log.info(String.format("Step %s had some input removed from %s after step start", this.getName(), op.name()));
 		}
-		else if (op.name().startsWith("out_") // if out removed, establish if this is late output removal, then propagate further
-				&& ( this.getActualLifecycleState().equals(State.COMPLETED) || isImmediateDataPropagationEnabled() ) ){
+		else if (op.name().startsWith("out_")) { // if out removed, establish if this is late output removal, then propagate further
+				//&& ( this.getActualLifecycleState().equals(State.COMPLETED) || isImmediateDataPropagationEnabled() ) ){
 			
 			if (this.getActualLifecycleState().equals(State.COMPLETED)) {
-				log.info(String.format("Step %s had some output removed from %s after step completion, queuing for propagation to successors", this.getName(), op.name()));
+				log.debug(String.format("Step %s had some output removed from %s after step completion, queuing for propagation to successors", this.getName(), op.name()));
 			}
 			// we should not just propagate, as the newly added output could be violating completion or qa constraints and we should not propagate the artifact just yet. -->
 			// return a potential propagation cause Command, that is later checked again, whether it is still valid.
@@ -220,6 +219,22 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		return qaChanges;
 	}
 	
+	public List<Events.ProcessChangedEvent> processOutputChangedCmd(String outputName) {
+		List<Events.ProcessChangedEvent> events = new LinkedList<>();
+		// whenever there is output added or removed, it means someone was active regardless of otherstate (except for COMPLETED)
+		if (!getActualLifecycleState().equals(State.ACTIVE) && !getActualLifecycleState().equals(State.COMPLETED))
+			events.addAll(setActivationConditionsFulfilled(true));
+		// now lets take care of datapropagation
+		if (getProcess() != null) {
+			// there might be instances used in steps further down (not just the outDNI, thus we also need to trigger their inDNIs as otherwise there wont be any instances added/removed)
+			// we find all DNIs that have this as input //TODO: are there any DNIs that should not be triggered? perhaps if two exclusive steps deliver the same output, both are active and have output mapped, then triggering might result in unpredictable mappings 
+			Set<DecisionNodeInstance> downstreamDNIs = getProcess().getInstantiatedDNIsHavingStepsOutputAsInput(this, outputName);
+			downstreamDNIs.stream()
+				.forEach(dni -> events.addAll(dni.signalPrevTaskDataChanged(this)));						
+		} 
+		return events;
+	}
+	
 	public Set<ConstraintWrapper> getQAstatus() {
 		return (Set<ConstraintWrapper>) instance.getPropertyAsMap(CoreProperties.qaState.toString()).values().stream()
 		.map(inst -> WrapperCache.getWrappedInstance(ConstraintWrapper.class, (Instance) inst))
@@ -247,16 +262,15 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		return (boolean) instance.getPropertyAsValue(CoreProperties.processedCancelCondFulfilled.toString());
 	}
 	
+	public boolean areActivationCondFulfilled() {
+		return (boolean) instance.getPropertyAsValue(CoreProperties.processedActivationCondFulfilled.toString());
+	}
+	
 	public boolean isWorkExpected() {
 		return (boolean) instance.getPropertyAsValue(CoreProperties.isWorkExpected.toString());
 	}
 	
-	public boolean isImmediateDataPropagationEnabled() {
-		if (getProcess() == null)
-			return false;
-		else
-			return getProcess().isImmediateDataPropagationEnabled();
-	}
+
 	
 	public List<ProcessStep> isInUnsafeOperationModeDueTo() {
 		List<ProcessStep> unsafeSteps = new LinkedList<>();
@@ -431,25 +445,6 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		return actualSM.getState();
 	}
 	
-	public void setWorkExpected(boolean isExpected) {
-		if (isWorkExpected() != isExpected ) {
-			instance.getPropertyAsSingle(CoreProperties.isWorkExpected.toString()).set(isExpected);	
-				if (!isExpected) {
-					trigger(Trigger.HALT);
-				}
-				else {
-				if (arePostCondFulfilled() && areQAconstraintsFulfilled())
-					trigger(Trigger.MARK_COMPLETE_REPAIR);
-				if (arePreCondFulfilled())
-					trigger(Trigger.ENABLE);
-				if (actualSM.isInState(State.ACTIVE))
-					trigger(Trigger.ACTIVATE_REPAIR);
-				else
-					trigger(Trigger.RESET);
-				}
-			}
-	}
-	
 	public boolean areQAconstraintsFulfilled() {
 		// are there all constraint wrappers actually added already
 		if (this.getDefinition() == null)
@@ -466,16 +461,35 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		//return  qaState.values().parallelStream().allMatch(cw -> cw.getEvalResult()==true);
 	}
 	
+	public List<Events.ProcessChangedEvent> setWorkExpected(boolean isExpected) {
+		if (isWorkExpected() != isExpected ) {
+			instance.getPropertyAsSingle(CoreProperties.isWorkExpected.toString()).set(isExpected);	
+				if (!isExpected) {
+					return trigger(Trigger.HALT);
+				}
+				else {
+					return trigger(Trigger.UNHALT);														
+				}
+			}
+		else return Collections.emptyList();
+	}
+	
 	public List<Events.ProcessChangedEvent> setPostConditionsFulfilled(boolean isfulfilled) {
 		if (arePostCondFulfilled() != isfulfilled) { // a change
 			List<Events.ProcessChangedEvent> events = new LinkedList<>();
 			ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
 			events.add(new Events.ConditionFulfillmentChanged(pi, this, Conditions.POSTCONDITION, isfulfilled));
 			instance.getPropertyAsSingle(CoreProperties.processedPostCondFulfilled.toString()).set(isfulfilled);
-			if (isfulfilled && areQAconstraintsFulfilled())  
+			if (isfulfilled && areQAconstraintsFulfilled() && arePreCondFulfilled())  
 				events.addAll(this.trigger(StepLifecycle.Trigger.MARK_COMPLETE)) ;
-			if (!isfulfilled && actualSM.isInState(State.COMPLETED)) 
-				events.addAll(this.trigger(StepLifecycle.Trigger.ACTIVATE));
+			if (!isfulfilled && actualSM.isInState(State.COMPLETED)) // in canceled and nowork expected we dont care if no longer post conditions fulfilled, this is not a deviation, 
+																	//the deviation might have occurred earlier if we no longer expected work for something aleady completed, but no further deviation happening now
+				if (areActivationCondFulfilled())
+					events.addAll(this.trigger(StepLifecycle.Trigger.ACTIVATE));
+				else if (arePreCondFulfilled())
+					events.addAll(this.trigger(StepLifecycle.Trigger.ENABLE));
+				else 
+					events.addAll(this.trigger(StepLifecycle.Trigger.RESET));
 			return events;
 		}
 		return Collections.emptyList();
@@ -490,8 +504,12 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			instance.getPropertyAsSingle(CoreProperties.processedPreCondFulfilled.toString()).set(isfulfilled);
 			if (isfulfilled)  
 				events.addAll(this.trigger(StepLifecycle.Trigger.ENABLE)) ;
-			else 
+			else {
+				//if (!actualSM.isInState(State.CANCELED)) // no need to check any longer as CANCELED state only reacts to uncancel triggers
 				events.addAll(this.trigger(StepLifecycle.Trigger.RESET));
+				// we stay in cancelled even if there are preconditions no longer fulfilled,
+				// if we are no longer cancelled, and precond do not hold, then reset
+			}
 			return events;
 		}
 		return Collections.emptyList();
@@ -503,78 +521,76 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
 			events.add(new Events.ConditionFulfillmentChanged(pi, this, Conditions.CANCELATION, isfulfilled));
 			instance.getPropertyAsSingle(CoreProperties.processedCancelCondFulfilled.toString()).set(isfulfilled);
-			if (isfulfilled)
-				events.addAll(trigger(Trigger.CANCEL));
-			else { // check which is the new state:
-				// we cant use actual state as this might be deviating multiple ways (e.g., we should now be in available, but actual state is in active
-				if (!isWorkExpected())
-					events.addAll(trigger(Trigger.HALT)); //other steps are prefered/used at the moment
-				if (arePostCondFulfilled() && areQAconstraintsFulfilled())
-					events.addAll(trigger(Trigger.MARK_COMPLETE_REPAIR));
-				if (arePreCondFulfilled())
-					events.addAll(trigger(Trigger.ENABLE));
-				if (actualSM.isInState(State.ACTIVE))
-					events.addAll(trigger(Trigger.ACTIVATE_REPAIR));
-				else
-					events.addAll(trigger(Trigger.RESET));
+			if (isfulfilled) 
+					events.addAll(trigger(Trigger.CANCEL));
+			else { 
+				events.addAll(trigger(Trigger.UNCANCEL));
 			}
 			return events;
 		}
 		return Collections.emptyList();
 	}
 	
-	public List<Events.ProcessChangedEvent> setActivationConditionsFulfilled() {
-		List<Events.ProcessChangedEvent> events = new LinkedList<>();
-		ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
-		events.add(new Events.ConditionFulfillmentChanged(pi, this, Conditions.ACTIVATION, true));
-		events.addAll(trigger(Trigger.ACTIVATE));
-		return events;
+	public List<Events.ProcessChangedEvent> setActivationConditionsFulfilled(boolean isFulfilled) {
+		if (areActivationCondFulfilled() != isFulfilled) {			
+			List<Events.ProcessChangedEvent> events = new LinkedList<>();
+			ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
+			events.add(new Events.ConditionFulfillmentChanged(pi, this, Conditions.ACTIVATION, isFulfilled));		
+			if (isFulfilled) {				
+				events.addAll(trigger(Trigger.ACTIVATE));
+			} else {		
+				// TODO decide what exactly to do here.
+//				if (arePostCondFulfilled() && are)
+//				events.addAll(trigger(Trigger.ACTIVATE));
+			}
+			return events;
+		}
+		return Collections.emptyList();
 	}
 	
 	protected List<Events.ProcessChangedEvent> trigger(Trigger event) {
-		State prevExpectedSM = expectedSM.getState(); // to check whether we were in AVAILABLE before and are not anywhere else
-		// trigger expectedTransition:
-		if (event.equals(Trigger.ACTIVATE)) {
-			if (expectedSM.isInState(State.CANCELED) || expectedSM.isInState(State.NO_WORK_EXPECTED))
-				event = Trigger.ACTIVATE_DEVIATING;
-		}
-		else if (event.equals(Trigger.MARK_COMPLETE))
-			if (expectedSM.isInState(State.CANCELED) || expectedSM.isInState(State.NO_WORK_EXPECTED))
-				event = Trigger.MARK_COMPLETE_DEVIATING;
-		
-		ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
 		List<Events.ProcessChangedEvent> events = new LinkedList<>();
-		boolean doSignalRegression = false;
-		boolean tryProgress = false;		
+		events.addAll(triggerExpectedSM(event));
+		events.addAll(triggerActualSM(event));
+		// NEW: we just notifice the DNI and let it decide when and what to check and progress
+		if (this.getOutDNI() != null && events.size() > 0) {
+				events.addAll(getOutDNI().signalStateChanged(this));
+		}
+		return events;
+	}
+	
+	private List<Events.ProcessChangedEvent> triggerActualSM(Trigger event) { 
+		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		if (actualSM.canFire(event)) {
 			State prevActualLifecycleState = actualSM.getState();
 			actualSM.fire(event);
 			State actualLifecycleState = actualSM.getState();
 			if (actualLifecycleState != prevActualLifecycleState) { // state transition
-				instance.getPropertyAsSingle(CoreProperties.actualLifecycleState.toString()).set(actualSM.getState().toString());
-				
+				instance.getPropertyAsSingle(CoreProperties.actualLifecycleState.toString()).set(actualSM.getState().toString());				
+				ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
 				events.add(new Events.StepStateTransitionEvent(pi, this, prevActualLifecycleState, actualLifecycleState, true));
 				events.addAll(triggerProcessTransitions());
-				switch (expectedSM.getState()) { // we only progress in deviating state when postcond fulfilled or cancled or no work expected
-				case CANCELED: //fallthrough
-				case COMPLETED://fallthrough
-				case NO_WORK_EXPECTED: 
-					tryProgress = true;
-				}
-				if (prevActualLifecycleState.equals(State.COMPLETED)) {
-					// we are no longer complete
-					doSignalRegression = true;
-				}
 			}
-		} else {
-			log.info(String.format("Step %s received (and ignored) for 'expectedSM' unexpected Event %s for State %s ", this.getName(),  event,  actualSM.getState()));			
-		}		
-
-		if (this.expectedSM.canFire(event)) {
-			State prevExpState = expectedSM.getState();
-			expectedSM.fire(event);
-			if (expectedSM.getState() != prevExpState) { // state transition
+		} 
+		return events;
+	}
+	
+	private List<Events.ProcessChangedEvent> triggerExpectedSM(Trigger event) {
+		List<Events.ProcessChangedEvent> events = new LinkedList<>();
+		State prevExpState = expectedSM.getState();
+		
+		if (event.equals(Trigger.UNCANCEL) && this.expectedSM.canFire(event)) {
+			expectedSM.fire(StepLifecycle.uncancel, this);
+		} else if (event.equals(Trigger.UNHALT) && this.expectedSM.canFire(event)) {
+			expectedSM.fire(StepLifecycle.unhalt, this);
+		}
+		else {
+			if (this.expectedSM.canFire(event)) 	
+				expectedSM.fire(event);			
+		}
+		if (expectedSM.getState() != prevExpState) { // state transition
 				instance.getPropertyAsSingle(CoreProperties.expectedLifecycleState.toString()).set(expectedSM.getState().toString());
+				ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
 				events.add(new Events.StepStateTransitionEvent(pi, this, prevExpState, expectedSM.getState(), false));
 				switch(expectedSM.getState()) {
 				case ENABLED:					
@@ -588,57 +604,22 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 						expectedSM.fire(Trigger.MARK_COMPLETE);
 						instance.getPropertyAsSingle(CoreProperties.expectedLifecycleState.toString()).set(expectedSM.getState().toString());
 						events.add(new Events.StepStateTransitionEvent(pi, this, State.ENABLED, expectedSM.getState(), false));
-						tryProgress = true;
+					//	tryProgress = true;
 					} 
 					//				// what if we have been in No Work Expected and go back to Enabled or Available, shoulnt we also go to Active --> rules should do this automatically
 					//				// or we do upon artifact output --> no: as we can go to completed anyway and thus only activate if there is new activity going on.
 					//				}
-					break;
-				case CANCELED:
-				case NO_WORK_EXPECTED:
-				case COMPLETED:
-					tryProgress = true;
-					break;
+					break;				
 				}
-			}
-		}		
-		if (tryProgress) {
-			switch (expectedSM.getState()) { // we only progress automatically when we are indeed on track with the process
-			case CANCELED: //fallthrough
-			case COMPLETED://fallthrough
-			case NO_WORK_EXPECTED: 
-				if (this.getOutDNI() != null) //need to check, we might be a process without a parent
-					events.addAll(this.getOutDNI().tryInConditionsFullfilled());
-			} 
-		} else {
-			switch (expectedSM.getState()) { // we trigger downstream early steps when we have just left available and are now in active or enabled
-			case ACTIVE:
-			case ENABLED:
-				if (prevExpectedSM.equals(State.AVAILABLE) && isImmediateDataPropagationEnabled() && this.getOutDNI() != null ) {
-					events.addAll(this.getOutDNI().initiateDownstreamSteps(true)); // to prepare the next steps further downstream even though they should not start yet.
-				}
-			}
-		}
-		// signal downstream if we are no longer complete
-		if (doSignalRegression && this.getOutDNI() != null) {
-			events.addAll(this.getOutDNI().signalPrevTaskNolongerComplete(this));
-		}
+		}			
 		return events;
 	}
 	
 	private List<Events.ProcessChangedEvent> triggerProcessTransitions() {
 		if (this.getProcess() == null)
 			return Collections.emptyList();
-		if (actualSM.getState().equals(State.ENABLED) &&  this.getProcess().getDefinition().getCondition(Conditions.PRECONDITION).isEmpty()) {
-			if (this.getProcess().getActualLifecycleState().equals(State.COMPLETED))
-				return getProcess().setActivationConditionsFulfilled(); // we are back in an enabled state, let the process know that its not COMPLETED anymore
-			return getProcess().setPreConditionsFulfilled(true); // ensure the process is also in an enabled state
-		} else
-		if ((actualSM.getState().equals(State.ACTIVE) || actualSM.getState().equals(State.COMPLETED)) 
-				&& !getProcess().getActualLifecycleState().equals(State.ACTIVE)) {
-			return getProcess().setActivationConditionsFulfilled();
-		} 
-		return Collections.emptyList();
+		else
+			return this.getProcess().signalChildStepStateChanged(this);
 	}
 	
 	public List<ProcessScopedCmd> ensureRuleToStateConsistency() {
@@ -685,10 +666,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				InstanceType stepType = getOrCreateDesignSpaceInstanceType(ws, td);
 				PropertyType ioPropType = stepType.getPropertyType(propName);
 				InstanceType ruleType = ioPropType.referencedInstanceType();
-				if (ruleType == null) 	{			
-//				String name = CRD_DATAMAPPING_PREFIX+entry.getKey()+"_"+instType.name();
-//				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, entry.getValue());
-//				if (crt == null) {					
+				if (ruleType == null) 	{							
 					log.error("Expected Datamapping Rule for existing process not found: "+name);
 					status.put(name, "Corrupt data - Expected Datamapping Rule not found");
 				} else {
@@ -730,6 +708,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			typeStep.createPropertyType(CoreProperties.processedPreCondFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
 			typeStep.createPropertyType(CoreProperties.processedPostCondFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
 			typeStep.createPropertyType(CoreProperties.processedCancelCondFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
+			typeStep.createPropertyType(CoreProperties.processedActivationCondFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);			
 			typeStep.createPropertyType(CoreProperties.isWorkExpected.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
 			return typeStep;
 		}
@@ -813,6 +792,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		instance.getPropertyAsSingle(CoreProperties.processedPreCondFulfilled.toString()).set(false);
 		instance.getPropertyAsSingle(CoreProperties.processedPostCondFulfilled.toString()).set(false);
 		instance.getPropertyAsSingle(CoreProperties.processedCancelCondFulfilled.toString()).set(false);
+		instance.getPropertyAsSingle(CoreProperties.processedActivationCondFulfilled.toString()).set(false);		
 		instance.getPropertyAsSingle(CoreProperties.isWorkExpected.toString()).set(true);
 		
 		instance.getPropertyAsSingle(CoreProperties.stepDefinition.toString()).set(sd.getInstance());

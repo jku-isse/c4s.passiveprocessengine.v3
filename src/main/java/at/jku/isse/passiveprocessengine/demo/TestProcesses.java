@@ -45,7 +45,9 @@ public class TestProcesses {
 		sd2.setSpecOrderIndex(12);
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws)); //into both steps
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd2.getName(), "jiraIn",  ws)); //into both steps
+		dnd1.setDepthIndexRecursive(4);
 		dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd1.getName(), "jiraOut", procDef.getName(), "jiraOut",  ws)); //out of the first
+		dnd2.setDepthIndexRecursive(5);
 		if (doInitType)
 			procDef.initializeInstanceTypes(false);
 		procDef.setImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
@@ -81,7 +83,9 @@ public class TestProcesses {
 		
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws)); //into both steps
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd2.getName(), "jiraIn",  ws)); //into both steps
+		dnd1.setDepthIndexRecursive(1);
 		dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd2.getName(), "jiraOut", procDef.getName(), "jiraOut",  ws)); //out of the second
+		dnd2.setDepthIndexRecursive(2);
 		procDef.initializeInstanceTypes(false);
 		procDef.setImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
 		return procDef;
@@ -290,6 +294,83 @@ public class TestProcesses {
 		sd1.setSpecOrderIndex(1);
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn2", sd1.getName(), "jiraIn2",  ws));
+		procDef.initializeInstanceTypes(false);
+		procDef.setImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
+		return procDef;
+	}
+	
+	public static ProcessDefinition getSingleStepProcessDefinitionWithOutput(Workspace ws) throws ProcessException {
+		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
+		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
+		procDef.addExpectedInput("jiraIn", typeJira);		
+		
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1", ws);
+		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2", ws);
+		
+		StepDefinition sd1 = procDef.createStepDefinition("sd1", ws);
+		sd1.addExpectedInput("jiraIn", typeJira);		
+		sd1.addExpectedOutput("jiraOut", typeJira);
+
+		sd1.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->forAll( \r\n"
+				+ "issue | issue.state<>'Open')"); 
+		
+		sd1.addInputToOutputMappingRule("jiraOut", 
+				"self.in_jiraIn->collect(issue | issue.parent)"
+							//	+ "->asSet()) "  
+							//	+"->symmetricDifference(self.out_jiraOut) " +  
+							//	"->size() = 0"
+								); 
+		
+		sd1.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() > 0 and self.out_jiraOut->forAll( \r\n"
+				+ "issue | issue.state='Closed')"); 
+
+		sd1.setInDND(dnd1);
+		sd1.setOutDND(dnd2);
+		sd1.setSpecOrderIndex(1);
+		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
+		
+		procDef.initializeInstanceTypes(false);
+		procDef.setImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
+		return procDef;
+	}
+	
+	public static ProcessDefinition getSimpleXORDefinition(Workspace ws) throws ProcessException {
+		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
+		ProcessDefinition procDef = ProcessDefinition.getInstance("xorproc1", ws);
+		procDef.addExpectedInput("jiraIn", typeJira);			
+		procDef.addExpectedOutput("jiraOut", typeJira);
+		//procDef.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() > 0");
+		//no definition how many outputs, there is a possibility to provide output, but completion is upon subtask completion
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dndXORStart", ws);
+		DecisionNodeDefinition dnd2 = procDef.createDecisionNodeDefinition("dndXOREnd", ws);
+		dnd2.setInflowType(InFlowType.XOR);
+		StepDefinition sd1 = procDef.createStepDefinition("alt1", ws);
+		sd1.addExpectedInput("jiraIn", typeJira);
+		sd1.addExpectedOutput("jiraOut", typeJira);
+		sd1.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
+		sd1.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() > 0 and self.out_jiraOut->forAll( issue | issue.state = 'Closed')");
+		sd1.addInputToOutputMappingRule("jiraOut", "self.in_jiraIn->any()->asType(<"+typeJira.getQualifiedName()+">).bugs"); //->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and "
+				//+ " self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
+		sd1.setInDND(dnd1);
+		sd1.setOutDND(dnd2);
+		sd1.setSpecOrderIndex(11);
+		StepDefinition sd2 = procDef.createStepDefinition("alt2", ws);
+		sd2.addExpectedInput("jiraIn", typeJira);
+		sd2.addExpectedOutput("jiraOut", typeJira);
+		sd2.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
+		sd2.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() > 0 and self.out_jiraOut->forAll( issue | issue.state = 'InProgress')");
+		sd2.setCondition(Conditions.CANCELATION, "self.out_jiraOut->size() > 0 and self.out_jiraOut->forAll( issue | issue.state = 'Released')");
+		sd2.addInputToOutputMappingRule("jiraOut", "self.in_jiraIn->any()->asType(<"+typeJira.getQualifiedName()+">).requirements");
+		sd2.setInDND(dnd1);
+		sd2.setOutDND(dnd2);
+		sd2.setSpecOrderIndex(12);
+		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws)); //into both steps
+		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd2.getName(), "jiraIn",  ws)); //into both steps
+		dnd1.setDepthIndexRecursive(4);
+		dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd1.getName(), "jiraOut", procDef.getName(), "jiraOut",  ws)); //out of the first
+		dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd2.getName(), "jiraOut", procDef.getName(), "jiraOut",  ws)); //out of the second
+		dnd2.setDepthIndexRecursive(5);
+		
 		procDef.initializeInstanceTypes(false);
 		procDef.setImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
 		return procDef;

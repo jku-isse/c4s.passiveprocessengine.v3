@@ -2,6 +2,8 @@ package at.jku.isse.passiveprocessengine.instance;
 
 import com.github.oxo42.stateless4j.StateMachine;
 import com.github.oxo42.stateless4j.StateMachineConfig;
+import com.github.oxo42.stateless4j.delegates.Func2;
+import com.github.oxo42.stateless4j.triggers.TriggerWithParameters1;
 
 public class StepLifecycle {
 	
@@ -36,17 +38,23 @@ public class StepLifecycle {
 		ENABLE,
 		ACTIVATE,
 		CANCEL,
+		UNCANCEL,
 		HALT,
+		UNHALT,
 		RESET,
 		MARK_COMPLETE,
-		ACTIVATE_DEVIATING,
-		MARK_COMPLETE_DEVIATING,
-		ACTIVATE_REPAIR,
-		MARK_COMPLETE_REPAIR
+	//	ACTIVATE_DEVIATING,
+	//	MARK_COMPLETE_DEVIATING,
+	//	ACTIVATE_REPAIR,
+	//	MARK_COMPLETE_REPAIR
 	}
 	
 	private static StateMachineConfig<State, Trigger> smcExpected;
 	private static StateMachineConfig<State, Trigger> smcActual;
+	
+	public static TriggerWithParameters1<ProcessStep, Trigger> uncancel = new TriggerWithParameters1<>(Trigger.UNCANCEL, ProcessStep.class);
+	public static TriggerWithParameters1<ProcessStep, Trigger> unhalt= new TriggerWithParameters1<>(Trigger.UNHALT, ProcessStep.class);
+	
 	
 	public static StateMachineConfig<State, Trigger> getExpectedStateMachineConfig() {
 		if (smcExpected == null) {
@@ -68,23 +76,57 @@ public class StepLifecycle {
 //				.permit(Triggers.RESET, State.AVAILABLE)
 				.permit(Trigger.HALT, State.NO_WORK_EXPECTED)
 				.permit(Trigger.CANCEL, State.CANCELED);
-			smcExpected.configure(State.NO_WORK_EXPECTED)
-				.permit(Trigger.RESET, State.AVAILABLE)
-				.permit(Trigger.ENABLE, State.ENABLED)
-				.permit(Trigger.CANCEL, State.CANCELED)
-				.permit(Trigger.ACTIVATE_REPAIR, State.ACTIVE)
-				.permit(Trigger.MARK_COMPLETE_REPAIR, State.COMPLETED)
-				.substateOf(State.SUPERSTATE_ENDED);
-			smcExpected.configure(State.CANCELED)
-				.permit(Trigger.RESET, State.AVAILABLE)
-				.permit(Trigger.ENABLE, State.ENABLED)
-				.permit(Trigger.HALT, State.NO_WORK_EXPECTED)
-				.permit(Trigger.ACTIVATE_REPAIR, State.ACTIVE)
-				.permit(Trigger.MARK_COMPLETE_REPAIR, State.COMPLETED)
-				.substateOf(State.SUPERSTATE_ENDED);
 			smcExpected.configure(State.COMPLETED)
-				.permit(Trigger.CANCEL, State.CANCELED) // if we worked in good faith on an XOR branch that later needs to be ignored, we should cancel any completed step to signal that we explicitly wont use the results of that step
+			.permit(Trigger.CANCEL, State.CANCELED) // if we worked in good faith on an XOR branch that later needs to be ignored, we should cancel any completed step to signal that we explicitly wont use the results of that step
+			.substateOf(State.SUPERSTATE_ENDED);
+			
+			smcExpected.configure(State.NO_WORK_EXPECTED)
+				.permitDynamic(unhalt, new Func2<ProcessStep, State>() {
+					@Override
+					public State call(ProcessStep step) {						
+						if (step.areCancelCondFulfilled())
+							return State.CANCELED; 
+						else if (!step.arePreCondFulfilled())
+							return State.AVAILABLE;
+						else if (step.arePostCondFulfilled() && step.arePreCondFulfilled())
+							return State.COMPLETED;
+						else if (step.getActualLifecycleState().equals(State.ACTIVE))
+							return State.ACTIVE;
+						else 
+							return State.ENABLED;
+					}
+				})
+//				.permit( Trigger.RESET, State.AVAILABLE)
+//				.permit(Trigger.ENABLE, State.ENABLED)
+//				.permit(Trigger.CANCEL, State.CANCELED)
+//				.permit(Trigger.ACTIVATE_REPAIR, State.ACTIVE)
+//				.permit(Trigger.MARK_COMPLETE_REPAIR, State.COMPLETED)
 				.substateOf(State.SUPERSTATE_ENDED);
+			
+			smcExpected.configure(State.CANCELED)
+			.permitDynamic(uncancel, new Func2<ProcessStep, State>() {
+				@Override
+				public State call(ProcessStep step) {
+					if (!step.isWorkExpected())
+						return State.NO_WORK_EXPECTED; 
+					else if (!step.arePreCondFulfilled())
+						return State.AVAILABLE;
+					else if (step.arePostCondFulfilled() && step.arePreCondFulfilled())
+						return State.COMPLETED;
+					else if (step.getActualLifecycleState().equals(State.ACTIVE))
+						return State.ACTIVE;
+					else 
+						return State.ENABLED;
+				}
+			})
+			.permit(Trigger.HALT, State.NO_WORK_EXPECTED)
+				//.permit(Trigger.RESET, State.AVAILABLE)
+				//.permit(Trigger.ENABLE, State.ENABLED)				
+				//.permit(Trigger.ACTIVATE_REPAIR, State.ACTIVE)
+				//.permit(Trigger.MARK_COMPLETE_REPAIR, State.COMPLETED)
+				.substateOf(State.SUPERSTATE_ENDED);
+			
+
 		}
 		return smcExpected;
 	}
@@ -98,51 +140,85 @@ public class StepLifecycle {
 				.permit(Trigger.MARK_COMPLETE, State.COMPLETED) // deviating trigger
 				.permit(Trigger.ENABLE, State.ENABLED)
 				.permit(Trigger.HALT, State.NO_WORK_EXPECTED)
-				.permit(Trigger.CANCEL, State.CANCELED);
+				.permit(Trigger.CANCEL, State.CANCELED)
+				;
 			smcActual.configure(State.ENABLED)
 				.permit(Trigger.ACTIVATE, State.ACTIVE)
 				.permit(Trigger.RESET, State.AVAILABLE)
 				.permit(Trigger.MARK_COMPLETE, State.COMPLETED)
 				.permit(Trigger.HALT, State.NO_WORK_EXPECTED)
-				.permit(Trigger.CANCEL, State.CANCELED);
+				.permit(Trigger.CANCEL, State.CANCELED)
+				;
 			smcActual.configure(State.ACTIVE)
-				.permit(Trigger.MARK_COMPLETE_DEVIATING, State.COMPLETED) // deviating trigger	
-				.ignore(Trigger.ACTIVATE_REPAIR) // repair / expected catching up with actual 
-				.permit(Trigger.MARK_COMPLETE, State.COMPLETED)
-				//.permit(Triggers.ENABLE, State.ENABLED)  //FIXME: doesnt make sense, if we have already made some actions, why would we ever go back to enabled, perhaps when we made accidental changes and undo them? 
+				.permit(Trigger.MARK_COMPLETE/*_DEVIATING*/, State.COMPLETED) // deviating trigger	
+		//		.ignore(Trigger.ACTIVATE_REPAIR) // repair / expected catching up with actual 
+		//		.permit(Trigger.MARK_COMPLETE, State.COMPLETED)
+				.permit(Trigger.ENABLE, State.ENABLED)  //FIXME: doesnt make sense, if we have already made some actions, why would we ever go back to enabled, perhaps when we made accidental changes and undo them? 
 				// --> still some activeness, then question whether we rather cancel, deactivation needs special capability which we ignore for now
 				.permit(Trigger.RESET, State.AVAILABLE)
 				.permit(Trigger.HALT, State.NO_WORK_EXPECTED)
-				.permit(Trigger.CANCEL, State.CANCELED);
+				.permit(Trigger.CANCEL, State.CANCELED)
+				;
 			smcActual.configure(State.NO_WORK_EXPECTED)
-				.permit(Trigger.ACTIVATE_DEVIATING, State.ACTIVE) //deviating trigger
-				.permit(Trigger.MARK_COMPLETE_DEVIATING, State.COMPLETED) // deviating trigger
-				.permit(Trigger.MARK_COMPLETE_REPAIR, State.COMPLETED) // repair trigger
-				.permit(Trigger.ACTIVATE_REPAIR, State.ACTIVE) //repair trigger 
-				//.permit(Triggers.ACTIVATE, State.ACTIVE)
+				.permitDynamic(unhalt, new Func2<ProcessStep, State>() {
+					@Override
+					public State call(ProcessStep step) {						
+						if (step.areCancelCondFulfilled())
+							return State.CANCELED; 
+						else if (!step.arePreCondFulfilled())
+							return State.AVAILABLE;
+						else if (step.arePostCondFulfilled() && step.arePreCondFulfilled())
+							return State.COMPLETED;
+						else if (step.getActualLifecycleState().equals(State.ACTIVE))
+							return State.ACTIVE;
+						else 
+							return State.ENABLED;
+					}
+				}) // repairing
+//				.permit(Trigger.ACTIVATE/*_DEVIATING*/, State.ACTIVE) //deviating trigger
+				.permit(Trigger.MARK_COMPLETE/*_DEVIATING*/, State.COMPLETED) // deviating trigger
+//				.permit(Trigger.MARK_COMPLETE_REPAIR, State.COMPLETED) // repair trigger
+//				.permit(Trigger.ACTIVATE_REPAIR, State.ACTIVE) //repair trigger 
+				.permit(Trigger.ACTIVATE, State.ACTIVE)
 				.permit(Trigger.RESET, State.AVAILABLE)
 				.permit(Trigger.ENABLE, State.ENABLED)
 				.permit(Trigger.CANCEL, State.CANCELED)
 			//	.permit(Triggers.MARK_COMPLETE, State.COMPLETED)
 				.substateOf(State.SUPERSTATE_ENDED);
 			smcActual.configure(State.CANCELED)
-				.permit(Trigger.ACTIVATE_DEVIATING, State.ACTIVE) //deviating trigger
-				.permit(Trigger.MARK_COMPLETE_DEVIATING, State.COMPLETED) // deviating trigger
-				.permit(Trigger.MARK_COMPLETE_REPAIR, State.COMPLETED) // repair trigger
-				.permit(Trigger.ACTIVATE_REPAIR, State.ACTIVE) //repair trigger
+				.permitDynamic(uncancel, new Func2<ProcessStep, State>() {
+					@Override
+					public State call(ProcessStep step) {
+						if (!step.isWorkExpected())
+							return State.NO_WORK_EXPECTED; 
+						else if (!step.arePreCondFulfilled())
+							return State.AVAILABLE;
+						else if (step.arePostCondFulfilled() && step.arePreCondFulfilled())
+							return State.COMPLETED;
+						else if (step.getActualLifecycleState().equals(State.ACTIVE))
+							return State.ACTIVE;
+						else 
+							return State.ENABLED;
+					}
+				})
+//				.permit(Trigger.ACTIVATE/*_DEVIATING*/, State.ACTIVE) //deviating trigger
+//				.permit(Trigger.MARK_COMPLETE/*_DEVIATING*/, State.COMPLETED) // deviating trigger
+//				.permit(Trigger.MARK_COMPLETE_REPAIR, State.COMPLETED) // repair trigger
+//				.permit(Trigger.ACTIVATE_REPAIR, State.ACTIVE) //repair trigger
 				.permit(Trigger.ACTIVATE, State.ACTIVE)
 				.permit(Trigger.RESET, State.AVAILABLE)
 				.permit(Trigger.ENABLE, State.ENABLED)
 				.permit(Trigger.HALT, State.NO_WORK_EXPECTED)
-			//	.permit(Triggers.ACTIVATE, State.ACTIVE)
-				//.permit(Triggers.MARK_COMPLETE, State.COMPLETED)
+				.permit(Trigger.MARK_COMPLETE, State.COMPLETED)
 				.substateOf(State.SUPERSTATE_ENDED);
 			smcActual.configure(State.COMPLETED)
 				.permit(Trigger.RESET, State.AVAILABLE) //deviating trigger	
 				.permit(Trigger.ACTIVATE, State.ACTIVE) //deviating trigger
-				.permit(Trigger.CANCEL, State.CANCELED) // if we worked in good faith on an XOR branch that later needs to be ignored, we should cancel any completed step to signal that we explicitly wont use the results of that step
-				.permit(Trigger.HALT, State.NO_WORK_EXPECTED) // when a complete task is in an XOR branch that is not finally selected
-				.ignore(Trigger.MARK_COMPLETE_REPAIR) // repair / expected catching up with actual 
+				.permit(Trigger.ENABLE, State.ENABLED)
+				.permit(Trigger.CANCEL, State.CANCELED)
+		//		.permit(Trigger.CANCEL, State.CANCELED) // if we worked in good faith on an XOR branch that later needs to be ignored, we should cancel any completed step to signal that we explicitly wont use the results of that step
+		//		.permit(Trigger.HALT, State.NO_WORK_EXPECTED) // when a complete task is in an XOR branch that is not finally selected
+		//		.ignore(Trigger.MARK_COMPLETE_REPAIR) // repair / expected catching up with actual 
 				.substateOf(State.SUPERSTATE_ENDED);
 		}
 		return smcActual;

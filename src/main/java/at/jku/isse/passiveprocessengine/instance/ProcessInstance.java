@@ -26,6 +26,9 @@ import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ConditionChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.PrematureStepTriggerCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
+import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
+import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Trigger;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
@@ -116,7 +119,7 @@ public class ProcessInstance extends ProcessStep {
 			getDecisionNodeInstances().stream()
 			.filter(dni -> dni.getInSteps().size() == 0)
 			.forEach(dni -> {
-				dni.signalPrevTaskDataChanged(this);
+				dni.checkAndExecuteDataMappings(false, false); //dni.signalPrevTaskDataChanged(this);
 			});
 		}
 		return isOk;
@@ -131,14 +134,40 @@ public class ProcessInstance extends ProcessStep {
 			//when all steps are immediately enabled trigger all dnis to propagate, just to be on the safe side, we would actually only need to trigger those that obtain data from this param at process level
 			// otherwise just first
 			.forEach(dni -> {
-				//dni.tryActivationPropagation(); // to trigger mapping to first steps
-				dni.signalPrevTaskDataChanged(this);
+				dni.checkAndExecuteDataMappings(false, false);//dni.tryActivationPropagation(); // to trigger mapping to first steps				
 			});
 		}
 		return isOk;
 	}
+		
+	protected List<Events.ProcessChangedEvent> signalChildStepStateChanged(ProcessStep step) {
+		if (step.getActualLifecycleState().equals(State.ENABLED) &&  this.getDefinition().getCondition(Conditions.PRECONDITION).isEmpty()) {
+			if (this.getActualLifecycleState().equals(State.COMPLETED))
+				return this.setActivationConditionsFulfilled(true); // we are back in an enabled state, let the process know that its not COMPLETED anymore
+			return this.setPreConditionsFulfilled(true); // ensure the process is also in an enabled state
+		} else
+		if ((step.getActualLifecycleState().equals(State.ACTIVE) || step.getActualLifecycleState().equals(State.COMPLETED)) 
+				&& !this.getActualLifecycleState().equals(State.ACTIVE)) {
+			return this.setActivationConditionsFulfilled(true);
+		} 
+		return Collections.emptyList();
+	}
 	
-	
+	protected List<Events.ProcessChangedEvent> signalDNIChanged(DecisionNodeInstance dni) {
+		if (this.getDefinition().getCondition(Conditions.POSTCONDITION).isPresent()) // we have our own process specific post conditions
+			return Collections.emptyList(); // then we dont care about substep status, and rely only on post condition
+		
+		if (!dni.isInflowFulfilled()) // something not ready yet, so we just cannot be ready yet, perhaps we are not ready anyway
+			return this.setPostConditionsFulfilled(false); //we can only do this as there is no explicit process-level postcondition specified		
+		if (dni.isInflowFulfilled() && dni.getDefinition().getOutSteps().size() == 0 && this.areQAconstraintsFulfilled()) {						
+			List<Events.ProcessChangedEvent> events = this.setPostConditionsFulfilled(true);
+			if (events.size() > 0) 
+				return events;
+			else 
+				return trigger(Trigger.MARK_COMPLETE); // the last DNI is fulfilled, and our conditions are all fulfilled
+		} else
+			return Collections.emptyList();
+	}
 	
 	@SuppressWarnings("unchecked")
 	private void addProcessStep(ProcessStep step) {
@@ -297,7 +326,7 @@ public class ProcessInstance extends ProcessStep {
 			.filter(dnd -> dnd.getInSteps().size() == 0)
 			.forEach(dnd -> {
 				DecisionNodeInstance dni = getOrCreateDNI(dnd);		
-				dni.tryActivationPropagation(); // to trigger instantiation of initial steps
+				dni.signalStateChanged(this); //dni.tryActivationPropagation(); // to trigger instantiation of initial steps				
 			});		
 		// datamapping from proc to DNI is triggered upon adding input, which is not available at this stage
 	}

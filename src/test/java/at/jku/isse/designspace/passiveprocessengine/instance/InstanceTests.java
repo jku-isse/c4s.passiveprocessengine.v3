@@ -33,6 +33,7 @@ import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts.JiraStates;
 import at.jku.isse.passiveprocessengine.instance.ConstraintWrapper;
+import at.jku.isse.passiveprocessengine.instance.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
@@ -121,7 +122,7 @@ class InstanceTests {
 				.allMatch(step -> (step.getOutput("jiraOut").size() == 2) && step.getActualLifecycleState().equals(State.COMPLETED) ));
 		assert(proc.getProcessSteps().stream()
 				.filter(step -> step.getDefinition().getName().equals("sd2") )
-				.allMatch(step -> (step.getInput("jiraIn").size() == 2) && step.getActualLifecycleState().equals(State.ENABLED) ) );
+				.allMatch(step -> (step.getInput("jiraIn").size() == 2) && step.getActualLifecycleState().equals(State.ACTIVE) ) );
 		
 		jiraA.getPropertyAsSet(TestArtifacts.CoreProperties.requirements.toString()).remove(jiraC);
 		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Closed);
@@ -148,7 +149,7 @@ class InstanceTests {
 		assert(step2.getInput("jiraIn").size()==1) ;
 		assert(step2.getOutput("jiraOut").size()==1) ;
 		assert(step2.getOutput("jiraOut").iterator().next().name().equals("jiraB")) ;
-		assert(step2.getActualLifecycleState().equals(State.ENABLED) );
+		assert(step2.getActualLifecycleState().equals(State.ACTIVE) );
 		
 		monitor.calcFinalStats();
 		ProcessStats stats = monitor.stats.get(proc);
@@ -197,7 +198,7 @@ class InstanceTests {
 		ws.concludeTransaction();
 		System.out.println(proc);
 		proc.getProcessSteps().stream().forEach(step -> System.out.println(step));
-		assert(proc.getExpectedLifecycleState().equals(State.ACTIVE));
+		assert(proc.getActualLifecycleState().equals(State.ACTIVE));
 		assert(proc.getProcessSteps().stream()
 				.filter(step -> step.getDefinition().getName().equals("sd2") )
 				.allMatch(step -> (step.getOutput("jiraOut").iterator().next().name().equals("jiraB"))) );
@@ -292,15 +293,13 @@ class InstanceTests {
 		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
 		proc.addInput("jiraIn", jiraE);
 		ws.concludeTransaction();
-		System.out.println(proc);
-		proc.getProcessSteps().stream().forEach(step -> System.out.println(step));
-		assert(proc.getExpectedLifecycleState().equals(State.ENABLED));
+		printFullProcessToLog(proc);
+		assert(proc.getExpectedLifecycleState().equals(State.ACTIVE));
 		
 		TestArtifacts.setStateToJiraInstance(jiraE, JiraStates.Closed);
 		ws.concludeTransaction();
 		
-		System.out.println(proc);
-		proc.getProcessSteps().stream().forEach(step -> System.out.println(step));
+		printFullProcessToLog(proc);
 		assert(proc.getExpectedLifecycleState().equals(State.COMPLETED));
 		assert(proc.getActualLifecycleState().equals(State.COMPLETED));
 		assert(proc.getOutput("jiraOut").size() == 1);
@@ -509,7 +508,9 @@ class InstanceTests {
 				System.out.println(nextIndent+step.toString());
 			}
 		});
-		proc.getDecisionNodeInstances().stream().forEach(dni -> System.out.println(nextIndent+dni.toString()));
+		proc.getDecisionNodeInstances().stream().sorted(DecisionNodeInstance.comparator).forEach(dni -> System.out.println(nextIndent+dni.toString()));
 	}
+	
+	
 	
 }
