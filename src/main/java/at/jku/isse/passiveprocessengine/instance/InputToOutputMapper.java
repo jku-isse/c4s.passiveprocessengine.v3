@@ -48,9 +48,9 @@ public class InputToOutputMapper {
 //		log.info("Pruned RepairTree for : "+crt.name());
 //		ConsistencyUtils.printRepairTree(rn);
 		
-		Set<Object> objects = (Set<Object>) step.getDefinition().getExpectedOutput().values().stream()
+		Set<Object> objects = step.getDefinition().getExpectedOutput().values().stream()
 			.distinct()
-			.flatMap(type -> type.getInstancesIncludingThoseOfSubtypes().get().stream())
+			.flatMap(type -> type.instancesIncludingThoseOfSubtypes())
 			.collect(Collectors.toSet());
 		if (objects.size() == 0) {
 			log.error(String.format("No candidates for fixing datamapping % found", crt.name() ));

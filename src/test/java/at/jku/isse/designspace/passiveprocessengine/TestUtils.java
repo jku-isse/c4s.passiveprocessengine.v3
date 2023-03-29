@@ -62,12 +62,12 @@ public class TestUtils {
 		.forEach(entry -> {
 			if (entry.getValue() != null) {
 				String ruleName = ProcessInstance.generatePrematureRuleName(entry.getKey(), proc.getDefinition());
-				Collection<ConsistencyRuleType> ruleDefinitions = proc.getInstance().workspace.its(ConsistencyRuleType.CONSISTENCY_RULE_TYPE).subTypes().get();
+				Collection<InstanceType> ruleDefinitions = proc.getInstance().workspace.its(ConsistencyRuleType.CONSISTENCY_RULE_TYPE).subTypes();
 		        if(! ruleDefinitions.isEmpty() && !(ruleDefinitions.stream().filter(inst -> !inst.isDeleted).count() == 0)) {
-		        	for(ConsistencyRuleType crt: ruleDefinitions.stream().filter(inst -> !inst.isDeleted).collect(Collectors.toSet() )){
+		        	for(InstanceType crt: ruleDefinitions.stream().filter(inst -> !inst.isDeleted).collect(Collectors.toSet() )){
 		        		if (crt.name().equalsIgnoreCase(ruleName)) {
-		        			assertTrue(ConsistencyUtils.crdValid(crt));
-		        			String eval = (String) crt.ruleEvaluations().get().stream()
+		        			assertTrue(ConsistencyUtils.crdValid((ConsistencyRuleType)crt));
+		        			String eval = (String) ((ConsistencyRuleType)crt).ruleEvaluations().get().stream()
 									.map(rule -> ((Rule)rule).result()+"" )
 									.collect(Collectors.joining(",","[","]"));
 							System.out.println("Checking "+crt.name() +" Result: "+ eval);

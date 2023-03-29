@@ -175,7 +175,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 	}
 
 	@Override
-	public void handleUpdated(List<Operation> operations) {
+	public void handleUpdated(Collection<Operation> operations) {
 		handleUpdates(operations);
 	}
 	
@@ -189,7 +189,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 		}
 	}
 	
-	protected Set<ProcessInstance> handleUpdates(List<Operation> operations) {
+	protected Set<ProcessInstance> handleUpdates(Collection<Operation> operations) {
 		@SuppressWarnings("unchecked")
 		
 		List<ProcessScopedCmd> queuedEffects = (List<ProcessScopedCmd>) operations.stream()
@@ -423,4 +423,6 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 			processEventCount = processEventCount + inc;
 		}
 	}
+
+
 }

@@ -1,5 +1,6 @@
 package at.jku.isse.designspace.passiveprocessengine.listeners;
 
+import java.util.Collection;
 import java.util.List;
 import at.jku.isse.designspace.core.events.ElementCreate;
 import at.jku.isse.designspace.core.events.Operation;
@@ -51,7 +52,7 @@ public class JiraItemAugmentor implements WorkspaceListener {
 	}
 	
 	@Override
-	public void handleUpdated(List<Operation> arg0) {
+	public void handleUpdated(Collection<Operation> arg0) {
 	
 		arg0.stream().forEach(op -> {
 			if (op instanceof ElementCreate && !isSchemaUpdated) {

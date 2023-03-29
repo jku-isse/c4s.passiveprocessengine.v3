@@ -62,6 +62,7 @@ import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
 import at.jku.isse.passiveprocessengine.instance.messages.WorkspaceListenerSequencer;
 import at.jku.isse.passiveprocessengine.monitoring.CurrentSystemTimeProvider;
+import at.jku.isse.passiveprocessengine.monitoring.ITimeStampProvider;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
 import at.jku.isse.passiveprocessengine.monitoring.RepairAnalyzer;
@@ -79,13 +80,14 @@ public class RepairAnalysisTests {
 	static RepairAnalyzer repAnalyzer;
 	static RepairStats rs = new RepairStats();
 	static RepairNodeScorer scorer=new SortOnRestriction();
-	static ReplayTimeProvider timeProvider=new ReplayTimeProvider();
+	static ITimeStampProvider timeProvider=new CurrentSystemTimeProvider();
 
 	@BeforeEach
 	void setup() throws Exception {
 		RuleService.setEvaluator(new ArlRuleEvaluator());
-		ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER,
-				null, true, false);
+		//ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER,
+//				null, true, false);
+		ws = WorkspaceService.PUBLIC_WORKSPACE;
 		// ws = WorkspaceService.PUBLIC_WORKSPACE;
 		RuleService.currentWorkspace = ws;
 		EventDistributor eventDistrib = new EventDistributor();
@@ -109,6 +111,7 @@ public class RepairAnalysisTests {
 
 		ProcessDefinition procDef = TestProcesses.getComplexSingleStepProcessDefinition(ws);
 		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
+		ws.concludeTransaction();
 		proc.addInput("jiraIn", jiraA);
 		ws.concludeTransaction();
 
@@ -154,11 +157,11 @@ public class RepairAnalysisTests {
 		proc.getProcessSteps().stream().forEach(step -> System.out.println(step));
 		assert (proc.getProcessSteps().stream().filter(step -> step.getDefinition().getName().equals("sd1"))
 				.allMatch(step -> (step.getOutput("jiraOut").size() == 2)
-						&& step.getActualLifecycleState().equals(State.ENABLED)));
+						&& step.getActualLifecycleState().equals(State.ACTIVE)));
 
 		// finally we fulfill the completion constraint
 		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Closed);
-		TestArtifacts.setStateToJiraInstance(jiraA, JiraStates.Closed);
+		//TestArtifacts.setStateToJiraInstance(jiraA, JiraStates.Closed);
 		// both changes are necessary
 
 		ws.concludeTransaction();

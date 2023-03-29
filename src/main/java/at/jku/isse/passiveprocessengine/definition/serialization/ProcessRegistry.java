@@ -58,7 +58,7 @@ public class ProcessRegistry {
 	
 	
 	public Optional<ProcessDefinition> getProcessDefinition(String name) {
-		return procDefType.getInstancesIncludingThoseOfSubtypes().stream()
+		return procDefType.instancesIncludingThoseOfSubtypes()
 				.filter(inst -> !inst.isDeleted)
 				.filter(inst -> inst.name().equals(name))
 			.map(inst -> (ProcessDefinition)WrapperCache.getWrappedInstance(ProcessDefinition.class, inst))
@@ -98,13 +98,13 @@ public class ProcessRegistry {
 	}
 	
 	public Set<String> getAllDefinitionIDs() {
-		 return procDefType.getInstancesIncludingThoseOfSubtypes().stream()
+		 return procDefType.instancesIncludingThoseOfSubtypes()
 		 	.map(inst -> inst.name())
 		 	.collect(Collectors.toSet());
 	}
 	
 	public Set<ProcessDefinition> getAllDefinitions() {
-		return procDefType.getInstancesIncludingThoseOfSubtypes().stream()
+		return procDefType.instancesIncludingThoseOfSubtypes()
 			.map(inst -> (ProcessDefinition)WrapperCache.getWrappedInstance(ProcessDefinition.class, inst))
 			.collect(Collectors.toSet());
 	}
