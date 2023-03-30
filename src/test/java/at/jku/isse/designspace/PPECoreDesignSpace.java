@@ -1,13 +1,8 @@
 package at.jku.isse.designspace;
 
 import at.jku.isse.designspace.core.events.Event;
-import at.jku.isse.designspace.core.trees.collaboration.CollaborationTree;
 import at.jku.isse.designspace.endpoints.grpc.service.GrpcUtils;
-import at.jku.isse.designspace.rule.arl.repair.Operator;
-import at.jku.isse.designspace.rule.arl.repair.changepropagation.Change;
-import at.jku.isse.designspace.rule.arl.repair.changepropagation.ModelState;
 import at.jku.isse.designspace.rule.arl.repair.changepropagation.ParallelGraphGenerator;
-import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -17,7 +12,6 @@ import org.springframework.context.ApplicationListener;
 import at.jku.isse.designspace.core.model.*;
 import at.jku.isse.designspace.core.service.ServiceRegistry;
 import at.jku.isse.designspace.core.service.WorkspaceService;
-import at.jku.isse.designspace.core.trees.operation.OperationTree;
 
 import org.springframework.boot.Banner;
 import org.springframework.core.env.Environment;
@@ -26,8 +20,6 @@ import org.springframework.core.env.Environment;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.*;
-import java.util.stream.Collectors;
-
 import javax.annotation.PreDestroy;
 
 @SpringBootApplication

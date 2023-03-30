@@ -3,6 +3,7 @@ package at.jku.isse.designspace.passiveprocessengine.instance;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 import java.util.Iterator;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -243,7 +244,7 @@ public class RepairOrderTest {
 	{
 		System.out.println("The Updated Repair Trees are as follows");
 		InstanceType type = ws.debugInstanceTypeFindByName(ReservedNames.CONSISTENCY_RULE_TYPE_NAME);
-		SetProperty<InstanceType> all = type.subTypes();
+		Set<InstanceType> all = type.subTypes();
 		Iterator<InstanceType> it = all.iterator();
 		while (it.hasNext()) {
 			SetProperty<Rule> rule = ((ConsistencyRuleType) it.next()).ruleEvaluations();

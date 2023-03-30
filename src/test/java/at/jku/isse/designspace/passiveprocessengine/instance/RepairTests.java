@@ -62,8 +62,8 @@ class RepairTests {
 		
 		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "TranverseTest", "self.parent.name = self.name");
 		ws.concludeTransaction();
-		crt.consistencyRuleEvaluations().value.forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr); });
-		RepairNode rnodeA = crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr); });
+		RepairNode rnodeA = crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.map(cr -> RuleService.repairTree(cr))
 			.findAny().get();		
@@ -88,8 +88,8 @@ class RepairTests {
 				"self.requirements"
 				+ "->exists(req : <"+typeJira.getQualifiedName()+">  | self.parent.name = req.name)");
 		ws.concludeTransaction();
-		crt.consistencyRuleEvaluations().value.forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr); });
-		RepairNode rnodeA = crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr); });
+		RepairNode rnodeA = crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.map(cr -> RuleService.repairTree(cr))
 			.findAny().get();		
@@ -112,7 +112,7 @@ class RepairTests {
 						+ "->size() > 1");
 		ws.concludeTransaction();
 		
-		crt.consistencyRuleEvaluations().value.forEach(cr -> { 
+		crt.consistencyRuleEvaluations().getValue().forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
 			printRepairActions(repairTree);
 		});		
@@ -134,7 +134,7 @@ class RepairTests {
 						+ "->size() > 0");
 		ws.concludeTransaction();
 		
-		RepairNode rnodeA = crt.consistencyRuleEvaluations().value.stream()
+		RepairNode rnodeA = crt.consistencyRuleEvaluations().getValue().stream()
 				.filter(cr -> cr.contextInstance().equals(jiraA))
 				.map(cr -> RuleService.repairTree(cr))
 				.findAny().get();		
@@ -157,8 +157,8 @@ class RepairTests {
 		
 		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "TranverseTest", "self.parent.name = 'jiraX'");
 		ws.concludeTransaction();
-		crt.consistencyRuleEvaluations().value.forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr); });
-		RepairNode rnodeA = crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr); });
+		RepairNode rnodeA = crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.map(cr -> RuleService.repairTree(cr))
 			.findAny().get();		
@@ -185,7 +185,7 @@ class RepairTests {
 		
 		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "TraverseTest", "self.parent.parent.name = 'jiraD'");
 		ws.concludeTransaction();
-		RepairNode rnodeA = crt.consistencyRuleEvaluations().value.stream()
+		RepairNode rnodeA = crt.consistencyRuleEvaluations().getValue().stream()
 				.filter(cr -> cr.contextInstance().equals(jiraA))
 				.map(cr -> RuleService.repairTree(cr))
 				.findAny().get();	
@@ -225,9 +225,9 @@ class RepairTests {
 		
 		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "TranverseTest", "self.parent.parent.name.equalsIgnoreCase('jiraD')");
 		ws.concludeTransaction();
-		crt.consistencyRuleEvaluations().value.forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr);
+		crt.consistencyRuleEvaluations().getValue().forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr);
 		});
-		RepairNode rnodeA = crt.consistencyRuleEvaluations().value.stream()
+		RepairNode rnodeA = crt.consistencyRuleEvaluations().getValue().stream()
 				.filter(cr -> cr.contextInstance().equals(jiraA))
 				.map(cr -> RuleService.repairTree(cr))
 				.findAny().get();		
@@ -267,9 +267,9 @@ class RepairTests {
 		
 		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "TranverseTest", "self.parent.parent.name.startsWith('jiraD')");
 		ws.concludeTransaction();
-		crt.consistencyRuleEvaluations().value.forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr);
+		crt.consistencyRuleEvaluations().getValue().forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr);
 		});
-		RepairNode rnodeA = crt.consistencyRuleEvaluations().value.stream()
+		RepairNode rnodeA = crt.consistencyRuleEvaluations().getValue().stream()
 				.filter(cr -> cr.contextInstance().equals(jiraA))
 				.map(cr -> RuleService.repairTree(cr))
 				.findAny().get();		
@@ -318,7 +318,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
@@ -471,7 +471,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent() )
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
@@ -512,7 +512,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent() )
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
@@ -561,7 +561,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent() )
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
@@ -618,7 +618,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent() )
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
@@ -665,7 +665,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent() )
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
@@ -705,7 +705,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent() )
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
@@ -747,7 +747,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent() )
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
@@ -788,7 +788,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent() )
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
@@ -830,7 +830,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent() )
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
@@ -870,7 +870,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent() || cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
@@ -907,7 +907,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).result()+"" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent())
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
@@ -973,7 +973,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).result()+"" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent())
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
@@ -1042,7 +1042,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).contextInstance().toString()+":"+((Rule)rule).result()+"\r\n" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
@@ -1101,7 +1101,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).result()+"" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent())
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
@@ -1154,7 +1154,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).result()+"" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent())
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
@@ -1210,7 +1210,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).result()+"" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent())
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
@@ -1296,7 +1296,7 @@ class RepairTests {
 		ConsistencyRuleType crd1 = ConsistencyRuleType.create(ws, typeStep, "crd1", arl);
 		ws.concludeTransaction();
 		
-		crd1.consistencyRuleEvaluations().value.stream()
+		crd1.consistencyRuleEvaluations().getValue().stream()
 		.filter(cr -> !cr.isConsistent())
 		.forEach(cr -> { 
 		RepairNode repairTree = RuleService.repairTree(cr);
@@ -1331,7 +1331,7 @@ class RepairTests {
 		ConsistencyRuleType crd1 = ConsistencyRuleType.create(ws, typeStep, "crd1", arl);
 		ws.concludeTransaction();
 		
-		crd1.consistencyRuleEvaluations().value.stream()
+		crd1.consistencyRuleEvaluations().getValue().stream()
 		.filter(cr -> !cr.isConsistent())
 		.forEach(cr -> { 
 		RepairNode repairTree = RuleService.repairTree(cr);
@@ -1390,7 +1390,7 @@ class RepairTests {
 		ConsistencyRuleType crd1 = ConsistencyRuleType.create(ws, typeStep, "crd1", arl);
 		ws.concludeTransaction();
 		
-		crd1.consistencyRuleEvaluations().value.stream()
+		crd1.consistencyRuleEvaluations().getValue().stream()
 		.filter(cr -> !cr.isConsistent())
 		.forEach(cr -> { 
 		RepairNode repairTree = RuleService.repairTree(cr);
@@ -1412,7 +1412,7 @@ class RepairTests {
 		
 		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AsSetTest", "self.requirements.asSet().size() > 2");
 		ws.concludeTransaction();
-		crt.consistencyRuleEvaluations().value.forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr); 
+		crt.consistencyRuleEvaluations().getValue().forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr); 
 		printRepairActions(repairTree);});
 		;
 		//works
@@ -1431,7 +1431,7 @@ class RepairTests {
 		
 		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "AsSetTest", "self.requirements.size() > 2");
 		ws.concludeTransaction();
-		crt.consistencyRuleEvaluations().value.forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr);
+		crt.consistencyRuleEvaluations().getValue().forEach(cr -> { RepairNode repairTree = RuleService.repairTree(cr);
 		printRepairActions(repairTree);});
 		;
 		//works
@@ -1458,7 +1458,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).result()+"" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent())
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
@@ -1493,7 +1493,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).result()+"" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent())
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
@@ -1526,7 +1526,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).result()+"" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent())
 			.forEach(cr -> { 
 			RepairNode repairTree = RuleService.repairTree(cr);
@@ -1559,7 +1559,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).result()+"" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent())
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 
@@ -1593,7 +1593,7 @@ class RepairTests {
 				.map(rule -> ((Rule)rule).result()+"" )
 				.collect(Collectors.joining(",","[","]"));
 		System.out.println("Checking "+crt.name() +" Result: "+ eval);
-		crt.consistencyRuleEvaluations().value.stream()
+		crt.consistencyRuleEvaluations().getValue().stream()
 			.filter(cr -> !cr.isConsistent())
 			.filter(cr -> cr.contextInstance().equals(jiraA))
 			.forEach(cr -> { 

@@ -81,6 +81,13 @@ class InstanceTests {
 
 
 	@Test
+	void opposableProps() {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		
+	}
+	
+	@Test
 	void testComplexDataMapping() throws ProcessException {
 		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
 		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");

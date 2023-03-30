@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.instance.messages;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -22,7 +23,7 @@ public class WorkspaceListenerSequencer implements WorkspaceListener {
 	}
 	
 	@Override
-	public void handleUpdated(List<Operation> operations) {
+	public void handleUpdated(Collection<Operation> operations) {
 		listeners.forEach(wsl -> wsl.handleUpdated(operations));
 	}
 }
