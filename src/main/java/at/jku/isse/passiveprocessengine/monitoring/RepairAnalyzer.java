@@ -694,7 +694,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 					updateCRE_matrix(se_cre, entryPU.getKey(),stepInst,time.getLastChangeTimeStamp());
 					if(cre.isConsistent())// change lead to cre fulfillment
 					{
-						this.pce.updateRepairTemplateSelectScores(cre);
+						this.pce.updateRepairTemplateScores(cre);
 					}
 				}
 				else if(se_cre.getSideEffectType()==SideEffect.Type.NEGATIVE)
