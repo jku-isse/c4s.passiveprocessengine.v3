@@ -427,6 +427,32 @@ public class TestProcesses {
 		return procDef;
 	}
 	
+	// not ( eventually(a, next( eventually(a)))) 
+	public static ProcessDefinition getSimpleTemporalProcessDefinitionWithSequenceAbsence(Workspace ws) throws ProcessException {
+		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
+		ProcessDefinition procDef = ProcessDefinition.getInstance("temporal1", ws);
+		procDef.addExpectedInput("jiraIn", typeJira);			
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("start1", ws);
+		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("end2", ws);
+		StepDefinition sd1 = procDef.createStepDefinition("step1", ws);
+		sd1.addExpectedInput("jiraIn", typeJira);
+		sd1.setInDND(dnd1);
+		sd1.setOutDND(dnd2);
+		sd1.setSpecOrderIndex(1);
+		
+		sd1.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() > 0");
+		sd1.setCondition(Conditions.POSTCONDITION, "self.in_jiraIn->forAll( issue1 | issue1.requirements->size() > 0) and \r\n"
+												 + "self.in_jiraIn->forAll( issue | issue.requirements\r\n"
+													//+ "->forAll(req | eventually(req.state = 'Released') and not(eventually(req.state = 'Released' , (next( eventually(req.state = 'Released') ) ) ) ) ) )");
+																					+ "->forAll(req | eventually(req.state = 'Released') and eventually(req.state = 'Released' , eventually(req.state = 'Released') or not (next( eventually(req.state <> 'Released' , req.state = 'Released') ) )) ) )");
+				
+		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
+		procDef.setDepthIndexRecursive(0);
+		procDef.initializeInstanceTypes(false);
+		procDef.setImmediateInstantiateAllStepsEnabled(true); // ensure new behavior
+		return procDef;
+	}
+	
 	public static DTOs.Process getSimpleDTOSubprocess(Workspace ws) {
 		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
 		DTOs.Process procD = new DTOs.Process();

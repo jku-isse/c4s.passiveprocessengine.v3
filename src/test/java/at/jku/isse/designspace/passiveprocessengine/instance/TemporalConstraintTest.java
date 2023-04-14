@@ -334,4 +334,154 @@ class TemporalConstraintTest {
 		InstanceTests.printFullProcessToLog(proc);
 		assert(sd1.getActualLifecycleState() == State.ENABLED);
 	}
+	
+	@Test
+	void testTemporalConstraintEarlyAddingSequenceAbsence() throws Exception {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");		
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		TestArtifacts.addJiraToJira(jiraA, jiraB);
+		TestArtifacts.addJiraToJira(jiraA, jiraC);	
+		
+		ProcessDefinition procDef = TestProcesses.getSimpleTemporalProcessDefinitionWithSequenceAbsence(ws);
+		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
+		proc.addInput("jiraIn", jiraA);
+		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.ReadyForReview);
+		
+		ws.concludeTransaction();
+		ProcessStep sd1 = proc.getProcessSteps().stream()
+				.filter(step -> step.getDefinition().getName().equals("step1") ).findAny().get(); 
+		InstanceTests.printFullProcessToLog(proc);
+		// now we are enabled
+		assert(sd1.getActualLifecycleState() == State.ENABLED);
+		
+		// now lets progress toward fulfillment but
+		
+		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Released);
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.ReadyForReview);
+		ws.concludeTransaction();
+		InstanceTests.printFullProcessToLog(proc);
+		// now we are still enabled
+		assert(sd1.getActualLifecycleState() == State.ENABLED);
+				
+		
+		// now lets complete step1:		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		ws.concludeTransaction();
+		InstanceTests.printFullProcessToLog(proc);
+		assert(sd1.getActualLifecycleState() == State.COMPLETED);
+	}
+	
+	@Test
+	void testTemporalConstraintLateAddingSequenceAbsence() throws Exception {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");		
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		
+		TestArtifacts.addJiraToJira(jiraA, jiraC);	
+		
+		ProcessDefinition procDef = TestProcesses.getSimpleTemporalProcessDefinitionWithSequenceAbsence(ws);
+		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
+		proc.addInput("jiraIn", jiraA);
+		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.ReadyForReview);
+		
+		ws.concludeTransaction();
+		ProcessStep sd1 = proc.getProcessSteps().stream()
+				.filter(step -> step.getDefinition().getName().equals("step1") ).findAny().get(); 
+		InstanceTests.printFullProcessToLog(proc);
+		// now we are enabled
+		assert(sd1.getActualLifecycleState() == State.ENABLED);
+		
+		// now lets progress toward fulfillment but
+		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Released);
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.ReadyForReview);
+		ws.concludeTransaction();
+		InstanceTests.printFullProcessToLog(proc);
+		// now we are still enabled
+		assert(sd1.getActualLifecycleState() == State.ENABLED);
+				
+		// now lets deviate with B by setting to something else again and back to released
+		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Closed);
+		ws.concludeTransaction();
+		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Released);
+		ws.concludeTransaction();
+		assert(sd1.getActualLifecycleState() == State.ENABLED);
+		
+		// now lets add B, complete for C, but we should still be ENABLED as B violated the constraint
+		TestArtifacts.addJiraToJira(jiraA, jiraB);		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		ws.concludeTransaction();
+		InstanceTests.printFullProcessToLog(proc);
+		assert(sd1.getActualLifecycleState() == State.ENABLED);
+	}
+	
+	@Test
+	void testTemporalConstraintearlyAddingDeviatingFromSequenceAbsence() throws Exception {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");		
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		TestArtifacts.addJiraToJira(jiraA, jiraB);	
+		TestArtifacts.addJiraToJira(jiraA, jiraC);	
+		
+		ProcessDefinition procDef = TestProcesses.getSimpleTemporalProcessDefinitionWithSequenceAbsence(ws);
+		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
+		proc.addInput("jiraIn", jiraA);
+		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.ReadyForReview);
+		
+		ws.concludeTransaction();
+		ProcessStep sd1 = proc.getProcessSteps().stream()
+				.filter(step -> step.getDefinition().getName().equals("step1") ).findAny().get(); 
+		InstanceTests.printFullProcessToLog(proc);
+		// now we are enabled
+		assert(sd1.getActualLifecycleState() == State.ENABLED);
+		
+		// now lets progress toward fulfillment but
+		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Released);
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.ReadyForReview);
+		ws.concludeTransaction();
+		InstanceTests.printFullProcessToLog(proc);
+		// now we are still enabled
+		assert(sd1.getActualLifecycleState() == State.ENABLED);
+				
+		// now lets deviate with B by setting to something else again and back to released
+		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Closed);
+		ws.concludeTransaction();
+		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Released);
+		ws.concludeTransaction();
+		assert(sd1.getActualLifecycleState() == State.ENABLED);
+		
+		//complete for C, but we should still be ENABLED as B violated the constraint
+			
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		ws.concludeTransaction();
+		InstanceTests.printFullProcessToLog(proc);
+		assert(sd1.getActualLifecycleState() == State.ENABLED);
+	}
+	
+	@Test
+	public void testDeviationFromSequenceAbsence() {		
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");			
+		
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "TempTest2", "eventually(self.state = 'Released') and eventually(self.state = 'Released' , eventually(self.state = 'Released') or not (next( eventually(self.state <> 'Released' , self.state = 'Released') ) )) ");
+		ws.concludeTransaction();
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.ReadyForReview);
+		ws.concludeTransaction();
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==false);
+						
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Open);
+		ws.concludeTransaction();
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==false);
+		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		ws.concludeTransaction();
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==true);
+		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.ReadyForReview);
+		ws.concludeTransaction();
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==true);
+		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		ws.concludeTransaction();
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==false);
+	}
 }
