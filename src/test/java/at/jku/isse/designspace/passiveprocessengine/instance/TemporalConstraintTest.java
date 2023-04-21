@@ -416,7 +416,7 @@ class TemporalConstraintTest {
 	}
 	
 	@Test
-	void testTemporalConstraintearlyAddingDeviatingFromSequenceAbsence() throws Exception {
+	void testTemporalConstraintEarlyAddingDeviatingFromSequenceAbsence() throws Exception {
 		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
 		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");		
 		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
@@ -460,9 +460,89 @@ class TemporalConstraintTest {
 	
 	@Test
 	public void testDeviationFromSequenceAbsence() {		
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC", "jiraA");	
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "TempTest2", "self.requirementIDs.size() >= 0 and eventually(self.state = 'Released', always(self.state = 'Released') or not ( eventually(self.state <> 'Released' , self.state = 'Released'))) ");
+		ws.concludeTransaction();
+		
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==true);
+		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.ReadyForReview);
+		ws.concludeTransaction();
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==true);
+		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		ws.concludeTransaction();
+		
+		TestArtifacts.addReqIdsToJira(jiraC, "jiraB");
+		ws.concludeTransaction();
+		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		ws.concludeTransaction();
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==false);
+	}
+	
+	@Test
+	public void testDeviationFromSequenceAbsence1() {		
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");			
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "TempTest2", " always(self.state = 'Released') or not ( eventually(self.state <> 'Released' , self.state = 'Released')) ");
+		ws.concludeTransaction();
+		
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==true);
+		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.ReadyForReview);
+		ws.concludeTransaction();
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==true);
+		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		ws.concludeTransaction();
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==false);
+	}
+	
+	@Test
+	public void testDeviationFromAlwaysSequence() {		
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "TempTest2", " always(self.state = 'Released')");
+		ws.concludeTransaction();
+		
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		ws.concludeTransaction();
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==true);
+		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.ReadyForReview);
+		ws.concludeTransaction();
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==false);
+		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		ws.concludeTransaction();
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==false);
+	}
+	
+	@Test
+	public void testDeviationFromEventuallyAlwaysSequence() {		
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "TempTest2", " eventually(always(self.state = 'Released'))");
+		ws.concludeTransaction();
+		
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		ws.concludeTransaction();
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==true);
+		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.ReadyForReview);
+		ws.concludeTransaction();
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==false);
+		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		ws.concludeTransaction();
+		assert(crt.consistencyRuleEvaluation(jiraC).isConsistent()==true);
+	}
+	
+	@Test
+	public void testDeviationFromSequenceAbsence2() {		
 		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");			
 		
-		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "TempTest2", "eventually(self.state = 'Released') and eventually(self.state = 'Released' , eventually(self.state = 'Released') or not (next( eventually(self.state <> 'Released' , self.state = 'Released') ) )) ");
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, typeJira, "TempTest3", "eventually(self.state = 'Released') and eventually(self.state = 'Released' , always(self.state = 'Released') or not (next( eventually(self.state <> 'Released' , self.state = 'Released') ) )) ");
 		ws.concludeTransaction();
 		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.ReadyForReview);
 		ws.concludeTransaction();
