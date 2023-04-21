@@ -389,7 +389,7 @@ public class TestProcesses {
 		sd1.setCondition(Conditions.POSTCONDITION, "self.in_jiraIn->forAll( issue1 | issue1.requirements->size() > 0) and \r\n"
 												 + "self.in_jiraIn->forAll( issue | issue.requirements\r\n"
 												 				//+ "->forAll(req | eventually(req.state = 'ReadyForReview') and eventually( always( req.state = 'ReadyForReview' ,  req.state = 'Released'))) ) ");
-																	+ "->forAll(req | eventually(req.state = 'ReadyForReview') and eventually( always( req.state = 'ReadyForReview' ,  eventually(req.state = 'Released')))) ) ");			
+																	+ "->forAll(req | eventually(req.state = 'ReadyForReview') and eventually( everytime( req.state = 'ReadyForReview' ,  eventually(req.state = 'Released')))) ) ");			
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		procDef.setDepthIndexRecursive(0);
 		procDef.initializeInstanceTypes(false);
@@ -412,11 +412,11 @@ public class TestProcesses {
 		sd1.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() > 0");
 		sd1.setCondition(Conditions.POSTCONDITION, "self.in_jiraIn->forAll( issue1 | issue1.requirements->size() > 0) and \r\n"
 												 + "self.in_jiraIn->forAll( issue | issue.requirements\r\n"
-																					+ "->forAll(req | eventually(req.state = 'ReadyForReview') and eventually( always( req.state = 'ReadyForReview' ,  req.state = 'Released'))))");
+																					+ "->forAll(req | eventually(req.state = 'ReadyForReview') and eventually( everytime( req.state = 'ReadyForReview' ,  eventually(req.state = 'Released')))))");
 		//until(not(b), a) and always(b, next(until(not(b), a)))
 		QAConstraintSpec qa3 = QAConstraintSpec.createInstance("sd1-reviewAlwaysBeforeReleased", "self.in_jiraIn->forAll( issue | issue.requirements\r\n"
 				+ "->forAll(req | until(req.state <> 'Released' , req.state = 'ReadyForReview') \r\n"
-				+ "					and always( req.state = 'Released', next( eventually( req.state <> 'Released',  until( req.state <> 'Released', req.state = 'ReadyForReview') ) ) ) ) ) "
+				+ "					and everytime( req.state = 'Released', next( asSoonAs( req.state <> 'Released',  until( req.state <> 'Released', req.state = 'ReadyForReview') ) ) ) ) ) "
 				, "All linked requirements must be in state ReadyForReview before being in state Released", 3,ws);
 		sd1.addQAConstraint(qa3);
 		
@@ -444,7 +444,7 @@ public class TestProcesses {
 		sd1.setCondition(Conditions.POSTCONDITION, "self.in_jiraIn->forAll( issue1 | issue1.requirements->size() > 0) and \r\n"
 												 + "self.in_jiraIn->forAll( issue | issue.requirements\r\n"
 													//+ "->forAll(req | eventually(req.state = 'Released') and not(eventually(req.state = 'Released' , (next( eventually(req.state = 'Released') ) ) ) ) ) )");
-																					+ "->forAll(req | eventually(req.state = 'Released') and eventually(req.state = 'Released' , eventually(req.state = 'Released') or not (next( eventually(req.state <> 'Released' , req.state = 'Released') ) )) ) )");
+																					+ "->forAll(req | eventually(req.state = 'Released') and asSoonAs(req.state = 'Released' , always(req.state = 'Released') or not (next( asSoonAs(req.state <> 'Released' , req.state = 'Released') ) )) ) )");
 				
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		procDef.setDepthIndexRecursive(0);
