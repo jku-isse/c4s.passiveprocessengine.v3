@@ -55,7 +55,14 @@ public class DTOs {
 		String html_url;	
 				
 		protected void toPlantUML(StringBuffer sb) {	
-			sb.append("\r\n :"+this.getCode()+";");
+			String errorMsgs = output.entrySet().stream()
+					.filter(entry -> !ioMapping.containsKey(entry.getKey())) // find any output without mapping 
+					.map(entry -> "No IOMapping for output: "+entry.getKey())
+					.collect(Collectors.joining("\r\n","\r\n", ""));
+			String highlight = errorMsgs.length() > 5 ? "#red" :"";
+						
+			String stepUML = String.format("\r\n %s:%s %s ;", highlight, this.getCode(), errorMsgs);
+			sb.append(stepUML);
 			sb.append("\r\n note left");
 	        this.input.forEach((var, type) -> sb.append("\r\n   in: "+var));
 	        this.output.forEach((var, type) -> sb.append("\r\n   out: "+var));
@@ -135,12 +142,16 @@ public class DTOs {
 			return steps.stream().filter(step -> step.getOutDNDid().equals(dn.getCode())).collect(Collectors.toList());
 		}
 		
-		public DecisionNode getStartingNode() {
+		public DecisionNode getEntryNode() {
 			return dns.stream().filter(dn -> getInStepsOf(dn).size() == 0).findAny().get();
 		}
 		
+		public DecisionNode getExitNode() {
+			return dns.stream().filter(dn -> getOutStepsOf(dn).size() == 0).findAny().get();
+		}
+		
 		public void calculateDecisionNodeDepthIndex(int startIndex) {
-			setDNDepthIndexRecursive(getStartingNode(), startIndex);
+			setDNDepthIndexRecursive(getEntryNode(), startIndex);
 		}
 		
 		private void setDNDepthIndexRecursive(DecisionNode dn, int index) {
@@ -183,8 +194,8 @@ public class DTOs {
 		
 		public String toPlantUMLActivityDiagram() {
 			StringBuffer sb = new StringBuffer("@startuml\r\n"
-					+ "\r\n"
-					+ "skin rose\r\n"
+//					+ "\r\n"
+//					+ "skin rose\r\n"
 					+ "start\r\n");
 			toPlantUML(sb);
 			sb.append("\r\nend"
