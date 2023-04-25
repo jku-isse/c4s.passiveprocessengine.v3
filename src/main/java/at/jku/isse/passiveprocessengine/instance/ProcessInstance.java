@@ -26,10 +26,12 @@ import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ConditionChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.PrematureStepTriggerCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
+import at.jku.isse.passiveprocessengine.instance.ProcessStep.CoreProperties;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Trigger;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
+import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -144,29 +146,64 @@ public class ProcessInstance extends ProcessStep {
 		if (step.getActualLifecycleState().equals(State.ENABLED) &&  this.getDefinition().getCondition(Conditions.PRECONDITION).isEmpty()) {
 			if (this.getActualLifecycleState().equals(State.COMPLETED))
 				return this.setActivationConditionsFulfilled(true); // we are back in an enabled state, let the process know that its not COMPLETED anymore
-			return this.setPreConditionsFulfilled(true); // ensure the process is also in an enabled state
+			else
+				return this.setPreConditionsFulfilled(true); // ensure the process is also in an enabled state
 		} else
-		if ((step.getActualLifecycleState().equals(State.ACTIVE) || step.getActualLifecycleState().equals(State.COMPLETED)) 
-				&& !this.getActualLifecycleState().equals(State.ACTIVE)) {
-			return this.setActivationConditionsFulfilled(true);
-		} 
+			if (step.getActualLifecycleState().equals(State.ACTIVE) && !this.getActualLifecycleState().equals(State.ACTIVE)) {
+				return this.setActivationConditionsFulfilled(true);
+			} else if (step.getActualLifecycleState().equals(State.COMPLETED) && !this.getActualLifecycleState().equals(State.COMPLETED)) {
+				// lets see if we can also progress to complete, or otherwise activate process
+				return this.tryTransitionToCompleted();
+			}
 		return Collections.emptyList();
 	}
 	
 	protected List<Events.ProcessChangedEvent> signalDNIChanged(DecisionNodeInstance dni) {
-		if (this.getDefinition().getCondition(Conditions.POSTCONDITION).isPresent()) // we have our own process specific post conditions
-			return Collections.emptyList(); // then we dont care about substep status, and rely only on post condition
+		// we do a combination of postconditions and steps status
+		if (dni.isInflowFulfilled())
+			return tryTransitionToCompleted();
+		else
+			return this.trigger(Trigger.ACTIVATE);
 		
-		if (!dni.isInflowFulfilled()) // something not ready yet, so we just cannot be ready yet, perhaps we are not ready anyway
-			return this.setPostConditionsFulfilled(false); //we can only do this as there is no explicit process-level postcondition specified		
-		if (dni.isInflowFulfilled() && dni.getDefinition().getOutSteps().size() == 0 && this.areQAconstraintsFulfilled()) {						
-			List<Events.ProcessChangedEvent> events = this.setPostConditionsFulfilled(true);
-			if (events.size() > 0) 
-				return events;
-			else 
-				return trigger(Trigger.MARK_COMPLETE); // the last DNI is fulfilled, and our conditions are all fulfilled
-		} else
-			return Collections.emptyList();
+		
+//		if (this.getDefinition().getCondition(Conditions.POSTCONDITION).isPresent()) // we have our own process specific post conditions
+//			return Collections.emptyList(); // then we dont care about substep status, and rely only on post condition
+
+//		if (!dni.isInflowFulfilled()) // something not ready yet, so we just cannot be ready yet, perhaps we are not ready anyway
+//			return this.setPostConditionsFulfilled(false); //we can only do this as there is no explicit process-level postcondition specified		
+//		if (dni.isInflowFulfilled() && dni.getDefinition().getOutSteps().size() == 0 && this.areQAconstraintsFulfilled()) {						
+//			List<Events.ProcessChangedEvent> events = this.setPostConditionsFulfilled(true);
+//			if (events.size() > 0) 
+//				return events;
+//			else 
+//				return trigger(Trigger.MARK_COMPLETE); // the last DNI is fulfilled, and our conditions are all fulfilled
+//		} else
+//			return Collections.emptyList();
+	}
+	
+	
+	
+	@Override
+	public List<ProcessChangedEvent> setPostConditionsFulfilled(boolean isfulfilled) {
+		if (!isfulfilled) // regular step behavior for unfulfilled postcond
+			return super.setPostConditionsFulfilled(false);
+		// if now fulfilled, check with substeps
+		List<Events.ProcessChangedEvent> events = new LinkedList<>();
+		if (arePostCondFulfilled() != isfulfilled) { // a change
+			ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
+			events.add(new Events.ConditionFulfillmentChanged(pi, this, Conditions.POSTCONDITION, isfulfilled));
+			instance.getPropertyAsSingle(ProcessStep.CoreProperties.processedPostCondFulfilled.toString()).set(isfulfilled);
+			events.addAll(tryTransitionToCompleted());
+		}
+		return events;
+	}
+
+	private List<Events.ProcessChangedEvent> tryTransitionToCompleted() {
+		boolean areAllDNIsInflowFulfilled = this.getDecisionNodeInstances().stream().allMatch(dni -> dni.isInflowFulfilled());
+		if (arePostCondFulfilled() && areQAconstraintsFulfilled() && arePreCondFulfilled() && areAllDNIsInflowFulfilled)  
+			return this.trigger(StepLifecycle.Trigger.MARK_COMPLETE) ;
+		else
+			return this.trigger(StepLifecycle.Trigger.ACTIVATE);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -261,15 +298,17 @@ public class ProcessInstance extends ProcessStep {
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws, ProcessDefinition td) {
+		String parentName = td.getProcess() != null ? td.getProcess().getName() : "ROOT";
+		String name = designspaceTypeId+td.getName()+parentName;
 //		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
 //				.filter(it -> !it.isDeleted)
 //				.filter(it -> it.name().equals(designspaceTypeId+td.getName()))
 //				.findAny();
-		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId+td.getName())); 
+		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(name)); 
 		if (thisType.isPresent())
 			return thisType.get();
 		else {
-			InstanceType typeStep = ws.createInstanceType(designspaceTypeId+td.getName(), ws.TYPES_FOLDER, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, td));
+			InstanceType typeStep = ws.createInstanceType(name, ws.TYPES_FOLDER, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, td));
 			typeStep.createPropertyType(CoreProperties.processDefinition.toString(), Cardinality.SINGLE, ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws));
 			typeStep.createPropertyType(CoreProperties.stepInstances.toString(), Cardinality.SET, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
 			typeStep.createPropertyType(CoreProperties.decisionNodeInstances.toString(), Cardinality.SET, DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(ws));
