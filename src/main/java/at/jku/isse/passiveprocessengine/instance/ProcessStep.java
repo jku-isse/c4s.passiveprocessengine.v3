@@ -502,8 +502,13 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
 			events.add(new Events.ConditionFulfillmentChanged(pi, this, Conditions.PRECONDITION, isfulfilled));
 			instance.getPropertyAsSingle(CoreProperties.processedPreCondFulfilled.toString()).set(isfulfilled);
-			if (isfulfilled)  
+			if (isfulfilled)  {
 				events.addAll(this.trigger(StepLifecycle.Trigger.ENABLE)) ;
+				if (arePostCondFulfilled() && areQAconstraintsFulfilled())
+					events.addAll(this.trigger(StepLifecycle.Trigger.MARK_COMPLETE)) ;
+				else if (areActivationCondFulfilled())
+					events.addAll(this.trigger(StepLifecycle.Trigger.ACTIVATE)) ;
+			}
 			else {
 				//if (!actualSM.isInState(State.CANCELED)) // no need to check any longer as CANCELED state only reacts to uncancel triggers
 				events.addAll(this.trigger(StepLifecycle.Trigger.RESET));
