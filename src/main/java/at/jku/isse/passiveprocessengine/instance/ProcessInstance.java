@@ -199,6 +199,9 @@ public class ProcessInstance extends ProcessStep {
 	}
 
 	private List<Events.ProcessChangedEvent> tryTransitionToCompleted() {
+		if (this.getDefinition().getCondition(Conditions.POSTCONDITION).isEmpty()) {
+			instance.getPropertyAsSingle(ProcessStep.CoreProperties.processedPostCondFulfilled.toString()).set(true);
+		}
 		boolean areAllDNIsInflowFulfilled = this.getDecisionNodeInstances().stream().allMatch(dni -> dni.isInflowFulfilled());
 		if (arePostCondFulfilled() && areQAconstraintsFulfilled() && arePreCondFulfilled() && areAllDNIsInflowFulfilled)  
 			return this.trigger(StepLifecycle.Trigger.MARK_COMPLETE) ;
