@@ -76,6 +76,10 @@ public class DTOs {
 						.collect(Collectors.joining("\r\n ", "\r\n  -> ", ";")));		
 			}
 		}
+		
+		protected void toPlantUMLDataflow(StringBuffer sb) {
+			sb.append("\r\n  class \""+this.code+"\"");
+		}
 	} 
 
 	@ToString(doNotUseGetters = true)
@@ -101,6 +105,10 @@ public class DTOs {
 		InFlowType inflowType = InFlowType.AND; //default value
 		Set<Mapping> mapping = new HashSet<>();
 		int depthIndex = -1;	
+		
+		protected void toPlantUMLDataflow(StringBuffer sb) {
+			mapping.forEach(m -> sb.append("\r\n \""+m.getFromStep()+"\" -down-> \""+m.getToStep()+"\" : \""+m.getToParam()+"\""));
+		}
 	}
 	
 	@EqualsAndHashCode(callSuper = true)
@@ -192,10 +200,27 @@ public class DTOs {
 			}
 		}
 		
+		public String toPlantUMLDataflowAsClassDiagram() {
+			StringBuffer sb = new StringBuffer("@startuml\r\n skin rose \r\n title Dataflow "+this.getCode()+"\r\n");											
+			toPlantUMLDataflow(sb);
+			sb.append("\r\n@enduml");
+			return sb.toString();
+		}
+		
+		@Override
+		protected void toPlantUMLDataflow(StringBuffer sb) {
+			sb.append("\r\npackage \""+this.getCode()+"\"");
+			sb.append(" {");
+			this.steps.forEach(step -> step.toPlantUMLDataflow(sb));			
+			sb.append("\r\n}");
+			
+			sb.append("\r\n");
+			this.dns.forEach(node -> node.toPlantUMLDataflow(sb));
+		}
+		
+		
 		public String toPlantUMLActivityDiagram() {
-			StringBuffer sb = new StringBuffer("@startuml\r\n"
-//					+ "\r\n"
-//					+ "skin rose\r\n"
+			StringBuffer sb = new StringBuffer("@startuml\r\n"					
 					+ "start\r\n");
 			toPlantUML(sb);
 			sb.append("\r\nend"
