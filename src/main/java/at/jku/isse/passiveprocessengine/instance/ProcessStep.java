@@ -93,7 +93,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		ConsistencyRuleType crt = (ConsistencyRuleType)cr.getInstanceType();
 		Conditions cond = determineCondition(crt);
 		if (cond != null ) {
-			log.debug(String.format("Step %s has %s evaluate to %s in transaction %s ", this.getName(), cond, op.value().toString(), op.getConclusionId()));
+			String value = op.value() != null ? op.value().toString() : "NULL";
+			log.debug(String.format("Step %s has %s evaluate to %s in transaction %s ", this.getName(), cond, value, op.getConclusionId()));
 			SingleProperty prop = instance.getPropertyAsSingle(cond.toString());
 			if (prop.get() == null) 
 				prop.set(cr);
@@ -568,7 +569,12 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		if (actualSM.canFire(event)) {
 			State prevActualLifecycleState = actualSM.getState();
-			actualSM.fire(event);
+			if (event.equals(Trigger.UNCANCEL)) {
+				actualSM.fire(StepLifecycle.uncancel, this);
+			} else if (event.equals(Trigger.UNHALT)) {
+				actualSM.fire(StepLifecycle.unhalt, this);
+			} else 		
+				actualSM.fire(event);
 			State actualLifecycleState = actualSM.getState();
 			if (actualLifecycleState != prevActualLifecycleState) { // state transition
 				instance.getPropertyAsSingle(CoreProperties.actualLifecycleState.toString()).set(actualSM.getState().toString());				
