@@ -38,30 +38,24 @@ public class InputToOutputMapper {
 		RepairNode repairTree = RuleService.repairTree(crule);
 		RepairTreeFilter rtf = new OutputUpdateRepairTreeFilter();
 		rtf.filterRepairTree(repairTree);
-		//TODO: if there are (only) concrete repair actions (which should be the case with symmentric difference)
+		//DONE: if there are (only) concrete repair actions (which should be the case with symmetric difference)
 		
-//		RepairNode rn = RuleService.repairTree(crule);
-//		if (!pruneRepairNode(rn, null)) {
-//			log.error("No repairs remain to fix InputToOutputMapping: "+crt.name());
-//			return;
-//		}
-//		log.info("Pruned RepairTree for : "+crt.name());
-//		ConsistencyUtils.printRepairTree(rn);
 		
-		Set<Object> objects = step.getDefinition().getExpectedOutput().values().stream()
-			.distinct()
-			.flatMap(type -> type.instancesIncludingThoseOfSubtypes())
-			.collect(Collectors.toSet());
-		if (objects.size() == 0) {
-			log.error(String.format("No candidates for fixing datamapping % found", crt.name() ));
-			return Collections.emptyList();
-		}	
-		// this also works only if all instances that are relevant are somewhere in the designspace prefetched
-		Set<Repair> repairs = null;
-		try {
-		 repairs = //ConsistencyUtils.getConcreteRepairs(null, objects, 1, crt, crule.contextInstance());//.repairTree.getConcreteRepairs(objects, 1);// 
-				 				getConcreteRepairs(objects, 1, crt, crule.contextInstance()); 
-		
+//		Set<Object> objects = step.getDefinition().getExpectedOutput().values().stream()
+//			.distinct()
+//			.flatMap(type -> type.instancesIncludingThoseOfSubtypes())
+//			.collect(Collectors.toSet());
+//		if (objects.size() == 0) {
+//			log.error(String.format("No candidates for fixing datamapping % found", crt.name() ));
+//			return Collections.emptyList();
+//		}	
+//		// this also works only if all instances that are relevant are somewhere in the designspace prefetched
+//		Set<Repair> repairs = null;
+//		try {
+//		 repairs = //ConsistencyUtils.getConcreteRepairs(null, objects, 1, crt, crule.contextInstance());//.repairTree.getConcreteRepairs(objects, 1);// 
+//				 				getConcreteRepairs(objects, 1, crt, crule.contextInstance()); 
+
+		Set<Repair> repairs = repairTree.getRepairs();
 		if (repairs == null) {
 			String state = crule.isConsistent() ? "CONSISTENT" : "INCONSISTENT";
 			log.error("FATAL: No repairs could be created for "+state+" "+crt.name());
@@ -84,10 +78,10 @@ public class InputToOutputMapper {
 					}
 				);
 		
-		}catch(Exception e) {
-			log.error("Error while obtaining repairtree for" +crt.name() +": "+e.getMessage());
-			e.printStackTrace();
-		}
+//		}catch(Exception e) {
+//			log.error("Error while obtaining repairtree for" +crt.name() +": "+e.getMessage());
+//			e.printStackTrace();
+//		}
 		return Collections.emptyList(); //FIXME: somehow determine from repairs what was added and removed.
 	}
 	
