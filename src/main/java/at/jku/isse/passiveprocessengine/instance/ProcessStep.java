@@ -93,7 +93,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		ConsistencyRuleType crt = (ConsistencyRuleType)cr.getInstanceType();
 		Conditions cond = determineCondition(crt);
 		if (cond != null ) {
-			log.debug(String.format("Step %s has %s evaluate to %s in transaction %s ", this.getName(), cond, op.value().toString(), op.getConclusionId()));
+			String value = op.value() != null ? op.value().toString() : "NULL";
+			log.debug(String.format("Step %s has %s evaluate to %s in transaction %s ", this.getName(), cond, value, op.getConclusionId()));
 			SingleProperty prop = instance.getPropertyAsSingle(cond.toString());
 			if (prop.get() == null) 
 				prop.set(cr);
@@ -502,8 +503,13 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
 			events.add(new Events.ConditionFulfillmentChanged(pi, this, Conditions.PRECONDITION, isfulfilled));
 			instance.getPropertyAsSingle(CoreProperties.processedPreCondFulfilled.toString()).set(isfulfilled);
-			if (isfulfilled)  
+			if (isfulfilled)  {
 				events.addAll(this.trigger(StepLifecycle.Trigger.ENABLE)) ;
+				if (arePostCondFulfilled() && areQAconstraintsFulfilled())
+					events.addAll(this.trigger(StepLifecycle.Trigger.MARK_COMPLETE)) ;
+				else if (areActivationCondFulfilled())
+					events.addAll(this.trigger(StepLifecycle.Trigger.ACTIVATE)) ;
+			}
 			else {
 				//if (!actualSM.isInState(State.CANCELED)) // no need to check any longer as CANCELED state only reacts to uncancel triggers
 				events.addAll(this.trigger(StepLifecycle.Trigger.RESET));
@@ -563,7 +569,12 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		if (actualSM.canFire(event)) {
 			State prevActualLifecycleState = actualSM.getState();
-			actualSM.fire(event);
+			if (event.equals(Trigger.UNCANCEL)) {
+				actualSM.fire(StepLifecycle.uncancel, this);
+			} else if (event.equals(Trigger.UNHALT)) {
+				actualSM.fire(StepLifecycle.unhalt, this);
+			} else 		
+				actualSM.fire(event);
 			State actualLifecycleState = actualSM.getState();
 			if (actualLifecycleState != prevActualLifecycleState) { // state transition
 				instance.getPropertyAsSingle(CoreProperties.actualLifecycleState.toString()).set(actualSM.getState().toString());				
@@ -710,6 +721,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			typeStep.createPropertyType(CoreProperties.processedCancelCondFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
 			typeStep.createPropertyType(CoreProperties.processedActivationCondFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);			
 			typeStep.createPropertyType(CoreProperties.isWorkExpected.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
+			typeStep.createOpposablePropertyType(CoreProperties.qaState.toString(), Cardinality.MAP,  ConstraintWrapper.getOrCreateDesignSpaceInstanceType(ws) , ConstraintWrapper.CoreProperties.parentStep.toString(), Cardinality.SINGLE);
 			return typeStep;
 		}
 	}
@@ -742,7 +754,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 					}//assert ConsistencyUtils.crdValid(crt); as no workspace.concludeTransaction is called here, no need to assert this here, as will never be false here	
 				});
 			
-			typeStep.createPropertyType(CoreProperties.qaState.toString(), Cardinality.MAP, ConstraintWrapper.getOrCreateDesignSpaceCoreSchema(ws));
+			//typeStep.createPropertyType(CoreProperties.qaState.toString(), Cardinality.MAP, ConstraintWrapper.getOrCreateDesignSpaceCoreSchema(ws));
 			return typeStep;
 		}
 	}

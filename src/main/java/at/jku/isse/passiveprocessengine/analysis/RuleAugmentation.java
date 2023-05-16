@@ -11,6 +11,7 @@ import com.google.common.collect.Lists;
 
 import at.jku.isse.designspace.core.model.Cardinality;
 import at.jku.isse.designspace.core.model.InstanceType;
+import at.jku.isse.designspace.core.model.MapProperty;
 import at.jku.isse.designspace.core.model.ReservedNames;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.arl.expressions.VariableExpression;
@@ -30,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RuleAugmentation {
 
+	public static final String RESERVED_PROPERTY_STEP_AUGMENTATION_STATUS = "@stepAugmentationStatus";
 	
 	private Workspace ws;
 	private StepDefinition sd;
@@ -44,6 +46,12 @@ public class RuleAugmentation {
 	
 	// This works for non-temporal constraints only
 	public void augmentConditions() throws ProcessException {
+		MapProperty<String> propertyMetadata = stepType.getPropertyAsMap(ReservedNames.INSTANCETYPE_PROPERTY_METADATA);
+		String augmentationStatus = propertyMetadata.get(RESERVED_PROPERTY_STEP_AUGMENTATION_STATUS);
+		if (augmentationStatus != null) {
+			log.debug("Skipping augmentation of already augmented step "+sd.getName());
+			return; // then we already augmented this step
+		}
 		ProcessException pex = new ProcessException("Error augmenting transition conditions and/or QA constraints");
 		for (Conditions condition : Conditions.values()) {
 			if (sd.getCondition(condition).isPresent()) {
@@ -90,9 +98,12 @@ public class RuleAugmentation {
 					ConsistencyRuleType crt = ConsistencyRuleType.create(ws, stepType, specId, arl);
 				}
 			});
-		
+				
 		if (!pex.getErrorMessages().isEmpty())
 			throw pex;
+		else {
+			propertyMetadata.put(RESERVED_PROPERTY_STEP_AUGMENTATION_STATUS, "success");
+		}
 	}
 	
 	private String rewriteConstraint(String constraint) throws Exception {

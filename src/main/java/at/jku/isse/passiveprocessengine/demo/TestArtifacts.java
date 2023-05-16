@@ -43,6 +43,12 @@ public class TestArtifacts {
 		return jira;
 	}
 	
+	public static void addReqIdsToJira(Instance jira, String... reqIds) {
+		for(String id : reqIds) {
+			jira.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add(id);
+		}
+	}
+	
 	public static void addJiraToJira(Instance jira, Instance jiraToAdd) {
 		jira.getPropertyAsSet(TestArtifacts.CoreProperties.requirements.toString()).add(jiraToAdd);
 	}

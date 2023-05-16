@@ -20,7 +20,7 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 
 	
 	public static final String designspaceTypeId = ConstraintWrapper.class.getSimpleName();
-	static enum CoreProperties {qaSpec, lastChanged, crule};
+	static enum CoreProperties {qaSpec, lastChanged, crule, parentStep};
 	
 	ZonedDateTime lastChanged;
 	
@@ -78,6 +78,14 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 
 	private void setQaSpec(QAConstraintSpec qaSpec) {
 		instance.getPropertyAsSingle(CoreProperties.qaSpec.toString()).set(qaSpec.getInstance());
+	}
+	
+	public ProcessStep getParentStep() {
+		Instance step = instance.getPropertyAsInstance(CoreProperties.parentStep.toString());
+		if (step != null)
+			return WrapperCache.getWrappedInstance(ProcessStep.class, step);
+		else 
+			return null;
 	}
 	
 	public void deleteCascading() {
