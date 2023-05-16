@@ -42,11 +42,14 @@ import at.jku.isse.designspace.rule.arl.repair.UnknownRepairValue;
 import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.arl.repair.SideEffect.Type;
 import at.jku.isse.designspace.rule.arl.repair.order.Event_DS;
+import at.jku.isse.designspace.rule.arl.repair.order.NoSort;
 import at.jku.isse.designspace.rule.arl.repair.order.ProcessChangeEvents;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairNodeScorer;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairStats;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairTreeSorter;
 import at.jku.isse.designspace.rule.arl.repair.order.Repair_template;
+import at.jku.isse.designspace.rule.arl.repair.order.SortOnRepairPercentage;
+import at.jku.isse.designspace.rule.arl.repair.order.SortOnRestriction;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.ReservedNames;
@@ -722,11 +725,66 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 		if (rn != null) {
 			RepairTreeSorter rts=new RepairTreeSorter(this.pce.getRs(), scorer);
 			rts.updateTreeOnScores(rn,rule);
+			rts.printSortedRepairTree(rn, 1);
 			highestRank=rts.getMaxRank(rn);
+			// Max Rank = Test Code
+			// Default & Freq
+		/*	scorer=new NoSort();
+			RepairTreeSorter rts=new RepairTreeSorter(this.pce.getRs(), scorer);
+			rts.updateTreeOnScores(rn,rule);
+			rts.printSortedRepairTree(rn, 1);
+			highestRank=rts.getMaxRank(rn);
+			scorer=new SortOnRepairPercentage();
+			RepairTreeSorter rts1=new RepairTreeSorter(this.pce.getRs(), scorer);
+			rts1.updateTreeOnScores(rn,rule);
+			int highestRank1=rts1.getMaxRank(rn);
+			if(highestRank != highestRank1)
+			{
+				System.out.println("Check here "+ highestRank + " and " +highestRank1);
+				System.out.println("Default Ranking");
+				scorer=new NoSort();
+				rts.updateTreeOnScores(rn,rule);
+				rts.printSortedRepairTree(rn, 1);
+				highestRank=rts.getMaxRank(rn);
+				System.out.println("Frequency Ranking");
+				scorer=new SortOnRepairPercentage();
+				rts1.updateTreeOnScores(rn,rule);
+				rts1.printSortedRepairTree(rn, 1);
+				highestRank1=rts1.getMaxRank(rn);
+			}*/
+			// Default & Simplicity
+			/*scorer=new NoSort();
+			RepairTreeSorter rts=new RepairTreeSorter(this.pce.getRs(), scorer);
+			rts.updateTreeOnScores(rn,rule);
+			rts.printSortedRepairTree(rn, 1);
+			highestRank=rts.getMaxRank(rn);
+			scorer=new SortOnRestriction();
+			RepairTreeSorter rts1=new RepairTreeSorter(this.pce.getRs(), scorer);
+			rts1.updateTreeOnScores(rn,rule);
+			int highestRank1=rts1.getMaxRank(rn);
+			if(highestRank != highestRank1)
+			{
+				System.out.println("Check here "+ highestRank + " and " +highestRank1);
+				System.out.println("Default Ranking");
+				scorer=new NoSort();
+				rts.updateTreeOnScores(rn,rule);
+				rts.printSortedRepairTree(rn, 1);
+				highestRank=rts.getMaxRank(rn);
+				System.out.println("Simplicity Ranking");
+				scorer=new SortOnRestriction();
+				rts1.updateTreeOnScores(rn,rule);
+				rts1.printSortedRepairTree(rn, 1);
+				highestRank1=rts1.getMaxRank(rn);
+			}*/
+			// Max Rank =End Test
 			for(RepairAction ra: rn.getRepairActions()) {
 				// Checks if clientop matches the repair suggested by the repair tree
 				if (this.doesOpMatchRepair(ra, clientop, clientop.elementId())) 
 				{
+					EvaluationNode eval= ra.getEvalNode();
+					/*System.out.println("\n\n\n"+cre.consistencyRuleDefinition().toString());
+					System.out.println("\n\n\n"+ra.toString());
+					System.out.println("\n\n\n"+eval.toString()+"\t"+"\n");*/
 					Repair_template rt=new Repair_template();
 					rt=rt.toRepairTemplate(ra);
 					Event_DS event=new Event_DS(clientop, ra, se_cre,cre, cre.isConsistent(), stepInst, rt, dateTime, highestRank,ra.getRank(),ra.getScore());
