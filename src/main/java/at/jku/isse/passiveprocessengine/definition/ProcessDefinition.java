@@ -130,6 +130,7 @@ public class ProcessDefinition extends StepDefinition{
 			if (crt != null) crt.delete();
 		});
 		super.deleteCascading();
+		thisType.delete();
 	}
 	
 	public void initializeInstanceTypes(boolean doGeneratePrematureDetectionConstraints) throws ProcessException{

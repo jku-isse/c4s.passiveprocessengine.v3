@@ -59,7 +59,7 @@ public class MappingDefinition extends InstanceWrapper{
 	
 	@Override
 	public void deleteCascading() {
-		instance.delete();
+		super.deleteCascading();
 	}
 	
 //	public FlowDir getFlowDir() {

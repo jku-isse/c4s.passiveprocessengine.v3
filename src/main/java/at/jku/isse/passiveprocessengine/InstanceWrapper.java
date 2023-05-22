@@ -26,5 +26,10 @@ public abstract class InstanceWrapper implements IdentifiableElement{
 		return instance.name();
 	}
 	
-	public abstract void deleteCascading() ;
+	public void deleteCascading() {
+		WrapperCache.removeWrapper(getInstance().id());
+		instance.delete();
+		this.instance = null;
+		//this.ws = null;
+	}
 }

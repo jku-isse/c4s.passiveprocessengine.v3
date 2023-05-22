@@ -71,7 +71,7 @@ public class RuleAugmentation {
 					}
 					// if the error is from augmentation, still keep the original rule (with perhaps not as useful repairs)
 					// if the original rule has error, then this will be captured later anyway.
-					ConsistencyRuleType crd = ConsistencyRuleType.create(ws, stepType, "crd_"+condition+"_"+stepType.name(), arl);
+					ConsistencyRuleType crd = ConsistencyRuleType.create(ws, stepType, getConstraintName(condition, stepType), arl);
 					// not evaluated yet here, assert ConsistencyUtils.crdValid(crd);																					
 					stepType.createPropertyType(condition.toString(), Cardinality.SINGLE, crd);
 				}
@@ -104,6 +104,10 @@ public class RuleAugmentation {
 		else {
 			propertyMetadata.put(RESERVED_PROPERTY_STEP_AUGMENTATION_STATUS, "success");
 		}
+	}
+	
+	public static String getConstraintName(Conditions condition, InstanceType stepType) {
+		return "crd_"+condition+"_"+stepType.name();
 	}
 	
 	private String rewriteConstraint(String constraint) throws Exception {

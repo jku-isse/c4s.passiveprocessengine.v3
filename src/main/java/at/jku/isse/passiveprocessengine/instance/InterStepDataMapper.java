@@ -195,4 +195,9 @@ public class InterStepDataMapper {
 		}
 		return templateEM;
 	}
+	
+	protected void delete() {
+		this.definition = null;
+		this.process = null;
+	}
 }

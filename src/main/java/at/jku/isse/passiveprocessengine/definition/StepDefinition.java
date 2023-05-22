@@ -16,6 +16,7 @@ import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.extern.slf4j.Slf4j;
@@ -216,8 +217,8 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		InstanceType instType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this);
 		for (Conditions condition : Conditions.values()) {
 			if (this.getCondition(condition).isPresent()) {
-				String name = "crd_"+condition+"_"+instType.name();
-				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  "crd_"+condition+"_"+instType.name(), instType, this.getCondition(condition).get());
+				String name = RuleAugmentation.getConstraintName(condition, instType);
+				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, this.getCondition(condition).get());
 				if (crt != null) crt.delete();
 			}	
 		}
@@ -235,8 +236,9 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
 				if (crt != null) crt.delete();
 			});
-		ProcessStep.getOrCreateDesignSpaceInstanceType(instance.workspace, this).delete();
-		instance.delete();
+		
+		instType.delete();
+		super.deleteCascading();
 	}
 
 

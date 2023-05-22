@@ -89,7 +89,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 	public void deleteCascading() {
 		this.getMappings().forEach(md -> md.deleteCascading());
 		// no instanceType for DNI to delete, all processes use the same one.
-		instance.delete();
+		super.deleteCascading();
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {

@@ -339,7 +339,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		.forEach(cw -> ((ConstraintWrapper)cw).deleteCascading());
 		// we are not deleting input and output artifacts as we are just referencing them!
 		// finally delete self
-		this.getInstance().delete();
+		super.deleteCascading();
 	}
 	
 	public StepDefinition getDefinition() {

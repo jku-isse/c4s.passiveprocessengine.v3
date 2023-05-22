@@ -197,6 +197,27 @@ public class ProcessInstance extends ProcessStep {
 		}
 		return events;
 	}
+	
+	public List<Events.ProcessChangedEvent> setPreConditionsFulfilled(boolean isfulfilled) {
+		if (arePreCondFulfilled() != isfulfilled) {  // a change
+			List<Events.ProcessChangedEvent> events = new LinkedList<>();
+			ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
+			events.add(new Events.ConditionFulfillmentChanged(pi, this, Conditions.PRECONDITION, isfulfilled));
+			instance.getPropertyAsSingle(ProcessStep.CoreProperties.processedPreCondFulfilled.toString()).set(isfulfilled);
+			if (isfulfilled)  {
+				events.addAll(this.trigger(StepLifecycle.Trigger.ENABLE)) ;
+				events.addAll(tryTransitionToCompleted()) ;
+			}
+			else {
+				//if (!actualSM.isInState(State.CANCELED)) // no need to check any longer as CANCELED state only reacts to uncancel triggers
+				events.addAll(this.trigger(StepLifecycle.Trigger.RESET));
+				// we stay in cancelled even if there are preconditions no longer fulfilled,
+				// if we are no longer cancelled, and precond do not hold, then reset
+			}
+			return events;
+		}
+		return Collections.emptyList();
+	}
 
 	private List<Events.ProcessChangedEvent> tryTransitionToCompleted() {
 		if (this.getDefinition().getCondition(Conditions.POSTCONDITION).isEmpty()) {
