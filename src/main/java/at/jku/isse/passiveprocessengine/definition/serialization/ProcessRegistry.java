@@ -102,7 +102,7 @@ public class ProcessRegistry {
 				});
 			if (!exceptions.isEmpty()) {
 				ProcessException ex = new ProcessException("Successfully created Process Definition but unable to reinstantiate processes");
-				exceptions.stream().forEach(err -> ex.getErrorMessages().addAll(err.getErrorMessages()));
+				exceptions.stream().forEach(err -> ex.getErrorMessages().add(err.getMainMessage()));
 				throw ex;
 			}
 		}

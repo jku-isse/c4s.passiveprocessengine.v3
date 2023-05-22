@@ -142,4 +142,41 @@ class ReplacementTests {
 		
 	}
 	
+	@Test
+	void testReplaceSpecWithPreexistingProcInstancesNotReinstantiated() throws ProcessException {
+		DTOs.Process proc1 = TestProcesses.getSimpleDTOSubprocess(ws);
+		ProcessDefinition pd1 = procReg.createOrReplaceProcessDefinition(proc1, false);
+		input.put("jiraIn", Set.of(jiraB));
+		ProcessInstance p1 = procReg.instantiateProcess(pd1, input);
+		p1.printProcessToConsole("");
+		assert(p1.getExpectedLifecycleState().equals(State.ACTIVE));
+		
+		//changing the processes, and re-registering it.
+		DTOs.Process proc2 = TestProcesses.getSimpleDTOSubprocess(ws);
+		proc2.getInput().remove("jiraIn");
+		proc2.getInput().put("issueIn", typeJira.name());
+		proc2.getConditions().put(Conditions.PRECONDITION, "self.in_issueIn->size() = 1");
+		DTOs.Step step2 = proc2.getStepByCode("subtask2");
+		step2.getInput().remove("jiraIn");
+		step2.getInput().put("issueIn", typeJira.name());
+		step2.getConditions().put(Conditions.PRECONDITION, "self.in_issueIn->size() = 1");
+		step2.getConditions().put(Conditions.POSTCONDITION, "self.in_issueIn->size() = 1 and self.in_issueIn->forAll( issue | issue.state = 'Closed')"); 
+		DTOs.DecisionNode dn1 = proc2.getEntryNode();
+		dn1.getMapping().clear();
+		dn1.getMapping().add(new DTOs.Mapping(proc2.getCode(), "issueIn", "subtask1", "jiraIn")); //into both steps
+		dn1.getMapping().add(new DTOs.Mapping(proc2.getCode(), "issueIn", step2.getCode(), "issueIn")); //into both steps
+		
+		
+		try {
+			ProcessDefinition pd = procReg.createOrReplaceProcessDefinition(proc2, true);
+			ProcessInstance p2 = procReg.getProcess("TestSerializeProc1_[jiraB]");
+			assert(p2 == null);
+		}catch (ProcessException ex) {
+			assert(ex.getMainMessage().equals("Successfully created Process Definition but unable to reinstantiate processes"));
+		}
+				
+		
+		
+	}
+	
 }
