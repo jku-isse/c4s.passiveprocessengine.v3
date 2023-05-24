@@ -33,7 +33,7 @@ public class DefinitionTransformer {
 		procDTO.getSteps().stream().forEach(sd -> {
 			StepDefinition sDef = null;
 			if (sd instanceof DTOs.Process) { // a subprocess
-				sDef = fromDTO((Process) sd, ws);
+				sDef = createSubprocess((DTOs.Process)sd, ws, procDTO.getCode());
 				sDef.setProcess(pDef);
 				pDef.addStepDefinition(sDef);
 			} else {
@@ -47,6 +47,33 @@ public class DefinitionTransformer {
 		initStepFromDTO(procDTO, pDef, ws);
 		
 		pDef.setDepthIndexRecursive(depth);
+	}
+	
+	private static ProcessDefinition createSubprocess(DTOs.Process subProcess, Workspace ws, String parentProcName) {
+		// first rename the subprocess to be unique and
+		String oldSubProcName = subProcess.getCode();
+		String newSubProcName = subProcess.getCode()+"-"+parentProcName; 
+		subProcess.setCode(newSubProcName);		
+		// then update mappings
+		replaceStepNamesInMappings(subProcess, oldSubProcName, newSubProcName);
+		
+		ProcessDefinition pDef = fromDTO((Process) subProcess, ws);
+		//undo mappings and naming
+		replaceStepNamesInMappings(subProcess, newSubProcName, oldSubProcName);
+		subProcess.setCode(oldSubProcName);
+		
+		return pDef;
+	}
+	
+	private static void replaceStepNamesInMappings(DTOs.Process process, String oldStepName, String newStepName) {
+		process.getDns().forEach(dn -> 
+		dn.getMapping().stream()
+			.filter(mapping -> mapping.getFromStep().equals(oldStepName))
+			.forEach(mapping -> mapping.setFromStep(newStepName)));
+	process.getDns().forEach(dn -> 
+		dn.getMapping().stream()
+			.filter(mapping -> mapping.getToStep().equals(oldStepName))
+			.forEach(mapping -> mapping.setToStep(newStepName)));
 	}
 	
 	private static void initStepFromDTO(DTOs.Step step, StepDefinition pStep, Workspace ws) {

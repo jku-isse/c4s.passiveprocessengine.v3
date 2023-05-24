@@ -27,7 +27,7 @@ public class ProcessRegistry {
 	protected Workspace ws;
 	protected InstanceType procDefType;
 	
-	protected Set<DTOs.Process> cachePD = new HashSet<>();
+	protected Set<DTOs.Process> tempStorePD = new HashSet<>();
 	protected boolean isInit = false;
 	protected Map<String, ProcessInstance> pInstances = new HashMap<>();
 	
@@ -53,27 +53,33 @@ public class ProcessRegistry {
 		ws.debugInstanceTypes().parallelStream().forEach(itype -> log.debug(String.format("Available instance type %s as %s", itype.name(), itype.getQualifiedName())));
 		
 		isInit = true;
-		cachePD.forEach(pd -> {
+		tempStorePD.forEach(pd -> {
 			try {
 				storeProcessDefinitionIfNotExists(pd);
 			} catch (ProcessException e) {
 				e.printStackTrace();
 			}
 		});
-		cachePD.clear();
+		tempStorePD.clear();
 	}
 	
 	
 	public Optional<ProcessDefinition> getProcessDefinition(String name) {
-		return procDefType.instancesIncludingThoseOfSubtypes()
+		List<ProcessDefinition> defs = procDefType.instancesIncludingThoseOfSubtypes()
 				.filter(inst -> !inst.isDeleted)
 				.filter(inst -> inst.name().equals(name))
 			.map(inst -> (ProcessDefinition)WrapperCache.getWrappedInstance(ProcessDefinition.class, inst))
-			.findAny();
+			.collect(Collectors.toList());			
+		if (defs.isEmpty()) 
+			return Optional.empty();
+		if (defs.size() > 1) 
+			throw new RuntimeException("Duplicate non-deleted Processes: "+name);
+		else
+			return Optional.ofNullable(defs.get(0));
 	}
 	
 	public ProcessDefinition createOrReplaceProcessDefinition(DTOs.Process process, boolean doReinstantiateExistingProcessInstances) throws ProcessException {
-		if (!isInit) { cachePD.add(process); return null;} // may occur upon bootup where we dont expect replacement to happen and resort to standard behavior
+		if (!isInit) { tempStorePD.add(process); return null;} // may occur upon bootup where we dont expect replacement to happen and resort to standard behavior
 		String originalCode = process.getCode();
 		process.setCode(originalCode+"_STAGING");
 		storeProcessDefinitionIfNotExists(process);
@@ -110,7 +116,7 @@ public class ProcessRegistry {
 	}
 	
 	public ProcessDefinition storeProcessDefinitionIfNotExists(DTOs.Process process) throws ProcessException {
-		if (!isInit) { cachePD.add(process); return null;}
+		if (!isInit) { tempStorePD.add(process); return null;}
 		Optional<ProcessDefinition> optPD = getProcessDefinition(process.getCode());
 		if (optPD.isEmpty()) {
 			log.debug("Storing new process: "+process.getCode());
