@@ -1,5 +1,7 @@
 package at.jku.isse.passiveprocessengine.definition.serialization;
 
+import java.util.AbstractMap.SimpleEntry;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -15,10 +17,13 @@ import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
+import at.jku.isse.passiveprocessengine.instance.ProcessInstanceError;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -54,19 +59,19 @@ public class ProcessRegistry {
 		
 		isInit = true;
 		tempStorePD.forEach(pd -> {
-			try {
-				storeProcessDefinitionIfNotExists(pd);
-			} catch (ProcessException e) {
-				e.printStackTrace();
+			SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> result = storeProcessDefinitionIfNotExists(pd);
+			if (!result.getValue().isEmpty()) {
+				log.warn("Error loading process definition from file system: "+result.getKey().getName()+"\r\n"+result.getValue());
 			}
 		});
 		tempStorePD.clear();
 	}
 	
 	
-	public Optional<ProcessDefinition> getProcessDefinition(String name) {
+	public Optional<ProcessDefinition> getProcessDefinition(String name, Boolean onlyValid) {
 		List<ProcessDefinition> defs = procDefType.instancesIncludingThoseOfSubtypes()
 				.filter(inst -> !inst.isDeleted)
+				.filter(inst -> (Boolean)inst.getPropertyAsValue((ProcessDefinition.CoreProperties.isWithoutBlockingErrors.toString())) || !onlyValid)
 				.filter(inst -> inst.name().equals(name))
 			.map(inst -> (ProcessDefinition)WrapperCache.getWrappedInstance(ProcessDefinition.class, inst))
 			.collect(Collectors.toList());			
@@ -78,53 +83,54 @@ public class ProcessRegistry {
 			return Optional.ofNullable(defs.get(0));
 	}
 	
-	public ProcessDefinition createOrReplaceProcessDefinition(DTOs.Process process, boolean doReinstantiateExistingProcessInstances) throws ProcessException {
+	public ProcessDeployResult createOrReplaceProcessDefinition(DTOs.Process process, boolean doReinstantiateExistingProcessInstances) {
 		if (!isInit) { tempStorePD.add(process); return null;} // may occur upon bootup where we dont expect replacement to happen and resort to standard behavior
 		String originalCode = process.getCode();
 		process.setCode(originalCode+"_STAGING");
-		storeProcessDefinitionIfNotExists(process);
-		// if we continue here, then no process exception was thrown and we can continue
+		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> stagedProc = storeProcessDefinitionIfNotExists(process);
+		if (!stagedProc.getValue().isEmpty())
+			return new ProcessDeployResult(stagedProc.getKey(), stagedProc.getValue(), Collections.emptyList());
+		// if we continue here, then no process error occurred and we can continue
 		// we remove the staging one and replace the original
 		removeProcessDefinition(process.getCode());
 		// now remove the original if exists, and store as new
 		process.setCode(originalCode);
-		Optional<ProcessDefinition> prevPD = getProcessDefinition(process.getCode());
+		Optional<ProcessDefinition> prevPD = getProcessDefinition(process.getCode(), true);
 		Map<String, Map<String, Set<Instance>>> prevProcInput = new HashMap<>() ;
 		if (prevPD.isPresent()) {
 			log.debug("Removing existing process definition and instances thereof: "+process.getCode());
 			prevProcInput = removeAllProcessInstancesOfProcessDefinition(prevPD.get());
 			removeProcessDefinition(process.getCode());
 		};
-		ProcessDefinition newPD = storeProcessDefinitionIfNotExists(process);
+		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> newPD = storeProcessDefinitionIfNotExists(process);
+		// if stages process has no error, so should this be, as its identical.
+		List<ProcessInstanceError> pInstErrors = new LinkedList<>();
 		if (doReinstantiateExistingProcessInstances) {
-			List<ProcessException> exceptions = new LinkedList<>();
+			//List<ProcessException> exceptions = new LinkedList<>();
 			prevProcInput.values().stream()
 				.forEach(inputSet -> {
-					try { 
-						this.instantiateProcess(newPD, inputSet);
-					} catch (ProcessException e) {
-						exceptions.add(e);
-					}
+					SimpleEntry<ProcessInstance, List<ProcessInstanceError>> pInst = this.instantiateProcess(newPD.getKey(), inputSet);
+					pInstErrors.addAll(pInst.getValue());
 				});
-			if (!exceptions.isEmpty()) {
-				ProcessException ex = new ProcessException("Successfully created Process Definition but unable to reinstantiate processes");
-				exceptions.stream().forEach(err -> ex.getErrorMessages().add(err.getMainMessage()));
-				throw ex;
-			}
+//			if (!exceptions.isEmpty()) {
+//				ProcessException ex = new ProcessException("Successfully created Process Definition but unable to reinstantiate processes");
+//				exceptions.stream().forEach(err -> ex.getErrorMessages().add(err.getMainMessage()));
+//				throw ex;
+//			}
 		}
-		return newPD;
+		return new ProcessDeployResult(newPD.getKey(), newPD.getValue(), pInstErrors);
 	}
 	
-	public ProcessDefinition storeProcessDefinitionIfNotExists(DTOs.Process process) throws ProcessException {
+	public SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> storeProcessDefinitionIfNotExists(DTOs.Process process) {
 		if (!isInit) { tempStorePD.add(process); return null;}
-		Optional<ProcessDefinition> optPD = getProcessDefinition(process.getCode());
+		Optional<ProcessDefinition> optPD = getProcessDefinition(process.getCode(), true);
 		if (optPD.isEmpty()) {
 			log.debug("Storing new process: "+process.getCode());
 			ProcessDefinition pd = DefinitionTransformer.fromDTO(process, ws);						
 			boolean doGeneratePrematureRules = false; 
 			if (Boolean.parseBoolean(process.getProcessConfig().getOrDefault(CONFIG_KEY_doGeneratePrematureRules, "false")))
 				doGeneratePrematureRules = true;
-			pd.initializeInstanceTypes(doGeneratePrematureRules);
+			List<ProcessDefinitionError> errors = pd.initializeInstanceTypes(doGeneratePrematureRules);
 			boolean doImmediatePropagate = !doGeneratePrematureRules;
 			pd.setImmediateDataPropagationEnabled(doImmediatePropagate);
 			
@@ -132,10 +138,10 @@ public class ProcessRegistry {
 			if (Boolean.parseBoolean(process.getProcessConfig().getOrDefault(CONFIG_KEY_doImmediateInstantiateAllSteps, "true")))
 				doImmediateInstantiateAllSteps = true;
 			pd.setImmediateInstantiateAllStepsEnabled(doImmediateInstantiateAllSteps);
-			return pd;
+			return new SimpleEntry<>(pd, errors);
 		} else {
 			log.debug("Reusing process: "+process.getCode());
-			return optPD.get();
+			return new SimpleEntry<>(optPD.get(), Collections.emptyList());
 		}
 	}
 	
@@ -162,48 +168,52 @@ public class ProcessRegistry {
 	}
 	
 	public void removeProcessDefinition(String name) {
-		getProcessDefinition(name).ifPresent(pdef -> { 
+		getProcessDefinition(name, true).ifPresent(pdef -> { 
 		// moved into ProcessDefinition:	WrapperCache.removeWrapper(pdef.getInstance().id());
 			pdef.deleteCascading();
 			ws.concludeTransaction();
 		});  
 	}
 	
-	public Set<String> getAllDefinitionIDs() {
+	public Set<String> getAllDefinitionIDs(Boolean onlyValid) {
 		 return procDefType.instancesIncludingThoseOfSubtypes()
+			.filter(inst -> !inst.isDeleted())
+			.filter(inst -> (Boolean)inst.getPropertyAsValue((ProcessDefinition.CoreProperties.isWithoutBlockingErrors.toString())) || !onlyValid)
 		 	.map(inst -> inst.name())
 		 	.collect(Collectors.toSet());
 	}
 	
-	public Set<ProcessDefinition> getAllDefinitions() {
+	public Set<ProcessDefinition> getAllDefinitions(Boolean onlyValid) {
 		return procDefType.instancesIncludingThoseOfSubtypes()
+			.filter(inst -> !inst.isDeleted())
+			.filter(inst -> (Boolean)inst.getPropertyAsValue((ProcessDefinition.CoreProperties.isWithoutBlockingErrors.toString())) || !onlyValid)
 			.map(inst -> (ProcessDefinition)WrapperCache.getWrappedInstance(ProcessDefinition.class, inst))
 			.collect(Collectors.toSet());
 	}
 	
-	public ProcessInstance instantiateProcess(ProcessDefinition pDef, Map<String, Set<Instance>> input) throws ProcessException {
+	public SimpleEntry<ProcessInstance, List<ProcessInstanceError>> instantiateProcess(ProcessDefinition pDef, Map<String, Set<Instance>> input) {
 		// check if all inputs available:
-		boolean allInputAvail = pDef.getExpectedInput().keySet().stream().allMatch(expIn -> input.containsKey(expIn));
-		if (!allInputAvail)
-			throw new ProcessException("Unable to instantiate process due to missing input");
-		
+		List<ProcessInstanceError> errors = new LinkedList<>();
 		String namePostfix = generateProcessNamePostfix(input);
 		ProcessInstance pInst = ProcessInstance.getInstance(ws, pDef, namePostfix);
-		List<IOResponse> errResp = input.entrySet().stream()
-			.flatMap(entry ->  entry.getValue().stream().map(inputV -> pInst.addInput(entry.getKey(), inputV)))
-			.filter(resp -> resp.getError() != null)
-			.collect(Collectors.toList());
-		
-		if (errResp.isEmpty()) {
+		boolean allInputAvail = pDef.getExpectedInput().keySet().stream().allMatch(expIn -> input.containsKey(expIn));
+		if (!allInputAvail)
+			errors.add(new ProcessInstanceError(pInst, "Input Invalid",  "Unable to instantiate process due to missing input"));
+		else {
+			errors.addAll(input.entrySet().stream()
+					.flatMap(entry ->  entry.getValue().stream().map(inputV -> pInst.addInput(entry.getKey(), inputV)))
+					.filter(resp -> resp.getError() != null)
+					.map(resp -> new ProcessInstanceError(pInst, "Input Invalid", resp.getError()))
+					.collect(Collectors.toList()));
+		}
+		if (errors.isEmpty()) {
 			pInstances.put(pInst.getName(), pInst);
 			ws.concludeTransaction();
-			return pInst;
+			return new SimpleEntry<>(pInst, errors);
 		} else {
 			pInst.deleteCascading();
 			ws.concludeTransaction();
-			ProcessException ex = new ProcessException("Unable to instantiate process");
-			errResp.stream().forEach(err -> ex.getErrorMessages().add(err.getError()));
-			throw ex;
+			return new SimpleEntry<>(pInst, errors);
 		}		
 	}
 	
@@ -244,5 +254,12 @@ public class ProcessRegistry {
 		return procInput.entrySet().stream()
 				.flatMap(entry -> entry.getValue().stream())
 				.map(inst -> inst.name()).collect(Collectors.joining(",", "[", "]"));
+	}
+
+	@Data
+	public static class ProcessDeployResult {
+		final ProcessDefinition procDef;
+		final List<ProcessDefinitionError> definitionErrors;
+		final List<ProcessInstanceError> instanceErrors;
 	}
 }

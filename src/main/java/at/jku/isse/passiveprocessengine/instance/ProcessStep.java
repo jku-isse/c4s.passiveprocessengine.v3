@@ -30,6 +30,7 @@ import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
@@ -656,8 +657,9 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		return inconsistencies;
 	}
 	
-	public static Map<String, String> getConstraintValidityStatus(Workspace ws, StepDefinition td) {
-		Map<String, String> status = new HashMap<>();
+	public static List<ProcessDefinitionError> getConstraintValidityStatus(Workspace ws, StepDefinition td) {
+		List<ProcessDefinitionError> errors = new LinkedList<>();
+	//	Map<String, String> status = new HashMap<>();
 		InstanceType instType = getOrCreateDesignSpaceInstanceType(ws, td);
 		for (Conditions condition : Conditions.values()) {
 			if (td.getCondition(condition).isPresent()) {
@@ -665,9 +667,12 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, td.getCondition(condition).get());
 				if (crt == null) {
 					log.error("Expected Rule for existing process not found: "+name);
-					status.put(name, "Corrupt data - Expected Rule not found");
-				} else
-					status.put(name, crt.hasRuleError() ? crt.ruleError() : "valid");
+					errors.add(new ProcessDefinitionError(td, "Expected Constraint Not Found - Internal Data Corruption", name));
+					//status.put(name, "Corrupt data - Expected Rule not found");
+				} else {
+					if (crt.hasRuleError())
+						errors.add(new ProcessDefinitionError(td, String.format("Condition % has an error", condition), crt.ruleError()));
+				}
 			}	
 		}
 		td.getInputToOutputMappingRules().entrySet().stream()
@@ -679,10 +684,12 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				InstanceType ruleType = ioPropType.referencedInstanceType();
 				if (ruleType == null) 	{							
 					log.error("Expected Datamapping Rule for existing process not found: "+name);
-					status.put(name, "Corrupt data - Expected Datamapping Rule not found");
+					//status.put(name, "Corrupt data - Expected Datamapping Rule not found");
+					errors.add(new ProcessDefinitionError(td, "Expected DataMapping Not Found - Internal Data Corruption", name));
 				} else {
 					ConsistencyRuleType crt = (ConsistencyRuleType)ruleType;
-					status.put(name, crt.hasRuleError() ? crt.ruleError() : "valid");
+					if (crt.hasRuleError())
+						errors.add(new ProcessDefinitionError(td, String.format("DataMapping % has an error", name), crt.ruleError()));
 				}
 			});
 		//qa constraints:
@@ -693,11 +700,12 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
 				if (crt == null) {
 					log.error("Expected Rule for existing process not found: "+specId);
-					status.put(specId, "Corrupt data - Expected Rule not found");
+					errors.add(new ProcessDefinitionError(td, "Expected QA Constraint Not Found - Internal Data Corruption", specId));
 				} else
-					status.put(specId, crt.hasRuleError() ? crt.ruleError() : "valid");
+					if (crt.hasRuleError())
+						errors.add(new ProcessDefinitionError(td, String.format("QA Constraint % has an error", specId), crt.ruleError()));
 			});
-		return status;
+		return errors;
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {

@@ -5,7 +5,11 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.List;
 
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,9 +47,12 @@ public class FilesystemProcessDefinitionLoader {
                 DTOs.Process procD = serializer.fromJson(new String(encoded, Charset.defaultCharset()));
                 if (procD != null) {
                 	try {
-						registry.storeProcessDefinitionIfNotExists(procD);
-						i++;
-					} catch (ProcessException | NullPointerException e) {
+                		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>>  result = registry.storeProcessDefinitionIfNotExists(procD);
+						if (!result.getValue().isEmpty()) {
+							log.warn("Error loading process definition from file system: "+result.getKey().getName()+"\r\n"+result.getValue());
+						}
+                		i++;
+					} catch (NullPointerException e) {
 						e.printStackTrace();
 						log.error(e.getMessage());
 					}

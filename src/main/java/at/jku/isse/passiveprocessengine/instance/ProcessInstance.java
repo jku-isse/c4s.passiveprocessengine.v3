@@ -22,6 +22,7 @@ import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ConditionChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.PrematureStepTriggerCmd;
@@ -304,8 +305,9 @@ public class ProcessInstance extends ProcessStep {
 		return incons;
 	}
 	
-	public static Map<String, String> getConstraintValidityStatus(Workspace ws, ProcessDefinition pd) {
-		Map<String, String> status = ProcessStep.getConstraintValidityStatus(ws, pd);
+	public static List<ProcessDefinitionError> getConstraintValidityStatus(Workspace ws, ProcessDefinition pd) {
+		List<ProcessDefinitionError> errors = new LinkedList<>();
+		errors.addAll(ProcessStep.getConstraintValidityStatus(ws, pd));
 		InstanceType instType = getOrCreateDesignSpaceInstanceType(ws, pd);
 		//premature constraints:
 		pd.getPrematureTriggers().entrySet().stream()
@@ -314,11 +316,12 @@ public class ProcessInstance extends ProcessStep {
 				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
 				if (crt == null) {
 					log.error("Expected Rule for existing process not found: "+ruleId);
-					status.put(ruleId, "Corrupt data - Expected Rule not found");
+					errors.add(new ProcessDefinitionError(pd, "Expected Premature Trigger Rule Not Found - Internal Data Corruption", ruleId));
 				} else
-					status.put(ruleId, crt.hasRuleError() ? crt.ruleError() : "valid");
+					if (crt.hasRuleError())
+						errors.add(new ProcessDefinitionError(pd, String.format("Premature Trigger Rule % has an error", ruleId), crt.ruleError()));
 			});
-		return status;
+		return errors;
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws, ProcessDefinition td) {

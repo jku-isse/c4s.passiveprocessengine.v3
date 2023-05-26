@@ -19,6 +19,7 @@ import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
 import at.jku.isse.passiveprocessengine.definition.serialization.ProcessRegistry;
+import at.jku.isse.passiveprocessengine.definition.serialization.ProcessRegistry.ProcessDeployResult;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
@@ -69,9 +70,9 @@ class ReplacementTests {
 	@Test
 	void testBaselineProcessWorks() throws ProcessException {
 		DTOs.Process proc1 = TestProcesses.getSimpleDTOSubprocess(ws);
-		ProcessDefinition pd = procReg.createOrReplaceProcessDefinition(proc1, false);
+		ProcessDefinition pd = procReg.createOrReplaceProcessDefinition(proc1, false).getProcDef();
 		input.put("jiraIn", Set.of(jiraB));
-		ProcessInstance p1 = procReg.instantiateProcess(pd, input);
+		ProcessInstance p1 = procReg.instantiateProcess(pd, input).getKey();
 		p1.printProcessToConsole("");
 		assert(p1.getExpectedLifecycleState().equals(State.ACTIVE));
 	}
@@ -81,9 +82,9 @@ class ReplacementTests {
 		DTOs.Process proc1 = TestProcesses.getSimpleDTOSubprocess(ws);
 		procReg.createOrReplaceProcessDefinition(proc1, false);
 		DTOs.Process proc2 = TestProcesses.getSimpleDTOSubprocess(ws);
-		ProcessDefinition pd = procReg.createOrReplaceProcessDefinition(proc2, false);
+		ProcessDefinition pd = procReg.createOrReplaceProcessDefinition(proc2, false).getProcDef();
 		input.put("jiraIn", Set.of(jiraB));
-		ProcessInstance p1 = procReg.instantiateProcess(pd, input);
+		ProcessInstance p1 = procReg.instantiateProcess(pd, input).getKey();
 		p1.printProcessToConsole("");
 		assert(p1.getExpectedLifecycleState().equals(State.ACTIVE));
 	}
@@ -103,10 +104,10 @@ class ReplacementTests {
 		dn1.getMapping().clear();
 		dn1.getMapping().add(new DTOs.Mapping(proc2.getCode(), "jiraIn", "subtask1", "jiraIn")); //into both steps
 		dn1.getMapping().add(new DTOs.Mapping(proc2.getCode(), "jiraIn", step2.getCode(), "issueIn")); //into both steps
-		ProcessDefinition pd = procReg.createOrReplaceProcessDefinition(proc2, false);
+		ProcessDefinition pd = procReg.createOrReplaceProcessDefinition(proc2, false).getProcDef();
 		
 		input.put("jiraIn", Set.of(jiraB));
-		ProcessInstance p1 = procReg.instantiateProcess(pd, input);
+		ProcessInstance p1 = procReg.instantiateProcess(pd, input).getKey();
 		p1.printProcessToConsole("");
 		assert(p1.getExpectedLifecycleState().equals(State.ACTIVE));
 				
@@ -115,9 +116,9 @@ class ReplacementTests {
 	@Test
 	void testReplaceSpecWithPreexistingProcInstances() throws ProcessException {
 		DTOs.Process proc1 = TestProcesses.getSimpleDTOSubprocess(ws);
-		ProcessDefinition pd1 = procReg.createOrReplaceProcessDefinition(proc1, false);
+		ProcessDefinition pd1 = procReg.createOrReplaceProcessDefinition(proc1, false).getProcDef();
 		input.put("jiraIn", Set.of(jiraB));
-		ProcessInstance p1 = procReg.instantiateProcess(pd1, input);
+		ProcessInstance p1 = procReg.instantiateProcess(pd1, input).getKey();
 		p1.printProcessToConsole("");
 		assert(p1.getExpectedLifecycleState().equals(State.ACTIVE));
 		
@@ -132,7 +133,7 @@ class ReplacementTests {
 		dn1.getMapping().clear();
 		dn1.getMapping().add(new DTOs.Mapping(proc2.getCode(), "jiraIn", "subtask1", "jiraIn")); //into both steps
 		dn1.getMapping().add(new DTOs.Mapping(proc2.getCode(), "jiraIn", step2.getCode(), "issueIn")); //into both steps
-		ProcessDefinition pd = procReg.createOrReplaceProcessDefinition(proc2, true);
+		ProcessDefinition pd = procReg.createOrReplaceProcessDefinition(proc2, true).getProcDef();
 		
 		ProcessInstance p2 = procReg.getProcess("TestSerializeProc1_[jiraB]");
 		p2.printProcessToConsole("");
@@ -145,9 +146,9 @@ class ReplacementTests {
 	@Test
 	void testReplaceSpecWithPreexistingProcInstancesNotReinstantiated() throws ProcessException {
 		DTOs.Process proc1 = TestProcesses.getSimpleDTOSubprocess(ws);
-		ProcessDefinition pd1 = procReg.createOrReplaceProcessDefinition(proc1, false);
+		ProcessDefinition pd1 = procReg.createOrReplaceProcessDefinition(proc1, false).getProcDef();
 		input.put("jiraIn", Set.of(jiraB));
-		ProcessInstance p1 = procReg.instantiateProcess(pd1, input);
+		ProcessInstance p1 = procReg.instantiateProcess(pd1, input).getKey();
 		p1.printProcessToConsole("");
 		assert(p1.getExpectedLifecycleState().equals(State.ACTIVE));
 		
@@ -166,16 +167,16 @@ class ReplacementTests {
 		dn1.getMapping().add(new DTOs.Mapping(proc2.getCode(), "issueIn", "subtask1", "jiraIn")); //into both steps
 		dn1.getMapping().add(new DTOs.Mapping(proc2.getCode(), "issueIn", step2.getCode(), "issueIn")); //into both steps
 		
-		
-		try {
-			ProcessDefinition pd = procReg.createOrReplaceProcessDefinition(proc2, true);
-			ProcessInstance p2 = procReg.getProcess("TestSerializeProc1_[jiraB]");
-			assert(p2 == null);
-		}catch (ProcessException ex) {
-			assert(ex.getMainMessage().equals("Successfully created Process Definition but unable to reinstantiate processes"));
-		}
-				
-		
+
+
+		ProcessDeployResult result = procReg.createOrReplaceProcessDefinition(proc2, true);
+		ProcessDefinition pd = result.getProcDef();
+		ProcessInstance p2 = procReg.getProcess("TestSerializeProc1_[jiraB]");
+		assert(p2 == null);
+		assert(result.getInstanceErrors().get(0).getErrorType().equals("Input Invalid"));
+
+
+
 		
 	}
 	
