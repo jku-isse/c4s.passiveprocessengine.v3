@@ -305,24 +305,24 @@ public class ProcessInstance extends ProcessStep {
 		return incons;
 	}
 	
-	public static List<ProcessDefinitionError> getConstraintValidityStatus(Workspace ws, ProcessDefinition pd) {
-		List<ProcessDefinitionError> errors = new LinkedList<>();
-		errors.addAll(ProcessStep.getConstraintValidityStatus(ws, pd));
-		InstanceType instType = getOrCreateDesignSpaceInstanceType(ws, pd);
-		//premature constraints:
-		pd.getPrematureTriggers().entrySet().stream()
-			.forEach(entry -> {
-				String ruleId = generatePrematureRuleName(entry.getKey(), pd);
-				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
-				if (crt == null) {
-					log.error("Expected Rule for existing process not found: "+ruleId);
-					errors.add(new ProcessDefinitionError(pd, "Expected Premature Trigger Rule Not Found - Internal Data Corruption", ruleId));
-				} else
-					if (crt.hasRuleError())
-						errors.add(new ProcessDefinitionError(pd, String.format("Premature Trigger Rule % has an error", ruleId), crt.ruleError()));
-			});
-		return errors;
-	}
+//	public static List<ProcessDefinitionError> getConstraintValidityStatus(Workspace ws, ProcessDefinition pd) {
+//		List<ProcessDefinitionError> errors = new LinkedList<>();
+//		errors.addAll(pd.checkConstraintValidity());
+//		InstanceType instType = getOrCreateDesignSpaceInstanceType(ws, pd);
+//		//premature constraints:
+//		pd.getPrematureTriggers().entrySet().stream()
+//			.forEach(entry -> {
+//				String ruleId = generatePrematureRuleName(entry.getKey(), pd);
+//				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
+//				if (crt == null) {
+//					log.error("Expected Rule for existing process not found: "+ruleId);
+//					errors.add(new ProcessDefinitionError(pd, "Expected Premature Trigger Rule Not Found - Internal Data Corruption", ruleId));
+//				} else
+//					if (crt.hasRuleError())
+//						errors.add(new ProcessDefinitionError(pd, String.format("Premature Trigger Rule % has an error", ruleId), crt.ruleError()));
+//			});
+//		return errors;
+//	}
 	
 	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws, ProcessDefinition td) {
 		String parentName = td.getProcess() != null ? td.getProcess().getName() : "ROOT";

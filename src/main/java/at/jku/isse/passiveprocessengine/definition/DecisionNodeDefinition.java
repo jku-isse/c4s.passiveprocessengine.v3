@@ -1,6 +1,8 @@
 package at.jku.isse.passiveprocessengine.definition;
 
 import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -90,6 +92,54 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 		this.getMappings().forEach(md -> md.deleteCascading());
 		// no instanceType for DNI to delete, all processes use the same one.
 		super.deleteCascading();
+	}
+	
+	public List<ProcessDefinitionError> checkDecisionNodeStructureValidity() {
+		 List<ProcessDefinitionError> errors = this.getMappings().stream()
+			.flatMap(mapping -> checkResolvable(mapping).stream())
+			.collect(Collectors.toList());
+		return errors;
+	}
+	
+	private List<ProcessDefinitionError> checkResolvable(MappingDefinition mapping) {
+		List<ProcessDefinitionError> errors = new LinkedList<>();
+		StepDefinition fromStep = this.getProcess().getStepDefinitionByName(mapping.getFromStepType());
+		if (fromStep == null && !this.getProcess().getName().equals(mapping.getFromStepType())) {
+			String reason = String.format("Source Step %s is not a known process or process step", mapping.getFromStepType());
+			errors.add(new ProcessDefinitionError(this, "InterStepMapping Invalid", reason));
+		} else {
+			if (fromStep == null) { 
+				fromStep = this.getProcess();
+				if (!fromStep.getExpectedInput().containsKey(mapping.getFromParameter())) {
+					String reason = String.format("Source Process %s does not have an input property %s to be used as source ", mapping.getFromStepType(), mapping.getFromParameter());
+					errors.add(new ProcessDefinitionError(this, "InterStepMapping Invalid", reason));
+				}
+			} else {
+				if (!fromStep.getExpectedOutput().containsKey(mapping.getFromParameter())) {
+					String reason = String.format("Source Step %s does not have an output property %s to be used as source", mapping.getFromStepType(), mapping.getFromParameter());
+					errors.add(new ProcessDefinitionError(this, "InterStepMapping Invalid", reason));
+				}
+			}
+		}
+		StepDefinition toStep = this.getProcess().getStepDefinitionByName(mapping.getToStepType());
+		if (toStep == null && !this.getProcess().getName().equals(mapping.getToStepType())) {
+			String reason = String.format("Destination Step %s is not a known process or process step", mapping.getFromStepType());
+			errors.add(new ProcessDefinitionError(this, "InterStepMapping Invalid", reason));
+		} else {
+			if (toStep == null) { 
+				toStep = this.getProcess();
+				if (!toStep.getExpectedOutput().containsKey(mapping.getToParameter())) {
+					String reason = String.format("Destination Process %s does not have an input property %s to be used as destination  ", mapping.getToStepType(), mapping.getToParameter());
+					errors.add(new ProcessDefinitionError(this, "InterStepMapping Invalid", reason));
+				}
+			} else {
+				if (!toStep.getExpectedInput().containsKey(mapping.getToParameter())) {
+					String reason = String.format("Destination Step %s does not have an output property %s to be used as destination ", mapping.getToStepType(), mapping.getToParameter());
+					errors.add(new ProcessDefinitionError(this, "InterStepMapping Invalid", reason));
+				}
+			}
+		}
+		return errors;
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {

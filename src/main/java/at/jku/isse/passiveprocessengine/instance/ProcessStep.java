@@ -51,7 +51,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 
 	private static final String CRD_QASPEC_PREFIX = "crd_qaspec_";
 
-	private static final String CRD_DATAMAPPING_PREFIX = "crd_datamapping_";
+	public static final String CRD_DATAMAPPING_PREFIX = "crd_datamapping_";
 
 
 	public static enum CoreProperties {actualLifecycleState, expectedLifecycleState, stepDefinition, inDNI, outDNI, qaState, 
@@ -657,56 +657,56 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		return inconsistencies;
 	}
 	
-	public static List<ProcessDefinitionError> getConstraintValidityStatus(Workspace ws, StepDefinition td) {
-		List<ProcessDefinitionError> errors = new LinkedList<>();
-	//	Map<String, String> status = new HashMap<>();
-		InstanceType instType = getOrCreateDesignSpaceInstanceType(ws, td);
-		for (Conditions condition : Conditions.values()) {
-			if (td.getCondition(condition).isPresent()) {
-				String name = "crd_"+condition+"_"+instType.name();
-				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, td.getCondition(condition).get());
-				if (crt == null) {
-					log.error("Expected Rule for existing process not found: "+name);
-					errors.add(new ProcessDefinitionError(td, "Expected Constraint Not Found - Internal Data Corruption", name));
-					//status.put(name, "Corrupt data - Expected Rule not found");
-				} else {
-					if (crt.hasRuleError())
-						errors.add(new ProcessDefinitionError(td, String.format("Condition % has an error", condition), crt.ruleError()));
-				}
-			}	
-		}
-		td.getInputToOutputMappingRules().entrySet().stream()
-			.forEach(entry -> {
-				String name = getDataMappingId(entry, td);
-				String propName = CRD_DATAMAPPING_PREFIX+entry.getKey();
-				InstanceType stepType = getOrCreateDesignSpaceInstanceType(ws, td);
-				PropertyType ioPropType = stepType.getPropertyType(propName);
-				InstanceType ruleType = ioPropType.referencedInstanceType();
-				if (ruleType == null) 	{							
-					log.error("Expected Datamapping Rule for existing process not found: "+name);
-					//status.put(name, "Corrupt data - Expected Datamapping Rule not found");
-					errors.add(new ProcessDefinitionError(td, "Expected DataMapping Not Found - Internal Data Corruption", name));
-				} else {
-					ConsistencyRuleType crt = (ConsistencyRuleType)ruleType;
-					if (crt.hasRuleError())
-						errors.add(new ProcessDefinitionError(td, String.format("DataMapping % has an error", name), crt.ruleError()));
-				}
-			});
-		//qa constraints:
-		ProcessDefinition pd = td.getProcess() !=null ? td.getProcess() : (ProcessDefinition)td;
-		td.getQAConstraints().stream()
-			.forEach(spec -> {
-				String specId = getQASpecId(spec, pd);
-				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
-				if (crt == null) {
-					log.error("Expected Rule for existing process not found: "+specId);
-					errors.add(new ProcessDefinitionError(td, "Expected QA Constraint Not Found - Internal Data Corruption", specId));
-				} else
-					if (crt.hasRuleError())
-						errors.add(new ProcessDefinitionError(td, String.format("QA Constraint % has an error", specId), crt.ruleError()));
-			});
-		return errors;
-	}
+//	public static List<ProcessDefinitionError> getConstraintValidityStatus(Workspace ws, StepDefinition td) {
+//		List<ProcessDefinitionError> errors = new LinkedList<>();
+//	//	Map<String, String> status = new HashMap<>();
+//		InstanceType instType = getOrCreateDesignSpaceInstanceType(ws, td);
+//		for (Conditions condition : Conditions.values()) {
+//			if (td.getCondition(condition).isPresent()) {
+//				String name = "crd_"+condition+"_"+instType.name();
+//				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, td.getCondition(condition).get());
+//				if (crt == null) {
+//					log.error("Expected Rule for existing process not found: "+name);
+//					errors.add(new ProcessDefinitionError(td, "Expected Constraint Not Found - Internal Data Corruption", name));
+//					//status.put(name, "Corrupt data - Expected Rule not found");
+//				} else {
+//					if (crt.hasRuleError())
+//						errors.add(new ProcessDefinitionError(td, String.format("Condition % has an error", condition), crt.ruleError()));
+//				}
+//			}	
+//		}
+//		td.getInputToOutputMappingRules().entrySet().stream()
+//			.forEach(entry -> {
+//				String name = getDataMappingId(entry, td);
+//				String propName = CRD_DATAMAPPING_PREFIX+entry.getKey();
+//				InstanceType stepType = getOrCreateDesignSpaceInstanceType(ws, td);
+//				PropertyType ioPropType = stepType.getPropertyType(propName);
+//				InstanceType ruleType = ioPropType.referencedInstanceType();
+//				if (ruleType == null) 	{							
+//					log.error("Expected Datamapping Rule for existing process not found: "+name);
+//					//status.put(name, "Corrupt data - Expected Datamapping Rule not found");
+//					errors.add(new ProcessDefinitionError(td, "Expected DataMapping Not Found - Internal Data Corruption", name));
+//				} else {
+//					ConsistencyRuleType crt = (ConsistencyRuleType)ruleType;
+//					if (crt.hasRuleError())
+//						errors.add(new ProcessDefinitionError(td, String.format("DataMapping % has an error", name), crt.ruleError()));
+//				}
+//			});
+//		//qa constraints:
+//		ProcessDefinition pd = td.getProcess() !=null ? td.getProcess() : (ProcessDefinition)td;
+//		td.getQAConstraints().stream()
+//			.forEach(spec -> {
+//				String specId = getQASpecId(spec, pd);
+//				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
+//				if (crt == null) {
+//					log.error("Expected Rule for existing process not found: "+specId);
+//					errors.add(new ProcessDefinitionError(td, "Expected QA Constraint Not Found - Internal Data Corruption", specId));
+//				} else
+//					if (crt.hasRuleError())
+//						errors.add(new ProcessDefinitionError(td, String.format("QA Constraint % has an error", specId), crt.ruleError()));
+//			});
+//		return errors;
+//	}
 	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
 		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId)); 

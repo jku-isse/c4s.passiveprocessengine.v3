@@ -137,7 +137,7 @@ public class ProcessDefinition extends StepDefinition{
 		List<ProcessDefinitionError> errors = new LinkedList<>();
 		ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
 		DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(instance.workspace);
-		List<ProcessException> subProcessExceptions = new ArrayList<>();
+		//List<ProcessException> subProcessExceptions = new ArrayList<>();
 		this.getStepDefinitions().stream().forEach(sd -> { 
 			//FIXME: wrong abstraction level, this should be done in process definition and step definition, as here we now need to distinguish between steps and process
 			if (sd instanceof ProcessDefinition) {
@@ -146,6 +146,7 @@ public class ProcessDefinition extends StepDefinition{
 			} else
 				ProcessStep.getOrCreateDesignSpaceInstanceType(instance.workspace, sd); 			
 		});
+		errors.addAll(checkProcessStructure());
 //		if (!subProcessExceptions.isEmpty())
 //			return errors;
 		ws.concludeTransaction();
@@ -187,9 +188,44 @@ public class ProcessDefinition extends StepDefinition{
 	
 	public List<ProcessDefinitionError> checkConstraintValidity() {
 		List<ProcessDefinitionError> overallStatus = new LinkedList<>();
-		overallStatus.addAll( ProcessInstance.getConstraintValidityStatus(ws, this));
-		getStepDefinitions().forEach(sd -> overallStatus.addAll( ProcessStep.getConstraintValidityStatus(ws, sd)));
+		InstanceType instType = ProcessInstance.getOrCreateDesignSpaceInstanceType(ws, this);
+		//premature constraints:
+		this.getPrematureTriggers().entrySet().stream()
+			.forEach(entry -> {
+				String ruleId = ProcessInstance.generatePrematureRuleName(entry.getKey(), this);
+				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
+				if (crt == null) {
+					log.error("Expected Rule for existing process not found: "+ruleId);
+					overallStatus.add(new ProcessDefinitionError(this, "Expected Premature Trigger Rule Not Found - Internal Data Corruption", ruleId));
+				} else
+					if (crt.hasRuleError())
+						overallStatus.add(new ProcessDefinitionError(this, String.format("Premature Trigger Rule % has an error", ruleId), crt.ruleError()));
+			});
+		getStepDefinitions().forEach(sd -> overallStatus.addAll( sd.checkConstraintValidity()));
 		return overallStatus;
+	}
+	
+	public List<ProcessDefinitionError> checkProcessStructure() {
+		List<ProcessDefinitionError> status = new LinkedList<>();
+		if (this.getDecisionNodeDefinitions().stream().filter(dnd -> dnd.getInSteps().isEmpty()).count() > 1)
+			status.add(new ProcessDefinitionError(this, "Invalid Process Structure", "More than one entry decision node found"));
+		if (this.getDecisionNodeDefinitions().stream().filter(dnd -> dnd.getOutSteps().isEmpty()).count() > 1)
+			status.add(new ProcessDefinitionError(this, "Invalid Process Structure", "More than one exit decision node found"));
+		if (getExpectedInput().isEmpty()) {
+			status.add(new ProcessDefinitionError(this, "No Input Defined", "Step needs at least one input."));
+		}
+		getExpectedInput().forEach((in, type) -> { 
+			if (type == null) 
+				status.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of input <"+in+"> could not be resolved"));
+		});
+		getExpectedOutput().forEach((out, type) -> { 
+			if (type == null) 
+				status.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of output <"+out+"> could not be resolved"));
+		});
+
+		getStepDefinitions().forEach(sd -> status.addAll( sd.checkStepStructureValidity()));
+		getDecisionNodeDefinitions().forEach(dnd -> status.addAll(dnd.checkDecisionNodeStructureValidity()));
+		return status;
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
