@@ -24,7 +24,8 @@ public class ProcessDefinitionError {
 
 	@Override
 	public String toString() {
-		return "ProcessDefinitionError at " + errorScope.getName() + " of type <" + errorType + "> with message: "
+		String proc = errorScope.getProcess() != null ? "in Process '"+errorScope.getProcess().getName()+"'": "";
+		return "DefinitionError "+proc+" at " +errorScope.getName() +" ("+ errorScope.getClass().getSimpleName()+") of type <" + errorType + "> with message: "
 				+ errorMsg;
 	}
 

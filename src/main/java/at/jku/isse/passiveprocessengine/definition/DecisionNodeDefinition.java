@@ -105,36 +105,36 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
 		StepDefinition fromStep = this.getProcess().getStepDefinitionByName(mapping.getFromStepType());
 		if (fromStep == null && !this.getProcess().getName().equals(mapping.getFromStepType())) {
-			String reason = String.format("Source Step %s is not a known process or process step", mapping.getFromStepType());
+			String reason = String.format("Source Step '%s' is not a known process or process step", mapping.getFromStepType());
 			errors.add(new ProcessDefinitionError(this, "InterStepMapping Invalid", reason));
 		} else {
 			if (fromStep == null) { 
 				fromStep = this.getProcess();
 				if (!fromStep.getExpectedInput().containsKey(mapping.getFromParameter())) {
-					String reason = String.format("Source Process %s does not have an input property %s to be used as source ", mapping.getFromStepType(), mapping.getFromParameter());
+					String reason = String.format("Source Process '%s' does not have an input property '%s' to be used as source ", mapping.getFromStepType(), mapping.getFromParameter());
 					errors.add(new ProcessDefinitionError(this, "InterStepMapping Invalid", reason));
 				}
 			} else {
 				if (!fromStep.getExpectedOutput().containsKey(mapping.getFromParameter())) {
-					String reason = String.format("Source Step %s does not have an output property %s to be used as source", mapping.getFromStepType(), mapping.getFromParameter());
+					String reason = String.format("Source Step '%s' does not have an output property '%s' to be used as source", mapping.getFromStepType(), mapping.getFromParameter());
 					errors.add(new ProcessDefinitionError(this, "InterStepMapping Invalid", reason));
 				}
 			}
 		}
 		StepDefinition toStep = this.getProcess().getStepDefinitionByName(mapping.getToStepType());
 		if (toStep == null && !this.getProcess().getName().equals(mapping.getToStepType())) {
-			String reason = String.format("Destination Step %s is not a known process or process step", mapping.getFromStepType());
+			String reason = String.format("Destination Step '%s' is not a known process or process step", mapping.getToStepType());
 			errors.add(new ProcessDefinitionError(this, "InterStepMapping Invalid", reason));
 		} else {
 			if (toStep == null) { 
 				toStep = this.getProcess();
 				if (!toStep.getExpectedOutput().containsKey(mapping.getToParameter())) {
-					String reason = String.format("Destination Process %s does not have an input property %s to be used as destination  ", mapping.getToStepType(), mapping.getToParameter());
+					String reason = String.format("Destination Process '%s' does not have an input property '%s' to be used as destination  ", mapping.getToStepType(), mapping.getToParameter());
 					errors.add(new ProcessDefinitionError(this, "InterStepMapping Invalid", reason));
 				}
 			} else {
 				if (!toStep.getExpectedInput().containsKey(mapping.getToParameter())) {
-					String reason = String.format("Destination Step %s does not have an output property %s to be used as destination ", mapping.getToStepType(), mapping.getToParameter());
+					String reason = String.format("Destination Step '%s' does not have an output property '%s' to be used as destination ", mapping.getToStepType(), mapping.getToParameter());
 					errors.add(new ProcessDefinitionError(this, "InterStepMapping Invalid", reason));
 				}
 			}

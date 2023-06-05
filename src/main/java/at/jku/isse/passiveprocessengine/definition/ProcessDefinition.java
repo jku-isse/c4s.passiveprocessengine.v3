@@ -216,14 +216,16 @@ public class ProcessDefinition extends StepDefinition{
 		}
 		getExpectedInput().forEach((in, type) -> { 
 			if (type == null) 
-				status.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of input <"+in+"> could not be resolved"));
+				status.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of input '"+in+"' could not be resolved"));
 		});
 		getExpectedOutput().forEach((out, type) -> { 
 			if (type == null) 
-				status.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of output <"+out+"> could not be resolved"));
+				status.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of output '"+out+"' could not be resolved"));
 		});
 
-		getStepDefinitions().forEach(sd -> status.addAll( sd.checkStepStructureValidity()));
+		getStepDefinitions().stream()
+			.filter(sd -> !(sd instanceof ProcessDefinition))
+			.forEach(sd -> status.addAll( sd.checkStepStructureValidity()));
 		getDecisionNodeDefinitions().forEach(dnd -> status.addAll(dnd.checkDecisionNodeStructureValidity()));
 		return status;
 	}

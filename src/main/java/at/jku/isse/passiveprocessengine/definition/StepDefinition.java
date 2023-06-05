@@ -268,7 +268,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	public List<ProcessDefinitionError> checkStepStructureValidity() {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
 		
-		if (getCondition(Conditions.POSTCONDITION).isEmpty()) {
+		if (getCondition(Conditions.POSTCONDITION).isEmpty()) {			
 			errors.add(new ProcessDefinitionError(this, "No Condition Defined", "Step needs exactly one post condition to signal when a step is considered finished."));
 		}
 		if (getExpectedInput().isEmpty()) {
@@ -276,15 +276,15 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		}
 		getExpectedInput().forEach((in, type) -> { 
 			if (type == null) 
-				errors.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of input <"+in+"> could not be resolved"));
+				errors.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of input '"+in+"' could not be resolved"));
 			});
 		getExpectedOutput().forEach((out, type) -> { 
 			if (type == null) 
-				errors.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of output <"+out+"> could not be resolved"));
+				errors.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of output '"+out+"' could not be resolved"));
 			});
 		getExpectedOutput().forEach((out, type) -> {
 			if (!getInputToOutputMappingRules().containsKey(out))
-				errors.add(new ProcessDefinitionError(this, "No Mapping Defined", "Step output <"+out+"> has not datamapping from input defined"));
+				errors.add(new ProcessDefinitionError(this, "No Mapping Defined", "Step output '"+out+"' has not datamapping from input defined"));
 			});
 		
 		return errors;
