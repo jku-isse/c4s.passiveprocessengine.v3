@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -24,15 +25,17 @@ public class DTOs {
 		
 	}
 	
+	@EqualsAndHashCode( onlyExplicitlyIncluded = true)
 	@ToString(doNotUseGetters = true)
 	@Data
 	public abstract static class Element implements Typed{
 		String _type = this.getClass().getSimpleName();
-		String code;
+		@EqualsAndHashCode.Include
+		private String code;
 		String description;
 	}
 	
-	@EqualsAndHashCode(callSuper = true)
+	@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class QAConstraint extends Element {
@@ -40,7 +43,7 @@ public class DTOs {
 		int specOrderIndex = 0;
 	}
 	
-	@EqualsAndHashCode(callSuper = true)
+	@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class Step extends Element {
@@ -78,7 +81,7 @@ public class DTOs {
 		}
 		
 		protected void toPlantUMLDataflow(StringBuffer sb) {
-			sb.append("\r\n  class \""+this.code+"\"");
+			sb.append("\r\n  class \""+this.getCode()+"\"");
 		}
 	} 
 
@@ -98,7 +101,7 @@ public class DTOs {
 		}
 	}
 	
-	@EqualsAndHashCode(callSuper = true)
+	@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class DecisionNode extends Element {
@@ -111,7 +114,7 @@ public class DTOs {
 		}
 	}
 	
-	@EqualsAndHashCode(callSuper = true)
+	@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class Process extends Step {

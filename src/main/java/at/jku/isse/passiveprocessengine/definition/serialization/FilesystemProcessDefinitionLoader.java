@@ -47,7 +47,7 @@ public class FilesystemProcessDefinitionLoader {
                 DTOs.Process procD = serializer.fromJson(new String(encoded, Charset.defaultCharset()));
                 if (procD != null) {
                 	try {
-                		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>>  result = registry.storeProcessDefinitionIfNotExists(procD);
+                		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>>  result = registry.storeProcessDefinitionIfNotExists(procD, false);
 						if (!result.getValue().isEmpty()) {
 							log.warn("Error loading process definition from file system: "+result.getKey().getName()+"\r\n"+result.getValue());
 						}

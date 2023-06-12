@@ -49,7 +49,7 @@ class TestPrematureTriggerConstraints {
 		DTOs.Process procD = json.fromJson(content);
 		ProcessRegistry preg = new ProcessRegistry();
 		preg.inject(ws);
-		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD).getKey();
+		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD, false).getKey();
 		// = DefinitionTransformer.fromDTO(procD, ws);
 		//new PrematureTriggerGenerator(ws, pd).generatePrematureConstraints();
 		pd.getPrematureTriggers().entrySet().forEach(entry -> System.out.println(entry.getKey()+":\r\n"+entry.getValue()));
@@ -71,7 +71,7 @@ class TestPrematureTriggerConstraints {
 		DTOs.Process procD = json.fromJson(content);
 		ProcessRegistry preg = new ProcessRegistry();
 		preg.inject(ws);
-		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD).getKey();
+		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD, false).getKey();
 		//ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
 		//new PrematureTriggerGenerator().generatePrematureConstraints(pd);
 		pd.getPrematureTriggers().entrySet().forEach(entry -> System.out.println(entry.getKey()+":\r\n"+entry.getValue()));
@@ -93,7 +93,7 @@ class TestPrematureTriggerConstraints {
 		DTOs.Process procD = json.fromJson(content);
 		ProcessRegistry preg = new ProcessRegistry();
 		preg.inject(ws);
-		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD).getKey();
+		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD, false).getKey();
 //		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
 //		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
 		pd.getPrematureTriggers().entrySet().forEach(entry -> System.out.println(entry.getKey()+":\r\n"+entry.getValue()));
@@ -114,7 +114,7 @@ class TestPrematureTriggerConstraints {
 		DTOs.Process procD = json.fromJson(content);
 		ProcessRegistry preg = new ProcessRegistry();
 		preg.inject(ws);
-		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD).getKey();
+		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD, false).getKey();
 //		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
 //		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
 		pd.getPrematureTriggers().entrySet().forEach(entry -> System.out.println(entry.getKey()+":\r\n"+entry.getValue()));
@@ -132,7 +132,7 @@ class TestPrematureTriggerConstraints {
 		DTOs.Process procD = json.fromJson(content);
 		ProcessRegistry preg = new ProcessRegistry();
 		preg.inject(ws);
-		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD).getKey();
+		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD, false).getKey();
 //		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
 //		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
 		pd.getPrematureTriggers().entrySet().forEach(entry -> System.out.println(entry.getKey()+":\r\n"+entry.getValue()));
@@ -151,7 +151,7 @@ class TestPrematureTriggerConstraints {
 		DTOs.Process procD = json.fromJson(content);
 		ProcessRegistry preg = new ProcessRegistry();
 		preg.inject(ws);
-		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD).getKey();
+		ProcessDefinition pd = preg.storeProcessDefinitionIfNotExists(procD, false).getKey();
 //		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
 //		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
 		pd.getPrematureTriggers().entrySet().forEach(entry -> System.out.println(entry.getKey()+":\r\n"+entry.getValue()));

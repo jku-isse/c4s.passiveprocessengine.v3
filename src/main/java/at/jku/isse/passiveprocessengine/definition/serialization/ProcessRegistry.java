@@ -29,6 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProcessRegistry {
 	
+	
+	
 	protected Workspace ws;
 	protected InstanceType procDefType;
 	
@@ -39,7 +41,7 @@ public class ProcessRegistry {
 	public static final String CONFIG_KEY_doGeneratePrematureRules = "doGeneratePrematureRules";
 	public static final String CONFIG_KEY_doImmediateInstantiateAllSteps = "doImmediateInstantiateAllSteps";
 	
-	
+	public static final String STAGINGPOSTFIX = "_STAGING";
 	
 	public ProcessRegistry() {
 		
@@ -59,7 +61,7 @@ public class ProcessRegistry {
 		
 		isInit = true;
 		tempStorePD.forEach(pd -> {
-			SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> result = storeProcessDefinitionIfNotExists(pd);
+			SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> result = storeProcessDefinitionIfNotExists(pd, false);
 			if (!result.getValue().isEmpty()) {
 				log.warn("Error loading process definition from file system: "+result.getKey().getName()+"\r\n"+result.getValue());
 			}
@@ -86,14 +88,17 @@ public class ProcessRegistry {
 	public ProcessDeployResult createOrReplaceProcessDefinition(DTOs.Process process, boolean doReinstantiateExistingProcessInstances) {
 		if (!isInit) { tempStorePD.add(process); return null;} // may occur upon bootup where we dont expect replacement to happen and resort to standard behavior
 		String originalCode = process.getCode();
-		process.setCode(originalCode+"_STAGING");
-		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> stagedProc = storeProcessDefinitionIfNotExists(process);
+		String tempCode = originalCode+STAGINGPOSTFIX;
+		process.setCode(tempCode);
+		DefinitionTransformer.replaceStepNamesInMappings(process, originalCode, tempCode);
+		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> stagedProc = storeProcessDefinitionIfNotExists(process, true);
 		if (!stagedProc.getValue().isEmpty())
 			return new ProcessDeployResult(stagedProc.getKey(), stagedProc.getValue(), Collections.emptyList());
 		// if we continue here, then no process error occurred and we can continue
 		// we remove the staging one and replace the original
 		removeProcessDefinition(process.getCode());
 		// now remove the original if exists, and store as new
+		DefinitionTransformer.replaceStepNamesInMappings(process, tempCode, originalCode);
 		process.setCode(originalCode);
 		Optional<ProcessDefinition> prevPD = getProcessDefinition(process.getCode(), true);
 		Map<String, Map<String, Set<Instance>>> prevProcInput = new HashMap<>() ;
@@ -102,7 +107,7 @@ public class ProcessRegistry {
 			prevProcInput = removeAllProcessInstancesOfProcessDefinition(prevPD.get());
 			removeProcessDefinition(process.getCode());
 		};
-		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> newPD = storeProcessDefinitionIfNotExists(process);
+		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> newPD = storeProcessDefinitionIfNotExists(process, false);
 		// if stages process has no error, so should this be, as its identical.
 		List<ProcessInstanceError> pInstErrors = new LinkedList<>();
 		if (doReinstantiateExistingProcessInstances) {
@@ -121,12 +126,12 @@ public class ProcessRegistry {
 		return new ProcessDeployResult(newPD.getKey(), newPD.getValue(), pInstErrors);
 	}
 	
-	public SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> storeProcessDefinitionIfNotExists(DTOs.Process process) {
+	public SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> storeProcessDefinitionIfNotExists(DTOs.Process process, boolean isInStaging) {
 		if (!isInit) { tempStorePD.add(process); return null;}
 		Optional<ProcessDefinition> optPD = getProcessDefinition(process.getCode(), true);
 		if (optPD.isEmpty()) {
 			log.debug("Storing new process: "+process.getCode());
-			ProcessDefinition pd = DefinitionTransformer.fromDTO(process, ws);						
+			ProcessDefinition pd = DefinitionTransformer.fromDTO(process, ws, isInStaging);						
 			boolean doGeneratePrematureRules = false; 
 			if (Boolean.parseBoolean(process.getProcessConfig().getOrDefault(CONFIG_KEY_doGeneratePrematureRules, "false")))
 				doGeneratePrematureRules = true;
