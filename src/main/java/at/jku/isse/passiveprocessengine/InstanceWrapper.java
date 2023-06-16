@@ -29,7 +29,7 @@ public abstract class InstanceWrapper implements IdentifiableElement{
 	public void deleteCascading() {
 		WrapperCache.removeWrapper(getInstance().id());
 		instance.delete();
-		this.instance = null;
-		//this.ws = null;
+		//this.instance = null;
+		
 	}
 }

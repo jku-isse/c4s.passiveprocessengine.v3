@@ -362,7 +362,7 @@ public class ProcessInstance extends ProcessStep {
 	
 	public static ProcessInstance getInstance(Workspace ws, ProcessDefinition sd, String namePostfix) {
 		//TODO: not to create duplicate process instances somehow
-		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+namePostfix);
+		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+namePostfix);		
 		ProcessInstance pi = WrapperCache.getWrappedInstance(ProcessInstance.class, instance);
 		pi.init(sd, null, null, ws);
 		return pi;

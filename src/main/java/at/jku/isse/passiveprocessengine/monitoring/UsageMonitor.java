@@ -20,7 +20,7 @@ public class UsageMonitor {
 	private final Logger monitor = LoggerFactory.getLogger("monitor.usage");
 	
 	public static enum UsageEvents {ProcessViewed, StepViewed, ConstraintViewed, GuidanceExecuted};
-	public static enum LogProperties {processInstanceId, processDefinitionId, stepDefinitionId, evalResult, guidanceSize, constraintId, repairTemplate, repairRank, originTime, eventType}
+	public static enum LogProperties {processInstanceId, processDefinitionId, stepDefinitionId, evalResult, guidanceSize, constraintId, repairTemplate, repairRank, originTime, eventType, userId}
 	
 	public UsageMonitor(ITimeStampProvider timeProvider) {
 		this.timeProvider = timeProvider;
@@ -38,14 +38,16 @@ public class UsageMonitor {
 		);		
 	}
 	
-	public void stepViewed(ProcessStep step) {
+	public void stepViewed(ProcessStep step, String userId) {
 		monitor.info("Step {} viewed within process {} with {}", kv(LogProperties.stepDefinitionId.toString(), step.getDefinition().getName()), 
 																	kv(LogProperties.processInstanceId.toString(), step.getProcess().getName()), 
 																	kv(LogProperties.processDefinitionId.toString(), step.getProcess().getDefinition().getName()), 
-																	getTime(), kv(LogProperties.eventType.toString(), UsageEvents.StepViewed.toString()));
+																	getTime(), 
+																	kv(LogProperties.eventType.toString(), UsageEvents.StepViewed.toString()),
+																	kv(LogProperties.userId.toString(), userId != null ? userId : "anonymous" ) );
 	}
 	
-	public void constraintedViewed(ConstraintWrapper cw) { //if not fulfilled, implies that repairtree was loaded
+	public void constraintedViewed(ConstraintWrapper cw, String userId) { //if not fulfilled, implies that repairtree was loaded
 		int repairCount = 0;
 		if (!cw.getEvalResult() && cw.getCr() != null) {
 			RepairNode repairTree = RuleService.repairTree(cw.getCr());
@@ -57,7 +59,10 @@ public class UsageMonitor {
 																							kv(LogProperties.guidanceSize.toString(), repairCount),
 																							kv(LogProperties.processInstanceId.toString(), cw.getProcess().getName()), 
 																							kv(LogProperties.processDefinitionId.toString(), cw.getProcess().getDefinition().getName()), 
-																							getTime(),kv(LogProperties.eventType.toString(), UsageEvents.ConstraintViewed.toString()));
+																							getTime(),
+																							kv(LogProperties.eventType.toString(), UsageEvents.ConstraintViewed.toString()),
+																							kv(LogProperties.userId.toString(), userId != null ? userId : "anonymous" )
+																							);
 	}
 	
 	public void repairActionExecuted(ConsistencyRule processScopedRule, ProcessStep step, String selectedRepairTemplate, int rank) { 

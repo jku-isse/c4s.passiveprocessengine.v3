@@ -37,6 +37,7 @@ public class ProcessRegistry {
 	protected Set<DTOs.Process> tempStorePD = new HashSet<>();
 	protected boolean isInit = false;
 	protected Map<String, ProcessInstance> pInstances = new HashMap<>();
+	protected List<ProcessInstance> removedInstances = new LinkedList<>();
 	
 	public static final String CONFIG_KEY_doGeneratePrematureRules = "doGeneratePrematureRules";
 	public static final String CONFIG_KEY_doImmediateInstantiateAllSteps = "doImmediateInstantiateAllSteps";
@@ -231,7 +232,14 @@ public class ProcessRegistry {
 		if (pi != null) {
 			pi.deleteCascading();
 			ws.concludeTransaction();
+			this.removedInstances.add(pi);
 		}
+	}
+	
+	public List<ProcessInstance> getExistingAndPriorInstances() {
+		List<ProcessInstance> all = new LinkedList<>(pInstances.values());
+		all.addAll(removedInstances);
+		return all;
 	}
 	
 	public Set<ProcessInstance> loadPersistedProcesses() {
