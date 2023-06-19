@@ -9,9 +9,14 @@ import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.instance.ConstraintWrapper;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
+import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
 import net.logstash.logback.argument.StructuredArgument;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
+
+import java.time.format.DateTimeFormatter;
+import java.util.LinkedList;
+import java.util.List;
 
 public class UsageMonitor {
 
@@ -19,8 +24,8 @@ public class UsageMonitor {
 	
 	private final Logger monitor = LoggerFactory.getLogger("monitor.usage");
 	
-	public static enum UsageEvents {ProcessViewed, StepViewed, ConstraintViewed, GuidanceExecuted};
-	public static enum LogProperties {processInstanceId, processDefinitionId, stepDefinitionId, evalResult, guidanceSize, constraintId, repairTemplate, repairRank, originTime, eventType, userId}
+	public static enum UsageEvents {ProcessViewed, StepViewed, ConstraintViewed, GuidanceExecuted, ProcessDeleted, ProcessCreated};
+	public static enum LogProperties {rootProcessInstanceId, processInstanceId, processDefinitionId, stepDefinitionId, evalResult, guidanceSize, constraintId, repairTemplate, repairRank, originTime, eventType, userId}
 	
 	public UsageMonitor(ITimeStampProvider timeProvider) {
 		this.timeProvider = timeProvider;
@@ -30,21 +35,43 @@ public class UsageMonitor {
 		return kv(LogProperties.originTime.toString(), timeProvider.getLastChangeTimeStamp().toString());
 	}
 	
-	public void processViewed(ProcessInstance proc) {		
-		monitor.info("Process {} viewed with {}", kv(LogProperties.processInstanceId.toString(), proc.getName()), 
-												kv(LogProperties.processDefinitionId.toString(), proc.getDefinition().getName()), 
-												getTime(),
-												kv(LogProperties.eventType.toString(), UsageEvents.ProcessViewed.toString())
-		);		
+	protected static String getRootProcessInstanceId(ProcessInstance proc) {
+		if (proc.getProcess() != null)
+			return getRootProcessInstanceId(proc.getProcess());
+		else
+			return proc.getName();
+	}
+	
+	private List<StructuredArgument> getDefaultArguments(ProcessInstance proc, String userId, String eventType) {
+		List<StructuredArgument> args = new LinkedList<>();
+		args.add(kv(LogProperties.rootProcessInstanceId.toString(), getRootProcessInstanceId(proc))); 
+		args.add(kv(LogProperties.processInstanceId.toString(), proc.getName())); 
+		args.add(kv(LogProperties.processDefinitionId.toString(), proc.getDefinition().getName())); 
+		args.add(kv(LogProperties.userId.toString(), userId != null ? userId : "anonymous" ));
+		args.add(getTime());
+		args.add(kv(LogProperties.eventType.toString(), eventType));
+		return args;
+	}
+	
+	public void processCreated(ProcessInstance proc, String userId) {		
+		List<StructuredArgument> args = getDefaultArguments(proc, userId, UsageEvents.ProcessCreated.toString());
+		monitor.info("Process created", args.toArray());		
+	}
+	
+	public void processViewed(ProcessInstance proc, String userId) {		
+		List<StructuredArgument> args = getDefaultArguments(proc, userId, UsageEvents.ProcessViewed.toString());
+		monitor.info("Process viewed", args.toArray());		
+	}
+	
+	public void processDeleted(ProcessInstance proc, String userId) {		
+		List<StructuredArgument> args = getDefaultArguments(proc, userId, UsageEvents.ProcessDeleted.toString());
+		monitor.info("Process deleted", args.toArray());		
 	}
 	
 	public void stepViewed(ProcessStep step, String userId) {
-		monitor.info("Step {} viewed within process {} with {}", kv(LogProperties.stepDefinitionId.toString(), step.getDefinition().getName()), 
-																	kv(LogProperties.processInstanceId.toString(), step.getProcess().getName()), 
-																	kv(LogProperties.processDefinitionId.toString(), step.getProcess().getDefinition().getName()), 
-																	getTime(), 
-																	kv(LogProperties.eventType.toString(), UsageEvents.StepViewed.toString()),
-																	kv(LogProperties.userId.toString(), userId != null ? userId : "anonymous" ) );
+		List<StructuredArgument> args = getDefaultArguments(step.getProcess(), userId, UsageEvents.StepViewed.toString());
+		args.add(kv(LogProperties.stepDefinitionId.toString(), step.getDefinition().getName()));
+		monitor.info("Step viewed", args.toArray());
 	}
 	
 	public void constraintedViewed(ConstraintWrapper cw, String userId) { //if not fulfilled, implies that repairtree was loaded
@@ -54,24 +81,19 @@ public class UsageMonitor {
 			repairCount = repairTree.getRepairActions().size();
 			// TODO: obtain also maxRank?
 		}
-		monitor.info("Constraint {} ( {} {} ) viewed within process {} with {}", kv(LogProperties.constraintId.toString(), cw.getQaSpec().getQaConstraintId()), 
-																							kv(LogProperties.evalResult.toString(), cw.getEvalResult()), 
-																							kv(LogProperties.guidanceSize.toString(), repairCount),
-																							kv(LogProperties.processInstanceId.toString(), cw.getProcess().getName()), 
-																							kv(LogProperties.processDefinitionId.toString(), cw.getProcess().getDefinition().getName()), 
-																							getTime(),
-																							kv(LogProperties.eventType.toString(), UsageEvents.ConstraintViewed.toString()),
-																							kv(LogProperties.userId.toString(), userId != null ? userId : "anonymous" )
-																							);
+		List<StructuredArgument> args = getDefaultArguments(cw.getProcess(), userId, UsageEvents.ConstraintViewed.toString());
+		args.add(kv(LogProperties.constraintId.toString(), cw.getQaSpec().getQaConstraintId())); 
+		args.add(kv(LogProperties.evalResult.toString(), cw.getEvalResult()));
+		args.add(kv(LogProperties.guidanceSize.toString(), repairCount));
+		monitor.info("Constraint viewed", args.toArray());
 	}
 	
 	public void repairActionExecuted(ConsistencyRule processScopedRule, ProcessStep step, String selectedRepairTemplate, int rank) { 
-		monitor.debug("Guidance {} Executed for constraint {} at {} within process {} of type {}", kv(LogProperties.repairTemplate.toString(), selectedRepairTemplate), 
-				kv(LogProperties.constraintId.toString(), processScopedRule.consistencyRuleDefinition().name()),
-				kv(LogProperties.repairRank.toString(), rank),
-				kv(LogProperties.processInstanceId.toString(), step.getProcess().getName()), 
-				kv(LogProperties.processDefinitionId.toString(), step.getProcess().getDefinition().getName()),
-				getTime(), kv(LogProperties.eventType.toString(), UsageEvents.GuidanceExecuted.toString()));
+		List<StructuredArgument> args = getDefaultArguments(step.getProcess(), null, UsageEvents.GuidanceExecuted.toString());
+		args.add(kv(LogProperties.repairTemplate.toString(), selectedRepairTemplate));
+		args.add(kv(LogProperties.constraintId.toString(), processScopedRule.consistencyRuleDefinition().name()));
+		args.add(kv(LogProperties.repairRank.toString(), rank));
+		monitor.debug("Guidance executed", args.toArray());
 		
 	}
 	
