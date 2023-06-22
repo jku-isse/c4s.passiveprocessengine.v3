@@ -89,7 +89,7 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 	}
 	
 	public void deleteCascading() {
-		this.getInstance().delete();
+		super.deleteCascading();
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws){

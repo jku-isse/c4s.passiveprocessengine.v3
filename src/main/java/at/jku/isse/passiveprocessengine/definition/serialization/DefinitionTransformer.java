@@ -14,26 +14,31 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DefinitionTransformer {
 
-	public static ProcessDefinition fromDTO(DTOs.Process procDTO, Workspace ws) {
+	public static ProcessDefinition fromDTO(DTOs.Process procDTO, Workspace ws, boolean isInStaging) {
 		ProcessDefinition procDef = ProcessDefinition.getInstance(procDTO.getCode(), ws);
-		initProcessFromDTO(procDTO, procDef, ws, 0);
+		initProcessFromDTO(procDTO, procDef, ws, 0, isInStaging);
 		return procDef;
 	}
 	
-	private static void initProcessFromDTO(DTOs.Process procDTO, ProcessDefinition pDef, Workspace ws, int depth) {
+	private static void initProcessFromDTO(DTOs.Process procDTO, ProcessDefinition pDef, Workspace ws, int depth, boolean isInStaging) {
+		if (!isInStaging) {
+			cleanStagingRewriting(procDTO);
+		}
+		
 		// first DNDs
 		procDTO.getDns().stream().forEach(dn -> { 
 			DecisionNodeDefinition dnd = pDef.createDecisionNodeDefinition(dn.getCode(), ws);
 			dnd.setInflowType(dn.getInflowType());
-			dn.getMapping().stream().forEach(m -> 
-				dnd.addDataMappingDefinition(
-					MappingDefinition.getInstance(m.getFromStep(), m.getFromParam(), m.getToStep(), m.getToParam(), ws)) );
+			// we need to set the mappings only later, in case there are subprocesses which update the mapping name
+//			dn.getMapping().stream().forEach(m -> 
+//				dnd.addDataMappingDefinition(
+//					MappingDefinition.getInstance(m.getFromStep(), m.getFromParam(), m.getToStep(), m.getToParam(), ws)) );
 		});
 		// then Steps
 		procDTO.getSteps().stream().forEach(sd -> {
 			StepDefinition sDef = null;
 			if (sd instanceof DTOs.Process) { // a subprocess
-				sDef = fromDTO((Process) sd, ws);
+				sDef = createSubprocess((DTOs.Process)sd, ws, procDTO, isInStaging);
 				sDef.setProcess(pDef);
 				pDef.addStepDefinition(sDef);
 			} else {
@@ -43,10 +48,67 @@ public class DefinitionTransformer {
 			sDef.setInDND(pDef.getDecisionNodeDefinitionByName(sd.getInDNDid()));
 			sDef.setOutDND(pDef.getDecisionNodeDefinitionByName(sd.getOutDNDid()));
 		});
+		//then create the DND mappings
+		procDTO.getDns().stream()			
+			.forEach(dn -> { 
+				DecisionNodeDefinition dnd = pDef.getDecisionNodeDefinitionByName(dn.getCode());
+				dn.getMapping().stream().forEach(m -> 
+					dnd.addDataMappingDefinition(
+						MappingDefinition.getInstance(m.getFromStep(), m.getFromParam(), m.getToStep(), m.getToParam(), ws)) );	
+		});
 		// then process itself
 		initStepFromDTO(procDTO, pDef, ws);
 		
 		pDef.setDepthIndexRecursive(depth);
+	}
+	
+	private static ProcessDefinition createSubprocess(DTOs.Process subProcess, Workspace ws, DTOs.Process parentProc, boolean isInStaging) {
+		// first rename the subprocess to be unique and
+		String parentProcName = parentProc.getCode();
+		String oldSubProcName = subProcess.getCode();
+		String newSubProcName = subProcess.getCode()+"-"+parentProcName; 
+		subProcess.setCode(newSubProcName);		
+		// then update mappings
+		replaceStepNamesInMappings(subProcess, oldSubProcName, newSubProcName); // in the subprocess
+		replaceStepNamesInMappings(parentProc, oldSubProcName, newSubProcName); // but also in the parent process, but WONT undo later 
+		
+		ProcessDefinition pDef = fromDTO((Process) subProcess, ws, isInStaging);
+		//undo mappings and naming
+		replaceStepNamesInMappings(subProcess, newSubProcName, oldSubProcName);
+//		if (isInStaging) {
+//			replaceStepNamesInMappings(parentProc, newSubProcName, oldSubProcName);
+//		}
+		subProcess.setCode(oldSubProcName);
+		
+		return pDef;
+	}
+	
+	protected static void cleanStagingRewriting(DTOs.Process process) {
+		process.getDns().forEach(dn -> 
+		dn.getMapping().stream()
+		.filter(mapping -> mapping.getFromStep().endsWith(ProcessRegistry.STAGINGPOSTFIX))
+		.forEach(mapping -> { 
+			String restoredName = mapping.getFromStep().replace(ProcessRegistry.STAGINGPOSTFIX, "");
+			mapping.setFromStep(restoredName); 
+		}));
+	process.getDns().forEach(dn -> 
+		dn.getMapping().stream()
+		.filter(mapping -> mapping.getToStep().endsWith(ProcessRegistry.STAGINGPOSTFIX))
+		.forEach(mapping -> { 
+			String restoredName = mapping.getToStep().replace(ProcessRegistry.STAGINGPOSTFIX, "");
+			mapping.setToStep(restoredName); 
+		}));
+	}
+	
+	protected static void replaceStepNamesInMappings(DTOs.Process process, String oldStepName, String newStepName) {
+		process.getDns().forEach(dn -> 
+			dn.getMapping().stream()
+			.filter(mapping -> mapping.getFromStep().equals(oldStepName))
+			.forEach(mapping -> mapping.setFromStep(newStepName)));
+		process.getDns().forEach(dn -> 
+			dn.getMapping().stream()
+			.filter(mapping -> mapping.getToStep().equals(oldStepName))
+			.forEach(mapping -> mapping.setToStep(newStepName)));
 	}
 	
 	private static void initStepFromDTO(DTOs.Step step, StepDefinition pStep, Workspace ws) {

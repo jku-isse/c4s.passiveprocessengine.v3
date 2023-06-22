@@ -15,6 +15,7 @@ import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedE
 import at.jku.isse.passiveprocessengine.instance.messages.Events.QAConstraintFulfillmentChanged;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.QAFulfillmentChanged;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.StepStateTransitionEvent;
+import at.jku.isse.passiveprocessengine.monitoring.UsageMonitor.LogProperties;
 import net.logstash.logback.argument.StructuredArgument;
 
 public class ProcessMonitor implements IProcessEventHandler{
@@ -33,6 +34,7 @@ public class ProcessMonitor implements IProcessEventHandler{
 	
 	private List<StructuredArgument> getDefaultArguments(ProcessChangedEvent pce) {
 		List<StructuredArgument> args = new LinkedList<>();
+		args.add(kv(UsageMonitor.LogProperties.rootProcessInstanceId.toString(), UsageMonitor.getRootProcessInstanceId(pce.getProcScope()))); 
 		args.add(kv(UsageMonitor.LogProperties.processInstanceId.toString(), pce.getProcScope().getName()));
 		args.add(kv(UsageMonitor.LogProperties.processDefinitionId.toString(), pce.getProcScope().getDefinition().getName()));
 		if (pce.getStep() != null) {

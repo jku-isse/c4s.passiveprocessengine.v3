@@ -2,6 +2,8 @@ package at.jku.isse.passiveprocessengine.definition;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -11,11 +13,13 @@ import at.jku.isse.designspace.core.model.Cardinality;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.MapProperty;
+import at.jku.isse.designspace.core.model.PropertyType;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.extern.slf4j.Slf4j;
@@ -209,6 +213,83 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	{
 		return (String) instance.getPropertyAsValueOrElse(CoreProperties.description.toString(), () -> "");
 	}
+	
+	public List<ProcessDefinitionError> checkConstraintValidity() {
+		List<ProcessDefinitionError> errors = new LinkedList<>();
+	//	Map<String, String> status = new HashMap<>();
+		InstanceType instType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this);
+		for (Conditions condition : Conditions.values()) {
+			if (this.getCondition(condition).isPresent()) {
+				String name = "crd_"+condition+"_"+instType.name();
+				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, this.getCondition(condition).get());
+				if (crt == null) {
+					log.error("Expected Rule for existing process not found: "+name);
+					errors.add(new ProcessDefinitionError(this, "Expected Constraint Not Found - Internal Data Corruption", name));
+					//status.put(name, "Corrupt data - Expected Rule not found");
+				} else {
+					if (crt.hasRuleError())
+						errors.add(new ProcessDefinitionError(this, String.format("Condition % has an error", condition), crt.ruleError()));
+				}
+			}	
+		}
+		this.getInputToOutputMappingRules().entrySet().stream()
+			.forEach(entry -> {
+				String name = ProcessStep.getDataMappingId(entry, this);
+				String propName = ProcessStep.CRD_DATAMAPPING_PREFIX+entry.getKey();
+				InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this);
+				PropertyType ioPropType = stepType.getPropertyType(propName);
+				InstanceType ruleType = ioPropType.referencedInstanceType();
+				if (ruleType == null) 	{							
+					log.error("Expected Datamapping Rule for existing process not found: "+name);
+					//status.put(name, "Corrupt data - Expected Datamapping Rule not found");
+					errors.add(new ProcessDefinitionError(this, "Expected DataMapping Not Found - Internal Data Corruption", name));
+				} else {
+					ConsistencyRuleType crt = (ConsistencyRuleType)ruleType;
+					if (crt.hasRuleError())
+						errors.add(new ProcessDefinitionError(this, String.format("DataMapping % has an error", name), crt.ruleError()));
+				}
+			});
+		//qa constraints:
+		ProcessDefinition pd = this.getProcess() !=null ? this.getProcess() : (ProcessDefinition)this;
+		this.getQAConstraints().stream()
+			.forEach(spec -> {
+				String specId = ProcessStep.getQASpecId(spec, pd);
+				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
+				if (crt == null) {
+					log.error("Expected Rule for existing process not found: "+specId);
+					errors.add(new ProcessDefinitionError(this, "Expected QA Constraint Not Found - Internal Data Corruption", specId));
+				} else
+					if (crt.hasRuleError())
+						errors.add(new ProcessDefinitionError(this, String.format("QA Constraint % has an error", specId), crt.ruleError()));
+			});
+		return errors;
+	}
+	
+	public List<ProcessDefinitionError> checkStepStructureValidity() {
+		List<ProcessDefinitionError> errors = new LinkedList<>();
+		
+		if (getCondition(Conditions.POSTCONDITION).isEmpty()) {			
+			errors.add(new ProcessDefinitionError(this, "No Condition Defined", "Step needs exactly one post condition to signal when a step is considered finished."));
+		}
+		if (getExpectedInput().isEmpty()) {
+			errors.add(new ProcessDefinitionError(this, "No Input Defined", "Step needs at least one input."));
+		}
+		getExpectedInput().forEach((in, type) -> { 
+			if (type == null) 
+				errors.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of input '"+in+"' could not be resolved"));
+			});
+		getExpectedOutput().forEach((out, type) -> { 
+			if (type == null) 
+				errors.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of output '"+out+"' could not be resolved"));
+			});
+		getExpectedOutput().forEach((out, type) -> {
+			if (!getInputToOutputMappingRules().containsKey(out))
+				errors.add(new ProcessDefinitionError(this, "No Mapping Defined", "Step output '"+out+"' has not datamapping from input defined"));
+			});
+		
+		return errors;
+	}
+	
 	@Override
 	public void deleteCascading() {
 		// deleting constraints:
@@ -216,8 +297,8 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		InstanceType instType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this);
 		for (Conditions condition : Conditions.values()) {
 			if (this.getCondition(condition).isPresent()) {
-				String name = "crd_"+condition+"_"+instType.name();
-				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  "crd_"+condition+"_"+instType.name(), instType, this.getCondition(condition).get());
+				String name = RuleAugmentation.getConstraintName(condition, instType);
+				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, this.getCondition(condition).get());
 				if (crt != null) crt.delete();
 			}	
 		}
@@ -235,8 +316,9 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
 				if (crt != null) crt.delete();
 			});
-		ProcessStep.getOrCreateDesignSpaceInstanceType(instance.workspace, this).delete();
-		instance.delete();
+		
+		instType.delete();
+		super.deleteCascading();
 	}
 
 

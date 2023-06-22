@@ -342,7 +342,11 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		// remove any lower-level instances this step is managing, which is none
 		// hence
 		// finally delete self
-		this.getInstance().delete();
+		if (mapper != null) {
+			mapper.delete();
+			mapper = null;
+		}
+		super.deleteCascading();
 	}
 
 	private boolean isImmediateInstantiateAllStepsEnabled() {

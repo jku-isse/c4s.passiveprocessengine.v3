@@ -2,6 +2,7 @@ package at.jku.isse.passiveprocessengine.analysis;
 
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,6 +22,7 @@ import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.DataS
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.DataSource.IoType;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.StepParameter;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
@@ -45,14 +47,15 @@ public class RuleAugmentation {
 	}
 	
 	// This works for non-temporal constraints only
-	public void augmentConditions() throws ProcessException {
+	public List<ProcessDefinitionError> augmentConditions()  {
+		List<ProcessDefinitionError> errors = new LinkedList<>();
 		MapProperty<String> propertyMetadata = stepType.getPropertyAsMap(ReservedNames.INSTANCETYPE_PROPERTY_METADATA);
 		String augmentationStatus = propertyMetadata.get(RESERVED_PROPERTY_STEP_AUGMENTATION_STATUS);
 		if (augmentationStatus != null) {
 			log.debug("Skipping augmentation of already augmented step "+sd.getName());
-			return; // then we already augmented this step
+			return errors; // then we already augmented this step
 		}
-		ProcessException pex = new ProcessException("Error augmenting transition conditions and/or QA constraints");
+		//ProcessException pex = new ProcessException("Error augmenting transition conditions and/or QA constraints");
 		for (Conditions condition : Conditions.values()) {
 			if (sd.getCondition(condition).isPresent()) {
 				if (sd.getCondition(condition).get() != null) {
@@ -67,11 +70,12 @@ public class RuleAugmentation {
 						arl = rewriteConstraint(arl);
 						log.debug(String.format("Augmented %s for %s to %s", condition, sd.getName(), arl));
 					} catch(Exception e) {
-						pex.getErrorMessages().add(String.format("Error aumenting %s : %s", arl, e.getMessage()));
+						errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting condition %s : %s", condition, arl), e.getMessage()));
+						//pex.getErrorMessages().add(String.format("Error aumenting %s : %s", arl, e.getMessage()));
 					}
 					// if the error is from augmentation, still keep the original rule (with perhaps not as useful repairs)
 					// if the original rule has error, then this will be captured later anyway.
-					ConsistencyRuleType crd = ConsistencyRuleType.create(ws, stepType, "crd_"+condition+"_"+stepType.name(), arl);
+					ConsistencyRuleType crd = ConsistencyRuleType.create(ws, stepType, getConstraintName(condition, stepType), arl);
 					// not evaluated yet here, assert ConsistencyUtils.crdValid(crd);																					
 					stepType.createPropertyType(condition.toString(), Cardinality.SINGLE, crd);
 				}
@@ -93,17 +97,20 @@ public class RuleAugmentation {
 						arl = rewriteConstraint(arl);
 						log.debug(String.format("Augmented QA for %s to %s", sd.getName(), arl));
 					} catch(Exception e) {
-						pex.getErrorMessages().add(String.format("Error aumenting %s : %s", arl, e.getMessage()));
+						errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting QA Constraint %s : %s", spec.getQaConstraintId(), arl), e.getMessage()));
+						//pex.getErrorMessages().add(String.format("Error aumenting %s : %s", arl, e.getMessage()));
 					}
 					ConsistencyRuleType crt = ConsistencyRuleType.create(ws, stepType, specId, arl);
 				}
 			});
 				
-		if (!pex.getErrorMessages().isEmpty())
-			throw pex;
-		else {
+		if (errors.isEmpty())
 			propertyMetadata.put(RESERVED_PROPERTY_STEP_AUGMENTATION_STATUS, "success");
-		}
+		return errors;
+	}
+	
+	public static String getConstraintName(Conditions condition, InstanceType stepType) {
+		return "crd_"+condition+"_"+stepType.name();
 	}
 	
 	private String rewriteConstraint(String constraint) throws Exception {

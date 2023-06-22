@@ -43,4 +43,5 @@ public abstract class ProcessInstanceScopedElement extends InstanceWrapper {
 			return typeStep;
 		}
 	}
+	
 }

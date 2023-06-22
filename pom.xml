@@ -6,7 +6,7 @@
 
 	<groupId>at.jku.isse.designspace.passiveprocessengine</groupId>
 	<artifactId>c4s.passiveprocessengine.v3</artifactId>
-	<version>0.5.0-SNAPSHOT</version>
+	<version>0.5.1-SNAPSHOT</version>
 
 	<distributionManagement>
 		<repository>

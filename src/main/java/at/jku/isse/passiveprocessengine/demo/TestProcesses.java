@@ -476,8 +476,8 @@ public class TestProcesses {
 		sd1.getInput().put("jiraIn", typeJira.name());
 		sd1.getOutput().put("jiraOut", typeJira.name());
 		sd1.getConditions().put(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
-		sd1.getConditions().put(Conditions.POSTCONDITION, "self.in_jiraIn->forAll( issue | issue.state = 'Closed')");
-		sd1.getIoMapping().put("jiraIn2jiraOut", "self.in_jiraIn");//->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
+		sd1.getConditions().put(Conditions.POSTCONDITION, "self.in_jiraIn->size() = 1 and self.in_jiraIn->forAll( issue | issue.state = 'Closed')");
+		sd1.getIoMapping().put("jiraOut", "self.in_jiraIn");//->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
 		sd1.setInDNDid(dn1.getCode());
 		sd1.setOutDNDid(dn2.getCode());
 		procD.getSteps().add(sd1);
@@ -486,7 +486,7 @@ public class TestProcesses {
 		sd2.setCode("subtask2");
 		sd2.getInput().put("jiraIn", typeJira.name());
 		sd2.getConditions().put(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
-		sd2.getConditions().put(Conditions.POSTCONDITION, "self.in_jiraIn->forAll( issue | issue.state = 'Closed')"); 
+		sd2.getConditions().put(Conditions.POSTCONDITION, "self.in_jiraIn->size() = 1 and self.in_jiraIn->forAll( issue | issue.state = 'Closed')"); 
 		sd2.setInDNDid(dn1.getCode());
 		sd2.setOutDNDid(dn2.getCode());
 		procD.getSteps().add(sd2);

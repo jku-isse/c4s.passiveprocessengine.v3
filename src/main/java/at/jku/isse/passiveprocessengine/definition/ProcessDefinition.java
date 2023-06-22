@@ -33,7 +33,7 @@ public class ProcessDefinition extends StepDefinition{
 
 	public static enum CoreProperties {decisionNodeDefinitions, stepDefinitions, prematureTriggers, prematureTriggerMappings, 
 		isImmediateDataPropagationEnabled,
-		isImmediateInstantiateAllSteps}
+		isImmediateInstantiateAllSteps, isWithoutBlockingErrors}
 	
 	public static final String designspaceTypeId = ProcessDefinition.class.getSimpleName();
 	
@@ -130,42 +130,33 @@ public class ProcessDefinition extends StepDefinition{
 			if (crt != null) crt.delete();
 		});
 		super.deleteCascading();
+		thisType.delete();
 	}
 	
-	public void initializeInstanceTypes(boolean doGeneratePrematureDetectionConstraints) throws ProcessException{
+	public List<ProcessDefinitionError> initializeInstanceTypes(boolean doGeneratePrematureDetectionConstraints) {
+		List<ProcessDefinitionError> errors = new LinkedList<>();
 		ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
 		DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(instance.workspace);
-		List<ProcessException> subProcessExceptions = new ArrayList<>();
+		//List<ProcessException> subProcessExceptions = new ArrayList<>();
 		this.getStepDefinitions().stream().forEach(sd -> { 
-			//FIXME: wrong abstraction level, this should be don in process definition and step definition, as here we now need to distinguish between steps and process
+			//FIXME: wrong abstraction level, this should be done in process definition and step definition, as here we now need to distinguish between steps and process
 			if (sd instanceof ProcessDefinition) {
 				//ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, (ProcessDefinition)sd);
-				try {
-					((ProcessDefinition)sd).initializeInstanceTypes(doGeneratePrematureDetectionConstraints);
-				} catch (ProcessException e) {
-					subProcessExceptions.add(e);
-				}
+					errors.addAll(((ProcessDefinition)sd).initializeInstanceTypes(doGeneratePrematureDetectionConstraints));
 			} else
 				ProcessStep.getOrCreateDesignSpaceInstanceType(instance.workspace, sd); 			
 		});
-		if (!subProcessExceptions.isEmpty())
-			throw subProcessExceptions.get(0);
+		errors.addAll(checkProcessStructure());
+//		if (!subProcessExceptions.isEmpty())
+//			return errors;
 		ws.concludeTransaction();
-		List<String> augmentationErrors = new LinkedList<>();
-		try {
-			new RuleAugmentation(ws, this, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this)).augmentConditions(); 
-		} catch(ProcessException pex) {
-			augmentationErrors.addAll(pex.getErrorMessages());
-		}
+//		List<String> augmentationErrors = new LinkedList<>();
+		errors.addAll(new RuleAugmentation(ws, this, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this)).augmentConditions()); 
 		this.getStepDefinitions().stream().forEach(sd -> {
-			try {
-				new RuleAugmentation(ws, sd, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, sd)).augmentConditions(); 
-			} catch(ProcessException pex) {
-				augmentationErrors.addAll(pex.getErrorMessages());
-			}
+				errors.addAll(new RuleAugmentation(ws, sd, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, sd)).augmentConditions()); 
 		});
-		Map<String, Map<String, String>> validity = checkConstraintValidity();
-		if (validity.values().stream().flatMap(vmap -> vmap.values().stream()).allMatch(val -> val.equals("valid")) ) {
+		errors.addAll(checkConstraintValidity());
+		if (errors.isEmpty() ) {
 			// now lets also create premature rules here, as we need the process to exist first
 			if (doGeneratePrematureDetectionConstraints) {
 				new PrematureTriggerGenerator(ws, this).generatePrematureConstraints();
@@ -173,30 +164,70 @@ public class ProcessDefinition extends StepDefinition{
 			}
 			// even if there are augementation errors, these were due to unsupported constructs in the constraint during augmentation, but the constraints are ok,
 			// thus we store and run the process, but report back that augmentation didn;t work.
-			if (!augmentationErrors.isEmpty()) {
-				ProcessException pex = new ProcessException("Constraint Augmentation unsuccessful, but continuing nevertheless without augmentation.");
-				pex.setErrorMessages(augmentationErrors);
-				throw pex;
-			}
+//			if (!augmentationErrors.isEmpty()) {
+//				ProcessException pex = new ProcessException("Constraint Augmentation unsuccessful, but continuing nevertheless without augmentation.");
+//				pex.setErrorMessages(augmentationErrors);
+//				throw pex;
+//			}
+			this.setIsWithoutBlockingErrors(true);
 		} else {
-			log.info("Removing newly added process again due to constraint errors: "+getName());
-			ProcessException pex = new ProcessException("Constraints contain at least one error");
-			// here we dont care if there were augmentation errors, as these are most likely due to the constraint errors anyway.
-			validity.values().stream()
-				.flatMap(vmap -> vmap.entrySet().stream())
-				.filter(entry -> !entry.getValue().equals("valid"))
-				.forEach(entry -> pex.getErrorMessages().add(entry.getKey()+": "+entry.getValue()));
-			deleteCascading();
-			ws.concludeTransaction();
-			throw pex;
+			log.info("Blocking newly added process due to constraint errors: "+getName());
+//			ProcessException pex = new ProcessException("Constraints contain at least one error");
+//			// here we dont care if there were augmentation errors, as these are most likely due to the constraint errors anyway.
+//			validity.values().stream()
+//				.flatMap(vmap -> vmap.entrySet().stream())
+//				.filter(entry -> !entry.getValue().equals("valid"))
+//				.forEach(entry -> pex.getErrorMessages().add(entry.getKey()+": "+entry.getValue()));
+//			deleteCascading();
+//			ws.concludeTransaction();
+//			throw pex;
+			this.setIsWithoutBlockingErrors(false);
 		}
+		return errors;
 	}
 	
-	public Map<String, Map<String, String>> checkConstraintValidity() {
-		Map<String, Map<String, String>> overallStatus = new HashMap<>();
-		overallStatus.put(this.getName(), ProcessInstance.getConstraintValidityStatus(ws, this));
-		getStepDefinitions().forEach(sd -> overallStatus.put(sd.getName(), ProcessStep.getConstraintValidityStatus(ws, sd)));
+	public List<ProcessDefinitionError> checkConstraintValidity() {
+		List<ProcessDefinitionError> overallStatus = new LinkedList<>();
+		InstanceType instType = ProcessInstance.getOrCreateDesignSpaceInstanceType(ws, this);
+		//premature constraints:
+		this.getPrematureTriggers().entrySet().stream()
+			.forEach(entry -> {
+				String ruleId = ProcessInstance.generatePrematureRuleName(entry.getKey(), this);
+				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
+				if (crt == null) {
+					log.error("Expected Rule for existing process not found: "+ruleId);
+					overallStatus.add(new ProcessDefinitionError(this, "Expected Premature Trigger Rule Not Found - Internal Data Corruption", ruleId));
+				} else
+					if (crt.hasRuleError())
+						overallStatus.add(new ProcessDefinitionError(this, String.format("Premature Trigger Rule % has an error", ruleId), crt.ruleError()));
+			});
+		getStepDefinitions().forEach(sd -> overallStatus.addAll( sd.checkConstraintValidity()));
 		return overallStatus;
+	}
+	
+	public List<ProcessDefinitionError> checkProcessStructure() {
+		List<ProcessDefinitionError> status = new LinkedList<>();
+		if (this.getDecisionNodeDefinitions().stream().filter(dnd -> dnd.getInSteps().isEmpty()).count() > 1)
+			status.add(new ProcessDefinitionError(this, "Invalid Process Structure", "More than one entry decision node found"));
+		if (this.getDecisionNodeDefinitions().stream().filter(dnd -> dnd.getOutSteps().isEmpty()).count() > 1)
+			status.add(new ProcessDefinitionError(this, "Invalid Process Structure", "More than one exit decision node found"));
+		if (getExpectedInput().isEmpty()) {
+			status.add(new ProcessDefinitionError(this, "No Input Defined", "Step needs at least one input."));
+		}
+		getExpectedInput().forEach((in, type) -> { 
+			if (type == null) 
+				status.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of input '"+in+"' could not be resolved"));
+		});
+		getExpectedOutput().forEach((out, type) -> { 
+			if (type == null) 
+				status.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of output '"+out+"' could not be resolved"));
+		});
+
+		getStepDefinitions().stream()
+			.filter(sd -> !(sd instanceof ProcessDefinition))
+			.forEach(sd -> status.addAll( sd.checkStepStructureValidity()));
+		getDecisionNodeDefinitions().forEach(dnd -> status.addAll(dnd.checkDecisionNodeStructureValidity()));
+		return status;
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
@@ -215,6 +246,7 @@ public class ProcessDefinition extends StepDefinition{
 				typeStep.createPropertyType(CoreProperties.prematureTriggerMappings.toString(), Cardinality.MAP, Workspace.STRING);
 				typeStep.createPropertyType(CoreProperties.isImmediateDataPropagationEnabled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
 				typeStep.createPropertyType(CoreProperties.isImmediateInstantiateAllSteps.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
+				typeStep.createPropertyType(CoreProperties.isWithoutBlockingErrors.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
 				return typeStep;
 			}
 	}
@@ -265,5 +297,9 @@ public class ProcessDefinition extends StepDefinition{
 
 	public void setImmediateDataPropagationEnabled(boolean isImmediateDataPropagationEnabled) {
 		instance.getPropertyAsSingle(CoreProperties.isImmediateDataPropagationEnabled.toString()).set(isImmediateDataPropagationEnabled);
+	}
+	
+	public void setIsWithoutBlockingErrors(boolean isWithoutBlockingErrors) {
+		instance.getPropertyAsSingle(CoreProperties.isWithoutBlockingErrors.toString()).set(isWithoutBlockingErrors);
 	}
 }

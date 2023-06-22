@@ -22,6 +22,7 @@ import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ConditionChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.PrematureStepTriggerCmd;
@@ -197,6 +198,27 @@ public class ProcessInstance extends ProcessStep {
 		}
 		return events;
 	}
+	
+	public List<Events.ProcessChangedEvent> setPreConditionsFulfilled(boolean isfulfilled) {
+		if (arePreCondFulfilled() != isfulfilled) {  // a change
+			List<Events.ProcessChangedEvent> events = new LinkedList<>();
+			ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
+			events.add(new Events.ConditionFulfillmentChanged(pi, this, Conditions.PRECONDITION, isfulfilled));
+			instance.getPropertyAsSingle(ProcessStep.CoreProperties.processedPreCondFulfilled.toString()).set(isfulfilled);
+			if (isfulfilled)  {
+				events.addAll(this.trigger(StepLifecycle.Trigger.ENABLE)) ;
+				events.addAll(tryTransitionToCompleted()) ;
+			}
+			else {
+				//if (!actualSM.isInState(State.CANCELED)) // no need to check any longer as CANCELED state only reacts to uncancel triggers
+				events.addAll(this.trigger(StepLifecycle.Trigger.RESET));
+				// we stay in cancelled even if there are preconditions no longer fulfilled,
+				// if we are no longer cancelled, and precond do not hold, then reset
+			}
+			return events;
+		}
+		return Collections.emptyList();
+	}
 
 	private List<Events.ProcessChangedEvent> tryTransitionToCompleted() {
 		if (this.getDefinition().getCondition(Conditions.POSTCONDITION).isEmpty()) {
@@ -283,22 +305,24 @@ public class ProcessInstance extends ProcessStep {
 		return incons;
 	}
 	
-	public static Map<String, String> getConstraintValidityStatus(Workspace ws, ProcessDefinition pd) {
-		Map<String, String> status = ProcessStep.getConstraintValidityStatus(ws, pd);
-		InstanceType instType = getOrCreateDesignSpaceInstanceType(ws, pd);
-		//premature constraints:
-		pd.getPrematureTriggers().entrySet().stream()
-			.forEach(entry -> {
-				String ruleId = generatePrematureRuleName(entry.getKey(), pd);
-				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
-				if (crt == null) {
-					log.error("Expected Rule for existing process not found: "+ruleId);
-					status.put(ruleId, "Corrupt data - Expected Rule not found");
-				} else
-					status.put(ruleId, crt.hasRuleError() ? crt.ruleError() : "valid");
-			});
-		return status;
-	}
+//	public static List<ProcessDefinitionError> getConstraintValidityStatus(Workspace ws, ProcessDefinition pd) {
+//		List<ProcessDefinitionError> errors = new LinkedList<>();
+//		errors.addAll(pd.checkConstraintValidity());
+//		InstanceType instType = getOrCreateDesignSpaceInstanceType(ws, pd);
+//		//premature constraints:
+//		pd.getPrematureTriggers().entrySet().stream()
+//			.forEach(entry -> {
+//				String ruleId = generatePrematureRuleName(entry.getKey(), pd);
+//				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
+//				if (crt == null) {
+//					log.error("Expected Rule for existing process not found: "+ruleId);
+//					errors.add(new ProcessDefinitionError(pd, "Expected Premature Trigger Rule Not Found - Internal Data Corruption", ruleId));
+//				} else
+//					if (crt.hasRuleError())
+//						errors.add(new ProcessDefinitionError(pd, String.format("Premature Trigger Rule % has an error", ruleId), crt.ruleError()));
+//			});
+//		return errors;
+//	}
 	
 	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws, ProcessDefinition td) {
 		String parentName = td.getProcess() != null ? td.getProcess().getName() : "ROOT";
@@ -338,7 +362,7 @@ public class ProcessInstance extends ProcessStep {
 	
 	public static ProcessInstance getInstance(Workspace ws, ProcessDefinition sd, String namePostfix) {
 		//TODO: not to create duplicate process instances somehow
-		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+namePostfix);
+		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+namePostfix);		
 		ProcessInstance pi = WrapperCache.getWrappedInstance(ProcessInstance.class, instance);
 		pi.init(sd, null, null, ws);
 		return pi;
