@@ -258,9 +258,9 @@ public class RepairOrderTest {
 				RepairNode rn = RuleService.repairTree(cre);
 				if (rn != null) {
 					RepairTreeSorter rts = new RepairTreeSorter(this.rs,scorer);
-					rts.printSortedRepairTree(rn, 1);
+				//	rts.printSortedRepairTree(rn, 1);
 					scorer=new SortOnRestriction();
-					rts.printSortedRepairTree(rn, 1);
+				//	rts.printSortedRepairTree(rn, 1);
 				}
 				}
 			}
