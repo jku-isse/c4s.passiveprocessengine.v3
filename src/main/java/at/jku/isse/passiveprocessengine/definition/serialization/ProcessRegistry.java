@@ -74,7 +74,7 @@ public class ProcessRegistry {
 	public Optional<ProcessDefinition> getProcessDefinition(String name, Boolean onlyValid) {
 		List<ProcessDefinition> defs = procDefType.instancesIncludingThoseOfSubtypes()
 				.filter(inst -> !inst.isDeleted)
-				.filter(inst -> (Boolean)inst.getPropertyAsValue((ProcessDefinition.CoreProperties.isWithoutBlockingErrors.toString())) || !onlyValid)
+				.filter(inst -> (Boolean)inst.getPropertyAsValueOrElse((ProcessDefinition.CoreProperties.isWithoutBlockingErrors.toString()), () -> "false") || !onlyValid)
 				.filter(inst -> inst.name().equals(name))
 			.map(inst -> (ProcessDefinition)WrapperCache.getWrappedInstance(ProcessDefinition.class, inst))
 			.collect(Collectors.toList());			

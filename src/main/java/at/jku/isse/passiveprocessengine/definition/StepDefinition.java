@@ -246,7 +246,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 				} else {
 					ConsistencyRuleType crt = (ConsistencyRuleType)ruleType;
 					if (crt.hasRuleError())
-						errors.add(new ProcessDefinitionError(this, String.format("DataMapping % has an error", name), crt.ruleError()));
+						errors.add(new ProcessDefinitionError(this, String.format("DataMapping %s has an error", name), crt.ruleError()));
 				}
 			});
 		//qa constraints:
@@ -260,7 +260,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 					errors.add(new ProcessDefinitionError(this, "Expected QA Constraint Not Found - Internal Data Corruption", specId));
 				} else
 					if (crt.hasRuleError())
-						errors.add(new ProcessDefinitionError(this, String.format("QA Constraint % has an error", specId), crt.ruleError()));
+						errors.add(new ProcessDefinitionError(this, String.format("QA Constraint %s has an error", specId), crt.ruleError()));
 			});
 		return errors;
 	}
