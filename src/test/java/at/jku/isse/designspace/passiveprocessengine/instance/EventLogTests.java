@@ -59,6 +59,7 @@ import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStepStats;
 import at.jku.isse.passiveprocessengine.monitoring.RepairAnalyzer;
 import at.jku.isse.passiveprocessengine.monitoring.ReplayTimeProvider;
+import at.jku.isse.passiveprocessengine.monitoring.UsageMonitor;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -87,7 +88,7 @@ class EventLogTests {
 		eventDistrib.registerHandler(monitor);
 		eventDistrib.registerHandler(logs);
 		picp = new ProcessInstanceChangeProcessor(ws, eventDistrib);
-		repAnalyzer = new RepairAnalyzer(ws,rs,scorer,timeProvider);
+		repAnalyzer = new RepairAnalyzer(ws,rs,scorer,timeProvider, new UsageMonitor(timeProvider));
 		WorkspaceListenerSequencer wsls = new WorkspaceListenerSequencer(ws);
 		wsls.registerListener(repAnalyzer);
 		wsls.registerListener(picp);

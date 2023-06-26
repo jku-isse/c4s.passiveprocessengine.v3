@@ -62,7 +62,7 @@ public class ProcessRegistry {
 		
 		isInit = true;
 		tempStorePD.forEach(pd -> {
-			SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> result = storeProcessDefinitionIfNotExists(pd, false);
+			SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> result = storeProcessDefinition(pd, false);
 			if (!result.getValue().isEmpty()) {
 				log.warn("Error loading process definition from file system: "+result.getKey().getName()+"\r\n"+result.getValue());
 			}
@@ -74,7 +74,7 @@ public class ProcessRegistry {
 	public Optional<ProcessDefinition> getProcessDefinition(String name, Boolean onlyValid) {
 		List<ProcessDefinition> defs = procDefType.instancesIncludingThoseOfSubtypes()
 				.filter(inst -> !inst.isDeleted)
-				.filter(inst -> (Boolean)inst.getPropertyAsValue((ProcessDefinition.CoreProperties.isWithoutBlockingErrors.toString())) || !onlyValid)
+				.filter(inst -> (Boolean)inst.getPropertyAsValueOrElse((ProcessDefinition.CoreProperties.isWithoutBlockingErrors.toString()), () -> "false") || !onlyValid)
 				.filter(inst -> inst.name().equals(name))
 			.map(inst -> (ProcessDefinition)WrapperCache.getWrappedInstance(ProcessDefinition.class, inst))
 			.collect(Collectors.toList());			
@@ -92,12 +92,16 @@ public class ProcessRegistry {
 		String tempCode = originalCode+STAGINGPOSTFIX;
 		process.setCode(tempCode);
 		DefinitionTransformer.replaceStepNamesInMappings(process, originalCode, tempCode);
-		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> stagedProc = storeProcessDefinitionIfNotExists(process, true);
+		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> stagedProc = storeProcessDefinition(process, true);
 		if (!stagedProc.getValue().isEmpty())
 			return new ProcessDeployResult(stagedProc.getKey(), stagedProc.getValue(), Collections.emptyList());
 		// if we continue here, then no process error occurred and we can continue
 		// we remove the staging one and replace the original
-		removeProcessDefinition(process.getCode());
+		if (stagedProc.getKey() != null) {
+			stagedProc.getKey().deleteCascading();
+			ws.concludeTransaction();  
+		}
+		//removeProcessDefinition(process.getCode());
 		// now remove the original if exists, and store as new
 		DefinitionTransformer.replaceStepNamesInMappings(process, tempCode, originalCode);
 		process.setCode(originalCode);
@@ -108,7 +112,7 @@ public class ProcessRegistry {
 			prevProcInput = removeAllProcessInstancesOfProcessDefinition(prevPD.get());
 			removeProcessDefinition(process.getCode());
 		};
-		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> newPD = storeProcessDefinitionIfNotExists(process, false);
+		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> newPD = storeProcessDefinition(process, false);
 		// if stages process has no error, so should this be, as its identical.
 		List<ProcessInstanceError> pInstErrors = new LinkedList<>();
 		if (doReinstantiateExistingProcessInstances) {
@@ -127,10 +131,25 @@ public class ProcessRegistry {
 		return new ProcessDeployResult(newPD.getKey(), newPD.getValue(), pInstErrors);
 	}
 	
-	public SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> storeProcessDefinitionIfNotExists(DTOs.Process process, boolean isInStaging) {
+	public SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> storeProcessDefinition(DTOs.Process process, boolean isInStaging) {
 		if (!isInit) { tempStorePD.add(process); return null;}
-		Optional<ProcessDefinition> optPD = getProcessDefinition(process.getCode(), true);
-		if (optPD.isEmpty()) {
+		
+		boolean onlyValid = isInStaging ? false : true;
+		Optional<ProcessDefinition> optPD = getProcessDefinition(process.getCode(), onlyValid);
+		// in staging we overwrite existing process (as this is an old staged process)
+
+		if (optPD.isPresent()) {
+			if (isInStaging) {
+				log.debug("Removing old staged process: "+process.getCode()+" before staging new version");
+				ProcessDefinition pdef = optPD.get();
+				pdef.deleteCascading();
+				ws.concludeTransaction();  
+			} else {
+				log.debug("Reusing process: "+process.getCode());
+				return new SimpleEntry<>(optPD.get(), Collections.emptyList());
+			}
+		}
+//		if (optPD.isEmpty()) {
 			log.debug("Storing new process: "+process.getCode());
 			ProcessDefinition pd = DefinitionTransformer.fromDTO(process, ws, isInStaging);						
 			boolean doGeneratePrematureRules = false; 
@@ -145,10 +164,10 @@ public class ProcessRegistry {
 				doImmediateInstantiateAllSteps = true;
 			pd.setImmediateInstantiateAllStepsEnabled(doImmediateInstantiateAllSteps);
 			return new SimpleEntry<>(pd, errors);
-		} else {
-			log.debug("Reusing process: "+process.getCode());
-			return new SimpleEntry<>(optPD.get(), Collections.emptyList());
-		}
+//		} else {
+//			log.debug("Reusing process: "+process.getCode());
+//			return new SimpleEntry<>(optPD.get(), Collections.emptyList());
+//		}
 	}
 	
 	private Map<String, Map<String, Set<Instance>>> removeAllProcessInstancesOfProcessDefinition(ProcessDefinition pDef) {
