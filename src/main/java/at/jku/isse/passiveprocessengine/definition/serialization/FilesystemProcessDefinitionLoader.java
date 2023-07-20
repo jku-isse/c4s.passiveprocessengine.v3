@@ -48,8 +48,10 @@ public class FilesystemProcessDefinitionLoader {
                 if (procD != null) {
                 	try {
                 		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>>  result = registry.storeProcessDefinition(procD, false);
-						if (!result.getValue().isEmpty()) {
+						if (result != null && !result.getValue().isEmpty()) {
 							log.warn("Error loading process definition from file system: "+result.getKey().getName()+"\r\n"+result.getValue());
+						} else if (result == null) {
+							log.info("Loading of process definition "+procD.getCode()+" defered to when workspace is available");
 						}
                 		i++;
 					} catch (NullPointerException e) {
