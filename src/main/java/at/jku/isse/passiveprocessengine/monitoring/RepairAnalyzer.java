@@ -87,7 +87,6 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 	Map<PropertyUpdate, Set<SideEffect<ConsistencyRule>>> collectedImpact = new LinkedHashMap<>();
 	// last/latest repair for rule (updated at the end of previous iteration)
 	Map<ConsistencyRule, RepairNode> repairForRule = new HashMap<>();
-
 	//WITH CHANGE TO DS440 no longer needed, changes of properties and rule results occur in same transaction notification
 	// collecting all updates as long as no rule result changes,i.e., no rule was
 	// reevaluated resulting in a change
