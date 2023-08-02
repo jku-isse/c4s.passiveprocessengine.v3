@@ -79,6 +79,22 @@ public class RepairOrderTest {
 		typeJira = TestArtifacts.getJiraInstanceType(ws);
 	}
 
+	// The test checks if the property have been collected correctly
+	@Test
+	void testPropertyRanking() throws ProcessException {
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		Instance jiraB = TestArtifacts.getJiraInstance(ws, "jiraB");
+		ProcessDefinition procDef = TestProcesses.getComplexSingleStepProcessDefinition(ws);
+		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
+		proc.addInput("jiraIn", jiraA);
+		ws.concludeTransaction();
+		repAnalyzer.printImpact();
+		repAnalyzer.getImpact().clear();
+		TestArtifacts.setStateToJiraInstance(jiraA, JiraStates.Closed);
+		ws.concludeTransaction();
+		repAnalyzer.printImpact();
+		repAnalyzer.getImpact().clear();
+	}
 	// The test checks if at the end the program it calculates the correct
 	//select and unselect count of the nodes. Test Passed
 	@Test
