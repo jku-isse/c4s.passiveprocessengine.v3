@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class FilesystemProcessDefinitionLoader {
 
-	private static final JsonDefinitionSerializer serializer = new JsonDefinitionSerializer();
+	public static final JsonDefinitionSerializer serializer = new JsonDefinitionSerializer();
 	
 	protected ProcessRegistry registry;
 	
