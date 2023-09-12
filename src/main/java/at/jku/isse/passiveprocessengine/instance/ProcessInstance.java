@@ -43,10 +43,11 @@ public class ProcessInstance extends ProcessStep {
 
 	private static final String CRD_PREMATURETRIGGER_PREFIX = "crd_prematuretrigger_";
 
-	static enum CoreProperties {stepInstances, decisionNodeInstances, processDefinition};
+	static enum CoreProperties {stepInstances, decisionNodeInstances, processDefinition, createdAt};
 	
 	public static final String designspaceTypeId = ProcessInstance.class.getSimpleName();
 
+	protected ZonedDateTime createdAt;
 		
 	public ProcessInstance(Instance instance) {
 		super(instance);
@@ -54,6 +55,19 @@ public class ProcessInstance extends ProcessStep {
 	
 	public ZonedDateTime getCurrentTimestamp() {
 		return ZonedDateTime.now(); //default value, to be replaced with time provider
+	}
+	
+	public ZonedDateTime getCreatedAt() {
+		if (createdAt == null) { // load from DS
+			String last = (String) instance.getPropertyAsValue(CoreProperties.createdAt.toString());
+			createdAt = ZonedDateTime.parse(last);
+		}
+		return createdAt;
+	}
+	
+	private void setCreatedAt(ZonedDateTime createdAt) {
+		instance.getPropertyAsSingle(CoreProperties.createdAt.toString()).set(createdAt.toString());
+		this.createdAt = createdAt;
 	}
 	
 	public ProcessScopedCmd prepareRuleEvaluationChange(ConsistencyRule cr, PropertyUpdateSet op) {
@@ -339,6 +353,7 @@ public class ProcessInstance extends ProcessStep {
 			typeStep.createPropertyType(CoreProperties.processDefinition.toString(), Cardinality.SINGLE, ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws));
 			typeStep.createPropertyType(CoreProperties.stepInstances.toString(), Cardinality.SET, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
 			typeStep.createPropertyType(CoreProperties.decisionNodeInstances.toString(), Cardinality.SET, DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(ws));
+			typeStep.createPropertyType(CoreProperties.createdAt.toString(), Cardinality.SINGLE, Workspace.STRING);
 			return typeStep;
 		}
 	}
@@ -376,11 +391,12 @@ public class ProcessInstance extends ProcessStep {
 		return pi;
 	}
 	
-	protected void init(ProcessDefinition pdef, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, Workspace ws) {
+	protected void init(ProcessDefinition pdef, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, Workspace ws) {		
 		// init first DNI, there should be only one. Needs to be checked earlier with definition creation
 		// we assume consistent, correct specification/definition here
 		instance.getPropertyAsSingle(CoreProperties.processDefinition.toString()).set(pdef.getInstance());
-		super.init(ws, pdef, inDNI, outDNI);		
+		super.init(ws, pdef, inDNI, outDNI);	
+		setCreatedAt(getCurrentTimestamp());
 		if (isImmediateInstantiateAllStepsEnabled()) {
 			// instantiate all steps and thereby the DNIs
 			pdef.getStepDefinitions().stream().forEach(sd -> { 

@@ -189,7 +189,7 @@ public class ElementInspectionUtils {
 	    		AbstractRepairAction ra = (AbstractRepairAction)node;
 	    		RestrictionNode rootNode =  ra.getValue()==UnknownRepairValue.UNKNOWN && ra.getRepairValueOption().getRestriction() != null ? ra.getRepairValueOption().getRestriction().getRootNode() : null;
 	    		if (rootNode != null) {
-	    			printInto.append(treeLevel.concat(compileRestrictedRepair(ra,rootNode.printNodeTree(false))));
+	    			printInto.append(treeLevel.concat(compileRestrictedRepair(ra,rootNode.printNodeTree(false,40))));
 	    			printInto.append("\n"+ rootNode.toTreeString(40));
 	    		} else	
 	    			printInto.append(treeLevel.concat(node.toString()));
