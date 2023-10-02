@@ -1635,7 +1635,7 @@ class RepairTests {
 		.forEach(ra -> {
 			RestrictionNode rootNode =  ra.getRepairValueOption().getRestriction() != null ? ra.getRepairValueOption().getRestriction().getRootNode() : null;
 			String value = ra.getValue() != null ? " "+ra.getOperator().toString()+" "+ra.getValue().toString() : " NO VALUE";
-			String restriction = rootNode != null ? rootNode.printNodeTree(false) : value;					
+			String restriction = rootNode != null ? rootNode.printNodeTree(false, 40) : value;					
 			String inst = ra.getElement() != null ? ra.getElement().toString() : "null";
 			StringBuffer sb = new StringBuffer();
 			switch(ra.getOperator()) {

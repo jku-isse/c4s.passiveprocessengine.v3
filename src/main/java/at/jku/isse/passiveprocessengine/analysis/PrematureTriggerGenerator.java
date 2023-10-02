@@ -94,7 +94,7 @@ public class PrematureTriggerGenerator {
 		// we recreate the constraint to ensure we have all the types in iterators available
 		InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, step);
 		ArlEvaluator ae = new ArlEvaluator(stepType, constraint);
-		constraint = ae.syntaxTree.getOriginalARL();
+		constraint = ae.syntaxTree.getOriginalARL(0, false);
 
 		List<StepParameter> singleUsage = extractStepParameterUsageFromConstraint(step, constraint);
 		// we need to obtain for every in and out param that we have a source for the location, and then replace from the back every this location with the path from the source
@@ -159,7 +159,7 @@ public class PrematureTriggerGenerator {
 		ae.parser.currentEnvironment.locals.values().stream()
 			.filter(var -> !((VariableExpression)var).name.equals("self"))
 			.forEach(var -> ((VariableExpression)var).name = ((VariableExpression)var).name+"_"+varCount);
-		String rewritten = ae.syntaxTree.getOriginalARL();
+		String rewritten = ae.syntaxTree.getOriginalARL(0, false);
 		return rewritten;
 	}
 	
@@ -207,7 +207,7 @@ public class PrematureTriggerGenerator {
 		if (mapping != null) { // for now, we need to process the mapping constraints (will not be necessary once these are defines using derived properties)
 			InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, step);
 			ArlEvaluator ae = new ArlEvaluator(stepType, mapping);
-			mapping = ae.syntaxTree.getOriginalARL();;
+			mapping = ae.syntaxTree.getOriginalARL(0, false);;
 			
 			//int posSym = Math.max(mapping.indexOf("->symmetricDifference"), mapping.indexOf(".symmetricDifference"));
 			//if (posSym > 0) {

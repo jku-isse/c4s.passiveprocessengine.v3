@@ -60,6 +60,7 @@ public class DefinitionTransformer {
 		initStepFromDTO(procDTO, pDef, ws);
 		
 		pDef.setDepthIndexRecursive(depth);
+		pDef.setElementOrder();
 	}
 	
 	private static ProcessDefinition createSubprocess(DTOs.Process subProcess, Workspace ws, DTOs.Process parentProc, boolean isInStaging) {
@@ -120,8 +121,7 @@ public class DefinitionTransformer {
 		step.getQaConstraints().stream().forEach(qac -> pStep.addQAConstraint(QAConstraintSpec.createInstance(qac.getCode(), qac.getArlRule(), qac.getDescription(), qac.getSpecOrderIndex(), ws)));
 		pStep.setSpecOrderIndex(step.getSpecOrderIndex());
 		pStep.setHtml_url(step.getHtml_url());
-		pStep.setDescription(step.getDescription());
-		//FIXME: description field is not used in specification (only in persistance)
+		pStep.setDescription(step.getDescription());		
 	}
 	
 	private static InstanceType resolveInstanceType(String type, Workspace ws) {

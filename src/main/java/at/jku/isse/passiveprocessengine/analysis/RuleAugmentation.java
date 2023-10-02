@@ -117,7 +117,7 @@ public class RuleAugmentation {
 		// we recreate the constraint to ensure we have all the types in iterators available
 		//TODO: catch any exceptions here
 		ArlEvaluator ae = new ArlEvaluator(stepType, constraint);
-		constraint = ae.syntaxTree.getOriginalARL();
+		constraint = ae.syntaxTree.getOriginalARL(0, false);
 
 		List<StepParameter> singleUsage = PrematureTriggerGenerator.extractStepParameterUsageFromConstraint(sd, constraint);
 		// we need to obtain for every in and out param that we have a source for the location, and then replace from the back every this location with the path from the source
@@ -155,7 +155,7 @@ public class RuleAugmentation {
 		}
 		// ensure the new constraint is correct
 		ae = new ArlEvaluator(stepType, constraint);
-		constraint = ae.syntaxTree.getOriginalARL();
+		constraint = ae.syntaxTree.getOriginalARL(0, false);
 		return constraint;
 	}
 	
@@ -167,7 +167,7 @@ public class RuleAugmentation {
 		ae.parser.currentEnvironment.locals.values().stream()
 			.filter(var -> !((VariableExpression)var).name.equals("self"))
 			.forEach(var -> ((VariableExpression)var).name = ((VariableExpression)var).name+"_"+varCount);
-		String rewritten = ae.syntaxTree.getOriginalARL();
+		String rewritten = ae.syntaxTree.getOriginalARL(0, false);
 		return rewritten;
 	}
 	
@@ -176,7 +176,7 @@ public class RuleAugmentation {
 		if (mapping != null) { // for now, we need to process the mapping constraints (will not be necessary once these are defines using derived properties)
 			//InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, step);
 			ArlEvaluator ae = new ArlEvaluator(stepType, mapping);
-			mapping = ae.syntaxTree.getOriginalARL();
+			mapping = ae.syntaxTree.getOriginalARL(0, false);
 			
 			//int posSym = Math.max(mapping.indexOf("->symmetricDifference"), mapping.indexOf(".symmetricDifference")); //Symmetric difference is removed upon loading from DTOs and added extra upon creating mapping rules
 			//if (posSym > 0) {

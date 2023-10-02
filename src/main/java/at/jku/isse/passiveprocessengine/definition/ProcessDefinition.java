@@ -2,7 +2,9 @@ package at.jku.isse.passiveprocessengine.definition;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,8 @@ import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator;
 import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
+import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.DecisionNode;
+import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Step;
 import at.jku.isse.passiveprocessengine.instance.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
@@ -302,4 +306,28 @@ public class ProcessDefinition extends StepDefinition{
 	public void setIsWithoutBlockingErrors(boolean isWithoutBlockingErrors) {
 		instance.getPropertyAsSingle(CoreProperties.isWithoutBlockingErrors.toString()).set(isWithoutBlockingErrors);
 	}
+
+	@Override
+	public void setProcOrderIndex(int index) {
+		super.setProcOrderIndex(index);
+		setElementOrder(); // continue within this (sub)process
+	}
+	
+	public void setElementOrder() {
+		// init dnd index
+		this.getDecisionNodeDefinitions().stream().forEach(dnd -> dnd.setProcOrderIndex(this.getSpecOrderIndex()));
+		// determine order index
+		this.getStepDefinitions().stream()
+			.sorted(new Comparator<StepDefinition>() {
+				@Override
+				public int compare(StepDefinition o1, StepDefinition o2) {
+					return Integer.compare(o1.getSpecOrderIndex(), o2.getSpecOrderIndex());
+				}})
+			.forEach(step -> {
+			step.setProcOrderIndex(step.getSpecOrderIndex());
+			step.getOutDND().setProcOrderIndex(step.getSpecOrderIndex()); // every dnd has as order index the largest spec order index of its inSteps
+		});
+	}
+
+
 }

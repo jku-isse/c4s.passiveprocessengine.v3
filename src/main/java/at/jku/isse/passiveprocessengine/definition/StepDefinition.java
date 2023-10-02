@@ -34,7 +34,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 							hierarchyDepth};
 	
 	public static final String designspaceTypeId = StepDefinition.class.getSimpleName();
-	
+	public static final String NOOPSTEP_PREFIX = "NoOpStep";
 	
 	public StepDefinition(Instance instance) {
 		super(instance);
@@ -185,7 +185,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 			if (dnd.getDepthIndex() < newIndex) // this allows to override the index when this is used as a subprocess
 				dnd.setDepthIndexRecursive(newIndex);
 		}
-	}
+	}	
 	
 	public Integer getSpecOrderIndex() {
 		return (Integer) instance.getPropertyAsValueOrElse(CoreProperties.specOrderIndex.toString(), () -> -1);
@@ -268,10 +268,11 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	public List<ProcessDefinitionError> checkStepStructureValidity() {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
 		
-		if (getCondition(Conditions.POSTCONDITION).isEmpty()) {			
+		
+		if (getCondition(Conditions.POSTCONDITION).isEmpty() && !this.getName().startsWith(NOOPSTEP_PREFIX)) {			
 			errors.add(new ProcessDefinitionError(this, "No Condition Defined", "Step needs exactly one post condition to signal when a step is considered finished."));
 		}
-		if (getExpectedInput().isEmpty()) {
+		if (getExpectedInput().isEmpty() && !this.getName().startsWith(NOOPSTEP_PREFIX)) {						
 			errors.add(new ProcessDefinitionError(this, "No Input Defined", "Step needs at least one input."));
 		}
 		getExpectedInput().forEach((in, type) -> { 

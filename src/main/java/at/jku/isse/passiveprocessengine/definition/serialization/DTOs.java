@@ -105,7 +105,7 @@ public class DTOs {
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class DecisionNode extends Element {
-		InFlowType inflowType = InFlowType.AND; //default value
+		InFlowType inflowType = InFlowType.SEQ; //default value
 		Set<Mapping> mapping = new HashSet<>();
 		int depthIndex = -1;	
 		

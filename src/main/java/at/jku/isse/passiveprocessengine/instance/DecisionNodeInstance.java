@@ -132,6 +132,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	private boolean updateInConditionsFullfilledAndCheckIfHasChanged() {	
 		boolean prioCond = this.isInflowFulfilled();
 		switch(this.getDefinition().getInFlowType()) {		
+		case SEQ: //fallthrough as treated just like and
 		case AND: 
 			// we ignore Expected Canceled and no work expected
 			// we expect other to be E: COMPLETED, thus for a deviation we still propagate all inputs once we progated in the past, 

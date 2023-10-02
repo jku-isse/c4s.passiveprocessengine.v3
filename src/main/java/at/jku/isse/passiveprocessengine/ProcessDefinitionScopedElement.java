@@ -7,10 +7,11 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.StepDefinition.CoreProperties;
 
 public abstract class ProcessDefinitionScopedElement extends InstanceWrapper {
 
-	static enum CoreProperties {process};
+	static enum CoreProperties {process, orderIndex};
 	public static final String designspaceTypeId = ProcessDefinitionScopedElement.class.getSimpleName();
 	
 	
@@ -23,6 +24,14 @@ public abstract class ProcessDefinitionScopedElement extends InstanceWrapper {
 		instance.getPropertyAsSingle(CoreProperties.process.toString()).set(pi.getInstance());
 	}
 
+	public void setProcOrderIndex(int index) {
+		instance.getPropertyAsSingle(CoreProperties.orderIndex.toString()).set(index);
+	}
+	
+	public Integer getProcOrderIndex() {
+		return (Integer) instance.getPropertyAsValueOrElse(CoreProperties.orderIndex.toString(), () -> -1);
+	}
+	
 	public ProcessDefinition getProcess() {
 		Instance pi = instance.getPropertyAsInstance(CoreProperties.process.toString());
 		if (pi != null)
@@ -40,7 +49,12 @@ public abstract class ProcessDefinitionScopedElement extends InstanceWrapper {
 		else {
 			InstanceType typeStep = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER);
 			typeStep.createPropertyType(CoreProperties.process.toString(), Cardinality.SINGLE, typeStep);
+			typeStep.createPropertyType((CoreProperties.orderIndex.toString()), Cardinality.SINGLE, Workspace.INTEGER);
 			return typeStep;
 		}
+	}
+	
+	public String toString() {
+		return instance.name(); 
 	}
 }
