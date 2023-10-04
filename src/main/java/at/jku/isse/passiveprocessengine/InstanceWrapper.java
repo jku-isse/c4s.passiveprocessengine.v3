@@ -9,7 +9,7 @@ public abstract class InstanceWrapper implements IdentifiableElement{
 	protected transient Workspace ws;
 	
 	public InstanceWrapper(Instance instance) {
-		assert instance != null;
+	//	assert instance != null;
 		this.instance = instance;
 	}
 	
