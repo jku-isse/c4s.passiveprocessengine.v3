@@ -60,24 +60,23 @@ public class RuleAugmentation {
 			if (sd.getCondition(condition).isPresent()) {
 				if (sd.getCondition(condition).get() != null) {
 					//with subprocesses we might have run augmentation before, thus check and skip				
-					if (stepType.hasProperty(ReservedNames.PROPERTY_DEFINITION_PREFIX+condition.toString()))
-						break;
-					
+					if (stepType.getPropertyType(condition.toString()) != null)//(ReservedNames.PROPERTY_DEFINITION_PREFIX+condition.toString()))
+						break;					
 					// as the output cannot be changed directly (except in rare cases when set manually)
 					// repairing the output makes no sense, but rather its datamapping definition, so we replace all out_xxx occurences with the datamapping definition
 					String arl = sd.getCondition(condition).get();
 					try {
 						arl = rewriteConstraint(arl);
-						log.debug(String.format("Augmented %s for %s to %s", condition, sd.getName(), arl));
-					} catch(Exception e) {
-						errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting condition %s : %s", condition, arl), e.getMessage()));
-						//pex.getErrorMessages().add(String.format("Error aumenting %s : %s", arl, e.getMessage()));
-					}
+						log.debug(String.format("Augmented %s for %s to %s", condition, sd.getName(), arl));					
 					// if the error is from augmentation, still keep the original rule (with perhaps not as useful repairs)
 					// if the original rule has error, then this will be captured later anyway.
 					ConsistencyRuleType crd = ConsistencyRuleType.create(ws, stepType, getConstraintName(condition, stepType), arl);
 					// not evaluated yet here, assert ConsistencyUtils.crdValid(crd);																					
 					stepType.createPropertyType(condition.toString(), Cardinality.SINGLE, crd);
+					} catch(Exception e) {
+						errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting condition %s : %s", condition, arl), e.getMessage()));
+						//pex.getErrorMessages().add(String.format("Error aumenting %s : %s", arl, e.getMessage()));
+					}
 				}
 			}	
 		}

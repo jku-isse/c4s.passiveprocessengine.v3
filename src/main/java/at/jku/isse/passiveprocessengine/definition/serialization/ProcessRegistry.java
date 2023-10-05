@@ -211,7 +211,7 @@ public class ProcessRegistry {
 	public Set<ProcessDefinition> getAllDefinitions(Boolean onlyValid) {
 		return procDefType.instancesIncludingThoseOfSubtypes()
 			.filter(inst -> !inst.isDeleted())
-			.filter(inst -> (Boolean)inst.getPropertyAsValue((ProcessDefinition.CoreProperties.isWithoutBlockingErrors.toString())) || !onlyValid)
+			.filter(inst -> (Boolean)inst.getPropertyAsValueOrElse(ProcessDefinition.CoreProperties.isWithoutBlockingErrors.toString(), () -> false) || !onlyValid)
 			.map(inst -> (ProcessDefinition)WrapperCache.getWrappedInstance(ProcessDefinition.class, inst))
 			.collect(Collectors.toSet());
 	}
