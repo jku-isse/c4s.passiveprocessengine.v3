@@ -49,6 +49,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProcessStep extends ProcessInstanceScopedElement{
 
+	public static final String PREFIX_OUT = "out_";
+
+	public static final String PREFIX_IN = "in_";
+
 	private static final String CRD_QASPEC_PREFIX = "crd_qaspec_";
 
 	public static final String CRD_DATAMAPPING_PREFIX = "crd_datamapping_";
@@ -144,7 +148,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	
 	public ProcessScopedCmd prepareIOAddEvent(PropertyUpdateAdd op) { //List<Events.ProcessChangedEvent>
 		// if in added, establish if this resembles unexpected late input 
-		if (op.name().startsWith("in_") 
+		if (op.name().startsWith(PREFIX_IN) 
 				&& ( this.getActualLifecycleState().equals(State.ACTIVE) 
 					|| this.getActualLifecycleState().equals(State.COMPLETED) )) {
 			//(if so, then do something about this)
@@ -153,7 +157,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			log.info(String.format("Step %s received unexpected late input %s %s", this.getName(), op.name(), added.name()  ));
 			// Note that the adding has already happened, thus there is nothing to report back, this is only for checking whether we need to do something else as well.
 		}
-		else if (op.name().startsWith("out_")) { // if out added, establish if this is late output, then propagate further
+		else if (op.name().startsWith(PREFIX_OUT)) { // if out added, establish if this is late output, then propagate further
 				//&& ( this.getActualLifecycleState().equals(State.COMPLETED) || isImmediateDataPropagationEnabled() ) ){
 			if (this.getActualLifecycleState().equals(State.COMPLETED)) {
 				Id addedId = (Id) op.value();
@@ -172,13 +176,13 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	
 	public ProcessScopedCmd prepareIORemoveEvent(PropertyUpdateRemove op) { //List<Events.ProcessChangedEvent>
 		// if in removed, establish if this resembles unexpected late removeal 
-		if (op.name().startsWith("in_") 
+		if (op.name().startsWith(PREFIX_IN) 
 				&& ( this.getActualLifecycleState().equals(State.ACTIVE) 
 					|| this.getActualLifecycleState().equals(State.COMPLETED) )) {
 			//(if so, then do something about this)
 			log.info(String.format("Step %s had some input removed from %s after step start", this.getName(), op.name()));
 		}
-		else if (op.name().startsWith("out_")) { // if out removed, establish if this is late output removal, then propagate further
+		else if (op.name().startsWith(PREFIX_OUT)) { // if out removed, establish if this is late output removal, then propagate further
 				//&& ( this.getActualLifecycleState().equals(State.COMPLETED) || isImmediateDataPropagationEnabled() ) ){
 			
 			if (this.getActualLifecycleState().equals(State.COMPLETED)) {
@@ -350,9 +354,9 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	
 	protected Responses.IOResponse removeInput(String inParam, Instance artifact) {
 		if (getDefinition().getExpectedInput().containsKey(inParam)) {
-			Property<?> prop = instance.getProperty("in_"+inParam);
+			Property<?> prop = instance.getProperty(PREFIX_IN+inParam);
 			if (prop.propertyType.isAssignable(artifact)) {
-				instance.getPropertyAsSet("in_"+inParam).remove(artifact);
+				instance.getPropertyAsSet(PREFIX_IN+inParam).remove(artifact);
 				return IOResponse.okResponse();
 			} else {
 				String msg = String.format("Cannot remove input %s to %s with nonmatching artifact type %s of id % %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name());
@@ -369,7 +373,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Set<Instance> getInput(String param) {
-		SetProperty setP = instance.getPropertyAsSet("in_"+param);
+		SetProperty setP = instance.getPropertyAsSet(PREFIX_IN+param);
 		if (setP == null) {
 			//if (!instance.hasProperty("in_"+param))
 			log.error(String.format("Attempt to access non-existing input %s in Step %s.", param, this.getName()));
@@ -381,9 +385,9 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	@SuppressWarnings("unchecked")
 	public Responses.IOResponse addInput(String inParam, Instance artifact) {
 		if (getDefinition().getExpectedInput().containsKey(inParam)) {
-			Property<?> prop = instance.getProperty("in_"+inParam);
+			Property<?> prop = instance.getProperty(PREFIX_IN+inParam);
 			if (prop.propertyType.isAssignable(artifact)) {
-				instance.getPropertyAsSet("in_"+inParam).add(artifact);
+				instance.getPropertyAsSet(PREFIX_IN+inParam).add(artifact);
 				return IOResponse.okResponse();
 			} else {
 				String msg = String.format("Cannot add input %s to %s with nonmatching artifact type %s of id %s %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name());
@@ -399,7 +403,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	
 	@SuppressWarnings("unchecked")
 	public Set<Instance> getOutput(String param) {
-		SetProperty setP = instance.getPropertyAsSet("out_"+param);
+		SetProperty setP = instance.getPropertyAsSet(PREFIX_OUT+param);
 		if (setP == null) {
 			//if (!instance.hasProperty("in_"+param))
 			log.error(String.format("Attempt to access non-existing output %s in Step %s.", param, this.getName()));
@@ -411,9 +415,9 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	@SuppressWarnings("unchecked")
 	public Responses.IOResponse addOutput(String param, Instance artifact) {
 		if (getDefinition().getExpectedOutput().containsKey(param)) {
-			Property<?> prop = instance.getProperty("out_"+param);
+			Property<?> prop = instance.getProperty(PREFIX_OUT+param);
 			if (prop.propertyType.isAssignable(artifact)) {
-				instance.getPropertyAsSet("out_"+param).add(artifact);
+				instance.getPropertyAsSet(PREFIX_OUT+param).add(artifact);
 				return IOResponse.okResponse();
 			} else {
 				String msg = String.format("Cannot add outnput %s to %s with nonmatching artifact type %s of id % %s", param, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name());
@@ -428,7 +432,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 	
 	protected void removeOutput(String param, Instance art) {
-		instance.getPropertyAsSet("out_"+param).remove(art);
+		instance.getPropertyAsSet(PREFIX_OUT+param).remove(art);
 	}
 	
 	public DecisionNodeInstance getInDNI() {
@@ -748,11 +752,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			InstanceType typeStep = ws.createInstanceType(stepName, ws.TYPES_FOLDER, superType);
 			td.getExpectedInput().entrySet().stream()
 				.forEach(entry -> {
-						typeStep.createPropertyType("in_"+entry.getKey(), Cardinality.SET, entry.getValue());
+						typeStep.createPropertyType(PREFIX_IN+entry.getKey(), Cardinality.SET, entry.getValue());
 				});
 			td.getExpectedOutput().entrySet().stream()
 			.forEach(entry -> {
-					typeStep.createPropertyType("out_"+entry.getKey(), Cardinality.SET, entry.getValue());
+					typeStep.createPropertyType(PREFIX_OUT+entry.getKey(), Cardinality.SET, entry.getValue());
 			});
 			td.getInputToOutputMappingRules().entrySet().stream()
 				.forEach(entry -> {

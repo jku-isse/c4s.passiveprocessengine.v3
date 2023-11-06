@@ -25,25 +25,48 @@ public class DTOs {
 		
 	}
 	
-	@EqualsAndHashCode( onlyExplicitlyIncluded = true)
 	@ToString(doNotUseGetters = true)
 	@Data
 	public abstract static class Element implements Typed{
 		String _type = this.getClass().getSimpleName();
-		@EqualsAndHashCode.Include
 		private String code;
 		String description;
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Element other = (Element) obj;
+			return Objects.equals(code, other.code);
+		}
+		@Override
+		public int hashCode() {
+			return Objects.hash(code);
+		}
 	}
 	
-	@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class QAConstraint extends Element {
 		String arlRule;
 		int specOrderIndex = 0;
+		
+		@Override
+		public boolean equals(Object obj) {
+			return super.equals(obj);
+		}
+
+		@Override
+		public int hashCode() {
+			return super.hashCode();
+		}
 	}
 	
-	@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
+	//@EqualsAndHashCode(callSuper = true)
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class Step extends Element {
@@ -83,6 +106,16 @@ public class DTOs {
 		protected void toPlantUMLDataflow(StringBuffer sb) {
 			sb.append("\r\n  class \""+this.getCode()+"\"");
 		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return super.equals(obj);
+		}
+
+		@Override
+		public int hashCode() {
+			return super.hashCode();
+		}
 	} 
 
 	@ToString(doNotUseGetters = true)
@@ -101,7 +134,6 @@ public class DTOs {
 		}
 	}
 	
-	@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class DecisionNode extends Element {
@@ -112,9 +144,18 @@ public class DTOs {
 		protected void toPlantUMLDataflow(StringBuffer sb) {
 			mapping.forEach(m -> sb.append("\r\n \""+m.getFromStep()+"\" -down-> \""+m.getToStep()+"\" : \""+m.getToParam()+"\""));
 		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			return super.equals(obj);
+		}
+
+		@Override
+		public int hashCode() {
+			return super.hashCode();
+		}
 	}
 	
-	@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class Process extends Step {
@@ -201,6 +242,16 @@ public class DTOs {
 				} 
 				return sameDepthNodes.iterator().next();				
 			}
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			return super.equals(obj);
+		}
+
+		@Override
+		public int hashCode() {
+			return super.hashCode();
 		}
 		
 		public String toPlantUMLDataflowAsClassDiagram() {
