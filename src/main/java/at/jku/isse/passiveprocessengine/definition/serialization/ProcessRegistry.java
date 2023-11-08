@@ -170,7 +170,7 @@ public class ProcessRegistry {
 //		}
 	}
 	
-	private Map<String, Map<String, Set<Instance>>> removeAllProcessInstancesOfProcessDefinition(ProcessDefinition pDef) {
+	public Map<String, Map<String, Set<Instance>>> removeAllProcessInstancesOfProcessDefinition(ProcessDefinition pDef) {
 		// to be called before removing the process definition,
 		// get the process definition instance type, get all instances thereof, then use the wrapper cache to obtain the process instance
 		Map<String, Map<String, Set<Instance>>> prevProcInput = new HashMap<>();

@@ -288,10 +288,12 @@ public class DTOs {
 			sb.append("{");
 			
 			sb.append("\r\n");
-			sb.append("\r\n note");
-	        this.input.forEach((var, type) -> sb.append("\r\n  in: "+var));
-	        this.output.forEach((var, type) -> sb.append("\r\n  out: "+var));
-	        sb.append("\r\n end note");
+			if (input.size() > 0 && output.size() > 0) {
+				sb.append("\r\n note");
+				this.input.forEach((var, type) -> sb.append("\r\n  in: "+var));
+				this.output.forEach((var, type) -> sb.append("\r\n  out: "+var));
+				sb.append("\r\n end note");
+			}
 			if (!this.qaConstraints.isEmpty()) {
 				//sb.append("\r\nnote right");
 				sb.append(this.qaConstraints.stream()
@@ -334,7 +336,7 @@ public class DTOs {
 				DecisionNode closingDN = getScopeClosingDN(inDN);
 				AtomicInteger count = new AtomicInteger(0);				
 				// process steps				
-				subsequentSteps.forEach(nextStep -> {
+				subsequentSteps.stream().map(nextStep -> {
 					if (count.getAndIncrement() == 0)
 						sb.append("\r\nfork");
 					else {
@@ -343,9 +345,20 @@ public class DTOs {
 					nextStep.toPlantUML(sb);					
 					DecisionNode nextDN = this.getOutDNof(nextStep);
 					if (!nextDN.equals(closingDN)) { // found a subscope
-						toPlantUMLsubscope(nextDN, sb);
-					}
+						DecisionNode nextNode = toPlantUMLsubscope(nextDN, sb); // but what to do with the returned DNs
+						if (nextNode != closingDN)
+							return nextNode;
+						else 
+							return null;
+					} else
+						return null;
+				})
+				.filter(Objects::nonNull)
+				.distinct()
+				.forEach(nextNode -> { 
+					toPlantUMLsubscope(nextNode, sb);	
 				});
+				
 				sb.append("\r\nend fork {"+closingDN.getInflowType()+"}");				
 				
 				// recursive call to outdn if this is scope as further subscopes

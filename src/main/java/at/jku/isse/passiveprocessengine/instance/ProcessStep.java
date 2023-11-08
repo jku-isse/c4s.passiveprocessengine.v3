@@ -74,23 +74,31 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	protected transient boolean priorQAfulfilled = false;
 	
 	private void initState() {
-		
-		String actState = (String) instance.getPropertyAsValueOrNull(CoreProperties.actualLifecycleState.toString());
-		if (actState == null) {
-			actualSM = StepLifecycle.buildActualStatemachineInState(State.AVAILABLE);
+		if (this.getName().startsWith(StepDefinition.NOOPSTEP_PREFIX)) { // assumes/expects no pre/post cond and no qa			
+			actualSM = StepLifecycle.buildActualStatemachineInState(State.COMPLETED);
 			instance.getPropertyAsSingle(CoreProperties.actualLifecycleState.toString()).set(actualSM.getState().toString());
-		} else { // state already set, now just init FSM
-			actualSM = StepLifecycle.buildActualStatemachineInState(State.valueOf(actState));
-		}
-		
-		String expState = (String) instance.getPropertyAsValueOrNull(CoreProperties.expectedLifecycleState.toString());
-		if (expState == null) {
-			expectedSM = StepLifecycle.buildExpectedStatemachineInState(State.AVAILABLE);
+			expectedSM = StepLifecycle.buildExpectedStatemachineInState(State.COMPLETED);
 			instance.getPropertyAsSingle(CoreProperties.expectedLifecycleState.toString()).set(expectedSM.getState().toString());
-		} else { // state already set, now just init FSM
-			expectedSM = StepLifecycle.buildExpectedStatemachineInState(State.valueOf(expState));
+			priorQAfulfilled = true;
+		} else {
+		
+			String actState = (String) instance.getPropertyAsValueOrNull(CoreProperties.actualLifecycleState.toString());
+			if (actState == null) {
+				actualSM = StepLifecycle.buildActualStatemachineInState(State.AVAILABLE);
+				instance.getPropertyAsSingle(CoreProperties.actualLifecycleState.toString()).set(actualSM.getState().toString());
+			} else { // state already set, now just init FSM
+				actualSM = StepLifecycle.buildActualStatemachineInState(State.valueOf(actState));
+			}
+
+			String expState = (String) instance.getPropertyAsValueOrNull(CoreProperties.expectedLifecycleState.toString());
+			if (expState == null) {
+				expectedSM = StepLifecycle.buildExpectedStatemachineInState(State.AVAILABLE);
+				instance.getPropertyAsSingle(CoreProperties.expectedLifecycleState.toString()).set(expectedSM.getState().toString());
+			} else { // state already set, now just init FSM
+				expectedSM = StepLifecycle.buildExpectedStatemachineInState(State.valueOf(expState));
+			}
+			priorQAfulfilled = areQAconstraintsFulfilled();
 		}
-		priorQAfulfilled = areQAconstraintsFulfilled();
 	}
 	
 	public ProcessScopedCmd prepareRuleEvaluationChange(ConsistencyRule cr, PropertyUpdateSet op) {
@@ -808,16 +816,28 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			ProcessStep step = WrapperCache.getWrappedInstance(ProcessStep.class, instance);
 			step.setProcess(scope);
 			step.init(ws, sd, inDNI, outDNI);
+//			// if this is a noop step, complete it immediately
+//			if (step.getName().startsWith(StepDefinition.NOOPSTEP_PREFIX)) {
+//				step.setPreConditionsFulfilled(true);
+//				step.setPostConditionsFulfilled(true);			
+//			}
 			return step;
 		}
 	}
 
 	protected void init(Workspace ws, StepDefinition sd, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI) {
-		instance.getPropertyAsSingle(CoreProperties.processedPreCondFulfilled.toString()).set(false);
-		instance.getPropertyAsSingle(CoreProperties.processedPostCondFulfilled.toString()).set(false);
+		
+		if (this.getName().startsWith(StepDefinition.NOOPSTEP_PREFIX)) { // assumes/expects no pre/post cond and no qa	
+			instance.getPropertyAsSingle(CoreProperties.processedPreCondFulfilled.toString()).set(true);
+			instance.getPropertyAsSingle(CoreProperties.processedPostCondFulfilled.toString()).set(true);				
+			instance.getPropertyAsSingle(CoreProperties.isWorkExpected.toString()).set(false);
+		} else {
+			instance.getPropertyAsSingle(CoreProperties.processedPreCondFulfilled.toString()).set(false);
+			instance.getPropertyAsSingle(CoreProperties.processedPostCondFulfilled.toString()).set(false);					
+			instance.getPropertyAsSingle(CoreProperties.isWorkExpected.toString()).set(true);
+		}
 		instance.getPropertyAsSingle(CoreProperties.processedCancelCondFulfilled.toString()).set(false);
-		instance.getPropertyAsSingle(CoreProperties.processedActivationCondFulfilled.toString()).set(false);		
-		instance.getPropertyAsSingle(CoreProperties.isWorkExpected.toString()).set(true);
+		instance.getPropertyAsSingle(CoreProperties.processedActivationCondFulfilled.toString()).set(false);
 		
 		instance.getPropertyAsSingle(CoreProperties.stepDefinition.toString()).set(sd.getInstance());
 		if (inDNI != null) {

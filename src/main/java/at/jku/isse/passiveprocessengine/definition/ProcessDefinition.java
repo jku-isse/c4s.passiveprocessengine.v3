@@ -314,7 +314,8 @@ public class ProcessDefinition extends StepDefinition{
 	}
 	
 	public void setElementOrder() {
-		// init dnd index
+		int offset = this.getSpecOrderIndex();
+		// 		init dnd index		
 		this.getDecisionNodeDefinitions().stream().forEach(dnd -> dnd.setProcOrderIndex(this.getSpecOrderIndex()));
 		// determine order index
 		this.getStepDefinitions().stream()
@@ -324,8 +325,8 @@ public class ProcessDefinition extends StepDefinition{
 					return Integer.compare(o1.getSpecOrderIndex(), o2.getSpecOrderIndex());
 				}})
 			.forEach(step -> {
-			step.setProcOrderIndex(step.getSpecOrderIndex());
-			step.getOutDND().setProcOrderIndex(step.getSpecOrderIndex()); // every dnd has as order index the largest spec order index of its inSteps
+			step.setProcOrderIndex(step.getSpecOrderIndex()+offset);
+			step.getOutDND().setProcOrderIndex(step.getSpecOrderIndex()+offset); // every dnd has as order index the largest spec order index of its inSteps
 		});
 	}
 
