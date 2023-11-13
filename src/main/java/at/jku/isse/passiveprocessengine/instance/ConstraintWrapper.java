@@ -11,6 +11,7 @@ import at.jku.isse.designspace.core.model.SingleProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
+import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
@@ -118,6 +119,13 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 		cw.setLastChanged(lastChanged);
 		cw.setProcess(proc);
 		return cw;
+	}
+
+
+
+	@Override
+	public ProcessDefinitionScopedElement getDefinition() {
+		return getQaSpec();
 	}
 
 

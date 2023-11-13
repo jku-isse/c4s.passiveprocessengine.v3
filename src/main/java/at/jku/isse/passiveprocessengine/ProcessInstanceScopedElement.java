@@ -30,6 +30,8 @@ public abstract class ProcessInstanceScopedElement extends InstanceWrapper {
 		else return null;
 	}
 	
+	public abstract ProcessDefinitionScopedElement getDefinition();
+	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
 //		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
 //			.filter(it -> it.name().equals(designspaceTypeId))

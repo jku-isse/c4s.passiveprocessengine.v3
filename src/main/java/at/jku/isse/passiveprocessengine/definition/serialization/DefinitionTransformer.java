@@ -118,7 +118,14 @@ public class DefinitionTransformer {
 		step.getOutput().entrySet().stream().forEach(entry -> pStep.addExpectedOutput(entry.getKey(), resolveInstanceType(entry.getValue(), ws)));
 		step.getConditions().entrySet().stream().forEach(entry -> pStep.setCondition(entry.getKey(), entry.getValue()));
 		step.getIoMapping().entrySet().stream().forEach(entry -> pStep.addInputToOutputMappingRule(entry.getKey(),  trimLegacyIOMappingRule(entry.getValue())));
-		step.getQaConstraints().stream().forEach(qac -> pStep.addQAConstraint(QAConstraintSpec.createInstance(qac.getCode(), qac.getArlRule(), qac.getDescription(), qac.getSpecOrderIndex(), ws)));
+		step.getQaConstraints().stream().forEach(qac -> { 
+			QAConstraintSpec spec = QAConstraintSpec.createInstance(qac.getCode(), qac.getArlRule(), qac.getDescription(), qac.getSpecOrderIndex(), ws);
+			if (pStep instanceof ProcessDefinition) {
+				spec.setProcess((ProcessDefinition)pStep);
+			} else if (pStep.getProcess() != null) {
+				spec.setProcess(pStep.getProcess());
+			}
+			pStep.addQAConstraint(spec); });
 		pStep.setSpecOrderIndex(step.getSpecOrderIndex());
 		pStep.setHtml_url(step.getHtml_url());
 		pStep.setDescription(step.getDescription());		
