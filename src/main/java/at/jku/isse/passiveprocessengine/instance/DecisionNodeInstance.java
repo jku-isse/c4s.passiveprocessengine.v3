@@ -372,7 +372,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		else {			
 			Instance dnd = instance.getPropertyAsInstance(CoreProperties.closingDN.toString());
 			if (dnd != null)
-				return WrapperCache.getWrappedInstance(DecisionNodeDefinition.class, dnd);
+				return WrapperCache.getWrappedInstance(DecisionNodeInstance.class, dnd);
 			else { 
 				DecisionNodeInstance closingDnd = determineScopeClosingDN();
 				instance.getPropertyAsSingle(CoreProperties.closingDN.toString()).set(closingDnd.getInstance());		
