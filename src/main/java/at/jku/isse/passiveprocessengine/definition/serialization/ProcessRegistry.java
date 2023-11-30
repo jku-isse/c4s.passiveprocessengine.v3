@@ -151,18 +151,23 @@ public class ProcessRegistry {
 		}
 //		if (optPD.isEmpty()) {
 			log.debug("Storing new process: "+process.getCode());
-			ProcessDefinition pd = DefinitionTransformer.fromDTO(process, ws, isInStaging);						
-			boolean doGeneratePrematureRules = false; 
-			if (Boolean.parseBoolean(process.getProcessConfig().getOrDefault(CONFIG_KEY_doGeneratePrematureRules, "false")))
-				doGeneratePrematureRules = true;
-			List<ProcessDefinitionError> errors = pd.initializeInstanceTypes(doGeneratePrematureRules);
-			boolean doImmediatePropagate = !doGeneratePrematureRules;
-			pd.setImmediateDataPropagationEnabled(doImmediatePropagate);
-			
-			boolean doImmediateInstantiateAllSteps = false; 
-			if (Boolean.parseBoolean(process.getProcessConfig().getOrDefault(CONFIG_KEY_doImmediateInstantiateAllSteps, "true")))
-				doImmediateInstantiateAllSteps = true;
-			pd.setImmediateInstantiateAllStepsEnabled(doImmediateInstantiateAllSteps);
+			List<ProcessDefinitionError> errors = new LinkedList<>();
+			ProcessDefinition pd = DefinitionTransformer.fromDTO(process, ws, isInStaging, errors);						
+			if (errors.isEmpty()) { //if there are type errors, we dont even try to create rules
+				boolean doGeneratePrematureRules = false; 
+				if (Boolean.parseBoolean(process.getProcessConfig().getOrDefault(CONFIG_KEY_doGeneratePrematureRules, "false")))
+					doGeneratePrematureRules = true;
+				errors.addAll(pd.initializeInstanceTypes(doGeneratePrematureRules));
+				boolean doImmediatePropagate = !doGeneratePrematureRules;
+				pd.setImmediateDataPropagationEnabled(doImmediatePropagate);
+
+				boolean doImmediateInstantiateAllSteps = false; 
+				if (Boolean.parseBoolean(process.getProcessConfig().getOrDefault(CONFIG_KEY_doImmediateInstantiateAllSteps, "true")))
+					doImmediateInstantiateAllSteps = true;
+				pd.setImmediateInstantiateAllStepsEnabled(doImmediateInstantiateAllSteps);
+			} else {
+				pd.setIsWithoutBlockingErrors(false);
+			}
 			return new SimpleEntry<>(pd, errors);
 //		} else {
 //			log.debug("Reusing process: "+process.getCode());

@@ -210,11 +210,10 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	
 	
 	public List<Events.ProcessChangedEvent> processQAEvent(ConsistencyRule cr, boolean fulfilled) {
-		String id = cr.name();
-		//boolean preQaState = areQAconstraintsFulfilled(); // are all QA checks fulfilled?
+		String id = cr.name();		
 		//ConstraintWrapper cw = qaState.get(id);
+		//in one occasion found null instance in map, which should not happen!!!
 		ConstraintWrapper cw = WrapperCache.getWrappedInstance(ConstraintWrapper.class, (Instance) instance.getPropertyAsMap(CoreProperties.qaState.toString()).get(id));
-		
 		cw.setCrIfEmpty(cr);
 		//cw.setEvalResult(fulfilled);
 		cw.setLastChanged(getProcess().getCurrentTimestamp());

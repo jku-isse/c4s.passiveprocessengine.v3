@@ -1,5 +1,7 @@
 package at.jku.isse.designspace.passiveprocessengine.definition.deserialization;
 
+import java.util.LinkedList;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +31,7 @@ public class DeSerializationTest {
 		DTOs.Process procD = TestProcesses.getSimpleDTOSubprocess(ws);
 		String jsonProc = json.toJson(procD);
 		DTOs.Process deSer = json.fromJson(jsonProc);
-		ProcessDefinition procDef = DefinitionTransformer.fromDTO(deSer, ws, false);
+		ProcessDefinition procDef = DefinitionTransformer.fromDTO(deSer, ws, false, new LinkedList<>());
 		procDef.setHtml_url("https://www.google.com/");
 		procDef.setDescription("<ul><li>Inform participants about scope, review criteria, etc</li><li>Send work products to be reviewed to all participants</li><li>Schedule joint review</li><li>Set up mechanism to handle review outcomes</li></ul>");
 		procD=DefinitionTransformer.toDTO(procDef);

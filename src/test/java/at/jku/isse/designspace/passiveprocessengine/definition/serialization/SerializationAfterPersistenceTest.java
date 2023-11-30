@@ -9,6 +9,9 @@ import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionS
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+
+import java.util.LinkedList;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +45,7 @@ public class SerializationAfterPersistenceTest {
 		String jsonProc = json.toJson(procD);
 		System.out.println(jsonProc);
 		DTOs.Process deSer = json.fromJson(jsonProc);
-		ProcessDefinition procDef = DefinitionTransformer.fromDTO(deSer, ws, false);
+		ProcessDefinition procDef = DefinitionTransformer.fromDTO(deSer, ws, false, new LinkedList<>());
 		assert(procDef.getName().equals(procD.getCode()));
 		assert(procDef.getStepDefinitions().size() == procD.getSteps().size());
 		assert(procDef.getCondition(Conditions.PRECONDITION).get().equals(procD.getConditions().get(Conditions.PRECONDITION)));
@@ -57,7 +60,7 @@ public class SerializationAfterPersistenceTest {
 		String jsonProc = json.toJson(procD);
 		System.out.println(jsonProc);
 		DTOs.Process deSer = json.fromJson(jsonProc);
-		ProcessDefinition procDef = DefinitionTransformer.fromDTO(deSer, ws, false);
+		ProcessDefinition procDef = DefinitionTransformer.fromDTO(deSer, ws, false, new LinkedList<>());
 		assert(procDef.getName().equals(procD.getCode()));
 		assert(procDef.getStepDefinitions().size() == procD.getSteps().size());
 		assert(procDef.getCondition(Conditions.PRECONDITION).get().equals(procD.getConditions().get(Conditions.PRECONDITION)));
@@ -72,7 +75,7 @@ public class SerializationAfterPersistenceTest {
 		String jsonProc = json.toJson(procD);
 		System.out.println(jsonProc);
 		DTOs.Process deSer = json.fromJson(jsonProc);
-		ProcessDefinition procDef = DefinitionTransformer.fromDTO(deSer, ws, false);
+		ProcessDefinition procDef = DefinitionTransformer.fromDTO(deSer, ws, false, new LinkedList<>());
 		assert(procDef.getName().equals(procD.getCode()));
 		assert(procDef.getStepDefinitions().size() == procD.getSteps().size());
 		assert(procDef.getCondition(Conditions.PRECONDITION).get().equals(procD.getConditions().get(Conditions.PRECONDITION)));
@@ -103,7 +106,7 @@ public class SerializationAfterPersistenceTest {
 		String jsonProc = json.toJson(procD);
 		System.out.println(jsonProc);
 		DTOs.Process deSer = json.fromJson(jsonProc);
-		ProcessDefinition procDef = DefinitionTransformer.fromDTO(deSer, ws, false);
+		ProcessDefinition procDef = DefinitionTransformer.fromDTO(deSer, ws, false, new LinkedList<>());
 		assert(procDef.getName().equals(inPD.getName()));
 	}
 

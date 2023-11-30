@@ -1,30 +1,34 @@
 package at.jku.isse.passiveprocessengine.definition.serialization;
 
+import java.util.List;
+
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
+import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Process;
+import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DefinitionTransformer {
 
-	public static ProcessDefinition fromDTO(DTOs.Process procDTO, Workspace ws, boolean isInStaging) {
+	public static ProcessDefinition fromDTO(DTOs.Process procDTO, Workspace ws, boolean isInStaging, List<ProcessDefinitionError> errors)  {
 		ProcessDefinition procDef = ProcessDefinition.getInstance(procDTO.getCode(), ws);
-		initProcessFromDTO(procDTO, procDef, ws, 0, isInStaging);
+		initProcessFromDTO(procDTO, procDef, ws, 0, isInStaging, errors);
 		return procDef;
 	}
 	
-	private static void initProcessFromDTO(DTOs.Process procDTO, ProcessDefinition pDef, Workspace ws, int depth, boolean isInStaging) {
+	private static void initProcessFromDTO(DTOs.Process procDTO, ProcessDefinition pDef, Workspace ws, int depth, boolean isInStaging, List<ProcessDefinitionError> errors) {
 		if (!isInStaging) {
 			cleanStagingRewriting(procDTO);
-		}
-		
+		}						
 		// first DNDs
 		procDTO.getDns().stream().forEach(dn -> { 
 			DecisionNodeDefinition dnd = pDef.createDecisionNodeDefinition(dn.getCode(), ws);
@@ -37,17 +41,17 @@ public class DefinitionTransformer {
 		// then Steps
 		procDTO.getSteps().stream().forEach(sd -> {
 			StepDefinition sDef = null;
-			if (sd instanceof DTOs.Process) { // a subprocess
-				sDef = createSubprocess((DTOs.Process)sd, ws, procDTO, isInStaging);
+			if (sd instanceof DTOs.Process) { // a subprocess			
+				sDef = createSubprocess((DTOs.Process)sd, ws, procDTO, isInStaging, errors);
 				sDef.setProcess(pDef);
-				pDef.addStepDefinition(sDef);
+				pDef.addStepDefinition(sDef);				
 			} else {
 				sDef = pDef.createStepDefinition(sd.getCode() ,ws);
-				initStepFromDTO(sd, sDef, ws);
+				initStepFromDTO(sd, sDef, ws, errors);				
 			}
 			sDef.setInDND(pDef.getDecisionNodeDefinitionByName(sd.getInDNDid()));
 			sDef.setOutDND(pDef.getDecisionNodeDefinitionByName(sd.getOutDNDid()));
-		});
+		});		
 		//then create the DND mappings
 		procDTO.getDns().stream()			
 			.forEach(dn -> { 
@@ -57,13 +61,13 @@ public class DefinitionTransformer {
 						MappingDefinition.getInstance(m.getFromStep(), m.getFromParam(), m.getToStep(), m.getToParam(), ws)) );	
 		});
 		// then process itself
-		initStepFromDTO(procDTO, pDef, ws);
+		initStepFromDTO(procDTO, pDef, ws, errors);
 		
 		pDef.setDepthIndexRecursive(depth);
 		pDef.setElementOrder();
 	}
 	
-	private static ProcessDefinition createSubprocess(DTOs.Process subProcess, Workspace ws, DTOs.Process parentProc, boolean isInStaging) {
+	private static ProcessDefinition createSubprocess(DTOs.Process subProcess, Workspace ws, DTOs.Process parentProc, boolean isInStaging, List<ProcessDefinitionError> errors) {
 		// first rename the subprocess to be unique and
 		String parentProcName = parentProc.getCode();
 		String oldSubProcName = subProcess.getCode();
@@ -73,7 +77,7 @@ public class DefinitionTransformer {
 		replaceStepNamesInMappings(subProcess, oldSubProcName, newSubProcName); // in the subprocess
 		replaceStepNamesInMappings(parentProc, oldSubProcName, newSubProcName); // but also in the parent process, but WONT undo later 
 		
-		ProcessDefinition pDef = fromDTO((Process) subProcess, ws, isInStaging);
+		ProcessDefinition pDef = fromDTO((Process) subProcess, ws, isInStaging, errors);
 		//undo mappings and naming
 		replaceStepNamesInMappings(subProcess, newSubProcName, oldSubProcName);
 //		if (isInStaging) {
@@ -112,10 +116,9 @@ public class DefinitionTransformer {
 			.forEach(mapping -> mapping.setToStep(newStepName)));
 	}
 	
-	private static void initStepFromDTO(DTOs.Step step, StepDefinition pStep, Workspace ws) {
-		
-		step.getInput().entrySet().stream().forEach(entry -> pStep.addExpectedInput(entry.getKey(), resolveInstanceType(entry.getValue(), ws)));
-		step.getOutput().entrySet().stream().forEach(entry -> pStep.addExpectedOutput(entry.getKey(), resolveInstanceType(entry.getValue(), ws)));
+	private static void initStepFromDTO(DTOs.Step step, StepDefinition pStep, Workspace ws, List<ProcessDefinitionError> errors) {	
+		step.getInput().entrySet().stream().forEach(entry -> pStep.addExpectedInput(entry.getKey(), resolveInstanceType(entry.getValue(), ws, errors, pStep, entry.getKey())));
+		step.getOutput().entrySet().stream().forEach(entry -> pStep.addExpectedOutput(entry.getKey(), resolveInstanceType(entry.getValue(), ws, errors, pStep, entry.getKey())));
 		step.getConditions().entrySet().stream().forEach(entry -> pStep.setCondition(entry.getKey(), entry.getValue()));
 		step.getIoMapping().entrySet().stream().forEach(entry -> pStep.addInputToOutputMappingRule(entry.getKey(),  trimLegacyIOMappingRule(entry.getValue())));
 		step.getQaConstraints().stream().forEach(qac -> { 
@@ -131,10 +134,11 @@ public class DefinitionTransformer {
 		pStep.setDescription(step.getDescription());		
 	}
 	
-	private static InstanceType resolveInstanceType(String type, Workspace ws) {
+	private static InstanceType resolveInstanceType(String type, Workspace ws, List<ProcessDefinitionError> errors, ProcessDefinitionScopedElement el, String param) {
 		InstanceType iType = ws.debugInstanceTypeFindByName(type);
 		if (iType == null) {
-			log.warn("Process Description uses unknown instance type: "+type);
+			errors.add(new ProcessDefinitionError(el, "Unknown Instance Type", "Input/Output definition "+param+" uses unknown instance type: "+type ));
+			//throw new ProcessException("Process Description uses unknown instance type: "+type);
 		}
 		return iType;
 	}
