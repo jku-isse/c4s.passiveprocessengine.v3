@@ -58,7 +58,7 @@ public class ProcessRegistry {
 	public void inject(Workspace ws) {
 		this.ws=ws;
 		procDefType = ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);	
-		ws.debugInstanceTypes().parallelStream().forEach(itype -> log.debug(String.format("Available instance type %s as %s", itype.name(), itype.getQualifiedName())));
+		ws.debugInstanceTypes().stream().forEach(itype -> log.debug(String.format("Available instance type %s as %s", itype.name(), itype.getQualifiedName())));
 		
 		isInit = true;
 		tempStorePD.forEach(pd -> {
