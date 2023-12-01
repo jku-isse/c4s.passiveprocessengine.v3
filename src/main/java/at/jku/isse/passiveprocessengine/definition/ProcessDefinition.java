@@ -266,6 +266,7 @@ public class ProcessDefinition extends StepDefinition{
 
 	public static ProcessDefinition getInstance(String stepId, Workspace ws) {
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), stepId);
+		instance.getPropertyAsSingle(CoreProperties.isWithoutBlockingErrors.toString()).set(false);
 		return WrapperCache.getWrappedInstance(ProcessDefinition.class, instance);
 	}
 	
