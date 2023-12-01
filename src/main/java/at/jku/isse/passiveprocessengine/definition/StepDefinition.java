@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.definition;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -221,7 +222,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		for (Conditions condition : Conditions.values()) {
 			if (this.getCondition(condition).isPresent()) {
 				String name = "crd_"+condition+"_"+instType.name();
-				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, this.getCondition(condition).get());
+				ConsistencyRuleType crt = getRuleByNameAndContext(name, instType);
 				if (crt == null) {
 					log.error("Expected Rule for existing process not found: "+name);
 					errors.add(new ProcessDefinitionError(this, "Expected Constraint Not Found - Internal Data Corruption", name));
@@ -254,7 +255,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		this.getQAConstraints().stream()
 			.forEach(spec -> {
 				String specId = ProcessStep.getQASpecId(spec, pd);
-				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
+				ConsistencyRuleType crt = getRuleByNameAndContext(specId, instType);//ConsistencyRuleType.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
 				if (crt == null) {
 					log.error("Expected Rule for existing process not found: "+specId);
 					errors.add(new ProcessDefinitionError(this, "Expected QA Constraint Not Found - Internal Data Corruption", specId));
@@ -264,6 +265,8 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 			});
 		return errors;
 	}
+	
+
 	
 	public List<ProcessDefinitionError> checkStepStructureValidity() {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
@@ -299,14 +302,14 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		for (Conditions condition : Conditions.values()) {
 			if (this.getCondition(condition).isPresent()) {
 				String name = RuleAugmentation.getConstraintName(condition, instType);
-				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, this.getCondition(condition).get());
+				ConsistencyRuleType crt = getRuleByNameAndContext(name, instType);//ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, this.getCondition(condition).get());
 				if (crt != null) crt.delete();
 			}	
 		}
 		this.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
 				String name = ProcessStep.getDataMappingId(entry, this);
-				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, entry.getValue());
+				ConsistencyRuleType crt = getRuleByNameAndContext(name, instType);//ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, entry.getValue());
 				if (crt != null) crt.delete();
 			});
 		//delete qa constraints:
@@ -314,7 +317,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		this.getQAConstraints().stream()
 			.forEach(spec -> {
 				String specId = ProcessStep.getQASpecId(spec, pd);
-				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
+				ConsistencyRuleType crt = getRuleByNameAndContext(specId, instType);//ConsistencyRuleType.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
 				if (crt != null) crt.delete();
 			});
 		

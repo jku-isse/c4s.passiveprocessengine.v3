@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class InputToOutputMapper {
 
-	
+	private static RepairTreeFilter rtf = new OutputUpdateRepairTreeFilter();
 
 	@SuppressWarnings("unchecked")
 	public static List<Events.ProcessChangedEvent> mapInputToOutputInStepScope(ProcessStep step, ConsistencyRule crule) {
@@ -36,7 +36,7 @@ public class InputToOutputMapper {
 
 		ConsistencyRuleType crt = (ConsistencyRuleType) crule.getInstanceType();
 		RepairNode repairTree = RuleService.repairTree(crule);
-		RepairTreeFilter rtf = new OutputUpdateRepairTreeFilter();
+		
 		rtf.filterRepairTree(repairTree);
 		//DONE: if there are (only) concrete repair actions (which should be the case with symmetric difference)
 		

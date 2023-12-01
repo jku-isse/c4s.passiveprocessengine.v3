@@ -130,7 +130,7 @@ public class ProcessDefinition extends StepDefinition{
 		this.getPrematureTriggers().entrySet().stream()
 		.forEach(entry -> {
 			String name = ProcessInstance.generatePrematureRuleName(entry.getKey(), this);
-			ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, thisType, entry.getValue());
+			ConsistencyRuleType crt = getRuleByNameAndContext(name, thisType);//ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, thisType, entry.getValue());
 			if (crt != null) crt.delete();
 		});
 		super.deleteCascading();
@@ -197,7 +197,7 @@ public class ProcessDefinition extends StepDefinition{
 		this.getPrematureTriggers().entrySet().stream()
 			.forEach(entry -> {
 				String ruleId = ProcessInstance.generatePrematureRuleName(entry.getKey(), this);
-				ConsistencyRuleType crt = ConsistencyRuleType.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
+				ConsistencyRuleType crt = getRuleByNameAndContext(ruleId, instType); //.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
 				if (crt == null) {
 					log.error("Expected Rule for existing process not found: "+ruleId);
 					overallStatus.add(new ProcessDefinitionError(this, "Expected Premature Trigger Rule Not Found - Internal Data Corruption", ruleId));
