@@ -26,7 +26,7 @@ public abstract class ProcessDefinitionScopedElement extends InstanceWrapper {
 
 	public void setProcOrderIndex(int index) {
 		instance.getPropertyAsSingle(CoreProperties.orderIndex.toString()).set(index);
-	}
+	}		
 	
 	public Integer getProcOrderIndex() {
 		return (Integer) instance.getPropertyAsValueOrElse(CoreProperties.orderIndex.toString(), () -> -1);
