@@ -5,6 +5,7 @@ import java.util.List;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
+import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
@@ -19,16 +20,18 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DefinitionTransformer {
 
-	public static ProcessDefinition fromDTO(DTOs.Process procDTO, Workspace ws, boolean isInStaging, List<ProcessDefinitionError> errors)  {
+	public static ProcessDefinition fromDTO(DTOs.Process procDTO, Workspace ws, boolean isInStaging, List<ProcessDefinitionError> errors, ProcessConfigBaseElementFactory configFactory)  {
 		ProcessDefinition procDef = ProcessDefinition.getInstance(procDTO.getCode(), ws);
-		initProcessFromDTO(procDTO, procDef, ws, 0, isInStaging, errors);
+		initProcessFromDTO(procDTO, procDef, ws, 0, isInStaging, errors, configFactory);
 		return procDef;
 	}
 	
-	private static void initProcessFromDTO(DTOs.Process procDTO, ProcessDefinition pDef, Workspace ws, int depth, boolean isInStaging, List<ProcessDefinitionError> errors) {
+	private static void initProcessFromDTO(DTOs.Process procDTO, ProcessDefinition pDef, Workspace ws, int depth, boolean isInStaging, List<ProcessDefinitionError> errors, ProcessConfigBaseElementFactory configFactory) {
 		if (!isInStaging) {
 			cleanStagingRewriting(procDTO);
-		}						
+		}			
+		createOrUpdateConfig(procDTO, pDef, configFactory);
+		
 		// first DNDs
 		procDTO.getDns().stream().forEach(dn -> { 
 			DecisionNodeDefinition dnd = pDef.createDecisionNodeDefinition(dn.getCode(), ws);
@@ -42,8 +45,9 @@ public class DefinitionTransformer {
 		procDTO.getSteps().stream().forEach(sd -> {
 			StepDefinition sDef = null;
 			if (sd instanceof DTOs.Process) { // a subprocess			
-				sDef = createSubprocess((DTOs.Process)sd, ws, procDTO, isInStaging, errors);
+				sDef = createSubprocess((DTOs.Process)sd, ws, procDTO, isInStaging, errors, configFactory);
 				sDef.setProcess(pDef);
+				//FIXME: child process instance type will not point to this type of parent process instance type, for accessing any configuration
 				pDef.addStepDefinition(sDef);				
 			} else {
 				sDef = pDef.createStepDefinition(sd.getCode() ,ws);
@@ -67,7 +71,20 @@ public class DefinitionTransformer {
 		pDef.setElementOrder();
 	}
 	
-	private static ProcessDefinition createSubprocess(DTOs.Process subProcess, Workspace ws, DTOs.Process parentProc, boolean isInStaging, List<ProcessDefinitionError> errors) {
+	private static void createOrUpdateConfig(Process procDTO, ProcessDefinition pDef, ProcessConfigBaseElementFactory configFactory) {
+		// first create process config schema if it does not exists		
+		procDTO.getConfigs().entrySet().stream().forEach(entry -> {
+			String configName = entry.getKey();
+			InstanceType procConfig = configFactory.getOrCreateProcessSpecificSubtype(configName, pDef);
+			// then add the properties if they dont exist yet
+			configFactory.augmentConfig(entry.getValue(), procConfig);
+			// then add as input to process DTO if it doesnt yet exist, of if so, overrides with most concrete subtype						
+			procDTO.getInput().put(configName, procConfig.name());
+			//TODO: how this dynamic input setting works with configurations in subprocesses!? (mapping, staging, preset config names, etc.)
+		});		
+	}
+
+	private static ProcessDefinition createSubprocess(DTOs.Process subProcess, Workspace ws, DTOs.Process parentProc, boolean isInStaging, List<ProcessDefinitionError> errors, ProcessConfigBaseElementFactory configFactory) {
 		// first rename the subprocess to be unique and
 		String parentProcName = parentProc.getCode();
 		String oldSubProcName = subProcess.getCode();
@@ -77,7 +94,7 @@ public class DefinitionTransformer {
 		replaceStepNamesInMappings(subProcess, oldSubProcName, newSubProcName); // in the subprocess
 		replaceStepNamesInMappings(parentProc, oldSubProcName, newSubProcName); // but also in the parent process, but WONT undo later 
 		
-		ProcessDefinition pDef = fromDTO((Process) subProcess, ws, isInStaging, errors);
+		ProcessDefinition pDef = fromDTO((Process) subProcess, ws, isInStaging, errors, configFactory);
 		//undo mappings and naming
 		replaceStepNamesInMappings(subProcess, newSubProcName, oldSubProcName);
 //		if (isInStaging) {

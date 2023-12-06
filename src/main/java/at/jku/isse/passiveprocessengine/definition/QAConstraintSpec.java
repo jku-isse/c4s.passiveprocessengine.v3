@@ -9,6 +9,7 @@ import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 
 public class QAConstraintSpec extends /*InstanceWrapper*/ ProcessDefinitionScopedElement{
 
@@ -37,7 +38,7 @@ public class QAConstraintSpec extends /*InstanceWrapper*/ ProcessDefinitionScope
 	}
 	
 	@Override
-	public void deleteCascading() {
+	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
 		instance.delete();
 	}
 	

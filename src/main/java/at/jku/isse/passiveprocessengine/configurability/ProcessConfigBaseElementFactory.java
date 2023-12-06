@@ -8,11 +8,14 @@ import org.springframework.stereotype.Component;
 
 import at.jku.isse.designspace.core.model.Cardinality;
 import at.jku.isse.designspace.core.model.Folder;
+import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
+import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import lombok.Data;
 
 @Component
@@ -38,7 +41,8 @@ public class ProcessConfigBaseElementFactory {
         
         baseType = configFolder.instanceTypeWithName(TYPENAME);
         if (baseType == null) {
-        	baseType = ws.createInstanceType(TYPENAME, configFolder, ProcessDefinitionScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
+        	baseType = ws.createInstanceType(TYPENAME, configFolder, ProcessInstanceScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
+        	ProcessInstanceScopedElement.addGenericProcessProperty(baseType);
         	baseType.createPropertyType("description", Cardinality.SINGLE, Workspace.STRING);
         }
 	}
@@ -51,7 +55,8 @@ public class ProcessConfigBaseElementFactory {
 		String subtypeName = getSubtypeName(name, procDef);
 		InstanceType subType = configFolder.instanceTypeWithName(subtypeName);
 		if (subType == null) {
-			subType = ws.createInstanceType(subtypeName, configFolder, baseType);				
+			subType = ws.createInstanceType(subtypeName, configFolder, baseType);
+			subType.createPropertyType("processDefinition", Cardinality.SINGLE, ProcessDefinitionScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
 		}
 		return subType;
 	}
@@ -64,6 +69,15 @@ public class ProcessConfigBaseElementFactory {
 		Map<PropertySchemaDTO, Boolean> result = new HashMap<>();
 		props.forEach(prop -> result.put(prop, prop.addPropertyToType(configType, this)));
 		return result;
+	}
+	
+	public Instance createConfigInstance(String name, String subtypeName) throws ProcessException{
+		InstanceType subType = configFolder.instanceTypeWithName(subtypeName);
+		if (subType == null) {
+			throw new ProcessException("Configuration Subtyp "+subtypeName+" does not exist");
+		} else {
+			return subType.instantiate(name);
+		}
 	}
 	
 	@Data

@@ -413,6 +413,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			return thisTypeOpt.get();
 		else {
 			InstanceType thisType = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessInstanceScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
+			ProcessInstanceScopedElement.addGenericProcessProperty(thisType);
 			thisType.createPropertyType(CoreProperties.isInflowFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
 			thisType.createPropertyType(CoreProperties.hasPropagated.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
 			thisType.createPropertyType(CoreProperties.dnd.toString(), Cardinality.SINGLE, DecisionNodeDefinition.getOrCreateDesignSpaceCoreSchema(ws));

@@ -102,6 +102,7 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 				return thisType.get();
 			else {
 				InstanceType typeStep = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessInstanceScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
+				ProcessInstanceScopedElement.addGenericProcessProperty(typeStep);
 				typeStep.createPropertyType(CoreProperties.qaSpec.toString(), Cardinality.SINGLE, QAConstraintSpec.getOrCreateDesignSpaceCoreSchema(ws));
 				//typeStep.createPropertyType(CoreProperties.result.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
 				typeStep.createPropertyType(CoreProperties.lastChanged.toString(), Cardinality.SINGLE, Workspace.STRING);

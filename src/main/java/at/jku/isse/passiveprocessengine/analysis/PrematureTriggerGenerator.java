@@ -92,7 +92,7 @@ public class PrematureTriggerGenerator {
 	
 	private String rewriteConstraint(StepDefinition step, String constraint) {
 		// we recreate the constraint to ensure we have all the types in iterators available
-		InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, step);
+		InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, step, null); // process type is already known at this point, no need to provide again, hence null is ok
 		ArlEvaluator ae = new ArlEvaluator(stepType, constraint);
 		constraint = ae.syntaxTree.getOriginalARL(0, false);
 
@@ -205,7 +205,7 @@ public class PrematureTriggerGenerator {
 	private DataSource getFirstOccuranceOfOutParam(StepDefinition step, StepParameter outParam) {
 		String mapping = step.getInputToOutputMappingRules().get(outParam.getName()); // we assume for now that the mapping name is equal to the out param name, (this will be guaranteed in the future)
 		if (mapping != null) { // for now, we need to process the mapping constraints (will not be necessary once these are defines using derived properties)
-			InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, step);
+			InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, step, null); // process type is already known at this point, no need to provide again, hence null is ok
 			ArlEvaluator ae = new ArlEvaluator(stepType, mapping);
 			mapping = ae.syntaxTree.getOriginalARL(0, false);;
 			

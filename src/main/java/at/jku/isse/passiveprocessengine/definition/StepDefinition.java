@@ -21,6 +21,7 @@ import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
+import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.extern.slf4j.Slf4j;
@@ -215,10 +216,10 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		return (String) instance.getPropertyAsValueOrElse(CoreProperties.description.toString(), () -> "");
 	}
 	
-	public List<ProcessDefinitionError> checkConstraintValidity() {
+	public List<ProcessDefinitionError> checkConstraintValidity(InstanceType processInstType) {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
 	//	Map<String, String> status = new HashMap<>();
-		InstanceType instType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this);
+		InstanceType instType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstType);
 		for (Conditions condition : Conditions.values()) {
 			if (this.getCondition(condition).isPresent()) {
 				String name = "crd_"+condition+"_"+instType.name();
@@ -237,7 +238,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 			.forEach(entry -> {
 				String name = ProcessStep.getDataMappingId(entry, this);
 				String propName = ProcessStep.CRD_DATAMAPPING_PREFIX+entry.getKey();
-				InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this);
+				InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstType);
 				PropertyType ioPropType = stepType.getPropertyType(propName);
 				InstanceType ruleType = ioPropType.referencedInstanceType();
 				if (ruleType == null) 	{							
@@ -295,10 +296,10 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	}
 	
 	@Override
-	public void deleteCascading() {
+	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
 		// deleting constraints:
 		Map<String, String> status = new HashMap<>();
-		InstanceType instType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this);
+		InstanceType instType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, null); // for deletion its ok to not provide the process instance type
 		for (Conditions condition : Conditions.values()) {
 			if (this.getCondition(condition).isPresent()) {
 				String name = RuleAugmentation.getConstraintName(condition, instType);
@@ -319,10 +320,11 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 				String specId = ProcessStep.getQASpecId(spec, pd);
 				ConsistencyRuleType crt = getRuleByNameAndContext(specId, instType);//ConsistencyRuleType.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
 				if (crt != null) crt.delete();
+				spec.deleteCascading(configFactory);
 			});
 		
 		instType.delete();
-		super.deleteCascading();
+		super.deleteCascading(configFactory);
 	}
 
 

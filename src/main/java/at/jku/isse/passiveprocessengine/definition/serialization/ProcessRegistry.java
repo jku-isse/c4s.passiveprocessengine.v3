@@ -16,6 +16,7 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
@@ -33,6 +34,7 @@ public class ProcessRegistry {
 	
 	protected Workspace ws;
 	protected InstanceType procDefType;
+	private ProcessConfigBaseElementFactory configFactory;
 	
 	protected Set<DTOs.Process> tempStorePD = new HashSet<>();
 	protected boolean isInit = false;
@@ -55,8 +57,9 @@ public class ProcessRegistry {
 	}
 	//End
 	
-	public void inject(Workspace ws) {
+	public void inject(Workspace ws, ProcessConfigBaseElementFactory configFactory) {
 		this.ws=ws;
+		this.configFactory = configFactory;
 		procDefType = ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);	
 		ws.debugInstanceTypes().stream().forEach(itype -> log.debug(String.format("Available instance type %s as %s", itype.name(), itype.getQualifiedName())));
 		
@@ -98,7 +101,7 @@ public class ProcessRegistry {
 		// if we continue here, then no process error occurred and we can continue
 		// we remove the staging one and replace the original
 		if (stagedProc.getKey() != null) {
-			stagedProc.getKey().deleteCascading();
+			stagedProc.getKey().deleteCascading(configFactory);
 			ws.concludeTransaction();  
 		}
 		//removeProcessDefinition(process.getCode());
@@ -142,7 +145,7 @@ public class ProcessRegistry {
 			if (isInStaging) {
 				log.debug("Removing old staged process: "+process.getCode()+" before staging new version");
 				ProcessDefinition pdef = optPD.get();
-				pdef.deleteCascading();
+				pdef.deleteCascading(configFactory);
 				ws.concludeTransaction();  
 			} else {
 				log.debug("Reusing process: "+process.getCode());
@@ -152,7 +155,7 @@ public class ProcessRegistry {
 //		if (optPD.isEmpty()) {
 			log.debug("Storing new process: "+process.getCode());
 			List<ProcessDefinitionError> errors = new LinkedList<>();
-			ProcessDefinition pd = DefinitionTransformer.fromDTO(process, ws, isInStaging, errors);						
+			ProcessDefinition pd = DefinitionTransformer.fromDTO(process, ws, isInStaging, errors, configFactory);						
 			if (errors.isEmpty()) { //if there are type errors, we dont even try to create rules
 				boolean doGeneratePrematureRules = false; 
 				if (Boolean.parseBoolean(process.getProcessConfig().getOrDefault(CONFIG_KEY_doGeneratePrematureRules, "false")))
@@ -180,7 +183,7 @@ public class ProcessRegistry {
 		// get the process definition instance type, get all instances thereof, then use the wrapper cache to obtain the process instance
 		Map<String, Map<String, Set<Instance>>> prevProcInput = new HashMap<>();
 		
-		InstanceType specProcDefType = ProcessStep.getOrCreateDesignSpaceInstanceType(pDef.getInstance().workspace, pDef);
+		InstanceType specProcDefType = ProcessStep.getOrCreateDesignSpaceInstanceType(pDef.getInstance().workspace, pDef, null); // for deletion its ok to not provide the process instance type
 		specProcDefType.instancesIncludingThoseOfSubtypes().collect(Collectors.toSet()).stream()
 			.filter(inst -> !inst.isDeleted())
 			.map(inst -> WrapperCache.getWrappedInstance(ProcessInstance.class, inst))
@@ -200,7 +203,7 @@ public class ProcessRegistry {
 	public void removeProcessDefinition(String name) {
 		getProcessDefinition(name, true).ifPresent(pdef -> { 
 		// moved into ProcessDefinition:	WrapperCache.removeWrapper(pdef.getInstance().id());
-			pdef.deleteCascading();
+			pdef.deleteCascading(configFactory);
 			ws.concludeTransaction();
 		});  
 	}
