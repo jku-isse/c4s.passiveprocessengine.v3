@@ -49,7 +49,7 @@ public class RuleRewritingTests {
 		typeJira = TestArtifacts.getJiraInstanceType(workspace);
 		StepDefinition s1 = StepDefinition.getInstance("S1", workspace);
 		//s1.setCondition(Conditions.PRECONDITION, "self.in_story->size() > 0");
-		typeStep = ProcessStep.getOrCreateDesignSpaceInstanceType(workspace, s1);
+		typeStep = ProcessStep.getOrCreateDesignSpaceInstanceType(workspace, s1, null);
 		if (typeStep.getPropertyType("in_story") == null) {
 			typeStep.createPropertyType("in_story", Cardinality.LIST, typeJira);
 			typeStep.createPropertyType("out_story", Cardinality.LIST, typeJira);

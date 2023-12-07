@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory.PropertySchemaDTO;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.Data;
@@ -163,6 +164,7 @@ public class DTOs {
 		List<DecisionNode> dns = new LinkedList<>();
 		Map<String, String> prematureStepConditions = new HashMap<>();
 		Map<String, String> processConfig = new HashMap<>();
+		Map<String, Set<PropertySchemaDTO>> configs = new HashMap<>();  
 		
 		public Step getStepByCode(String code) {
 			return steps.stream().filter(step -> step.getCode().equals(code)).findAny().orElse(null);

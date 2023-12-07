@@ -15,6 +15,7 @@ import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 
 public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 
@@ -126,10 +127,10 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 	}
 	
 	@Override
-	public void deleteCascading() {
-		this.getMappings().forEach(md -> md.deleteCascading());
+	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
+		this.getMappings().forEach(md -> md.deleteCascading(configFactory));
 		// no instanceType for DNI to delete, all processes use the same one.
-		super.deleteCascading();
+		super.deleteCascading(configFactory);
 	}
 	
 	public List<ProcessDefinitionError> checkDecisionNodeStructureValidity() {

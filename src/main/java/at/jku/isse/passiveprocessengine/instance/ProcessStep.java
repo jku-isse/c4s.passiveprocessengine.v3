@@ -29,6 +29,7 @@ import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement.CoreProperties;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
@@ -745,7 +746,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 	}
 	
-	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws, StepDefinition td) {
+	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws, StepDefinition td, InstanceType processType) {
 		String stepName = getProcessStepName(td);
 //		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
 //				.filter(it -> !it.isDeleted)
@@ -772,7 +773,15 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 						typeStep.createPropertyType(CRD_DATAMAPPING_PREFIX+entry.getKey(), Cardinality.SINGLE, crt);					
 					}//assert ConsistencyUtils.crdValid(crt); as no workspace.concludeTransaction is called here, no need to assert this here, as will never be false here	
 				});
-			
+			// override process property type to actual process so we can access its config when needed
+			if (processType != null) {
+				if (typeStep.getPropertyType(ProcessInstanceScopedElement.CoreProperties.process.toString()) == null)
+					typeStep.createPropertyType(ProcessInstanceScopedElement.CoreProperties.process.toString(), Cardinality.SINGLE, processType);
+				//else
+					//typeStep.getPropertyType(ProcessInstanceScopedElement.CoreProperties.process.toString()).setInstanceType(processType);
+			} else {
+				ProcessInstanceScopedElement.addGenericProcessProperty(typeStep);
+			}
 			//typeStep.createPropertyType(CoreProperties.qaState.toString(), Cardinality.MAP, ConstraintWrapper.getOrCreateDesignSpaceCoreSchema(ws));
 			return typeStep;
 		}
@@ -811,7 +820,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			// we delegate to ProcessInstance
 			return ProcessInstance.getSubprocessInstance(ws, (ProcessDefinition) sd, inDNI, outDNI, scope);
 		} else {
-			Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+UUID.randomUUID());
+			Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd, scope.getInstance().getInstanceType()), sd.getName()+"_"+UUID.randomUUID());
 			ProcessStep step = WrapperCache.getWrappedInstance(ProcessStep.class, instance);
 			step.setProcess(scope);
 			step.init(ws, sd, inDNI, outDNI);

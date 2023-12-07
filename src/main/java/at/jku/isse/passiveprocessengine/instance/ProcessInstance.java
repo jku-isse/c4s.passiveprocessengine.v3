@@ -306,6 +306,7 @@ public class ProcessInstance extends ProcessStep {
 		getDecisionNodeInstances().forEach(dni -> dni.deleteCascading());
 		getProcessSteps().forEach(step -> step.deleteCascading());
 		// we are not deleting input and output artifacts as we are just referencing them!
+		// TODO: should we delete configurations?				
 		// finally delete self via super call
 		super.deleteCascading();
 	}
@@ -349,7 +350,7 @@ public class ProcessInstance extends ProcessStep {
 		if (thisType.isPresent())
 			return thisType.get();
 		else {
-			InstanceType typeStep = ws.createInstanceType(name, ws.TYPES_FOLDER, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, td));
+			InstanceType typeStep = ws.createInstanceType(name, ws.TYPES_FOLDER, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, td, null)); // here we dont know the parent process, if any at all, so we cant override the type, this needs to be done by the parent process
 			typeStep.createPropertyType(CoreProperties.processDefinition.toString(), Cardinality.SINGLE, ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws));
 			typeStep.createPropertyType(CoreProperties.stepInstances.toString(), Cardinality.SET, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
 			typeStep.createPropertyType(CoreProperties.decisionNodeInstances.toString(), Cardinality.SET, DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(ws));
@@ -384,7 +385,7 @@ public class ProcessInstance extends ProcessStep {
 	}
 	
 	public static ProcessInstance getSubprocessInstance(Workspace ws, ProcessDefinition sd, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, ProcessInstance scope) {
-		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+UUID.randomUUID());
+		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+UUID.randomUUID()); 		
 		ProcessInstance pi = WrapperCache.getWrappedInstance(ProcessInstance.class, instance);
 		pi.setProcess(scope);
 		pi.init(sd, inDNI, outDNI, ws);

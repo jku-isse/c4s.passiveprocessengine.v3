@@ -7,6 +7,7 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
+import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 
 public abstract class InstanceWrapper implements IdentifiableElement{
 	
@@ -30,12 +31,15 @@ public abstract class InstanceWrapper implements IdentifiableElement{
 	public String getName() {
 		return instance.name();
 	}
-	
+
 	public void deleteCascading() {
 		WrapperCache.removeWrapper(getInstance().id());
+		instance.delete();				
+	}
+	
+	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
+		WrapperCache.removeWrapper(getInstance().id());
 		instance.delete();
-		//this.instance = null;
-		
 	}
 	
 	protected ConsistencyRuleType getRuleByNameAndContext(String name, InstanceType context) {

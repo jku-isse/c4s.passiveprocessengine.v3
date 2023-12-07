@@ -22,6 +22,7 @@ import at.jku.isse.passiveprocessengine.definition.serialization.ProcessRegistry
 import at.jku.isse.passiveprocessengine.definition.serialization.ProcessRegistry.ProcessDeployResult;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
+import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
@@ -50,7 +51,7 @@ class ReplacementTests {
 	void setup() throws Exception {
 		RuleService.setEvaluator(new ArlRuleEvaluator());
 		ws = WorkspaceService.PUBLIC_WORKSPACE;
-		procReg.inject(ws);
+		procReg.inject(ws, new ProcessConfigBaseElementFactory(ws));
 		RuleService.currentWorkspace = ws;
 		EventDistributor eventDistrib = new EventDistributor();
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());

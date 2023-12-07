@@ -24,6 +24,7 @@ import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator;
 import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
+import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.DecisionNode;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Step;
 import at.jku.isse.passiveprocessengine.instance.DecisionNodeInstance;
@@ -123,9 +124,9 @@ public class ProcessDefinition extends StepDefinition{
 	}
 	
 	@Override
-	public void deleteCascading() {
-		getDecisionNodeDefinitions().forEach(dnd -> dnd.deleteCascading());
-		getStepDefinitions().forEach(sd -> sd.deleteCascading());
+	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
+		getDecisionNodeDefinitions().forEach(dnd -> dnd.deleteCascading(configFactory));
+		getStepDefinitions().forEach(sd -> sd.deleteCascading(configFactory));
 		InstanceType thisType = ProcessInstance.getOrCreateDesignSpaceInstanceType(ws, this);
 		this.getPrematureTriggers().entrySet().stream()
 		.forEach(entry -> {
@@ -133,13 +134,20 @@ public class ProcessDefinition extends StepDefinition{
 			ConsistencyRuleType crt = getRuleByNameAndContext(name, thisType);//ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, thisType, entry.getValue());
 			if (crt != null) crt.delete();
 		});
-		super.deleteCascading();
+		// delete configtype
+		this.getExpectedInput().entrySet().stream()
+		.filter(entry -> entry.getValue().isKindOf(configFactory.getBaseType()))
+		.forEach(configEntry -> {
+			InstanceType procConfig = configFactory.getOrCreateProcessSpecificSubtype(configEntry.getKey(), this);
+			procConfig.delete();
+		});
+		super.deleteCascading(configFactory);
 		thisType.delete();
 	}
 	
 	public List<ProcessDefinitionError> initializeInstanceTypes(boolean doGeneratePrematureDetectionConstraints) {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
-		ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
+		InstanceType processInstanceType = ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
 		DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(instance.workspace);
 		//List<ProcessException> subProcessExceptions = new ArrayList<>();
 		this.getStepDefinitions().stream().forEach(sd -> { 
@@ -148,16 +156,16 @@ public class ProcessDefinition extends StepDefinition{
 				//ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, (ProcessDefinition)sd);
 					errors.addAll(((ProcessDefinition)sd).initializeInstanceTypes(doGeneratePrematureDetectionConstraints));
 			} else
-				ProcessStep.getOrCreateDesignSpaceInstanceType(instance.workspace, sd); 			
+				ProcessStep.getOrCreateDesignSpaceInstanceType(instance.workspace, sd, processInstanceType); 			
 		});
 		errors.addAll(checkProcessStructure());
 //		if (!subProcessExceptions.isEmpty())
 //			return errors;
 		ws.concludeTransaction();
 //		List<String> augmentationErrors = new LinkedList<>();
-		errors.addAll(new RuleAugmentation(ws, this, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this)).augmentConditions()); 
+		errors.addAll(new RuleAugmentation(ws, this, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstanceType)).augmentConditions()); 
 		this.getStepDefinitions().stream().forEach(sd -> {
-				errors.addAll(new RuleAugmentation(ws, sd, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, sd)).augmentConditions()); 
+				errors.addAll(new RuleAugmentation(ws, sd, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, sd, processInstanceType)).augmentConditions()); 
 		});
 		errors.addAll(checkConstraintValidity());
 		if (errors.isEmpty() ) {
@@ -192,12 +200,12 @@ public class ProcessDefinition extends StepDefinition{
 	
 	public List<ProcessDefinitionError> checkConstraintValidity() {
 		List<ProcessDefinitionError> overallStatus = new LinkedList<>();
-		InstanceType instType = ProcessInstance.getOrCreateDesignSpaceInstanceType(ws, this);
+		InstanceType processInstType = ProcessInstance.getOrCreateDesignSpaceInstanceType(ws, this);
 		//premature constraints:
 		this.getPrematureTriggers().entrySet().stream()
 			.forEach(entry -> {
 				String ruleId = ProcessInstance.generatePrematureRuleName(entry.getKey(), this);
-				ConsistencyRuleType crt = getRuleByNameAndContext(ruleId, instType); //.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
+				ConsistencyRuleType crt = getRuleByNameAndContext(ruleId, processInstType); //.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
 				if (crt == null) {
 					log.error("Expected Rule for existing process not found: "+ruleId);
 					overallStatus.add(new ProcessDefinitionError(this, "Expected Premature Trigger Rule Not Found - Internal Data Corruption", ruleId));
@@ -205,7 +213,7 @@ public class ProcessDefinition extends StepDefinition{
 					if (crt.hasRuleError())
 						overallStatus.add(new ProcessDefinitionError(this, String.format("Premature Trigger Rule % has an error", ruleId), crt.ruleError()));
 			});
-		getStepDefinitions().forEach(sd -> overallStatus.addAll( sd.checkConstraintValidity()));
+		getStepDefinitions().forEach(sd -> overallStatus.addAll( sd.checkConstraintValidity(processInstType)));
 		return overallStatus;
 	}
 	
