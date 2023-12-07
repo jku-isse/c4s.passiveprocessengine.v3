@@ -71,12 +71,17 @@ public class ProcessConfigBaseElementFactory {
 		return result;
 	}
 	
+	public Instance createConfigInstance(String name, InstanceType configSubType) {
+		// any other logic such as default values etc, not implemented at the moment
+		return configSubType.instantiate(name);
+	}
+	
 	public Instance createConfigInstance(String name, String subtypeName) throws ProcessException{
 		InstanceType subType = configFolder.instanceTypeWithName(subtypeName);
 		if (subType == null) {
 			throw new ProcessException("Configuration Subtyp "+subtypeName+" does not exist");
 		} else {
-			return subType.instantiate(name);
+			return createConfigInstance(name, subType);
 		}
 	}
 	
