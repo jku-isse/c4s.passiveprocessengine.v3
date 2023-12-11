@@ -12,6 +12,7 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
+import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
@@ -91,7 +92,7 @@ public class ProcessConfigBaseElementFactory {
 		final String instanceType;
 		final String cardinality;				
 		Object defaultValue; // not supported yet
-		boolean isRepairable; // not supported yet
+		boolean isRepairable = true; // not supported yet
 		
 		public InstanceType getInstanceType(Workspace ws) {
 			switch (instanceType) {
@@ -127,6 +128,9 @@ public class ProcessConfigBaseElementFactory {
 					) {
 				
 				processConfig.createPropertyType(name, getCardinality(), getInstanceType(processConfig.workspace));
+				if (!isRepairable()) {
+					ConsistencyUtils.setPropertyRepairable(processConfig, name, isRepairable);
+				}
 				return true;
 			} else
 				return false;
