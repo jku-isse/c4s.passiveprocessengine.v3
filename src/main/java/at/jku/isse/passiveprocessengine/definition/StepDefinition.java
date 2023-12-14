@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,7 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 public class StepDefinition extends ProcessDefinitionScopedElement implements IStepDefinition {
 
 	public static enum CoreProperties {expectedInput, expectedOutput, ioMappingRules, 
-							conditions,
+							//conditions,
+							preconditions, postconditions, cancelconditions, activationconditions,
 							qaConstraints,
 							inDND, outDND, specOrderIndex,html_url,description,
 							hierarchyDepth};
@@ -72,28 +74,130 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		instance.getPropertyAsMap(CoreProperties.expectedOutput.toString()).put(paramName, type);
 	}
 	
+	@Deprecated(forRemoval = true)
 	public Optional<String> getCondition(Conditions condition) {
-		String rule = (String)instance.getPropertyAsMap(CoreProperties.conditions.toString()).get(condition.toString());
-		return Optional.ofNullable(rule);
+		SetProperty<?> qaSet = null;		
+		switch(condition) {
+		case ACTIVATION:
+			qaSet = instance.getPropertyAsSet(CoreProperties.activationconditions.toString());			
+			break;
+		case CANCELATION:
+			qaSet = instance.getPropertyAsSet(CoreProperties.cancelconditions.toString());
+			break;
+		case POSTCONDITION:
+			qaSet = instance.getPropertyAsSet(CoreProperties.postconditions.toString());
+			break;
+		case PRECONDITION:
+			qaSet = instance.getPropertyAsSet(CoreProperties.preconditions.toString());
+			break;
+		default:
+			break;
+		}				
+		if (qaSet != null && qaSet.get() != null) {
+			return qaSet.get().stream()
+					.map(inst -> WrapperCache.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.filter(Objects::nonNull)
+					.map(spec -> ((ConstraintSpec) spec).getConstraintSpec())
+					.findAny();						
+		} else 
+			return Optional.empty();						
 	}
 	
 	@SuppressWarnings("unchecked")
-	public void setCondition(Conditions condition, String ruleAsString) {
-		instance.getPropertyAsMap(CoreProperties.conditions.toString()).put(condition.toString(), ruleAsString);
-	}
-
-	@SuppressWarnings("unchecked")
-	public Set<QAConstraintSpec> getQAConstraints() {
-		SetProperty<?> qaSet = instance.getPropertyAsSet(CoreProperties.qaConstraints.toString());
+	public Set<ConstraintSpec> getPreconditions() {
+		SetProperty<?> qaSet = instance.getPropertyAsSet(CoreProperties.preconditions.toString());
 		if (qaSet != null && qaSet.get() != null) {
-			return (Set<QAConstraintSpec>) qaSet.get().stream()
-					.map(inst -> WrapperCache.getWrappedInstance(QAConstraintSpec.class, (Instance) inst))
+			return (Set<ConstraintSpec>) qaSet.get().stream()
+					.map(inst -> WrapperCache.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
 	}
 	
 	@SuppressWarnings("unchecked")
-	public void addQAConstraint(QAConstraintSpec spec) {
+	public Set<ConstraintSpec> getPostconditions() {
+		SetProperty<?> qaSet = instance.getPropertyAsSet(CoreProperties.postconditions.toString());
+		if (qaSet != null && qaSet.get() != null) {
+			return (Set<ConstraintSpec>) qaSet.get().stream()
+					.map(inst -> WrapperCache.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.collect(Collectors.toSet());
+		} else return Collections.emptySet();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Set<ConstraintSpec> getCancelconditions() {
+		SetProperty<?> qaSet = instance.getPropertyAsSet(CoreProperties.cancelconditions.toString());
+		if (qaSet != null && qaSet.get() != null) {
+			return (Set<ConstraintSpec>) qaSet.get().stream()
+					.map(inst -> WrapperCache.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.collect(Collectors.toSet());
+		} else return Collections.emptySet();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Set<ConstraintSpec> getActivationconditions() {
+		SetProperty<?> qaSet = instance.getPropertyAsSet(CoreProperties.activationconditions.toString());
+		if (qaSet != null && qaSet.get() != null) {
+			return (Set<ConstraintSpec>) qaSet.get().stream()
+					.map(inst -> WrapperCache.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.collect(Collectors.toSet());
+		} else return Collections.emptySet();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Deprecated(forRemoval = true)
+	public void setCondition(Conditions condition, String ruleAsString) {
+		ConstraintSpec constraint = ConstraintSpec.createInstance(condition+"0", ruleAsString, ruleAsString, 0, false, ws);		
+		switch(condition) {
+		case ACTIVATION:
+			instance.getPropertyAsSet(CoreProperties.activationconditions.toString()).add(constraint);
+			break;
+		case CANCELATION:
+			instance.getPropertyAsSet(CoreProperties.cancelconditions.toString()).add(constraint);
+			break;
+		case POSTCONDITION:
+			instance.getPropertyAsSet(CoreProperties.postconditions.toString()).add(constraint);
+			break;
+		case PRECONDITION:
+			instance.getPropertyAsSet(CoreProperties.preconditions.toString()).add(constraint);
+			break;
+		default:
+			break;
+		
+		}				
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void addPrecondition(ConstraintSpec spec) {
+		instance.getPropertyAsSet(CoreProperties.preconditions.toString()).add(spec.getInstance());
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void addPostcondition(ConstraintSpec spec) {
+		instance.getPropertyAsSet(CoreProperties.postconditions.toString()).add(spec.getInstance());
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void addCancelcondition(ConstraintSpec spec) {
+		instance.getPropertyAsSet(CoreProperties.cancelconditions.toString()).add(spec.getInstance());
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void addActivationcondition(ConstraintSpec spec) {
+		instance.getPropertyAsSet(CoreProperties.activationconditions.toString()).add(spec.getInstance());
+	}
+
+	@SuppressWarnings("unchecked")
+	public Set<ConstraintSpec> getQAConstraints() {
+		SetProperty<?> qaSet = instance.getPropertyAsSet(CoreProperties.qaConstraints.toString());
+		if (qaSet != null && qaSet.get() != null) {
+			return (Set<ConstraintSpec>) qaSet.get().stream()
+					.map(inst -> WrapperCache.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.collect(Collectors.toSet());
+		} else return Collections.emptySet();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void addQAConstraint(ConstraintSpec spec) {
 		instance.getPropertyAsSet(CoreProperties.qaConstraints.toString()).add(spec.getInstance());
 	}
 	
@@ -217,6 +321,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	}
 	
 	public List<ProcessDefinitionError> checkConstraintValidity(InstanceType processInstType) {
+	// FIXME: adapt to multiconditions
 		List<ProcessDefinitionError> errors = new LinkedList<>();
 	//	Map<String, String> status = new HashMap<>();
 		InstanceType instType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstType);
@@ -270,6 +375,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 	
 	public List<ProcessDefinitionError> checkStepStructureValidity() {
+		//FIXME: adapt to multiconstraints 
 		List<ProcessDefinitionError> errors = new LinkedList<>();
 		
 		
@@ -297,20 +403,20 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	
 	@Override
 	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
-		// deleting constraints:
+		//FIXME deleting multi constraints:
 		Map<String, String> status = new HashMap<>();
 		InstanceType instType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, null); // for deletion its ok to not provide the process instance type
 		for (Conditions condition : Conditions.values()) {
 			if (this.getCondition(condition).isPresent()) {
 				String name = RuleAugmentation.getConstraintName(condition, instType);
-				ConsistencyRuleType crt = getRuleByNameAndContext(name, instType);//ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, this.getCondition(condition).get());
+				ConsistencyRuleType crt = getRuleByNameAndContext(name, instType);
 				if (crt != null) crt.delete();
 			}	
 		}
 		this.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
 				String name = ProcessStep.getDataMappingId(entry, this);
-				ConsistencyRuleType crt = getRuleByNameAndContext(name, instType);//ConsistencyRuleType.consistencyRuleTypeExists(ws,  name, instType, entry.getValue());
+				ConsistencyRuleType crt = getRuleByNameAndContext(name, instType);
 				if (crt != null) crt.delete();
 			});
 		//delete qa constraints:
@@ -318,7 +424,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		this.getQAConstraints().stream()
 			.forEach(spec -> {
 				String specId = ProcessStep.getQASpecId(spec, pd);
-				ConsistencyRuleType crt = getRuleByNameAndContext(specId, instType);//ConsistencyRuleType.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
+				ConsistencyRuleType crt = getRuleByNameAndContext(specId, instType);
 				if (crt != null) crt.delete();
 				spec.deleteCascading(configFactory);
 			});
@@ -337,19 +443,23 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
-				InstanceType typeStep = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessDefinitionScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
-				typeStep.createPropertyType(CoreProperties.qaConstraints.toString(), Cardinality.SET, QAConstraintSpec.getOrCreateDesignSpaceCoreSchema(ws));
-				typeStep.createPropertyType(CoreProperties.expectedInput.toString(), Cardinality.MAP, ws.META_INSTANCE_TYPE);
-				typeStep.createPropertyType(CoreProperties.expectedOutput.toString(), Cardinality.MAP, ws.META_INSTANCE_TYPE);
-				typeStep.createPropertyType(CoreProperties.conditions.toString(), Cardinality.MAP, Workspace.STRING);
-				typeStep.createPropertyType(CoreProperties.inDND.toString(), Cardinality.SINGLE, Workspace.STRING);
-				typeStep.createPropertyType(CoreProperties.outDND.toString(), Cardinality.SINGLE, Workspace.STRING);
-				typeStep.createPropertyType((CoreProperties.ioMappingRules.toString()), Cardinality.MAP, Workspace.STRING);
-				typeStep.createPropertyType((CoreProperties.specOrderIndex.toString()), Cardinality.SINGLE, Workspace.INTEGER);
-				typeStep.createPropertyType((CoreProperties.hierarchyDepth.toString()), Cardinality.SINGLE, Workspace.INTEGER);
-				typeStep.createPropertyType((CoreProperties.html_url.toString()), Cardinality.SINGLE, Workspace.STRING);
-				typeStep.createPropertyType((CoreProperties.description.toString()), Cardinality.SINGLE, Workspace.STRING);
-				return typeStep;
+				InstanceType stepType = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessDefinitionScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
+				stepType.createPropertyType(CoreProperties.qaConstraints.toString(), Cardinality.SET, ConstraintSpec.getOrCreateDesignSpaceCoreSchema(ws));
+				stepType.createPropertyType(CoreProperties.expectedInput.toString(), Cardinality.MAP, ws.META_INSTANCE_TYPE);
+				stepType.createPropertyType(CoreProperties.expectedOutput.toString(), Cardinality.MAP, ws.META_INSTANCE_TYPE);
+				//typeStep.createPropertyType(CoreProperties.conditions.toString(), Cardinality.MAP, Workspace.STRING);
+				stepType.createPropertyType(CoreProperties.preconditions.toString(), Cardinality.SET, ConstraintSpec.getOrCreateDesignSpaceCoreSchema(ws));
+				stepType.createPropertyType(CoreProperties.postconditions.toString(), Cardinality.SET, ConstraintSpec.getOrCreateDesignSpaceCoreSchema(ws));
+				stepType.createPropertyType(CoreProperties.cancelconditions.toString(), Cardinality.SET, ConstraintSpec.getOrCreateDesignSpaceCoreSchema(ws));
+				stepType.createPropertyType(CoreProperties.activationconditions.toString(), Cardinality.SET, ConstraintSpec.getOrCreateDesignSpaceCoreSchema(ws));				
+				stepType.createPropertyType(CoreProperties.inDND.toString(), Cardinality.SINGLE, Workspace.STRING);
+				stepType.createPropertyType(CoreProperties.outDND.toString(), Cardinality.SINGLE, Workspace.STRING);
+				stepType.createPropertyType((CoreProperties.ioMappingRules.toString()), Cardinality.MAP, Workspace.STRING);
+				stepType.createPropertyType((CoreProperties.specOrderIndex.toString()), Cardinality.SINGLE, Workspace.INTEGER);
+				stepType.createPropertyType((CoreProperties.hierarchyDepth.toString()), Cardinality.SINGLE, Workspace.INTEGER);
+				stepType.createPropertyType((CoreProperties.html_url.toString()), Cardinality.SINGLE, Workspace.STRING);
+				stepType.createPropertyType((CoreProperties.description.toString()), Cardinality.SINGLE, Workspace.STRING);
+				return stepType;
 			}
 	}
 

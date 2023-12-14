@@ -1,4 +1,4 @@
-package at.jku.isse.designspace.passiveprocessengine;
+package at.jku.isse.passiveprocessengine;
 
 import static org.junit.Assert.assertTrue;
 

@@ -1,4 +1,4 @@
-package at.jku.isse.designspace;
+package at.jku.isse;
 
 import at.jku.isse.designspace.core.events.Event;
 import at.jku.isse.designspace.endpoints.grpc.service.GrpcUtils;

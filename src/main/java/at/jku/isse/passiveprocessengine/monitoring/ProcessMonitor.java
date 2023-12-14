@@ -63,7 +63,7 @@ public class ProcessMonitor implements IProcessEventHandler{
 			args.add(3, kv(LogProperties.fulfillment.toString(), e.isFulfilled()));
 		} else if (pce instanceof  QAConstraintFulfillmentChanged) {
 			QAConstraintFulfillmentChanged e = (QAConstraintFulfillmentChanged)pce;
-			args.add(3, kv(UsageMonitor.LogProperties.constraintId.toString(), e.getQacWrapper().getQaSpec().getQaConstraintId()));
+			args.add(3, kv(UsageMonitor.LogProperties.constraintId.toString(), e.getQacWrapper().getSpec().getConstraintId()));
 			args.add(4, kv(LogProperties.fulfillment.toString(), e.getQacWrapper().getEvalResult()));
 		} // we ignore DataMappingChangeEvents for now
 		monitor.info("ProcessChangedEvent", args.toArray() );

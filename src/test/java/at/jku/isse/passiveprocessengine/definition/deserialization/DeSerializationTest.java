@@ -1,4 +1,4 @@
-package at.jku.isse.designspace.passiveprocessengine.definition.deserialization;
+package at.jku.isse.passiveprocessengine.definition.deserialization;
 
 import java.util.LinkedList;
 

@@ -82,7 +82,7 @@ public class UsageMonitor {
 			// TODO: obtain also maxRank?
 		}
 		List<StructuredArgument> args = getDefaultArguments(cw.getProcess(), userId, UsageEvents.ConstraintViewed.toString());
-		args.add(kv(LogProperties.constraintId.toString(), cw.getQaSpec().getQaConstraintId())); 
+		args.add(kv(LogProperties.constraintId.toString(), cw.getSpec().getConstraintId())); 
 		args.add(kv(LogProperties.evalResult.toString(), cw.getEvalResult()));
 		args.add(kv(LogProperties.guidanceSize.toString(), repairCount));
 		monitor.info("Constraint viewed", args.toArray());

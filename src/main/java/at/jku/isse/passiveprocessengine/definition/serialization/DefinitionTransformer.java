@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.definition.serialization;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import at.jku.isse.designspace.core.model.InstanceType;
@@ -10,8 +11,9 @@ import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
-import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
+import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Constraint;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Process;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
@@ -136,10 +138,37 @@ public class DefinitionTransformer {
 	private static void initStepFromDTO(DTOs.Step step, StepDefinition pStep, Workspace ws, List<ProcessDefinitionError> errors) {	
 		step.getInput().entrySet().stream().forEach(entry -> pStep.addExpectedInput(entry.getKey(), resolveInstanceType(entry.getValue(), ws, errors, pStep, entry.getKey())));
 		step.getOutput().entrySet().stream().forEach(entry -> pStep.addExpectedOutput(entry.getKey(), resolveInstanceType(entry.getValue(), ws, errors, pStep, entry.getKey())));
-		step.getConditions().entrySet().stream().forEach(entry -> pStep.setCondition(entry.getKey(), entry.getValue()));
+		//step.getConditions().entrySet().stream().forEach(entry -> pStep.setCondition(entry.getKey(), entry.getValue()));		
+		step.getConditions().entrySet().stream().forEach(entry -> {
+			entry.getValue().stream().forEach(constraint -> {
+				ConstraintSpec spec = ConstraintSpec.createInstance(constraint.getCode(), constraint.getArlRule(), constraint.getDescription(), constraint.getSpecOrderIndex(), constraint.isOverridable(), ws);
+				if (pStep instanceof ProcessDefinition) {
+					spec.setProcess((ProcessDefinition)pStep);
+				} else if (pStep.getProcess() != null) {
+					spec.setProcess(pStep.getProcess());
+				}
+				switch(entry.getKey()) {
+				case ACTIVATION:
+					pStep.addActivationcondition(spec);
+					break;
+				case CANCELATION:
+					pStep.addCancelcondition(spec);
+					break;
+				case POSTCONDITION:
+					pStep.addPostcondition(spec);
+					break;
+				case PRECONDITION:
+					pStep.addPrecondition(spec);
+					break;
+				default:
+					log.warn("Unsupported constraint type: "+entry.getKey());
+					break;
+				}				
+			});
+		});		
 		step.getIoMapping().entrySet().stream().forEach(entry -> pStep.addInputToOutputMappingRule(entry.getKey(),  trimLegacyIOMappingRule(entry.getValue())));
-		step.getQaConstraints().stream().forEach(qac -> { 
-			QAConstraintSpec spec = QAConstraintSpec.createInstance(qac.getCode(), qac.getArlRule(), qac.getDescription(), qac.getSpecOrderIndex(), ws);
+		step.getQaConstraints().stream().forEach(constraint -> { 
+			ConstraintSpec spec = ConstraintSpec.createInstance(constraint.getCode(), constraint.getArlRule(), constraint.getDescription(), constraint.getSpecOrderIndex(), constraint.isOverridable(), ws);
 			if (pStep instanceof ProcessDefinition) {
 				spec.setProcess((ProcessDefinition)pStep);
 			} else if (pStep.getProcess() != null) {
@@ -196,20 +225,55 @@ public class DefinitionTransformer {
 		pStep.getExpectedInput().entrySet().stream().forEach(entry -> step.getInput().put(entry.getKey(), entry.getValue().name()));
 		pStep.getExpectedOutput().entrySet().stream().forEach(entry -> step.getOutput().put(entry.getKey(), entry.getValue().name()));
 		pStep.getQAConstraints().stream().forEach(qac -> { 
-			DTOs.QAConstraint qa = new DTOs.QAConstraint();
-			qa.setArlRule(qac.getQaConstraintSpec());
-			qa.setCode(qac.getQaConstraintId());
+			DTOs.Constraint qa = new DTOs.Constraint(qac.getConstraintSpec());			
+			qa.setCode(qac.getConstraintId());
 			qa.setDescription(qac.getHumanReadableDescription());
 			qa.setSpecOrderIndex(qac.getOrderIndex());
+			qa.setOverridable(qac.isOverridable());
 			step.getQaConstraints().add(qa ); 
+			
 		});
 		pStep.getInputToOutputMappingRules().entrySet().stream().forEach(entry -> step.getIoMapping().put(entry.getKey(), entry.getValue()));
-		for (Conditions cond : Conditions.values()) {
-			pStep.getCondition(cond).ifPresent(condARL -> step.getConditions().put(cond, condARL));
-		}
+		//old conditions mapping
+//		for (Conditions cond : Conditions.values()) {
+//			pStep.getCondition(cond).ifPresent(condARL -> step.getConditions().put(cond, condARL));
+//		}
+		pStep.getActivationconditions().stream().forEach(spec -> {
+			Constraint constraint = new Constraint(spec.getConstraintSpec());
+			constraint.setCode(spec.getName());
+			constraint.setDescription(spec.getHumanReadableDescription());
+			constraint.setSpecOrderIndex(spec.getOrderIndex());
+			constraint.setOverridable(spec.isOverridable());
+			step.getConditions().computeIfAbsent(Conditions.ACTIVATION, k -> new ArrayList<Constraint>()).add(constraint);
+		});
+		pStep.getCancelconditions().stream().forEach(spec -> {
+			Constraint constraint = new Constraint(spec.getConstraintSpec());
+			constraint.setCode(spec.getName());
+			constraint.setDescription(spec.getHumanReadableDescription());
+			constraint.setSpecOrderIndex(spec.getOrderIndex());
+			constraint.setOverridable(spec.isOverridable());
+			step.getConditions().computeIfAbsent(Conditions.CANCELATION, k -> new ArrayList<Constraint>()).add(constraint);
+		});
+		pStep.getPreconditions().stream().forEach(spec -> {
+			Constraint constraint = new Constraint(spec.getConstraintSpec());
+			constraint.setCode(spec.getName());
+			constraint.setDescription(spec.getHumanReadableDescription());
+			constraint.setSpecOrderIndex(spec.getOrderIndex());
+			constraint.setOverridable(spec.isOverridable());
+			step.getConditions().computeIfAbsent(Conditions.PRECONDITION, k -> new ArrayList<Constraint>()).add(constraint);
+		});
+		pStep.getPostconditions().stream().forEach(spec -> {
+			Constraint constraint = new Constraint(spec.getConstraintSpec());
+			constraint.setCode(spec.getName());
+			constraint.setDescription(spec.getHumanReadableDescription());
+			constraint.setSpecOrderIndex(spec.getOrderIndex());
+			constraint.setOverridable(spec.isOverridable());
+			step.getConditions().computeIfAbsent(Conditions.POSTCONDITION, k -> new ArrayList<Constraint>()).add(constraint);
+		});		
+
+		
 		step.setHtml_url(pStep.getHtml_url());
 		step.setDescription(pStep.getDescription());
-		//TODO: description field
 	}
 	
 	private static String trimLegacyIOMappingRule(String ruleString) {

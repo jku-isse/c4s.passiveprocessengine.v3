@@ -1,6 +1,7 @@
-package at.jku.isse.designspace.passiveprocessengine.definition;
+package at.jku.isse.passiveprocessengine.definition;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -17,6 +18,7 @@ import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.designspace.rule.checker.ArlRuleEvaluator;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
+import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Constraint;
 import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
 import at.jku.isse.passiveprocessengine.definition.serialization.ProcessRegistry;
 import at.jku.isse.passiveprocessengine.definition.serialization.ProcessRegistry.ProcessDeployResult;
@@ -99,8 +101,8 @@ class ReplacementTests {
 		DTOs.Step step2 = proc2.getStepByCode("subtask2");
 		step2.getInput().remove("jiraIn");
 		step2.getInput().put("issueIn", typeJira.name());
-		step2.getConditions().put(Conditions.PRECONDITION, "self.in_issueIn->size() = 1");
-		step2.getConditions().put(Conditions.POSTCONDITION, "self.in_issueIn->size() = 1 and self.in_issueIn->forAll( issue | issue.state = 'Closed')"); 
+		step2.getConditions().put(Conditions.PRECONDITION, List.of(new Constraint("self.in_issueIn->size() = 1")));
+		step2.getConditions().put(Conditions.POSTCONDITION, List.of(new Constraint("self.in_issueIn->size() = 1 and self.in_issueIn->forAll( issue | issue.state = 'Closed')"))); 
 		DTOs.DecisionNode dn1 = proc2.getEntryNode();
 		dn1.getMapping().clear();
 		dn1.getMapping().add(new DTOs.Mapping(proc2.getCode(), "jiraIn", "subtask1", "jiraIn")); //into both steps
@@ -128,8 +130,8 @@ class ReplacementTests {
 		DTOs.Step step2 = proc2.getStepByCode("subtask2");
 		step2.getInput().remove("jiraIn");
 		step2.getInput().put("issueIn", typeJira.name());
-		step2.getConditions().put(Conditions.PRECONDITION, "self.in_issueIn->size() = 1");
-		step2.getConditions().put(Conditions.POSTCONDITION, "self.in_issueIn->size() = 1 and self.in_issueIn->forAll( issue | issue.state = 'Closed')"); 
+		step2.getConditions().put(Conditions.PRECONDITION, List.of(new Constraint("self.in_issueIn->size() = 1")));
+		step2.getConditions().put(Conditions.POSTCONDITION, List.of(new Constraint("self.in_issueIn->size() = 1 and self.in_issueIn->forAll( issue | issue.state = 'Closed')"))); 
 		DTOs.DecisionNode dn1 = proc2.getEntryNode();
 		dn1.getMapping().clear();
 		dn1.getMapping().add(new DTOs.Mapping(proc2.getCode(), "jiraIn", "subtask1", "jiraIn")); //into both steps
@@ -157,12 +159,12 @@ class ReplacementTests {
 		DTOs.Process proc2 = TestProcesses.getSimpleDTOSubprocess(ws);
 		proc2.getInput().remove("jiraIn");
 		proc2.getInput().put("issueIn", typeJira.name());
-		proc2.getConditions().put(Conditions.PRECONDITION, "self.in_issueIn->size() = 1");
+		proc2.getConditions().put(Conditions.PRECONDITION, List.of(new Constraint("self.in_issueIn->size() = 1")));
 		DTOs.Step step2 = proc2.getStepByCode("subtask2");
 		step2.getInput().remove("jiraIn");
 		step2.getInput().put("issueIn", typeJira.name());
-		step2.getConditions().put(Conditions.PRECONDITION, "self.in_issueIn->size() = 1");
-		step2.getConditions().put(Conditions.POSTCONDITION, "self.in_issueIn->size() = 1 and self.in_issueIn->forAll( issue | issue.state = 'Closed')"); 
+		step2.getConditions().put(Conditions.PRECONDITION, List.of(new Constraint("self.in_issueIn->size() = 1")));
+		step2.getConditions().put(Conditions.POSTCONDITION, List.of(new Constraint("self.in_issueIn->size() = 1 and self.in_issueIn->forAll( issue | issue.state = 'Closed')"))); 
 		DTOs.DecisionNode dn1 = proc2.getEntryNode();
 		dn1.getMapping().clear();
 		dn1.getMapping().add(new DTOs.Mapping(proc2.getCode(), "issueIn", "subtask1", "jiraIn")); //into both steps

@@ -1,4 +1,4 @@
-package at.jku.isse.designspace.passiveprocessengine.definition.serialization;
+package at.jku.isse.passiveprocessengine.definition.serialization;
 
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
@@ -10,6 +10,8 @@ import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionS
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
+import at.jku.isse.passiveprocessengine.monitoring.UsageMonitor;
 
 import java.util.LinkedList;
 
@@ -27,6 +29,12 @@ public class SerializationAfterPersistenceTest {
 	
 	@Autowired
 	WorkspaceService workspaceService;
+		
+	@Autowired
+	ProcessQAStatsMonitor qastats;
+	
+	@Autowired 
+	UsageMonitor usageMonitor;
 	
 	//static Workspace ws;
 	static JsonDefinitionSerializer json = new JsonDefinitionSerializer();

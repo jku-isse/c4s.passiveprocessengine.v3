@@ -14,7 +14,7 @@ import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
-import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
+import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
 
 //@Data
 public class ConstraintWrapper extends ProcessInstanceScopedElement {
@@ -24,15 +24,6 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 	static enum CoreProperties {qaSpec, lastChanged, crule, parentStep};
 	
 	ZonedDateTime lastChanged;
-	
-//	ConsistencyRule cr;
-//	Boolean evalResult = false;
-//	QAConstraintSpec qaSpec;
-//
-//	protected void setCrIfEmpty(ConsistencyRule cr) {
-//	this.cr = cr;
-//	this.evalResult = cr.isConsistent();
-// }
 	
 	public ConstraintWrapper(Instance instance) {
 		super(instance);
@@ -72,12 +63,12 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 		this.lastChanged = lastChanged;
 	}
 
-	public QAConstraintSpec getQaSpec() {
+	public ConstraintSpec getSpec() {
 		Instance qainst = instance.getPropertyAsInstance(CoreProperties.qaSpec.toString());
-		return WrapperCache.getWrappedInstance(QAConstraintSpec.class, qainst);
+		return WrapperCache.getWrappedInstance(ConstraintSpec.class, qainst);
 	}
 
-	private void setQaSpec(QAConstraintSpec qaSpec) {
+	private void setQaSpec(ConstraintSpec qaSpec) {
 		instance.getPropertyAsSingle(CoreProperties.qaSpec.toString()).set(qaSpec.getInstance());
 	}
 	
@@ -94,16 +85,13 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 	}
 	
 	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws){
-//		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
-//				.filter(it -> it.name().equals(designspaceTypeId))
-//				.findAny();
 		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId));
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
 				InstanceType typeStep = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessInstanceScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
 				ProcessInstanceScopedElement.addGenericProcessProperty(typeStep);
-				typeStep.createPropertyType(CoreProperties.qaSpec.toString(), Cardinality.SINGLE, QAConstraintSpec.getOrCreateDesignSpaceCoreSchema(ws));
+				typeStep.createPropertyType(CoreProperties.qaSpec.toString(), Cardinality.SINGLE, ConstraintSpec.getOrCreateDesignSpaceCoreSchema(ws));
 				//typeStep.createPropertyType(CoreProperties.result.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
 				typeStep.createPropertyType(CoreProperties.lastChanged.toString(), Cardinality.SINGLE, Workspace.STRING);
 				typeStep.createPropertyType(CoreProperties.crule.toString(), Cardinality.SINGLE, ws.its(ConsistencyRuleType.CONSISTENCY_RULE_TYPE));
@@ -111,7 +99,7 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 			}
 	}
 	
-	public static ConstraintWrapper getInstance(Workspace ws, QAConstraintSpec qaSpec, ZonedDateTime lastChanged, ProcessInstance proc) {
+	public static ConstraintWrapper getInstance(Workspace ws, ConstraintSpec qaSpec, ZonedDateTime lastChanged, ProcessInstance proc) {
 		Instance inst = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws), qaSpec.getId()+proc.getName()+"_"+UUID.randomUUID());
 		ConstraintWrapper cw = WrapperCache.getWrappedInstance(ConstraintWrapper.class, inst);
 		//cw.setCrIfEmpty(cr);
@@ -126,7 +114,7 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 
 	@Override
 	public ProcessDefinitionScopedElement getDefinition() {
-		return getQaSpec();
+		return getSpec();
 	}
 
 

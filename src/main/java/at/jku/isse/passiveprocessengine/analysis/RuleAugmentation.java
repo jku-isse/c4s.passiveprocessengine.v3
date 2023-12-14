@@ -23,7 +23,7 @@ import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.DataS
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.StepParameter;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
-import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
+import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
@@ -46,8 +46,14 @@ public class RuleAugmentation {
 		this.stepType = stepType;
 	}
 	
+	public static Comparator<ConstraintSpec> CONSTRAINTCOMPARATOR = new Comparator<ConstraintSpec>() {
+		@Override
+		public int compare(ConstraintSpec o1, ConstraintSpec o2) {					
+			return o1.getOrderIndex().compareTo(o2.getOrderIndex()) ;
+		}};
+	
 	// This works for non-temporal constraints only
-	public List<ProcessDefinitionError> augmentConditions()  {
+	public List<ProcessDefinitionError> augmentAndCreateConditions()  {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
 		MapProperty<String> propertyMetadata = stepType.getPropertyAsMap(ReservedNames.INSTANCETYPE_PROPERTY_METADATA);
 		String augmentationStatus = propertyMetadata.get(RESERVED_PROPERTY_STEP_AUGMENTATION_STATUS);
@@ -55,49 +61,111 @@ public class RuleAugmentation {
 			log.debug("Skipping augmentation of already augmented step "+sd.getName());
 			return errors; // then we already augmented this step
 		}
-		//ProcessException pex = new ProcessException("Error augmenting transition conditions and/or QA constraints");
-		for (Conditions condition : Conditions.values()) {
-			if (sd.getCondition(condition).isPresent()) {
-				if (sd.getCondition(condition).get() != null) {
-					//with subprocesses we might have run augmentation before, thus check and skip				
-					if (stepType.getPropertyType(condition.toString()) != null)//(ReservedNames.PROPERTY_DEFINITION_PREFIX+condition.toString()))
-						break;					
-					// as the output cannot be changed directly (except in rare cases when set manually)
-					// repairing the output makes no sense, but rather its datamapping definition, so we replace all out_xxx occurences with the datamapping definition
-					String arl = sd.getCondition(condition).get();
-					try {
-						arl = rewriteConstraint(arl);
-						log.debug(String.format("Augmented %s for %s to %s", condition, sd.getName(), arl));					
-					// if the error is from augmentation, still keep the original rule (with perhaps not as useful repairs)
-					// if the original rule has error, then this will be captured later anyway.
-					ConsistencyRuleType crd = ConsistencyRuleType.create(ws, stepType, getConstraintName(condition, stepType), arl);
-					// not evaluated yet here, assert ConsistencyUtils.crdValid(crd);																					
-					stepType.createPropertyType(condition.toString(), Cardinality.SINGLE, crd);
-					} catch(Exception e) {
-						errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting condition %s : %s", condition, arl), e.getMessage()));
-						//pex.getErrorMessages().add(String.format("Error aumenting %s : %s", arl, e.getMessage()));
-					}
+		
+		sd.getPreconditions().stream()
+		.sorted(CONSTRAINTCOMPARATOR)
+		.forEach(spec -> {
+			String specId = getConstraintName(Conditions.PRECONDITION, spec.getOrderIndex(), stepType);
+			if (spec.getConstraintSpec() != null) {
+				String arl = spec.getConstraintSpec();
+				try {  
+					arl = rewriteConstraint(arl);
+					log.debug(String.format("Augmented constraint %s for %s to %s", specId, sd.getName(), arl));
+				} catch(Exception e) {
+					errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
 				}
-			}	
-		}
+				ConsistencyRuleType crt = ConsistencyRuleType.create(ws, stepType, specId, arl);
+				//TODO check if that needs to be stored, references anywhere
+			}
+		});
+		sd.getPostconditions().stream()
+		.sorted(CONSTRAINTCOMPARATOR)
+		.forEach(spec -> {
+			String specId = getConstraintName(Conditions.POSTCONDITION, spec.getOrderIndex(), stepType);
+			if (spec.getConstraintSpec() != null) {
+				String arl = spec.getConstraintSpec();
+				try {  
+					arl = rewriteConstraint(arl);
+					log.debug(String.format("Augmented constraint %s for %s to %s", specId, sd.getName(), arl));
+				} catch(Exception e) {
+					errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
+				}
+				ConsistencyRuleType crt = ConsistencyRuleType.create(ws, stepType, specId, arl);
+				//TODO check if that needs to be stored, references anywhere
+			}
+		});
+		sd.getCancelconditions().stream()
+		.sorted(CONSTRAINTCOMPARATOR)
+		.forEach(spec -> {
+			String specId = getConstraintName(Conditions.CANCELATION, spec.getOrderIndex(), stepType);
+			if (spec.getConstraintSpec() != null) {
+				String arl = spec.getConstraintSpec();
+				try {  
+					arl = rewriteConstraint(arl);
+					log.debug(String.format("Augmented constraint %s for %s to %s", specId, sd.getName(), arl));
+				} catch(Exception e) {
+					errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
+				}
+				ConsistencyRuleType crt = ConsistencyRuleType.create(ws, stepType, specId, arl);
+				//TODO check if that needs to be stored, references anywhere
+			}
+		});
+		sd.getActivationconditions().stream()
+		.sorted(CONSTRAINTCOMPARATOR)
+		.forEach(spec -> {
+			String specId = getConstraintName(Conditions.ACTIVATION, spec.getOrderIndex(), stepType);
+			if (spec.getConstraintSpec() != null) {
+				String arl = spec.getConstraintSpec();
+				try {  
+					arl = rewriteConstraint(arl);
+					log.debug(String.format("Augmented constraint %s for %s to %s", specId, sd.getName(), arl));
+				} catch(Exception e) {
+					errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
+				}
+				ConsistencyRuleType crt = ConsistencyRuleType.create(ws, stepType, specId, arl);
+				//TODO check if that needs to be stored, references anywhere
+			}
+		});
+						
+		//old constraints support
+//		for (Conditions condition : Conditions.values()) {
+//			if (sd.getCondition(condition).isPresent()) {
+//				if (sd.getCondition(condition).get() != null) {
+//					//with subprocesses we might have run augmentation before, thus check and skip				
+//					if (stepType.getPropertyType(condition.toString()) != null)//
+//						break;					
+//					// as the output cannot be changed directly
+//					// repairing the output makes no sense, but rather its datamapping definition, so we replace all out_xxx occurences with the datamapping definition
+//					String arl = sd.getCondition(condition).get();
+//					try {
+//						arl = rewriteConstraint(arl);
+//						log.debug(String.format("Augmented %s for %s to %s", condition, sd.getName(), arl));					
+//					// if the error is from augmentation, still keep the original rule (with perhaps not as useful repairs)
+//					// if the original rule has error, then this will be captured later anyway.
+//					ConsistencyRuleType crd = ConsistencyRuleType.create(ws, stepType, getConstraintName(condition, stepType), arl);
+//					// not evaluated yet here, assert ConsistencyUtils.crdValid(crd);																					
+//					 stepType.createPropertyType(condition.toString(), Cardinality.SINGLE, crd);
+//					} catch(Exception e) {
+//						errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting condition %s : %s", condition, arl), e.getMessage()));
+//						//pex.getErrorMessages().add(String.format("Error aumenting %s : %s", arl, e.getMessage()));
+//					}
+//				}
+//			}	
+//		}
+								
 		//qa constraints:
 		ProcessDefinition pd = sd.getProcess() !=null ? sd.getProcess() : (ProcessDefinition)sd;
 		sd.getQAConstraints().stream()
-			.sorted(new Comparator<QAConstraintSpec>() {
-				@Override
-				public int compare(QAConstraintSpec o1, QAConstraintSpec o2) {					
-					return o1.getOrderIndex().compareTo(o2.getOrderIndex()) ;
-				}})
+			.sorted(CONSTRAINTCOMPARATOR)
 			.forEach(spec -> {
 				String specId = ProcessStep.getQASpecId(spec, pd);
-				if (spec.getQaConstraintSpec() != null) {
-					String arl = spec.getQaConstraintSpec();
+				if (spec.getConstraintSpec() != null) {
+					String arl = spec.getConstraintSpec();
 					try {  
 						arl = rewriteConstraint(arl);
 						log.debug(String.format("Augmented QA for %s to %s", sd.getName(), arl));
 					} catch(Exception e) {
-						errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting QA Constraint %s : %s", spec.getQaConstraintId(), arl), e.getMessage()));
-						//pex.getErrorMessages().add(String.format("Error aumenting %s : %s", arl, e.getMessage()));
+						errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting QA Constraint %s : %s", spec.getConstraintId(), arl), e.getMessage()));
 					}
 					ConsistencyRuleType crt = ConsistencyRuleType.create(ws, stepType, specId, arl);
 				}
@@ -108,8 +176,13 @@ public class RuleAugmentation {
 		return errors;
 	}
 	
+	public static String getConstraintName(Conditions condition, int specOrderIndex, InstanceType stepType) {
+		return "crd_"+condition+specOrderIndex+"_"+stepType.name();
+	}
+	
 	public static String getConstraintName(Conditions condition, InstanceType stepType) {
-		return "crd_"+condition+"_"+stepType.name();
+		//return "crd_"+condition+"_"+stepType.name();
+		return getConstraintName(condition, 0, stepType);
 	}
 	
 	private String rewriteConstraint(String constraint) throws Exception {

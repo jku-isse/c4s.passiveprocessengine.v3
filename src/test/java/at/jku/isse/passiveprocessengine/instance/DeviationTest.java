@@ -1,4 +1,4 @@
-package at.jku.isse.designspace.passiveprocessengine.instance;
+package at.jku.isse.passiveprocessengine.instance;
 
 import static org.junit.jupiter.api.Assertions.*;
 
