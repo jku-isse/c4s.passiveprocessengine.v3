@@ -199,13 +199,13 @@ public class ProcessInstance extends ProcessStep {
 	
 	
 	@Override
-	public List<ProcessChangedEvent> setPostConditionsFulfilled(boolean isfulfilled) {
+	protected List<ProcessChangedEvent> setPostConditionsFulfilled(boolean isfulfilled) {
 		if (!isfulfilled) // regular step behavior for unfulfilled postcond
 			return super.setPostConditionsFulfilled(false);
 		// if now fulfilled, check with substeps
 		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		if (arePostCondFulfilled() != isfulfilled) { // a change
-			ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
+			ProcessInstance pi = getParentProcessOrThisIfProcessElseNull();
 			events.add(new Events.ConditionFulfillmentChanged(pi, this, Conditions.POSTCONDITION, isfulfilled));
 			instance.getPropertyAsSingle(ProcessStep.CoreProperties.processedPostCondFulfilled.toString()).set(isfulfilled);
 			events.addAll(tryTransitionToCompleted());
@@ -213,10 +213,11 @@ public class ProcessInstance extends ProcessStep {
 		return events;
 	}
 	
-	public List<Events.ProcessChangedEvent> setPreConditionsFulfilled(boolean isfulfilled) {
+	@Override
+	protected List<Events.ProcessChangedEvent> setPreConditionsFulfilled(boolean isfulfilled) {
 		if (arePreCondFulfilled() != isfulfilled) {  // a change
 			List<Events.ProcessChangedEvent> events = new LinkedList<>();
-			ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
+			ProcessInstance pi = getParentProcessOrThisIfProcessElseNull();
 			events.add(new Events.ConditionFulfillmentChanged(pi, this, Conditions.PRECONDITION, isfulfilled));
 			instance.getPropertyAsSingle(ProcessStep.CoreProperties.processedPreCondFulfilled.toString()).set(isfulfilled);
 			if (isfulfilled)  {
@@ -235,11 +236,11 @@ public class ProcessInstance extends ProcessStep {
 	}
 
 	private List<Events.ProcessChangedEvent> tryTransitionToCompleted() {
-		if (this.getDefinition().getCondition(Conditions.POSTCONDITION).isEmpty()) {
+		if (this.getDefinition().getPostconditions().isEmpty()) {
 			instance.getPropertyAsSingle(ProcessStep.CoreProperties.processedPostCondFulfilled.toString()).set(true);
 		}
 		boolean areAllDNIsInflowFulfilled = this.getDecisionNodeInstances().stream().allMatch(dni -> dni.isInflowFulfilled());
-		if (arePostCondFulfilled() && areQAconstraintsFulfilled() && arePreCondFulfilled() && areAllDNIsInflowFulfilled)  
+		if (arePostCondFulfilled() && areConstraintsFulfilled(ProcessStep.CoreProperties.qaState.toString()) && arePreCondFulfilled() && areAllDNIsInflowFulfilled)  
 			return this.trigger(StepLifecycle.Trigger.MARK_COMPLETE) ;
 		else
 			return this.trigger(StepLifecycle.Trigger.ACTIVATE);

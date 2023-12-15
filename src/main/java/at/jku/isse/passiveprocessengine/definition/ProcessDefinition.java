@@ -150,10 +150,8 @@ public class ProcessDefinition extends StepDefinition{
 		InstanceType processInstanceType = ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
 		DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(instance.workspace);
 		//List<ProcessException> subProcessExceptions = new ArrayList<>();
-		this.getStepDefinitions().stream().forEach(sd -> { 
-			//FIXME: wrong abstraction level, this should be done in process definition and step definition, as here we now need to distinguish between steps and process
+		this.getStepDefinitions().stream().forEach(sd -> { 		
 			if (sd instanceof ProcessDefinition) {
-				//ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, (ProcessDefinition)sd);
 					errors.addAll(((ProcessDefinition)sd).initializeInstanceTypes(doGeneratePrematureDetectionConstraints));
 			} else
 				ProcessStep.getOrCreateDesignSpaceInstanceType(instance.workspace, sd, processInstanceType); 			
@@ -163,9 +161,9 @@ public class ProcessDefinition extends StepDefinition{
 //			return errors;
 		ws.concludeTransaction();
 //		List<String> augmentationErrors = new LinkedList<>();
-		errors.addAll(new RuleAugmentation(ws, this, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstanceType)).augmentConditions()); 
+		errors.addAll(new RuleAugmentation(ws, this, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstanceType)).augmentAndCreateConditions()); 
 		this.getStepDefinitions().stream().forEach(sd -> {
-				errors.addAll(new RuleAugmentation(ws, sd, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, sd, processInstanceType)).augmentConditions()); 
+				errors.addAll(new RuleAugmentation(ws, sd, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, sd, processInstanceType)).augmentAndCreateConditions()); 
 		});
 		errors.addAll(checkConstraintValidity());
 		if (errors.isEmpty() ) {
@@ -195,6 +193,7 @@ public class ProcessDefinition extends StepDefinition{
 //			throw pex;
 			this.setIsWithoutBlockingErrors(false);
 		}
+		ws.concludeTransaction(); // persisting the blocking errors flag
 		return errors;
 	}
 	

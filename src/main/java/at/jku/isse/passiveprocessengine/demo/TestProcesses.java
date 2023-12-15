@@ -1,14 +1,17 @@
 package at.jku.isse.passiveprocessengine.demo;
 
+import java.util.ArrayList;
+
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
+import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
+import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Constraint;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
@@ -133,9 +136,9 @@ public class TestProcesses {
 			
 			sd1.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 			sd1.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() = self.in_jiraIn->asList()->first()->asType(<"+typeJira.getQualifiedName()+">).requirements->size()");
-			QAConstraintSpec qa1 = QAConstraintSpec.createInstance("sd1-qa1-state", "self.out_jiraOut->forAll( issue | issue.state = 'Open')", "All issue states must be 'Open'", 1,ws);
+			ConstraintSpec qa1 = ConstraintSpec.createInstance(Conditions.QA, "sd1-qa1-state", "self.out_jiraOut->forAll( issue | issue.state = 'Open')", "All issue states must be 'Open'",1, ws);
 			sd1.addQAConstraint(qa1);
-			QAConstraintSpec qa2 = QAConstraintSpec.createInstance("sd1-qa2-state", "self.out_jiraOut->forAll( issue | issue.state <> 'InProgress')", "None of the issue states must be 'InProgress'", 2,ws);
+			ConstraintSpec qa2 = ConstraintSpec.createInstance(Conditions.QA, "sd1-qa2-state", "self.out_jiraOut->forAll( issue | issue.state <> 'InProgress')", "None of the issue states must be 'InProgress'",2, ws);
 			sd1.addQAConstraint(qa2);
 			sd1.setInDND(dnd1);
 			sd1.setOutDND(dnd2);
@@ -148,7 +151,7 @@ public class TestProcesses {
 			sd2.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() >= 0");
 			sd2.addInputToOutputMappingRule("jiraOut", "self.in_jiraIn");//->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and "
 							//+ " self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
-			QAConstraintSpec qa3 = QAConstraintSpec.createInstance("sd2-qa3-state", "self.in_jiraIn->forAll( issue | issue.state = 'Closed')", "All in issue states must be 'Closed'", 3,ws);
+			ConstraintSpec qa3 = ConstraintSpec.createInstance(Conditions.QA, "sd2-qa3-state", "self.in_jiraIn->forAll( issue | issue.state = 'Closed')", "All in issue states must be 'Closed'",3, ws);
 			sd2.addQAConstraint(qa3);
 			sd2.setInDND(dnd2);
 			sd2.setOutDND(dnd3);
@@ -414,10 +417,10 @@ public class TestProcesses {
 												 + "self.in_jiraIn->forAll( issue | issue.requirements\r\n"
 																					+ "->forAll(req | eventually(req.state = 'ReadyForReview') and eventually( everytime( req.state = 'ReadyForReview' ,  eventually(req.state = 'Released')))))");
 		//until(not(b), a) and always(b, next(until(not(b), a)))
-		QAConstraintSpec qa3 = QAConstraintSpec.createInstance("sd1-reviewAlwaysBeforeReleased", "self.in_jiraIn->forAll( issue | issue.requirements\r\n"
-				+ "->forAll(req | until(req.state <> 'Released' , req.state = 'ReadyForReview') \r\n"
-				+ "					and everytime( req.state = 'Released', next( asSoonAs( req.state <> 'Released',  until( req.state <> 'Released', req.state = 'ReadyForReview') ) ) ) ) ) "
-				, "All linked requirements must be in state ReadyForReview before being in state Released", 3,ws);
+		ConstraintSpec qa3 = ConstraintSpec.createInstance(Conditions.QA, "sd1-reviewAlwaysBeforeReleased"
+				, "self.in_jiraIn->forAll( issue | issue.requirements\r\n"
+						+ "->forAll(req | until(req.state <> 'Released' , req.state = 'ReadyForReview') \r\n"
+						+ "					and everytime( req.state = 'Released', next( asSoonAs( req.state <> 'Released',  until( req.state <> 'Released', req.state = 'ReadyForReview') ) ) ) ) ) ", "All linked requirements must be in state ReadyForReview before being in state Released",3, ws);
 		sd1.addQAConstraint(qa3);
 		
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
@@ -460,7 +463,7 @@ public class TestProcesses {
 		procD.setDescription("Test for Serialization");
 		procD.getInput().put("jiraIn", typeJira.name());
 		procD.getOutput().put("jiraOut", typeJira.name());
-		procD.getConditions().put(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
+		procD.getConditions().computeIfAbsent(Conditions.PRECONDITION, k -> new ArrayList<Constraint>()).add(new Constraint("self.in_jiraIn->size() = 1"));
 		
 		DTOs.DecisionNode dn1 = new DTOs.DecisionNode();
 		dn1.setCode("dndSubStart");
@@ -475,8 +478,8 @@ public class TestProcesses {
 		sd1.setCode("subtask1");
 		sd1.getInput().put("jiraIn", typeJira.name());
 		sd1.getOutput().put("jiraOut", typeJira.name());
-		sd1.getConditions().put(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
-		sd1.getConditions().put(Conditions.POSTCONDITION, "self.in_jiraIn->size() = 1 and self.in_jiraIn->forAll( issue | issue.state = 'Closed')");
+		sd1.getConditions().computeIfAbsent(Conditions.PRECONDITION, k -> new ArrayList<Constraint>()).add(new Constraint("self.in_jiraIn->size() = 1"));
+		sd1.getConditions().computeIfAbsent(Conditions.POSTCONDITION, k -> new ArrayList<Constraint>()).add(new Constraint( "self.in_jiraIn->size() = 1 and self.in_jiraIn->forAll( issue | issue.state = 'Closed')"));
 		sd1.getIoMapping().put("jiraOut", "self.in_jiraIn");//->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
 		sd1.setInDNDid(dn1.getCode());
 		sd1.setOutDNDid(dn2.getCode());
@@ -485,8 +488,8 @@ public class TestProcesses {
 		DTOs.Step sd2 = new DTOs.Step();
 		sd2.setCode("subtask2");
 		sd2.getInput().put("jiraIn", typeJira.name());
-		sd2.getConditions().put(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
-		sd2.getConditions().put(Conditions.POSTCONDITION, "self.in_jiraIn->size() = 1 and self.in_jiraIn->forAll( issue | issue.state = 'Closed')"); 
+		sd2.getConditions().computeIfAbsent(Conditions.PRECONDITION, k -> new ArrayList<Constraint>()).add(new Constraint("self.in_jiraIn->size() = 1"));
+		sd2.getConditions().computeIfAbsent(Conditions.POSTCONDITION, k -> new ArrayList<Constraint>()).add(new Constraint("self.in_jiraIn->size() = 1 and self.in_jiraIn->forAll( issue | issue.state = 'Closed')")); 
 		sd2.setInDNDid(dn1.getCode());
 		sd2.setOutDNDid(dn2.getCode());
 		procD.getSteps().add(sd2);
@@ -505,7 +508,7 @@ public class TestProcesses {
 		procD.setDescription("Test for Serialization");
 		procD.getInput().put("jiraIn", typeJira.name());
 		procD.getOutput().put("jiraOut", typeJira.name());
-		procD.getConditions().put(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
+		procD.getConditions().computeIfAbsent(Conditions.PRECONDITION, k -> new ArrayList<Constraint>()).add(new Constraint( "self.in_jiraIn->size() = 1"));
 		DTOs.DecisionNode dn1 = new DTOs.DecisionNode();
 		dn1.setCode("dndParentStart");
 		dn1.setInflowType(InFlowType.AND);
@@ -518,8 +521,8 @@ public class TestProcesses {
 		DTOs.Step sd1 = new DTOs.Step();
 		sd1.setCode("paratask1");
 		sd1.getInput().put("jiraIn", typeJira.name());
-		sd1.getConditions().put(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
-		sd1.getConditions().put(Conditions.POSTCONDITION, "self.in_jiraIn->forAll( issue | issue.state = 'Closed')"); 
+		sd1.getConditions().computeIfAbsent(Conditions.PRECONDITION, k -> new ArrayList<Constraint>()).add(new Constraint( "self.in_jiraIn->size() = 1"));
+		sd1.getConditions().computeIfAbsent(Conditions.POSTCONDITION, k -> new ArrayList<Constraint>()).add(new Constraint( "self.in_jiraIn->forAll( issue | issue.state = 'Closed')")); 
 		sd1.setInDNDid(dn1.getCode());
 		sd1.setOutDNDid(dn2.getCode());
 		procD.getSteps().add(sd1);
@@ -542,7 +545,7 @@ public class TestProcesses {
 		procD.setDescription("Test Accessing Github");
 		procD.getInput().put("issueIn", "git_issue");
 		procD.getOutput().put("testcaseOut", "git_issue");
-		procD.getConditions().put(Conditions.PRECONDITION, "self.in_issueIn->size() = 1");
+		procD.getConditions().computeIfAbsent(Conditions.PRECONDITION, k -> new ArrayList<Constraint>()).add(new Constraint( "self.in_issueIn->size() = 1"));
 		DTOs.DecisionNode dn1 = new DTOs.DecisionNode();
 		dn1.setCode("dndGitProcStart");
 		dn1.setInflowType(InFlowType.AND);
@@ -556,8 +559,8 @@ public class TestProcesses {
 		sd1.setCode("single1");
 		sd1.getInput().put("issueIn", "git_issue");
 		sd1.getOutput().put("testcaseOut", "git_issue");
-		sd1.getConditions().put(Conditions.PRECONDITION, "self.in_issueIn->size() = 1");
-		sd1.getConditions().put(Conditions.POSTCONDITION, "self.out_testcaseOut->forAll( issue | issue.state = 'Closed')");
+		sd1.getConditions().computeIfAbsent(Conditions.PRECONDITION, k -> new ArrayList<Constraint>()).add(new Constraint( "self.in_issueIn->size() = 1"));
+		sd1.getConditions().computeIfAbsent(Conditions.POSTCONDITION, k -> new ArrayList<Constraint>()).add(new Constraint( "self.out_testcaseOut->forAll( issue | issue.state = 'Closed')"));
 		//sd1.getIoMapping().put("issueIn2testcaseOut", "self.in_issueIn->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
 		sd1.setInDNDid(dn1.getCode());
 		sd1.setOutDNDid(dn2.getCode());

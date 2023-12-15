@@ -48,11 +48,11 @@ public class ProcessStepStats {
 		step.getQAstatus().stream()
 		.forEach(check -> {
 			if (check.getCr() == null) 				
-				qaConstraintsUnevaluatedAtSomeTime.add(check.getQaSpec().getQaConstraintId());			
+				qaConstraintsUnevaluatedAtSomeTime.add(check.getSpec().getConstraintId());			
 			if (!check.getCr().isConsistent()) 
-				qaConstraintsUnfulfilledAtSomeTime.add(check.getQaSpec().getQaConstraintId());
+				qaConstraintsUnfulfilledAtSomeTime.add(check.getSpec().getConstraintId());
 			else
-				qaConstraintsFulfilledAtSomeTime.add(check.getQaSpec().getQaConstraintId());
+				qaConstraintsFulfilledAtSomeTime.add(check.getSpec().getConstraintId());
 		});
 		// check for a completion ready step whether any QA constraint is fulfilled or not
 		if (!step.arePostCondFulfilled() || step.getActualLifecycleState().equals(State.CANCELED) || step.getActualLifecycleState().equals(State.NO_WORK_EXPECTED)) {
@@ -61,11 +61,11 @@ public class ProcessStepStats {
 		step.getQAstatus().stream()
 		.forEach(check -> {
 			if (check.getCr() == null) 				
-				qaConstraintsUnevaluatedAtStepCompletion.add(check.getQaSpec().getQaConstraintId());			
+				qaConstraintsUnevaluatedAtStepCompletion.add(check.getSpec().getConstraintId());			
 			if (!check.getCr().isConsistent()) 
-				qaConstraintsUnfulfilledAtStepCompletion.add(check.getQaSpec().getQaConstraintId());
+				qaConstraintsUnfulfilledAtStepCompletion.add(check.getSpec().getConstraintId());
 			else
-				qaConstraintsFulfilledAtStepCompletion.add(check.getQaSpec().getQaConstraintId());
+				qaConstraintsFulfilledAtStepCompletion.add(check.getSpec().getConstraintId());
 		});
 	}
 	
@@ -108,11 +108,11 @@ public class ProcessStepStats {
 		step.getQAstatus().stream()
 		.forEach(check -> {
 			if (check.getCr() == null) 
-					qaConstraintsUnevaluatedAtEnd.add(check.getQaSpec().getQaConstraintId());
+					qaConstraintsUnevaluatedAtEnd.add(check.getSpec().getConstraintId());
 			else if (!check.getCr().isConsistent()) 
-					qaConstraintsUnfulfilledAtEnd.add(check.getQaSpec().getQaConstraintId());
+					qaConstraintsUnfulfilledAtEnd.add(check.getSpec().getConstraintId());
 				else
-					qaConstraintsFulfilledAtEnd.add(check.getQaSpec().getQaConstraintId());
+					qaConstraintsFulfilledAtEnd.add(check.getSpec().getConstraintId());
 			});		
 		
 		exp = step.getExpectedLifecycleState().toString();

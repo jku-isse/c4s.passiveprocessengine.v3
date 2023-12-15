@@ -1,4 +1,4 @@
-package at.jku.isse.designspace.passiveprocessengine.instance;
+package at.jku.isse.passiveprocessengine.instance;
 
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
@@ -31,7 +31,7 @@ import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
+import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
@@ -285,9 +285,9 @@ public class RepairOrderTest {
 				"self.in_jiraIn->size() = 1 " + "and self.in_jiraIn->forAll( issue | issue.state = 'Open') ");
 		sd1.setCondition(Conditions.POSTCONDITION,
 				"self.out_jiraOut->size() = 2 " + "and self.in_jiraIn->forAll( issue2 | issue2.state = 'Closed') ");
-		QAConstraintSpec qa2 = QAConstraintSpec.createInstance("sd1-qa1-state",
-				"self.out_jiraOut->size() > 0 and self.out_jiraOut->forAll( issue | issue.state = 'Closed')",
-				"All linked issues should be closed", 2, ws);
+		ConstraintSpec qa2 = ConstraintSpec.createInstance(Conditions.QA,
+				"sd1-qa1-state",
+				"self.out_jiraOut->size() > 0 and self.out_jiraOut->forAll( issue | issue.state = 'Closed')", "All linked issues should be closed", 2, ws);
 		sd1.addQAConstraint(qa2);
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);

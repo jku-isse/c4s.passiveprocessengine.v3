@@ -52,9 +52,10 @@ public class DTOs {
 	
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
-	public static class QAConstraint extends Element {
-		String arlRule;
+	public static class Constraint extends Element {
+		final String arlRule;
 		int specOrderIndex = 0;
+		boolean isOverridable = false;
 		
 		@Override
 		public boolean equals(Object obj) {
@@ -76,8 +77,8 @@ public class DTOs {
 		Map<String,String> input = new HashMap<>();
 		Map<String,String> output = new HashMap<>();
 		Map<String,String> ioMapping = new HashMap<>();
-		Map<Conditions,String> conditions = new HashMap<>();
-		Set<QAConstraint> qaConstraints = new HashSet<>();
+		Map<Conditions,List<Constraint>> conditions = new HashMap<>();
+		Set<Constraint> qaConstraints = new HashSet<>();
 		int specOrderIndex = 0;
 		String html_url;	
 				

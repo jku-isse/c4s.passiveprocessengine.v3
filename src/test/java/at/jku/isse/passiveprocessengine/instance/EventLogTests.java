@@ -1,4 +1,4 @@
-package at.jku.isse.designspace.passiveprocessengine.instance;
+package at.jku.isse.passiveprocessengine.instance;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -18,7 +18,6 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
-import at.jku.isse.designspace.passiveprocessengine.TestUtils;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairNodeScorer;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairStats;
@@ -29,11 +28,12 @@ import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
+import at.jku.isse.passiveprocessengine.TestUtils;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
+import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
@@ -54,6 +54,7 @@ import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
 import at.jku.isse.passiveprocessengine.instance.messages.WorkspaceListenerSequencer;
 import at.jku.isse.passiveprocessengine.monitoring.CurrentSystemTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
+import at.jku.isse.passiveprocessengine.monitoring.ProcessStateChangeLog;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStepStats;
 import at.jku.isse.passiveprocessengine.monitoring.RepairAnalyzer;
@@ -63,7 +64,7 @@ import at.jku.isse.passiveprocessengine.monitoring.UsageMonitor;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 public
-class PrematureDetectionTests {
+class EventLogTests {
 
 	static Workspace ws;
 	static InstanceType typeJira;
@@ -71,6 +72,7 @@ class PrematureDetectionTests {
 	static JsonDefinitionSerializer json = new JsonDefinitionSerializer();
 	static ProcessQAStatsMonitor monitor;
 	static RepairAnalyzer repAnalyzer;
+	static ProcessStateChangeLog logs = new ProcessStateChangeLog();
 	static RepairStats rs=new RepairStats();
 	static RepairNodeScorer scorer=new SortOnRepairPercentage();
 	static ReplayTimeProvider timeProvider=new ReplayTimeProvider();
@@ -84,6 +86,7 @@ class PrematureDetectionTests {
 		EventDistributor eventDistrib = new EventDistributor();
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
 		eventDistrib.registerHandler(monitor);
+		eventDistrib.registerHandler(logs);
 		picp = new ProcessInstanceChangeProcessor(ws, eventDistrib);
 		repAnalyzer = new RepairAnalyzer(ws,rs,scorer,timeProvider, new UsageMonitor(timeProvider));
 		WorkspaceListenerSequencer wsls = new WorkspaceListenerSequencer(ws);
@@ -93,49 +96,8 @@ class PrematureDetectionTests {
 	}
 
 	
-	
-
-	
 	@Test
-	void testDetectPrematureStep() throws ProcessException {
-		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
-		Instance reqB =  TestArtifacts.getJiraInstance(ws, "reqB");
-		Instance reqC = TestArtifacts.getJiraInstance(ws, "reqC");
-		Instance reqD = TestArtifacts.getJiraInstance(ws, "reqD");
-		
-		ProcessDefinition procDef = getPrematureDetectableProcessDefinition(ws);
-		procDef.getPrematureTriggers().entrySet().stream().forEach(entry -> System.out.println(entry.getKey() + ": "+entry.getValue()));
-		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
-		proc.addInput("jiraIn", jiraA);
-		ws.concludeTransaction();
-		
-		assert(proc.getProcessSteps().stream()
-				.filter(step -> step.getDefinition().getName().equals("sd1") )
-				.allMatch(step -> (step.getOutput("jiraOut").size() == 0) && step.getActualLifecycleState().equals(State.ENABLED) ));
-		assert(proc.getProcessSteps().size() == 1);
-		
-		TestArtifacts.addJiraToJira(jiraA, reqB); // add a requirement 
-		TestArtifacts.setStateToJiraInstance(reqB, JiraStates.Released); //and immediately set it to Released
-		// this should trigger premature invocation
-		
-		ws.concludeTransaction();
-		TestUtils.printFullProcessToLog(proc);
-		TestUtils.assertAllConstraintsAreValid(proc);
-		assert(proc.getProcessSteps().stream()
-				.filter(step -> step.getDefinition().getName().equals("sd2") )
-				.allMatch(step -> (step.isInPrematureOperationModeDueTo().size() == 1)
-						&& (step.isInUnsafeOperationModeDueTo().size() == 0)
-						&& (step.getInput("reqIn").size() == 1) 
-						&& step.getActualLifecycleState().equals(State.COMPLETED) ));
-		assert(proc.getProcessSteps().size() == 2);
-		Map<ProcessStep, ProcessStepStats> stepStats = monitor.stats.get(proc).getPerStepStats();
-		assert(proc.getProcessSteps().stream()
-		.filter(step -> step.getDefinition().getName().equals("sd2") )
-		.allMatch(step -> stepStats.get(step).getPrematurelyStarted() != null));
-	}
-	
-	@Test
-	void testDetectPrematureStepDuringImmediateDatapropagation() throws ProcessException {
+	void testEventsUponImmediateDatapropagation() throws ProcessException {
 		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
 		Instance reqB =  TestArtifacts.getJiraInstance(ws, "reqB");
 		Instance reqC = TestArtifacts.getJiraInstance(ws, "reqC");
@@ -206,88 +168,13 @@ class PrematureDetectionTests {
 		assert(proc.getProcessSteps().size() == 2);
 		assert(sd2Stats.getPrematurelyStarted() == null);
 		assert(sd2Stats.getPrematureIntervals().size() == 1);
+		
+		System.out.println(logs.getEventLogAsJson(proc.getInstance().id().value()));
+		
+		//assert(logs.getEventLogAsJson(proc.getName()).size() == 10);
 	}
 	
-	@Test
-	void testDetectUnsafeStep() throws ProcessException {
-		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
-		Instance reqB =  TestArtifacts.getJiraInstance(ws, "reqB");
-		Instance reqC = TestArtifacts.getJiraInstance(ws, "reqC");
-		Instance reqD = TestArtifacts.getJiraInstance(ws, "reqD");
-		
-		ProcessDefinition procDef = getPrematureDetectableProcessDefinition(ws);
-		procDef.getPrematureTriggers().entrySet().stream().forEach(entry -> System.out.println(entry.getKey() + ": "+entry.getValue()));
-		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
-		proc.addInput("jiraIn", jiraA);
-		ws.concludeTransaction();
-		
-		assert(proc.getProcessSteps().stream()
-				.filter(step -> step.getDefinition().getName().equals("sd1") )
-				.allMatch(step -> (step.getOutput("jiraOut").size() == 0) && step.getActualLifecycleState().equals(State.ENABLED) ));
-		assert(proc.getProcessSteps().size() == 1);
-		
-		TestArtifacts.addJiraToJira(jiraA, reqB); // add a requirement 
-		TestArtifacts.setStateToJiraInstance(reqB, JiraStates.Released); //and immediately set it to Released
-		TestArtifacts.addJiraToJira(jiraA, reqC); // add a requirement that doesnt fulfill QA 
-		TestArtifacts.setStateToJiraInstance(jiraA, JiraStates.Closed);// and now also complete step
-		// this should trigger premature invocation in unsafe state
-		
-		ws.concludeTransaction();
-		TestUtils.printFullProcessToLog(proc);
-		TestUtils.assertAllConstraintsAreValid(proc);
-		assert(proc.getProcessSteps().stream()
-				.filter(step -> step.getDefinition().getName().equals("sd2") )
-				.allMatch(step -> (step.isInPrematureOperationModeDueTo().size() == 0)
-						&& (step.isInUnsafeOperationModeDueTo().size() == 1)
-						&& (step.getInput("reqIn").size() == 2) 
-						&& step.getActualLifecycleState().equals(State.ACTIVE) ));
-		assert(proc.getProcessSteps().size() == 2);
-		
-		Map<ProcessStep, ProcessStepStats> stepStats = monitor.stats.get(proc).getPerStepStats();
-		assert(proc.getProcessSteps().stream()
-		.filter(step -> step.getDefinition().getName().equals("sd2") )
-		.allMatch(step -> stepStats.get(step).getUnsafeStarted() != null));
-	}
 	
-	@Test
-	void testDetectUnsafeStepWithImmediateDatapropagation() throws ProcessException {
-		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
-		Instance reqB =  TestArtifacts.getJiraInstance(ws, "reqB");
-		Instance reqC = TestArtifacts.getJiraInstance(ws, "reqC");
-		Instance reqD = TestArtifacts.getJiraInstance(ws, "reqD");
-		
-		ProcessDefinition procDef = getPrematureDetectableProcessDefinition(ws, true);
-		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
-		proc.addInput("jiraIn", jiraA);
-		ws.concludeTransaction();
-		
-		assert(proc.getProcessSteps().stream()
-				.filter(step -> step.getDefinition().getName().equals("sd1") )
-				.allMatch(step -> (step.getOutput("jiraOut").size() == 0) && step.getActualLifecycleState().equals(State.ENABLED) ));
-		assert(proc.getProcessSteps().size() == 2);
-		
-		TestArtifacts.addJiraToJira(jiraA, reqB); // add a requirement 
-		TestArtifacts.setStateToJiraInstance(reqB, JiraStates.Released); //and immediately set it to Released
-		TestArtifacts.addJiraToJira(jiraA, reqC); // add a requirement that doesnt fulfill QA 
-		TestArtifacts.setStateToJiraInstance(jiraA, JiraStates.Closed);// and now also complete step
-		// this should trigger premature invocation in unsafe state
-		
-		ws.concludeTransaction();
-		TestUtils.printFullProcessToLog(proc);
-		TestUtils.assertAllConstraintsAreValid(proc);
-		assert(proc.getProcessSteps().stream()
-				.filter(step -> step.getDefinition().getName().equals("sd2") )
-				.allMatch(step -> (step.isInPrematureOperationModeDueTo().size() == 0)
-						&& (step.isInUnsafeOperationModeDueTo().size() == 1)
-						&& (step.getInput("reqIn").size() == 2) 
-						&& step.getActualLifecycleState().equals(State.ACTIVE) ));
-		assert(proc.getProcessSteps().size() == 2);
-		Map<ProcessStep, ProcessStepStats> stepStats = monitor.stats.get(proc).getPerStepStats();
-		assert(proc.getProcessSteps().stream()
-		.filter(step -> step.getDefinition().getName().equals("sd2") )
-		.allMatch(step -> stepStats.get(step).getUnsafeStarted() != null));
-		
-	}
 	
 	public static ProcessDefinition getPrematureDetectableProcessDefinition(Workspace ws) throws ProcessException {
 		return getPrematureDetectableProcessDefinition(ws, false);
@@ -319,7 +206,7 @@ class PrematureDetectionTests {
 				+ "and self.in_jiraIn->forAll( issue | issue.state = 'Open') ");
 		sd1.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() = 2 "
 				+ "and self.in_jiraIn->forAll( issue2 | issue2.state = 'Closed') ");
-		QAConstraintSpec qa1 = QAConstraintSpec.createInstance("sd1-qa1-state", "self.out_jiraOut->size() > 0 and self.out_jiraOut->forAll( issue | issue.state = 'ReadyForReview' or issue.state = 'Released')", "All linked requirements should be ready for review", 2,ws);
+		ConstraintSpec qa1 = ConstraintSpec.createInstance(Conditions.QA, "sd1-qa1-state", "self.out_jiraOut->size() > 0 and self.out_jiraOut->forAll( issue | issue.state = 'ReadyForReview' or issue.state = 'Released')", "All linked requirements should be ready for review",2, ws);
 		sd1.addQAConstraint(qa1);
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);

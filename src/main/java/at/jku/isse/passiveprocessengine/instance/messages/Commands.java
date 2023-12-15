@@ -141,19 +141,20 @@ public class Commands {
     @Data
     public static class ConditionChangedCmd extends ProcessScopedCmd {
         private final ProcessStep step;
+        private final ConsistencyRule crule;
         private final Conditions condition;
         private final boolean isFulfilled;
 		@Override
 		public List<Events.ProcessChangedEvent> execute() {
 			switch(condition) {
 			case ACTIVATION:				
-				return step.setActivationConditionsFulfilled(isFulfilled);
+				return step.processActivationConditionsChange(crule, isFulfilled);
 			case CANCELATION:
-				return step.setCancelConditionsFulfilled(isFulfilled);
+				return step.processCancelConditionsChange(crule, isFulfilled);
 			case POSTCONDITION:
-				return step.setPostConditionsFulfilled(isFulfilled);
+				return step.processPostConditionsChange(crule, isFulfilled);
 			case PRECONDITION:
-				return step.setPreConditionsFulfilled(isFulfilled);				
+				return step.processPreConditionsChange(crule, isFulfilled);				
 			default:
 				return Collections.emptyList();
 			}
@@ -161,7 +162,7 @@ public class Commands {
 		}
 		@Override
 		public String toString() {
-			return "ConditionChangedCmd [" + step.getDefinition().getName() + " " + condition + " : " + isFulfilled
+			return "ConditionChangedCmd [" + step.getDefinition().getName() + " " + crule.name() + " : " + isFulfilled
 					+ "]";
 		}
         
@@ -172,7 +173,7 @@ public class Commands {
 		
 		@Override
 		public String getId() {
-			return "ConditionChangedCmd ["+step.getName()+condition.toString();
+			return "ConditionChangedCmd ["+step.getName()+crule.name();
 		}
     }
     

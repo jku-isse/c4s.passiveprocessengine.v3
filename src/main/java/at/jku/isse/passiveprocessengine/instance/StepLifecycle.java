@@ -7,7 +7,7 @@ import com.github.oxo42.stateless4j.triggers.TriggerWithParameters1;
 
 public class StepLifecycle {
 	
-	public static enum Conditions { PRECONDITION, POSTCONDITION, ACTIVATION, CANCELATION }
+	public static enum Conditions { PRECONDITION, POSTCONDITION, ACTIVATION, CANCELATION, DATAMAPPING, QA }
 	
 	// see as inspiration: https://docs.camunda.org/manual/7.4/reference/cmmn11/concepts/lifecycle/#task-stage-lifecycle
 	public static enum State {
