@@ -15,25 +15,24 @@ import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep.CoreProperties;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ConstraintWrapper extends ProcessInstanceScopedElement {
 
-	
+
 	public static final String designspaceTypeId = ConstraintWrapper.class.getSimpleName();
-	static enum CoreProperties {qaSpec, lastChanged, crule, parentStep, isOverriden, overrideValue, overrideReason};
-	
+	static enum CoreProperties {qaSpec, lastChanged, crule, parentStep, isOverriden, overrideValue, overrideReason}
+
 	ZonedDateTime lastChanged;
-	
+
 	public ConstraintWrapper(Instance instance) {
 		super(instance);
-		
-	}
-	
 
-	
+	}
+
+
+
 	public ConsistencyRule getCr() {
 		return (ConsistencyRule) instance.getPropertyAsValueOrNull(CoreProperties.crule.toString());
 	}
@@ -44,14 +43,14 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 			prop.set(cr);
 	}
 
-	public Boolean getEvalResult() {		
+	public Boolean getEvalResult() {
 		if (getIsOverriden()) {
 			return getOverrideValue();
 		} else {
 			return getTrueResult();
 		}
 	}
-	
+
 	private Boolean getTrueResult() {
 		ConsistencyRule cr = getCr();
 		if (cr == null)
@@ -82,45 +81,45 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 	private void setSpec(ConstraintSpec qaSpec) {
 		instance.getPropertyAsSingle(CoreProperties.qaSpec.toString()).set(qaSpec.getInstance());
 	}
-	
+
 	public ProcessStep getParentStep() {
 		Instance step = instance.getPropertyAsInstance(CoreProperties.parentStep.toString());
 		if (step != null)
 			return WrapperCache.getWrappedInstance(ProcessStep.class, step);
-		else 
+		else
 			return null;
 	}
-	
+
 	@Override
 	public ProcessDefinitionScopedElement getDefinition() {
 		return getSpec();
-	}	
-	
+	}
+
 	public boolean getIsOverriden() {
 		return (boolean) instance.getPropertyAsValue(CoreProperties.isOverriden.toString());
 	}
-	
+
 	public boolean getOverrideValue() {
 		return (boolean) instance.getPropertyAsValue(CoreProperties.overrideValue.toString());
 	}
-	
+
 	public boolean isOverrideDiffFromConstraintResult() {
 		// if no override is there, then no effect
 		if (getIsOverriden()) {
 			return getOverrideValue() != getTrueResult();
 		} else return false;
 	}
-	
+
 	public String getOverrideReasonOrNull() {
 		return (String) instance.getPropertyAsValueOrNull(CoreProperties.overrideReason.toString());
 	}
-	
+
 	public void removeOverride() {
 		setIsOverriden(false);
 		setOverrideReason("");
 		this.instance.workspace.concludeTransaction();
 	}
-	
+
 	public String setOverrideWithReason(String reason) {
 		if (getSpec().isOverridable()) {
 			if (reason == null || reason.length() == 0) {
@@ -128,35 +127,36 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 				log.warn(msg);
 				return msg;
 			} else {
-				setIsOverriden(true);				
+				setIsOverriden(true);
 				setOverrideReason(reason);
-				setOverrideValue(!getTrueResult());		
+				setOverrideValue(!getTrueResult());
 				this.instance.workspace.concludeTransaction();
 				return "";
-			}						
-		} else {		
+			}
+		} else {
 			String msg = String.format("Attempt to override value of non-overridable constraint %s ", getSpec().getName());
 			log.warn(msg);
 			return msg;
-		}		
-	}		
-	
+		}
+	}
+
 	private void setIsOverriden(boolean isOverriden) {
 		instance.getPropertyAsSingle(CoreProperties.isOverriden.toString()).set(isOverriden);
 	}
-	
+
 	private void setOverrideValue(boolean overrideTo) {
 		instance.getPropertyAsSingle(CoreProperties.overrideValue.toString()).set(overrideTo);
 	}
-	
+
 	private void setOverrideReason(String reason) {
 		instance.getPropertyAsSingle(CoreProperties.overrideReason.toString()).set(reason);
 	}
-	
+
+	@Override
 	public void deleteCascading() {
 		super.deleteCascading();
 	}
-	
+
 	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws){
 		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId));
 			if (thisType.isPresent())
@@ -174,7 +174,7 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 				return typeStep;
 			}
 	}
-	
+
 	public static ConstraintWrapper getInstance(Workspace ws, ConstraintSpec qaSpec, ZonedDateTime lastChanged, ProcessStep owningStep, ProcessInstance proc) {
 		Instance inst = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws), qaSpec.getId()+proc.getName()+"_"+UUID.randomUUID());
 		ConstraintWrapper cw = WrapperCache.getWrappedInstance(ConstraintWrapper.class, inst);
@@ -186,5 +186,5 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 		cw.setIsOverriden(false);
 		return cw;
 	}
-	
+
 }

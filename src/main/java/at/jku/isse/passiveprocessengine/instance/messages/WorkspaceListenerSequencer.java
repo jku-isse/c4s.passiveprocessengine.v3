@@ -12,8 +12,8 @@ import at.jku.isse.designspace.core.model.WorkspaceListener;
 public class WorkspaceListenerSequencer implements WorkspaceListener {
 
 	List<WorkspaceListener> listeners = Collections.synchronizedList(new LinkedList<>());
-	
-	
+
+
 	public WorkspaceListenerSequencer(Workspace ws) {
 		ws.workspaceListeners.add(this);
 	}
@@ -21,7 +21,7 @@ public class WorkspaceListenerSequencer implements WorkspaceListener {
 	public void registerListener(WorkspaceListener wsl) {
 		listeners.add(wsl);
 	}
-	
+
 	@Override
 	public void handleUpdated(Collection<Operation> operations) {
 		listeners.forEach(wsl -> wsl.handleUpdated(operations));

@@ -20,9 +20,9 @@ import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElement
 public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 
 	public static enum CoreProperties {inFlowType, dataMappingDefinitions, inSteps, outSteps, hierarchyDepth, closingDN}
-	
+
 	public static final String designspaceTypeId = DecisionNodeDefinition.class.getSimpleName();
-	
+
 	public DecisionNodeDefinition(Instance instance) {
 		super(instance);
 	}
@@ -30,27 +30,27 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 	public void setInflowType(InFlowType ift) {
 		instance.getPropertyAsSingle(CoreProperties.inFlowType.toString()).set(ift.toString());
 	}
-	
+
 	public InFlowType getInFlowType() {
 		return InFlowType.valueOf((String) instance.getPropertyAsValueOrElse(CoreProperties.inFlowType.toString(), () -> InFlowType.AND.toString()));
 	}
-		
-	
+
+
 	public DecisionNodeDefinition getScopeClosingDecisionNodeOrNull() {
 		if (this.getOutSteps().isEmpty())
 			return null;
-		else {			
+		else {
 			Instance dnd = instance.getPropertyAsInstance(CoreProperties.closingDN.toString());
 			if (dnd != null)
 				return WrapperCache.getWrappedInstance(DecisionNodeDefinition.class, dnd);
-			else { 
+			else {
 				DecisionNodeDefinition closingDnd = determineScopeClosingDN();
-				instance.getPropertyAsSingle(CoreProperties.closingDN.toString()).set(closingDnd.getInstance());		
+				instance.getPropertyAsSingle(CoreProperties.closingDN.toString()).set(closingDnd.getInstance());
 				return closingDnd;
 			}
 		}
 	}
-			
+
 	private DecisionNodeDefinition determineScopeClosingDN() {
 //		List<Step> nextSteps = getOutStepsOf(dn);
 //		if (nextSteps.isEmpty()) return null; // end of the process, closing DN reached
@@ -68,26 +68,26 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 					nextStepOutDNs = nextNextStepOutDNs;
 				}
 				assert(nextStepOutDNs.size() > 0);
-			} 
-			return sameDepthNodes.iterator().next();				
+			}
+			return sameDepthNodes.iterator().next();
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	protected void addInStep(StepDefinition sd) {
 		instance.getPropertyAsSet(CoreProperties.inSteps.toString()).add(sd.getInstance());
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	protected void addOutStep(StepDefinition sd) {
 		instance.getPropertyAsSet(CoreProperties.outSteps.toString()).add(sd.getInstance());
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public void addDataMappingDefinition(MappingDefinition md) {
 		instance.getPropertyAsSet(CoreProperties.dataMappingDefinitions.toString()).add(md.getInstance());
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public Set<MappingDefinition> getMappings() {
 		SetProperty<?> mdSet = instance.getPropertyAsSet(CoreProperties.dataMappingDefinitions.toString());
@@ -97,7 +97,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public Set<StepDefinition> getInSteps() {
 		return (Set<StepDefinition>) instance.getPropertyAsSet(CoreProperties.inSteps.toString()).stream()
@@ -106,7 +106,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 			.map(inst -> WrapperCache.getWrappedInstance(ProcessDefinition.getMostSpecializedClass((Instance) inst), (Instance) inst))
 			.collect(Collectors.toSet());
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public Set<StepDefinition> getOutSteps() {
 		return (Set<StepDefinition>) instance.getPropertyAsSet(CoreProperties.outSteps.toString()).stream()
@@ -115,31 +115,31 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 			.map(inst -> WrapperCache.getWrappedInstance(ProcessDefinition.getMostSpecializedClass((Instance) inst), (Instance) inst))
 			.collect(Collectors.toSet());
 	}
-	
-	public void setDepthIndexRecursive(int indexToSet) {		
+
+	public void setDepthIndexRecursive(int indexToSet) {
 		instance.getPropertyAsSingle(CoreProperties.hierarchyDepth.toString()).set(indexToSet);
-		int newIndex = this.getOutSteps().size() > 1 ? indexToSet +1 : indexToSet; // we only increase the depth when we branch out	
-		this.getOutSteps().stream().forEach(step -> step.setDepthIndexRecursive(newIndex));				
+		int newIndex = this.getOutSteps().size() > 1 ? indexToSet +1 : indexToSet; // we only increase the depth when we branch out
+		this.getOutSteps().stream().forEach(step -> step.setDepthIndexRecursive(newIndex));
 	}
-	
+
 	public Integer getDepthIndex() {
 		return (Integer) instance.getPropertyAsValueOrElse(CoreProperties.hierarchyDepth.toString(), () -> -1);
 	}
-	
+
 	@Override
 	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
 		this.getMappings().forEach(md -> md.deleteCascading(configFactory));
 		// no instanceType for DNI to delete, all processes use the same one.
 		super.deleteCascading(configFactory);
 	}
-	
+
 	public List<ProcessDefinitionError> checkDecisionNodeStructureValidity() {
 		 List<ProcessDefinitionError> errors = this.getMappings().stream()
 			.flatMap(mapping -> checkResolvable(mapping).stream())
 			.collect(Collectors.toList());
 		return errors;
 	}
-	
+
 	private List<ProcessDefinitionError> checkResolvable(MappingDefinition mapping) {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
 		StepDefinition fromStep = this.getProcess().getStepDefinitionByName(mapping.getFromStepType());
@@ -147,7 +147,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 			String reason = String.format("Source Step '%s' is not a known process or process step", mapping.getFromStepType());
 			errors.add(new ProcessDefinitionError(this, "InterStepMapping Invalid", reason));
 		} else {
-			if (fromStep == null) { 
+			if (fromStep == null) {
 				fromStep = this.getProcess();
 				if (!fromStep.getExpectedInput().containsKey(mapping.getFromParameter())) {
 					String reason = String.format("Source Process '%s' does not have an input property '%s' to be used as source ", mapping.getFromStepType(), mapping.getFromParameter());
@@ -165,7 +165,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 			String reason = String.format("Destination Step '%s' is not a known process or process step", mapping.getToStepType());
 			errors.add(new ProcessDefinitionError(this, "InterStepMapping Invalid", reason));
 		} else {
-			if (toStep == null) { 
+			if (toStep == null) {
 				toStep = this.getProcess();
 				if (!toStep.getExpectedOutput().containsKey(mapping.getToParameter())) {
 					String reason = String.format("Destination Process '%s' does not have an input property '%s' to be used as destination  ", mapping.getToStepType(), mapping.getToParameter());
@@ -180,9 +180,9 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 		}
 		return errors;
 	}
-	
+
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
-		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId)); 
+		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId));
 		//= ws.debugInstanceTypes().stream()
 		//		.filter(it -> it.name().contentEquals(designspaceTypeId))
 		//		.findAny();
@@ -207,7 +207,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 		instance.getPropertyAsSingle(CoreProperties.hierarchyDepth.toString()).set(-1);
 		return WrapperCache.getWrappedInstance(DecisionNodeDefinition.class, instance);
 	}
-	
+
 	public static enum InFlowType {
 		AND, OR, XOR, SEQ;
 	}

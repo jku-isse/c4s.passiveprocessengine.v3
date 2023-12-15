@@ -44,13 +44,13 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
         }
         return null;
     }
-    
-    
-    
+
+
+
     private TypeAdapter<ProcessStats> wrapProcessStatsAdapter(Gson gson, TypeToken<ProcessStats> type) {
         final TypeAdapter<ProcessStats> delegate = gson.getDelegateAdapter(this, type);
 
-        return new TypeAdapter<ProcessStats>() {
+        return new TypeAdapter<>() {
 
             @Override
             public void write(JsonWriter out, ProcessStats value) throws IOException {
@@ -67,10 +67,10 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
     }
 
     private TypeAdapter<OffsetDateTime> wrapOffsetDateTimeAdapter(Gson gson, TypeToken<OffsetDateTime> type) {
-    	
+
     	final TypeAdapter<String> delegate = gson.getDelegateAdapter(this, TypeToken.get(String.class) );
 
-        return new TypeAdapter<OffsetDateTime>() {
+        return new TypeAdapter<>() {
 
             @Override
             public void write(JsonWriter out, OffsetDateTime value) throws IOException {
@@ -79,7 +79,7 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
             		delegate.write(out, strvalue);
                 } else
                 	delegate.write(out, "");
-            	
+
             }
 
             @Override public OffsetDateTime read(JsonReader in) throws IOException {
@@ -89,7 +89,7 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
             }
         };
     }
-    
+
 	private static class CompareBySpecOrder  implements Comparator<ProcessStepStats> {
 
 		@Override
@@ -98,12 +98,12 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
 				return o1.getStep().getDefinition().getSpecOrderIndex().compareTo(o2.getStep().getDefinition().getSpecOrderIndex());
 			else return 0;
 		}
-		
+
 	}
- 
-	
+
+
 	private TypeAdapter<StepStateTransitionEvent> wrapStepStateTransitionEvent(Gson gson, TypeToken<StepStateTransitionEvent> type) {
-		return new TypeAdapter<StepStateTransitionEvent>() {
+		return new TypeAdapter<>() {
 
 			@Override
 			public void write(JsonWriter out, StepStateTransitionEvent value) throws IOException {
@@ -124,14 +124,14 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
 			}
 
 			@Override
-			public StepStateTransitionEvent read(JsonReader in) throws IOException {	
+			public StepStateTransitionEvent read(JsonReader in) throws IOException {
 				throw new RuntimeException("Adapter not intended to be used for deserialization");
 			}
 		};
 	}
-	
+
 	private TypeAdapter<ConditionFulfillmentChanged> wrapPostconditionFulfillmentChanged(Gson gson, TypeToken<ConditionFulfillmentChanged> type) {
-		return new TypeAdapter<ConditionFulfillmentChanged>() {
+		return new TypeAdapter<>() {
 
 			@Override
 			public void write(JsonWriter out, ConditionFulfillmentChanged value) throws IOException {
@@ -150,14 +150,14 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
 			}
 
 			@Override
-			public ConditionFulfillmentChanged read(JsonReader in) throws IOException {	
+			public ConditionFulfillmentChanged read(JsonReader in) throws IOException {
 				throw new RuntimeException("Adapter not intended to be used for deserialization");
 			}
 		};
 	}
-	
+
 	private TypeAdapter<QAFulfillmentChanged> wrapQAFulfillmentChanged(Gson gson, TypeToken<QAFulfillmentChanged> type) {
-		return new TypeAdapter<QAFulfillmentChanged>() {
+		return new TypeAdapter<>() {
 
 			@Override
 			public void write(JsonWriter out, QAFulfillmentChanged value) throws IOException {
@@ -174,17 +174,17 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
 			}
 
 			@Override
-			public QAFulfillmentChanged read(JsonReader in) throws IOException {	
+			public QAFulfillmentChanged read(JsonReader in) throws IOException {
 				throw new RuntimeException("Adapter not intended to be used for deserialization");
 			}
 		};
 	}
-	
+
     public static Gson gson;
-    
+
 	public static void writeToJSONFile(String pathInclFileName, Collection<ProcessStats> stats) {
 		 if (gson == null) {
-			 gson = new GsonBuilder()	        
+			 gson = new GsonBuilder()
 				 	.registerTypeAdapterFactory(new MultiTypeAdapterFactory())
 	                .setPrettyPrinting()
 	                .create();
@@ -196,6 +196,6 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
 			e.printStackTrace();
 		}
 	}
-    
+
 }
 

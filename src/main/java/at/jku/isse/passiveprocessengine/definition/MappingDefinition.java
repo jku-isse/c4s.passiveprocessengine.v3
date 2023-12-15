@@ -17,15 +17,15 @@ public class MappingDefinition extends InstanceWrapper{
 //		outToOut, // from Step output to process output
 //		inToOut //from process input to process output
 //		};
-	
+
 	public static enum CoreProperties {fromStepType, fromParameter, toStepType, toParameter, flowDir}
-	
+
 	public static final String designspaceTypeId = MappingDefinition.class.getSimpleName();
-	
+
 	public MappingDefinition(Instance instance) {
 		super(instance);
 	}
-	
+
 	public String getFromStepType() {
 		return (String) instance.getPropertyAsValueOrNull(CoreProperties.fromStepType.toString());
 	}
@@ -57,12 +57,12 @@ public class MappingDefinition extends InstanceWrapper{
 	public void setToParameter(String toParameter) {
 		instance.getPropertyAsSingle(CoreProperties.toParameter.toString()).set(toParameter);
 	}
-	
+
 	@Override
 	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
 		super.deleteCascading(configFactory);
 	}
-	
+
 //	public FlowDir getFlowDir() {
 //		return FlowDir.valueOf((String) instance.getPropertyAsValueOrNull(CoreProperties.flowDir.toString()));
 //	}
@@ -70,9 +70,9 @@ public class MappingDefinition extends InstanceWrapper{
 //	public void setFlowDir(FlowDir flowDir) {
 //		instance.getPropertyAsSingle(CoreProperties.flowDir.toString()).set(flowDir.toString());
 //	}
-	
+
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
-		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId)); 
+		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId));
 //		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
 //				.filter(it -> it.name().contentEquals(designspaceTypeId))
 //				.findAny();
@@ -106,6 +106,6 @@ public class MappingDefinition extends InstanceWrapper{
 	}
 
 
-	
-	
+
+
 }

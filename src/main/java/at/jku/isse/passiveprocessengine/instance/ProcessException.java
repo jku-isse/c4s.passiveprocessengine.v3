@@ -15,12 +15,12 @@ public class ProcessException extends Exception {
 	@NonNull
 	String mainMessage;
 	List<String> errorMessages = new LinkedList<>();
-	
+
 	@Override
 	public String getMessage() {
-		return mainMessage +errorMessages.stream().collect(Collectors.joining(","," : \r\n[","]")); 
+		return mainMessage +errorMessages.stream().collect(Collectors.joining(","," : \r\n[","]"));
 	}
-	
-	
-	
+
+
+
 }

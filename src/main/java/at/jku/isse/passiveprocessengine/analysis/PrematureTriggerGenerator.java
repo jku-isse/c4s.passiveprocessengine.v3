@@ -28,25 +28,25 @@ import lombok.Data;
 
 public class PrematureTriggerGenerator {
 	// first trivial level: identify data origin as process input of mere step output
-	
+
 	private Workspace ws;
 	private ProcessDefinition pd;
 	private InstanceType procInstType;
 	private int varCount = 0;
 	//Map<StepParameter, DataSource> dSource = new HashMap<>();
-	
+
 	public PrematureTriggerGenerator(Workspace ws, ProcessDefinition pd) {
 		this.ws = ws;
 		this.pd = pd;
 		procInstType = ProcessInstance.getOrCreateDesignSpaceInstanceType(ws, pd);
 	}
-	
+
 	public void generatePrematureConstraints() {
-		
+
 		DecisionNodeDefinition initDND = pd.getDecisionNodeDefinitions().stream().filter(dnd -> dnd.getInSteps().isEmpty()).findAny().orElse(null);
 		if (initDND == null)
 			return; // should never be the case as this would mean a full circle in the process or malformed process
-		
+
 		pd.getStepDefinitions().stream()
 			.filter(step -> !step.getInDND().equals(initDND)) // filter out initial steps, i.e., steps that are anyway the first ones to be made available,
 			.filter(step -> (step.getCondition(Conditions.ACTIVATION).isPresent() || step.getCondition(Conditions.POSTCONDITION).isPresent())) // filter out those that have no activation or completion condition, also should not really be the case
@@ -63,18 +63,18 @@ public class PrematureTriggerGenerator {
 			if (entry.getValue() != null) {
 				String ruleName = ProcessInstance.generatePrematureRuleName(entry.getKey(), pd);
 				ConsistencyRuleType crt = ConsistencyRuleType.create(ws, procType, ruleName, entry.getValue());
-				//typeStep.createPropertyType("crd_premature_"+entry.getKey(), Cardinality.SINGLE, crt);	// not sure we need a property here				
+				//typeStep.createPropertyType("crd_premature_"+entry.getKey(), Cardinality.SINGLE, crt);	// not sure we need a property here
 				pd.setPrematureConstraintNameStepDefinition(ruleName, entry.getKey());
 			}
 		});
 	}
-	
+
 	private String generatePrematureConstraints(StepDefinition step) {
-		
+
 		List<String> prematureConstraints = new LinkedList<>();
-		
+
 		step.getCondition(Conditions.ACTIVATION).ifPresent(constraint -> {
-			
+
 			String tempConstr = rewriteConstraint(step, constraint);
 			if (tempConstr != null)
 				prematureConstraints.add(tempConstr);
@@ -89,7 +89,7 @@ public class PrematureTriggerGenerator {
 		} else
 			return "";
 	}
-	
+
 	private String rewriteConstraint(StepDefinition step, String constraint) {
 		// we recreate the constraint to ensure we have all the types in iterators available
 		InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, step, null); // process type is already known at this point, no need to provide again, hence null is ok
@@ -115,9 +115,9 @@ public class PrematureTriggerGenerator {
 		// now check which pos and thus param goes first for replacement.
 		for( int pos : Lists.reverse(loc2param.keySet().stream().sorted().collect(Collectors.toList()))) {
 			StepParameter param = loc2param.get(pos);
-			//				DataSource ds = dSource.get(param); 	
+			//				DataSource ds = dSource.get(param);
 			String extParam = param.getIo()==IO.IN ? "self.in_"+param.getName() : "self.out_"+param.getName();
-			// create two strings: one before the param to be replaced, the rest after the param 
+			// create two strings: one before the param to be replaced, the rest after the param
 			// and then replace the param by the path
 			String pre = constraint.substring(0, pos);
 			String post = constraint.substring(pos+extParam.length());
@@ -128,7 +128,7 @@ public class PrematureTriggerGenerator {
 		return ensureUniqueVarNames(constraint, procInstType);
 
 	}
-	
+
 //	private String dataSource2arlPathFromProcessInstance(DataSource ds) {
 //		if (ds == null) return "ERROR NULL DATASOURCE";
 //		switch(ds.getIoType()) {
@@ -136,7 +136,7 @@ public class PrematureTriggerGenerator {
 //			return  ensureUniqueVarNames("self.in_"+ds.getParamName()+ds.navPath, ProcessInstance.getOrCreateDesignSpaceInstanceType(ws, (ProcessDefinition)ds.getSource()));
 //		case procOut: // we only need to access process output by name, context for these constraints is always the process
 //			return  ensureUniqueVarNames("self.out_"+ds.getParamName()+ds.navPath, ProcessInstance.getOrCreateDesignSpaceInstanceType(ws, (ProcessDefinition)ds.getSource()));
-//		case stepIn: 
+//		case stepIn:
 //			varCount++;
 //			return ensureUniqueVarNames(String.format("self.stepInstances->select(step"+varCount+" | step"+varCount+".stepDefinition.name = '%s') \r\n"
 //					+ " ->any()->asType(<root/types/"+ProcessStep.getProcessStepName(ds.getSource())+">).in_%s %s", ds.getSource().getName(), ds.getParamName(), ds.navPath),
@@ -150,9 +150,9 @@ public class PrematureTriggerGenerator {
 //			return "ERROR NO IOTYPE"; // should never happen
 //		}
 //	}
-	
+
 	private String ensureUniqueVarNames(String query, InstanceType typeStep) {
-		// we need to check in any NavPath that it doesnt contain a var name (e.g., in an iteration etc) that occurred before, 
+		// we need to check in any NavPath that it doesnt contain a var name (e.g., in an iteration etc) that occurred before,
 		// i.e., we need unique var names per constraint
 		ArlEvaluator ae = new ArlEvaluator(typeStep, query);
 		varCount++;
@@ -162,7 +162,7 @@ public class PrematureTriggerGenerator {
 		String rewritten = ae.syntaxTree.getOriginalARL(0, false);
 		return rewritten;
 	}
-	
+
 	// returns all in/out parameters that are used in a constraint
 	protected static List<StepParameter> extractStepParameterUsageFromConstraint(StepDefinition step, String constraint) {
 		List<StepParameter> usage = new LinkedList<>();
@@ -176,12 +176,12 @@ public class PrematureTriggerGenerator {
 				.collect(Collectors.toList()));
 		return usage;
 	}
-	
+
 	private Set<DataSource> getFirstOccurancesOfInParam(StepDefinition step, StepParameter parameter) { // for now, we just return one out of potentially many sources, e.g., in case of OR or XOR branching
 		Set<DataSource> dsSet = step.getInDND().getMappings().stream()
 			.filter(mapping -> mapping.getToParameter().equals(parameter.getName()) && mapping.getToStepType().equals(step.getName()) )
-			.map(mapping -> { 
-				if (mapping.getFromStepType().equals(step.getProcess().getName()) ) { // we reached the process, stop here for now (we don;t check if we are in a subprocess here for now) 
+			.map(mapping -> {
+				if (mapping.getFromStepType().equals(step.getProcess().getName()) ) { // we reached the process, stop here for now (we don;t check if we are in a subprocess here for now)
 					DataSource localDS = new DataSource(step.getProcess(), mapping.getFromParameter(), IoType.procIn, "self.in_"+mapping.getFromParameter());
 					localDS.getUpstreamSources().add(localDS);
 					return localDS;
@@ -201,20 +201,20 @@ public class PrematureTriggerGenerator {
 				return Set.of(local);
 		} else return dsSet;
 	}
-	
+
 	private DataSource getFirstOccuranceOfOutParam(StepDefinition step, StepParameter outParam) {
 		String mapping = step.getInputToOutputMappingRules().get(outParam.getName()); // we assume for now that the mapping name is equal to the out param name, (this will be guaranteed in the future)
 		if (mapping != null) { // for now, we need to process the mapping constraints (will not be necessary once these are defines using derived properties)
 			InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, step, null); // process type is already known at this point, no need to provide again, hence null is ok
 			ArlEvaluator ae = new ArlEvaluator(stepType, mapping);
-			mapping = ae.syntaxTree.getOriginalARL(0, false);;
-			
+			mapping = ae.syntaxTree.getOriginalARL(0, false);
+
 			//int posSym = Math.max(mapping.indexOf("->symmetricDifference"), mapping.indexOf(".symmetricDifference"));
 			//if (posSym > 0) {
 				String navPath = mapping;//.substring(0, posSym); // now lets find which in param this outparam depends on
 				// we assume, only inparams are used in datamapping, i.e., we dont derive some output and then derive additional output from that!
 				Map<Integer, String> loc2param = new HashMap<>();
-				
+
 				for (String inParam : step.getExpectedInput().keySet()) {
 					String extParam = "self.in_"+inParam;
 					// find all locations of these inparam
@@ -233,7 +233,7 @@ public class PrematureTriggerGenerator {
 				for( int pos : Lists.reverse(loc2param.keySet().stream().sorted().collect(Collectors.toList()))) {
 					String param = loc2param.get(pos);
 					String extParam = "self.in_"+param;
-					// create two strings: one before the param to be replaced, the rest after the param 
+					// create two strings: one before the param to be replaced, the rest after the param
 					// and then replace the param by the path
 					String pre = navPath.substring(0, pos);
 					String post = navPath.substring(pos+extParam.length());
@@ -258,7 +258,7 @@ public class PrematureTriggerGenerator {
 		local.getUpstreamSources().add(local); //its its own root node
 		return local;
 	}
-	
+
 	private String combinePaths(Set<DataSource> dsSet) {
 		if (dsSet.isEmpty()) return "";
 		if (dsSet.size() == 1) return dsSet.stream().findAny().get().navPath;
@@ -272,12 +272,12 @@ public class PrematureTriggerGenerator {
 //				// if one item is not subset of largest list, add to dsList, else drop
 //				DataSource smallerDS = fullList.get(i);
 //				if (largestDS.getUpstreamSources().containsAll(smallerDS.getUpstreamSources()))
-//					; //drop 
+//					; //drop
 //				else
 //					dsList.add(smallerDS);
 //			}
 //			if (dsList.size() == 1) return dsSet.stream().findAny().get().navPath;
-			
+
 			StringBuffer prefix= new StringBuffer();
 			StringBuffer union = new StringBuffer();
 			union.append(dsList.get(0).navPath);
@@ -289,25 +289,25 @@ public class PrematureTriggerGenerator {
 			return prefix.toString();
 		}
 	}
-	
+
 	public class SourceSizeComparator implements Comparator<DataSource> {
 		@Override
 		public int compare(DataSource o1, DataSource o2) {
 			return Integer.compare(o1.getUpstreamSources().size(), o2.getUpstreamSources().size());
 		}
 	}
-	
-	@Data 
+
+	@Data
 	public static class StepParameter {
-		public enum IO {IN, OUT};
+		public enum IO {IN, OUT}
 		private final IO io;
 		private final String name;
 	}
-	
-	
+
+
 	@Data
 	public static class DataSource{
-		public enum IoType {stepOut, stepIn, procIn, procOut};
+		public enum IoType {stepOut, stepIn, procIn, procOut}
 		private final StepDefinition local;
 		private Set<DataSource> upstreamSources = new HashSet<>();
 		private final String paramName;
@@ -317,9 +317,7 @@ public class PrematureTriggerGenerator {
 		public boolean equals(Object obj) {
 			if (this == obj)
 				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
+			if ((obj == null) || (getClass() != obj.getClass()))
 				return false;
 			DataSource other = (DataSource) obj;
 			if (ioType != other.ioType)

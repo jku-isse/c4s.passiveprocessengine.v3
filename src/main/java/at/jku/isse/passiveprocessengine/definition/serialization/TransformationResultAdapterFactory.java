@@ -11,9 +11,6 @@ import com.google.gson.stream.JsonWriter;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
-import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
-import at.jku.isse.passiveprocessengine.definition.serialization.MultiTypeAdapterFactory;
 
 public class TransformationResultAdapterFactory extends MultiTypeAdapterFactory {
 
@@ -28,14 +25,14 @@ public class TransformationResultAdapterFactory extends MultiTypeAdapterFactory 
         } else
         	return super.create(gson, type);
 	}
-	
 
-	
-	
+
+
+
 	private TypeAdapter<Instance> wrapInstance(Gson gson) {
 		final TypeAdapter<String> instanceDelegate = gson.getDelegateAdapter(this, new TypeToken<String>() {});
-		
-		return new TypeAdapter<Instance>() {
+
+		return new TypeAdapter<>() {
 			@Override
 			public void write(JsonWriter out, Instance value) throws IOException {
 				instanceDelegate.write(out, value.name());
@@ -51,8 +48,8 @@ public class TransformationResultAdapterFactory extends MultiTypeAdapterFactory 
 
 	private TypeAdapter<ProcessDefinitionScopedElement> wrapProcessDefinitionScopedElement(Gson gson) {
 		final TypeAdapter<String> instanceDelegate = gson.getDelegateAdapter(this, new TypeToken<String>() {});
-		
-		return new TypeAdapter<ProcessDefinitionScopedElement>() {
+
+		return new TypeAdapter<>() {
 			@Override
 			public void write(JsonWriter out, ProcessDefinitionScopedElement value) throws IOException {
 				instanceDelegate.write(out, value.getName());
@@ -65,11 +62,11 @@ public class TransformationResultAdapterFactory extends MultiTypeAdapterFactory 
 			}
 		};
 	}
-	
+
 	private TypeAdapter<ProcessDefinition> wrapDefinition(Gson gson) {
 		 final TypeAdapter<DTOs.Process> procDelegate = gson.getDelegateAdapter(this, new TypeToken<DTOs.Process>() {});
-	      
-		 return new TypeAdapter<ProcessDefinition>() {
+
+		 return new TypeAdapter<>() {
 
 			@Override
 			public void write(JsonWriter out, ProcessDefinition value) throws IOException {
@@ -82,11 +79,11 @@ public class TransformationResultAdapterFactory extends MultiTypeAdapterFactory 
 				// TODO Auto-generated method stub
 				return null;
 			}
-			 
+
 		 };
 	}
-	
 
-	
-	
+
+
+
 }

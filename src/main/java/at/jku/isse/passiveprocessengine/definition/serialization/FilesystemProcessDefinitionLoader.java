@@ -10,23 +10,22 @@ import java.util.List;
 
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
-import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class FilesystemProcessDefinitionLoader {
 
 	public static final JsonDefinitionSerializer serializer = new JsonDefinitionSerializer();
-	
+
 	protected ProcessRegistry registry;
-	
+
 	// Added Code
 	public ProcessRegistry getRegistry()
 	{
 		return this.registry;
 	}
 	// END
-	
+
 	public FilesystemProcessDefinitionLoader(ProcessRegistry registry) {
 		this.registry = registry;
 	}
@@ -58,7 +57,7 @@ public class FilesystemProcessDefinitionLoader {
 						e.printStackTrace();
 						log.error(e.getMessage());
 					}
-                	
+
                 }
             }
         } catch (NullPointerException | IOException e) {

@@ -14,9 +14,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-import at.jku.isse.designspace.core.events.ElementCreate;
 import at.jku.isse.designspace.core.events.Operation;
-import at.jku.isse.designspace.core.events.PropertyCreate;
 import at.jku.isse.designspace.core.events.PropertyUpdateAdd;
 import at.jku.isse.designspace.core.events.PropertyUpdateRemove;
 import at.jku.isse.designspace.core.events.PropertyUpdateSet;
@@ -48,11 +46,11 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 	Workspace ws;
 	EventDistributor distributor = null;
 	//Map<Id, String> instanceIndex = Collections.synchronizedMap(new HashMap<>());
-	//we queue commands and remove some that are undone when lazy fetching of artifacts results in different outcome 
+	//we queue commands and remove some that are undone when lazy fetching of artifacts results in different outcome
 	protected Map<String, Commands.ProcessScopedCmd> cmdQueue = Collections.synchronizedMap(new HashMap<>());
-	
+
 	private EventStats stats = new EventStats();
-	
+
 	public ProcessInstanceChangeProcessor(Workspace ws, EventDistributor distributor) {
 		this.ws = ws;
 		this.distributor = distributor;
@@ -61,25 +59,25 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 	public EventStats getEventStatistics() {
 		return stats;
 	}
-	
+
 	private boolean isOfStepType(Id id) {
 		if (id == null) return false;
 		Element el = ws.findElement(id);
 		if (el instanceof Instance) {
 			return el.getInstanceType().isKindOf(ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
-		} 
+		}
 		return false;
 		//String type = instanceIndex.getOrDefault(id, "NOTFOUND");
 		//return (type.startsWith(ProcessStep.designspaceTypeId) || type.startsWith(ProcessInstance.designspaceTypeId));
 	}
-	
+
 	private boolean isOfCRDType(Id id) {
-		if (id == null) return false;		
+		if (id == null) return false;
 		Element el = ws.findElement(id);
 		return (el instanceof ConsistencyRule && el.getInstanceType().name().startsWith("crd_"));
 		//return instanceIndex.getOrDefault(id, "NOTFOUND").startsWith("crd"); //FIXME better approach than naming
 	}
-	
+
 //	private void processElementCreate(ElementCreate op, Element element) {
 //		if (element.getInstanceType() == null)
 //			return;
@@ -87,7 +85,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 //		if (element.getInstanceType().id().value() == 2l) {
 //			// new type
 //			//typeIndex.put(element.id(), element.getPropertyAsSingle("name").value.toString());
-//		} else if (element.getInstanceType().id().value() == 3l) { 
+//		} else if (element.getInstanceType().id().value() == 3l) {
 //			// ignore creation of a property
 //			return;
 //		} else {
@@ -99,16 +97,16 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 //			 	.forEach(type -> instanceIndex.put(element.id(), type.name()));
 //		}
 //	}
-	
+
 	private Optional<ProcessScopedCmd> processPropertyUpdateAdd(PropertyUpdateAdd op, Element element) {
 		// check if this is about an instance
 		//if (!instanceIndex.containsKey(op.elementId()))
 		//	return Optional.empty();;
-		// now lets check if this is about a step, 
+		// now lets check if this is about a step,
 		//if (isOfStepType(element.id())) {
-				
-				if(!op.name().contains("/@") 
-					&& (op.name().startsWith("in_") 
+
+				if(!op.name().contains("/@")
+					&& (op.name().startsWith("in_")
 					      || op.name().startsWith("out_"))
 					&& isOfStepType(element.id()) ) {
 					ProcessStep step = WrapperCache.getWrappedInstance(ProcessStep.class, (Instance)element);
@@ -121,10 +119,10 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 					stats.incrementIoAddEventCount();
 					return Optional.ofNullable(step.prepareIOAddEvent(op));
 				}
-		//}		
+		//}
 		return Optional.empty();
 	}
-	
+
 	private Optional<ProcessScopedCmd> processPropertyUpdateRemove(PropertyUpdateRemove op, Element element) {
 		// check if this is about an instance
 		//if (!instanceIndex.containsKey(op.elementId()))
@@ -135,27 +133,27 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 //				Id remId = (Id) op.value(); // IS NOT SET, returns NULL if remove is called via index
 	//			Element rem = ws.findElement(remId);
 			if(!op.name().contains("/@")  // ignore special properties  (e.g., usage in consistency rules, etc)
-				&& (op.name().startsWith("in_") 
+				&& (op.name().startsWith("in_")
 				      || op.name().startsWith("out_"))
 				&& isOfStepType(element.id()) ) {
 				ProcessStep step = WrapperCache.getWrappedInstance(ProcessStep.class, (Instance)element);
 				log.info(String.format("%s %s removed %s", element.name(),
 																op.name(),
 																op.indexOrKey()
-																));	
+																));
 				stats.incrementIoRemoveEventCount();
 				return Optional.ofNullable(step.prepareIORemoveEvent(op));
 			}
 	//	}
 		return Optional.empty();
 	}
-	
+
 	private Optional<ProcessScopedCmd> processPropertyUpdateSet(PropertyUpdateSet op, Element element) {
 		if (isOfStepType(element.id())) {
 			log.info(String.format("Step %s updated %s to %s", element.name(),
 					op.name(),
 					op.value().toString()
-					));	
+					));
 		} else if (isOfCRDType(element.id()) && op.name().equals("result")) {
 			// FIXME: we also have to check if a rule no longer has any error, only then can we process it properly
 			ConsistencyRule cr = (ConsistencyRule)element;
@@ -167,7 +165,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 //				log.debug(String.format("CRD of type %s for step %s updated %s to %s", element.name(), context.name(),
 //						op.name(),
 //						op.value().toString()
-//						));	
+//						));
 				return Optional.ofNullable(effect);
 			}
 		}
@@ -178,38 +176,38 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 	public void handleUpdated(Collection<Operation> operations) {
 		handleUpdates(operations);
 	}
-	
+
 	private void checkTransactionId(long id) {
 		long local = latestTransaction.getAcquire();
-		if (local > id) { 
+		if (local > id) {
 			log.error(String.format("Encountered Operation with an outdated transaction id: top current known id %s vs obtained id %s", local, id));
 		}
 		if (latestTransaction.getAcquire() < id) {
 			latestTransaction.set(id);
 		}
 	}
-	
+
 	protected Set<ProcessInstance> handleUpdates(Collection<Operation> operations) {
 		@SuppressWarnings("unchecked")
-		
+
 		List<ProcessScopedCmd> queuedEffects = (List<ProcessScopedCmd>) operations.stream()
 		 .map(operation -> {
 //			checkTransactionId(operation.getConclusionId());
  			Element element = ws.findElement(operation.elementId());
 				if (operation instanceof PropertyUpdateAdd) {
 					 return processPropertyUpdateAdd((PropertyUpdateAdd) operation, element);
-				} else 
+				} else
 					if (operation instanceof PropertyUpdateRemove) {
 						 return processPropertyUpdateRemove((PropertyUpdateRemove) operation, element);
 					} else
 						if (operation instanceof PropertyUpdateSet) {
 							return processPropertyUpdateSet((PropertyUpdateSet) operation, element);
 						}// else
-			//				if (operation instanceof PropertyCreate) { 
+			//				if (operation instanceof PropertyCreate) {
 								// no logging
-			//				} //else 			
-//			log.debug(String.format("Element %s %s <%s> changed: %s", 
-//					element.id(), 
+			//				} //else
+//			log.debug(String.format("Element %s %s <%s> changed: %s",
+//					element.id(),
 //					element.name(),
 //					element.getInstanceType() != null ? element.getInstanceType().id() : "NoInstanceType",
 //							operation.getClass().getSimpleName()));
@@ -218,18 +216,18 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 		.filter(Optional::isPresent)
 		.map(opt -> opt.get())
 		.collect(Collectors.toList());
-		
+
 		prepareQueueExecution(queuedEffects); // here we can subclass and manage commands, lazy loading etc
 		return executeCommands(); // here we execute, or in subclass, when we are still lazy loading, skip execution until later
 	}
-	
+
 	protected void prepareQueueExecution(List<ProcessScopedCmd> mostRecentQueuedEffects) {
 		mostRecentQueuedEffects.forEach(cmd -> {
 			cmdQueue.put(cmd.getId(), cmd);
 		});
-		
+
 	}
-	
+
 	protected Set<ProcessInstance> executeCommands() {
 		Collection<ProcessScopedCmd> relevantEffects = cmdQueue.values();
 		// now lets just execute all commands
@@ -241,72 +239,72 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 			.filter(QAConstraintChangedCmd.class::isInstance)
 			.map(QAConstraintChangedCmd.class::cast)
 			.filter(cmd -> !cmd.isFulfilled())
-			.map(cmd -> { 
+			.map(cmd -> {
 				stats.incrementNegQAConstraintChangedCmdCount();
-				log.debug(String.format("Executing: %s", cmd.toString())); 
+				log.debug(String.format("Executing: %s", cmd.toString()));
 				return cmd;})
 			.flatMap(cmd -> cmd.execute().stream())
 			.collect(Collectors.toList()));
-			
+
 			// first sort them to apply them in a sensible order, e.g., preconditions fulfilled before postconditions
 			cmdEvents.addAll(relevantEffects.stream()
 				.filter(ConditionChangedCmd.class::isInstance)
 				.map(ConditionChangedCmd.class::cast)
 				.sorted(new CommandComparator())
-				.map(cmd -> { 
+				.map(cmd -> {
 					stats.incrementConditionChangedCmdCount();
-					log.debug(String.format("Executing: %s", cmd.toString())); 
+					log.debug(String.format("Executing: %s", cmd.toString()));
 					return cmd;})
 				.flatMap(cmd -> cmd.execute().stream())
 				.collect(Collectors.toList()));
-			
+
 			// if QA is fulfilled
 			cmdEvents.addAll(relevantEffects.stream()
 			.filter(QAConstraintChangedCmd.class::isInstance)
 			.map(QAConstraintChangedCmd.class::cast)
 			.filter(cmd -> cmd.isFulfilled())
-			.map(cmd -> { 
+			.map(cmd -> {
 				stats.incrementPosQAConstraintChangedCmdCount();
-				log.debug(String.format("Executing: %s", cmd.toString())); 
+				log.debug(String.format("Executing: %s", cmd.toString()));
 				return cmd;})
 			.flatMap(cmd -> cmd.execute().stream())
 			.collect(Collectors.toList()));
-			
+
 			// then execute datamappings
 			cmdEvents.addAll(relevantEffects.stream()
 				.filter(IOMappingConsistencyCmd.class::isInstance)
 				.map(IOMappingConsistencyCmd.class::cast)
-				.map(cmd -> { 
+				.map(cmd -> {
 					stats.incrementIOMappingConsistencyCmdCount();
-					log.debug(String.format("Executing: %s", cmd.toString())); 
+					log.debug(String.format("Executing: %s", cmd.toString()));
 					return cmd;})
 				.flatMap(cmd -> cmd.execute().stream())
 				.collect(Collectors.toList()));
-			
+
 			// then execute output change events
 			cmdEvents.addAll(relevantEffects.stream()
 					.filter(OutputChangedCmd.class::isInstance)
 					.map(OutputChangedCmd.class::cast)
-					.map(cmd -> { 
+					.map(cmd -> {
 						stats.incrementOutputChangedCmdCount();
-						log.debug(String.format("Executing: %s", cmd.toString())); 
+						log.debug(String.format("Executing: %s", cmd.toString()));
 						return cmd;})
 					.flatMap(cmd -> cmd.execute().stream())
 					.collect(Collectors.toList()));
-			
+
 			// then execute premature step triggers
 			cmdEvents.addAll(relevantEffects.stream()
 					.filter(PrematureStepTriggerCmd.class::isInstance)
 					.map(PrematureStepTriggerCmd.class::cast)
-					.map(cmd -> { 
+					.map(cmd -> {
 						stats.incrementPrematureStepTriggerCmdCount();
-						log.debug(String.format("Executing: %s", cmd.toString())); 
+						log.debug(String.format("Executing: %s", cmd.toString()));
 						return cmd;})
 					.flatMap(cmd -> cmd.execute().stream())
 					.collect(Collectors.toList()));
-			
+
 			stats.incrementProcessEventCountBy(cmdEvents.size());
-			
+
 			Set<ProcessInstance> procs = new HashSet<>();
 			//procs.addAll(relevantEffects.stream().map(cmd -> cmd.getScope()).collect(Collectors.toSet()));
 			procs.addAll(cmdEvents.stream().map(event -> event.getProcScope()).filter(Objects::nonNull).collect(Collectors.toSet()));
@@ -314,12 +312,12 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 			cmdQueue.clear();
 			if (distributor  != null)
 				distributor.handleEvents(cmdEvents); //do something with the change events from command based effects, if needed, e.g., for LTE-based checking
-			ws.concludeTransaction(); 
+			ws.concludeTransaction();
 			return procs;
 		} else
 			return Collections.emptySet();
 	}
-	
+
 	public static class CommandComparator implements Comparator<ConditionChangedCmd> {
 
 		@Override
@@ -327,7 +325,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 			if (o1.getStep().getProcess() == null ) { // we have a process
 				if (o2.getStep().getProcess() == null) // we have a second process
 					return o1.getStep().getName().compareTo(o2.getStep().getName()); // we sort processes by their id
-				else {// other is a step, 
+				else {// other is a step,
 					return 1; // we put steps first, do process updates at the end
 				}
 			} else if (o2.getStep().getProcess() == null) { // second one is a process, but not first
@@ -336,14 +334,14 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 				int procBased = o1.getStep().getProcess().getName().compareTo(o2.getStep().getProcess().getName()); // compare via process
 				if (procBased == 0) {
 					// now compare via steps
-					int stepBased = o1.getStep().getDefinition().getSpecOrderIndex().compareTo(o2.getStep().getDefinition().getSpecOrderIndex()); 
+					int stepBased = o1.getStep().getDefinition().getSpecOrderIndex().compareTo(o2.getStep().getDefinition().getSpecOrderIndex());
 					if (stepBased == 0) { // same step
 						return Integer.compare(getAssignedValue(o1.getCondition(), o1.isFulfilled()), getAssignedValue(o2.getCondition(), o2.isFulfilled()));
-					} else return stepBased; // compare/sort by step order in proc definition 
+					} else return stepBased; // compare/sort by step order in proc definition
 				} else return procBased; // sort steps from different processes by process first
 			}
 		}
-		
+
 		private int getAssignedValue(Conditions cond, boolean fulfilled) {
 			// we need to ensure that we first signal a failure of conditions, before a fulfillment to avoid activation propagation that needs to be undone thereafter
 			//TODO: support also no work expected
@@ -365,60 +363,60 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 				return 10;
 			}
 		}
-		
+
 	}
-	
+
 	@Data
 	public static class EventStats {
 		private long ruleUpdateEventCount;
 		private long ioAddEventCount;
 		private long ioRemoveEventCount;
-		
+
 		private long negQAConstraintChangedCmdCount;
 		private long posQAConstraintChangedCmdCount;
 		private long conditionChangedCmdCount;
-		private long ioMappingConsistencyCmdCount; 
+		private long ioMappingConsistencyCmdCount;
 		private long outputChangedCmdCount;
 		private long prematureStepTriggerCmdCount;
-		
+
 		private long processEventCount;
-		
+
 		protected void incrementIoAddEventCount() {
 			ioAddEventCount++;
 		}
-		
+
 		protected void incrementIoRemoveEventCount() {
 			ioRemoveEventCount++;
 		}
-		
+
 		protected void incrementRuleUpdateEventCount() {
 			ruleUpdateEventCount++;
 		}
-		
+
 		protected void incrementNegQAConstraintChangedCmdCount() {
 			negQAConstraintChangedCmdCount++;
 		}
-		
+
 		protected void incrementConditionChangedCmdCount() {
 			conditionChangedCmdCount++;
 		}
-		
+
 		protected void incrementPosQAConstraintChangedCmdCount() {
 			posQAConstraintChangedCmdCount++;
 		}
-		
+
 		protected void incrementIOMappingConsistencyCmdCount() {
 			ioMappingConsistencyCmdCount++;
 		}
-		
+
 		protected void incrementOutputChangedCmdCount() {
 			outputChangedCmdCount++;
 		}
-		
+
 		protected void incrementPrematureStepTriggerCmdCount() {
 			prematureStepTriggerCmdCount++;
 		}
-		
+
 		protected void incrementProcessEventCountBy(long inc) {
 			processEventCount = processEventCount + inc;
 		}

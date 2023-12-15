@@ -7,7 +7,6 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
-import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
@@ -16,10 +15,10 @@ import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 public class ConstraintSpec extends /*InstanceWrapper*/ ProcessDefinitionScopedElement{
 
-	
-	public static enum CoreProperties {constraintSpec, humanReadableDescription, specOrderIndex, isOverridable, ruleType, conditionsType};
+
+	public static enum CoreProperties {constraintSpec, humanReadableDescription, specOrderIndex, isOverridable, ruleType, conditionsType}
 	public static final String designspaceTypeId = ConstraintSpec.class.getSimpleName();
-	
+
 	public ConstraintSpec(Instance instance) {
 		super(instance);
 	}
@@ -35,26 +34,26 @@ public class ConstraintSpec extends /*InstanceWrapper*/ ProcessDefinitionScopedE
 	public String getHumanReadableDescription() {
 		return (String) instance.getPropertyAsValue(CoreProperties.humanReadableDescription.toString());
 	}
-	
+
 	public Integer getOrderIndex() {
 		return (Integer) instance.getPropertyAsValue(CoreProperties.specOrderIndex.toString());
 	}
-	
+
 	public boolean isOverridable() {
 		return (Boolean) instance.getPropertyAsValue(CoreProperties.isOverridable.toString());
 	}
-	
+
 	public Conditions getConditionType() {
 		return Conditions.valueOf((String)instance.getPropertyAsValue(CoreProperties.conditionsType.toString()));
 	}
-	
+
 	@Override
 	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
 		instance.delete();
 	}
-	
+
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
-		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId)); 
+		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId));
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
@@ -69,11 +68,11 @@ public class ConstraintSpec extends /*InstanceWrapper*/ ProcessDefinitionScopedE
 				return specType;
 			}
 	}
-	
+
 	public static ConstraintSpec createInstance(Conditions condition, DTOs.Constraint constraintSpec, Workspace ws) {
 		return createInstance(condition, constraintSpec.getCode(), constraintSpec.getArlRule(), constraintSpec.getDescription(), constraintSpec.getSpecOrderIndex(), constraintSpec.isOverridable(), ws );
 	}
-	
+
 	@Deprecated
 	public static ConstraintSpec createInstance(Conditions condition, String constraintId, String constraintSpec, String humanReadableDescription, int specOrderIndex, Workspace ws) {
 		return createInstance(condition, constraintId, constraintSpec, humanReadableDescription, specOrderIndex, false, ws);
@@ -83,7 +82,7 @@ public class ConstraintSpec extends /*InstanceWrapper*/ ProcessDefinitionScopedE
 		instance.getPropertyAsSingle(CoreProperties.constraintSpec.toString()).set(constraintSpec);
 		instance.getPropertyAsSingle(CoreProperties.humanReadableDescription.toString()).set(humanReadableDescription == null ? "" : humanReadableDescription);
 		instance.getPropertyAsSingle(CoreProperties.specOrderIndex.toString()).set(specOrderIndex);
-		instance.getPropertyAsSingle(CoreProperties.isOverridable.toString()).set(isOverridable);		
+		instance.getPropertyAsSingle(CoreProperties.isOverridable.toString()).set(isOverridable);
 		instance.getPropertyAsSingle(CoreProperties.conditionsType.toString()).set(condition.toString());
 		return WrapperCache.getWrappedInstance(ConstraintSpec.class, instance);
 	}

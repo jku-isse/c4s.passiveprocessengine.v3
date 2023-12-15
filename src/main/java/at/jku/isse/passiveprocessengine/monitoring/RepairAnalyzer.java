@@ -5,13 +5,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,15 +21,10 @@ import at.jku.isse.designspace.core.events.PropertyUpdate;
 import at.jku.isse.designspace.core.events.PropertyUpdateAdd;
 import at.jku.isse.designspace.core.events.PropertyUpdateRemove;
 import at.jku.isse.designspace.core.events.PropertyUpdateSet;
-import at.jku.isse.designspace.core.model.Element;
 import at.jku.isse.designspace.core.model.Id;
 import at.jku.isse.designspace.core.model.Instance;
-import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.core.model.Property;
-import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.model.WorkspaceListener;
-import at.jku.isse.designspace.rule.arl.evaluator.EvaluationNode;
 import at.jku.isse.designspace.rule.arl.evaluator.RuleEvaluationIterationMetadata;
 import at.jku.isse.designspace.rule.arl.evaluator.RuleEvaluationListener;
 import at.jku.isse.designspace.rule.arl.exception.RepairException;
@@ -41,9 +33,8 @@ import at.jku.isse.designspace.rule.arl.repair.RepairAction;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.arl.repair.RepairTreeFilter;
 import at.jku.isse.designspace.rule.arl.repair.SideEffect;
-import at.jku.isse.designspace.rule.arl.repair.UnknownRepairValue;
-import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.arl.repair.SideEffect.Type;
+import at.jku.isse.designspace.rule.arl.repair.UnknownRepairValue;
 import at.jku.isse.designspace.rule.arl.repair.order.Event_DS;
 import at.jku.isse.designspace.rule.arl.repair.order.ProcessChangeEvents;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairNodeScorer;
@@ -52,13 +43,10 @@ import at.jku.isse.designspace.rule.arl.repair.order.RepairTreeSorter;
 import at.jku.isse.designspace.rule.arl.repair.order.Repair_template;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
-import at.jku.isse.designspace.rule.model.ReservedNames;
 import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.WrapperCache;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
-import at.jku.isse.passiveprocessengine.modeling.ElementInspectionUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Setter;
@@ -77,12 +65,12 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 	Map<PropertyUpdate, Set<SideEffect<ConsistencyRule>>> collectedImpact = new LinkedHashMap<>();
 	// last/latest repair for rule (updated at the end of previous iteration)
 	Map<ConsistencyRule, RepairNode> repairForRule = new HashMap<>();
-	
+
 	//WITH CHANGE TO DS440 no longer needed, changes of properties and rule results occur in same transaction notification
 	// collecting all updates as long as no rule result changes,i.e., no rule was
 	// reevaluated resulting in a change
 	//List<PropertyUpdate> queuedUpdates = Collections.synchronizedList(new LinkedList<PropertyUpdate>());
-	
+
 	// how many repair nodes are suggested for each rule, we collect across all rule
 	// instances, per type
 	Map<ConsistencyRuleType, List<Integer>> repairSizeStats = new HashMap<>();
@@ -126,23 +114,23 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 	public Map<PropertyUpdate, Set<SideEffect<ConsistencyRule>>> getImpact() {
 		return collectedImpact;
 	}
-	
+
 	@Override
 	public void signalRuleEvaluationFinished(Set<RuleEvaluationIterationMetadata> iterationMetadata) {
-		// here we get only those operations that cause a reevaluation, regardless if outcome changed or not, 
+		// here we get only those operations that cause a reevaluation, regardless if outcome changed or not,
 		// we only need to check if the rule is one we want to analyse (i.e., here no mapping rules, just pre/post/qa cond)
-						
+
 		// fill legacy datastructures
 		determineChangedRuleEvaluationsAndImpact(iterationMetadata);
-		
+
 		determineConflictingSideEffects();
 		determineConflictCausingNonRepairableOperations(); // this and the following method measure the same effect,
 															// upon inconsistency appearance, the other upon repair.
 		determineNotsuggestedRepairOperations();
 		logPositiveRepairs();
 		this.processLatestChanges();
-		
-		
+
+
 		// prepare for next round: for all unfulfilled constraints that were potentially
 		// affected now by changes, we store the current repair tree
 		changedRuleResult.keySet().stream()
@@ -169,7 +157,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 		.forEach(cre -> {
 			repairForRule.remove(cre);
 		});
-		
+
 		// cleanup:
 		//queuedUpdates.clear();
 		changedRuleResult.clear();
@@ -181,8 +169,8 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 
 	@Override
 	public void handleUpdated(Collection<Operation> operations) {
-		
-		
+
+
 		// REPLACED determineChangedRuleEvaluations(operations);
 		// if changedRuleResult is empty, then there has been no rule changes and this
 		// notification was about other operations, queue those that are relevant
@@ -232,12 +220,12 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 	 * replaces deterimeChangeRuleEvaluations(Operations) and isRelevant(operation) and determinePreliminaryImpact(operation)
 	 * */
 	private void determineChangedRuleEvaluationsAndImpact(Set<RuleEvaluationIterationMetadata> changeSet) {
-		changeSet.stream()		
+		changeSet.stream()
 		.filter(reim -> {
 			Rule el = reim.getRule();
 			if (el instanceof ConsistencyRule && el.getInstanceType().name().startsWith("crd")
 					&& !el.getInstanceType().name().startsWith("crd_datamapping")
-					&& !el.getInstanceType().name().startsWith("crd_prematuretrigger")) {							
+					&& !el.getInstanceType().name().startsWith("crd_prematuretrigger")) {
 				return true;
 			} else return false;
 		})
@@ -247,7 +235,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 					changedRuleResult.put(cre, true);
 					if (!cre.isConsistent() && repairForRule.containsKey(cre)) // for newly inconsistent rule, we should not have an old repair tree cached
 						log.error("Old Repair tree available for "+cre);
-				} else 
+				} else
 					changedRuleResult.put(cre, false);
 				// now how to deal with repairs:
 //				if (reim.getHasEvaluationOutcomeChanged() && !cre.isConsistent()) {
@@ -370,7 +358,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 		// "+cr.ruleDefinition().getQualifiedName());
 		// System.out.println("Rule Definition: "+cr.ruleDefinition().toString());
 		// if cr has changed
-		if (changedRuleResult.get(cr) == true) {
+		if (changedRuleResult.get(cr)) {
 			// and now is fulfilled
 			if (cr.isConsistent()) {
 				RepairNode rNodeOld = repairForRule.get(cr); // only be null if this is the first eval and was never
@@ -378,13 +366,13 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 				// was this change truly causing (part of ) the repair, see if it occurs in the
 				// repair tree TODO: (and no other action covered it so far). if so --> positive
 				if (rNodeOld == null) //the first time evaluating with fulfillment, thus no real true repair.
-					return new SideEffect<ConsistencyRule>(cr, Type.POSITIVE); // but counted as such to avoid nonsuggestedRepairs to not incorrectly flag this.				
+					return new SideEffect<>(cr, Type.POSITIVE); // but counted as such to avoid nonsuggestedRepairs to not incorrectly flag this.
 				else {
 					Optional<RepairAction> optRA = rNodeOld.getRepairActions().stream().filter(ra -> doesOpMatchRepair(ra, op, id)).findAny();
-					if (optRA.isPresent())				
-						return new ContextualizedPositiveSideEffect<ConsistencyRule>(cr, Type.POSITIVE, optRA.get()); //new SideEffect<ConsistencyRule>(cre, determineType(op, cre))
+					if (optRA.isPresent())
+						return new ContextualizedPositiveSideEffect<>(cr, Type.POSITIVE, optRA.get()); //new SideEffect<ConsistencyRule>(cre, determineType(op, cre))
 					else
-						return new SideEffect<ConsistencyRule>(cr,Type.NONE);
+						return new SideEffect<>(cr,Type.NONE);
 				}
 			} else { // no longer consistent
 				try {
@@ -394,19 +382,19 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 					// was this change truly causing (or part of) the inconsistency, see if its
 					// inverse action occurs in the repair tree. if so --> negative
 					if (rNodeNow.getRepairActions().stream().anyMatch(ra -> doesOpMatchInvertedRepair(ra, op, id)))
-						return new SideEffect<ConsistencyRule>(cr,Type.NEGATIVE);
+						return new SideEffect<>(cr,Type.NEGATIVE);
 					else
-						return new SideEffect<ConsistencyRule>(cr,Type.NONE);
+						return new SideEffect<>(cr,Type.NONE);
 				} catch (RepairException e) {
 					unsupportedRepairs.put(cr.getInstanceType().name(), e.getMessage());
 					e.printStackTrace();
-					return new SideEffect<ConsistencyRule>(cr,Type.ERROR); // misuse of ERROR, as this is not about the repair but the being able to repair
+					return new SideEffect<>(cr,Type.ERROR); // misuse of ERROR, as this is not about the repair but the being able to repair
 										// in the first place.
 				}
 			}
 		} else {
 			if (cr.isConsistent()) // all is still fine, no further analysis needed
-				return new SideEffect<ConsistencyRule>(cr,Type.NONE);
+				return new SideEffect<>(cr,Type.NONE);
 			else {
 				// rule result hasn't changed, thats not to say, that change might not now have
 				// introduced another inconsistency
@@ -414,9 +402,9 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 				RepairNode rNodeOld = repairForRule.get(cr); // must not be null if its still negative,
 				//except if this is the first rule evaluation that results also in unfulfilled, which means no change in outcome
 				// typically this is happening upon artifact instantiation, hence we dont consider that creation as negative
-//				assert(rNodeOld != null); 				
+//				assert(rNodeOld != null);
 				if (rNodeOld == null) {
-					return new SideEffect<ConsistencyRule>(cr,Type.NONE); // 
+					return new SideEffect<>(cr,Type.NONE); //
 				}
 				try {
 					RepairNode rNodeNow = RuleService.repairTree(cr);
@@ -425,23 +413,23 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 				// look whether old repair nodes included this operation , if so then positive
 					Optional<RepairAction> optRA = rNodeOld.getRepairActions().stream().filter(ra -> doesOpMatchRepair(ra, op, id)).findAny();
 					if (optRA.isPresent()) {
-						if (rNodeNow.getRepairActions().stream().anyMatch(ra -> doesOpMatchRepair(ra, op, id)) ) // if the new repair tree also includes the repair, then the action matched but was not successful (probably due to restrictions not being fulfilled) 
-							return new SideEffect<ConsistencyRule>(cr,Type.NONE);
+						if (rNodeNow.getRepairActions().stream().anyMatch(ra -> doesOpMatchRepair(ra, op, id)) ) // if the new repair tree also includes the repair, then the action matched but was not successful (probably due to restrictions not being fulfilled)
+							return new SideEffect<>(cr,Type.NONE);
 						else
-							return new ContextualizedPositiveSideEffect<ConsistencyRule>(cr, Type.POSITIVE, optRA.get());
+							return new ContextualizedPositiveSideEffect<>(cr, Type.POSITIVE, optRA.get());
 					} // else
 					// look whether new repair nodes include this inverse operation, but the old one did not, (i.e., the repair was added) if so then
 					// negative
-					if (rNodeNow.getRepairActions().stream().anyMatch(ra -> doesOpMatchInvertedRepair(ra, op, id)) && 
+					if (rNodeNow.getRepairActions().stream().anyMatch(ra -> doesOpMatchInvertedRepair(ra, op, id)) &&
 							!rNodeOld.getRepairActions().stream().anyMatch(ra -> doesOpMatchInvertedRepair(ra, op, id))) {
-						return new SideEffect<ConsistencyRule>(cr,Type.NEGATIVE);
+						return new SideEffect<>(cr,Type.NEGATIVE);
 					} else {// else: e.g., constraint req that status = open, but status was in progress and now is released, thus no improvement, but no further decline either, hence NONE
-						return new SideEffect<ConsistencyRule>(cr,Type.NONE);
+						return new SideEffect<>(cr,Type.NONE);
 					}
 				} catch (RepairException e) {
 					unsupportedRepairs.put(cr.getInstanceType().name(), e.getMessage());
 					e.printStackTrace();
-					return new SideEffect<ConsistencyRule>(cr,Type.ERROR); // misuse of ERROR, as this is not about the repair but the being able to repair
+					return new SideEffect<>(cr,Type.ERROR); // misuse of ERROR, as this is not about the repair but the being able to repair
 										// in the first place.
 				}
 			}
@@ -453,11 +441,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 		String propRep = ra.getProperty();
 		String propChange = op.name();
 		Instance rInst = (Instance) ra.getElement();
-		if (propRep == null) // the removal repair which in our case is never a sensible option
-			return false;
-		if (!propRep.equals(propChange)) // if this repair is not about the same property
-			return false;
-		if (!subject.equals(rInst.id())) // if this repair is not about the same subject
+		if ((propRep == null) || !propRep.equals(propChange) || !subject.equals(rInst.id())) // if this repair is not about the same subject
 			return false;
 		switch (ra.getOperator()) {
 		case ADD:
@@ -503,7 +487,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 					return opValue.equals(((Instance) rValue).id());
 				}
 				else if (rValue == UnknownRepairValue.UNKNOWN) // if repair suggest to set anything, any value set is fine TODO: (ignoring restrictions for now)
-					return true;				
+					return true;
 				else if (opValue != null)
 					return opValue.equals(rValue);
 				else {
@@ -567,11 +551,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 		String propRep = ra.getProperty();
 		String propChange = op.name();
 		Instance rInst = (Instance) ra.getElement(); // repair subject
-		if (propRep == null) // the removal repair which in our case is never a sensible option
-			return false;
-		if (!propRep.equals(propChange)) // if this repair is not about the same property
-			return false;
-		if (!subject.equals(rInst.id())) // if this repair is not about the same subject
+		if ((propRep == null) || !propRep.equals(propChange) || !subject.equals(rInst.id())) // if this repair is not about the same subject
 			return false;
 		switch (ra.getOperator()) {
 		case ADD:
@@ -613,7 +593,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 			if (op instanceof PropertyUpdateSet) {
 				Object rValue = ra.getValue();
 				Object opValue = op.value(); // for Set operation/repair, both need to be present but could be NULL if
-												// that is the intended/desired value or the effect of the operation								
+												// that is the intended/desired value or the effect of the operation
 				if (opValue == null && rValue == null)
 					return false;
 				if (opValue == null && rValue != null)
@@ -680,7 +660,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 		}
 		return false;
 	}
-	
+
 	private void logPositiveRepairs() {
 		// for each CRE we check if there are positive effects:
 		latestImpact.entrySet().stream().forEach(entry -> {
@@ -688,13 +668,13 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 					.collect(Collectors.groupingBy(SideEffect<ConsistencyRule>::getSideEffectType));
 			if (effects.getOrDefault(Type.POSITIVE, Collections.emptyList()).size() > 0) {
 				// we have at least one positive effects
-				
+
 				effects.get(Type.POSITIVE).stream()
-						.filter(se -> se instanceof ContextualizedPositiveSideEffect<?>)						
-						.forEach(se -> monitor.repairActionExecuted(se.getInconsistency(), 
-															WrapperCache.getWrappedInstance(ProcessStep.class, se.getInconsistency().contextInstance()), 
-															Repair_template.toRepairTemplate(((ContextualizedPositiveSideEffect<ConsistencyRule>) se).getMatchingRepair()).asString(), 
-															-1)); 												
+						.filter(se -> se instanceof ContextualizedPositiveSideEffect<?>)
+						.forEach(se -> monitor.repairActionExecuted(se.getInconsistency(),
+															WrapperCache.getWrappedInstance(ProcessStep.class, se.getInconsistency().contextInstance()),
+															Repair_template.toRepairTemplate(((ContextualizedPositiveSideEffect<ConsistencyRule>) se).getMatchingRepair()).asString(),
+															-1));
 			}
 		});
 	}
@@ -702,7 +682,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 	private void determineConflictCausingNonRepairableOperations() {
 		// check for every consistency rule that is now newly inconsistent whether there
 		// is at least one NEGATIVE impact,
-		changedRuleResult.entrySet().stream().filter(entry -> entry.getValue() == true)
+		changedRuleResult.entrySet().stream().filter(entry -> entry.getValue())
 				.filter(entry -> !entry.getKey().isConsistent())
 				.map(entry -> entry.getKey())
 				.forEach(cre -> {
@@ -734,7 +714,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 	private void determineNotsuggestedRepairOperations() {
 		// check for every consistency rule that is now newly consistent whether there
 		// is at least one POSITIVE impact
-		changedRuleResult.entrySet().stream().filter(entry -> entry.getValue() == true)
+		changedRuleResult.entrySet().stream().filter(entry -> entry.getValue())
 				.filter(entry -> entry.getKey().isConsistent())
 				.map(entry -> entry.getKey()).forEach(cre -> {
 					boolean hasPosImpact = latestImpact.values().stream()
@@ -808,9 +788,9 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 	// Code by AB
 
 	public void processLatestChanges() {
-		
+
 		latestImpact.entrySet().stream().forEach(entryPU->{
-			
+
 			for(SideEffect<ConsistencyRule> se_cre: entryPU.getValue())
 			{
 				/*Storing the data of all changes along with  their details i.e. effectType, constraint, operation, process, etc. */
@@ -840,8 +820,8 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 					/*The change has no effect neither fulfilling nor unfulfilling.*/
 				}
 			}
-			
-		});	
+
+		});
 	}
 
 	public void updateCRE_matrix(SideEffect<ConsistencyRule> se_cre, PropertyUpdate clientop, Instance stepInst, OffsetDateTime dateTime)
@@ -859,10 +839,10 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 			highestRank=rts.getMaxRank(rn);
 			for(RepairAction ra: rn.getRepairActions()) {
 				// Checks if clientop matches the repair suggested by the repair tree
-				if (this.doesOpMatchRepair(ra, clientop, clientop.elementId())) 
+				if (this.doesOpMatchRepair(ra, clientop, clientop.elementId()))
 				{
 					Repair_template rt=new Repair_template();
-					rt=rt.toRepairTemplate(ra);
+					rt=Repair_template.toRepairTemplate(ra);
 					Event_DS event=new Event_DS(clientop, ra, se_cre,cre, cre.isConsistent(), stepInst, rt, dateTime, highestRank,ra.getRank(),ra.getScore());
 					this.pce.addCRE_CurrentEventList(event);
 					this.pce.updateExecutedEventLog(se_cre,clientop,stepInst,dateTime,rt,ra);
@@ -870,15 +850,15 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 				else // Storing the repairs suggested but not selected by the developer.
 				{
 					Repair_template rt=new Repair_template();
-					rt=rt.toRepairTemplate(ra);
-					Event_DS event=new Event_DS(null, ra,null, cre, cre.isConsistent(), stepInst, rt, time.getLastChangeTimeStamp(), 
+					rt=Repair_template.toRepairTemplate(ra);
+					Event_DS event=new Event_DS(null, ra,null, cre, cre.isConsistent(), stepInst, rt, time.getLastChangeTimeStamp(),
 							highestRank, ra.getRank(), ra.getScore());
 					this.pce.addUnSelectRepairLog(event);
 				}
 			}
 		}
 	}
-	
+
 
 	/*public void checkClientOP(ConsistencyRule cre, PropertyUpdate clientop) {
 		int loc_cre = node_counter.getCRELocation(cre);
@@ -1031,7 +1011,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 		Map<String, List<Integer>> repairSizeStats;
 		Map<String, String> unsupportedRepairs;
 	}
-	
+
 	public RepairNodeScorer getRepairNodeScorer() {
 		return this.scorer;
 	}
@@ -1039,7 +1019,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 	public void setRepairNodeScorer(RepairNodeScorer scorer) {
 		this.scorer = scorer;
 	}
-	
+
 	public ProcessChangeEvents getTd() {
 		return this.pce;
 	}

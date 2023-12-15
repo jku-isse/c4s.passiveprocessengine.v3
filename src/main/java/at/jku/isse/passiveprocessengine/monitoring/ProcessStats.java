@@ -17,9 +17,9 @@ public class ProcessStats {
 	State lastActualState = State.AVAILABLE;
 	transient Map<ProcessStep, ProcessStepStats> perStepStats = new HashMap<>();
 	List<ProcessStepStats> stepStats = new LinkedList<>(); 	// only used for simpler serialization into json
-	
+
 	public ProcessStats(String processId) {
 		this.processId = processId;
-	
+
 	}
 }

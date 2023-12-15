@@ -4,7 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -22,15 +21,12 @@ import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
-import at.jku.isse.passiveprocessengine.instance.messages.Commands.ConditionChangedCmd;
-import at.jku.isse.passiveprocessengine.instance.messages.Commands.PrematureStepTriggerCmd;
-import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep.CoreProperties;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Trigger;
+import at.jku.isse.passiveprocessengine.instance.messages.Commands.PrematureStepTriggerCmd;
+import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses;
@@ -43,20 +39,20 @@ public class ProcessInstance extends ProcessStep {
 
 	private static final String CRD_PREMATURETRIGGER_PREFIX = "crd_prematuretrigger_";
 
-	static enum CoreProperties {stepInstances, decisionNodeInstances, processDefinition, createdAt};
-	
+	static enum CoreProperties {stepInstances, decisionNodeInstances, processDefinition, createdAt}
+
 	public static final String designspaceTypeId = ProcessInstance.class.getSimpleName();
 
 	protected ZonedDateTime createdAt;
-		
+
 	public ProcessInstance(Instance instance) {
 		super(instance);
-	}			
-	
+	}
+
 	public ZonedDateTime getCurrentTimestamp() {
 		return ZonedDateTime.now(); //default value, to be replaced with time provider
 	}
-	
+
 	public ZonedDateTime getCreatedAt() {
 		if (createdAt == null) { // load from DS
 			String last = (String) instance.getPropertyAsValue(CoreProperties.createdAt.toString());
@@ -64,15 +60,16 @@ public class ProcessInstance extends ProcessStep {
 		}
 		return createdAt;
 	}
-	
+
 	private void setCreatedAt(ZonedDateTime createdAt) {
 		instance.getPropertyAsSingle(CoreProperties.createdAt.toString()).set(createdAt.toString());
 		this.createdAt = createdAt;
 	}
-	
+
+	@Override
 	public ProcessScopedCmd prepareRuleEvaluationChange(ConsistencyRule cr, PropertyUpdateSet op) {
 		ConsistencyRuleType crt = (ConsistencyRuleType)cr.getInstanceType();
-		if (crt.name().startsWith(CRD_PREMATURETRIGGER_PREFIX) ) { 
+		if (crt.name().startsWith(CRD_PREMATURETRIGGER_PREFIX) ) {
 			log.debug(String.format("Queuing execution of Premature Trigger of step %s , trigger is now %s ", crt.name(), op.value().toString()));
 			StepDefinition sd = getDefinition().getStepDefinitionForPrematureConstraint(crt.name());
 			if (this.getProcessSteps().stream().anyMatch(step -> step.getDefinition().equals(sd)))
@@ -96,7 +93,7 @@ public class ProcessInstance extends ProcessStep {
         }
     	return null;
      }
-	
+
     private DecisionNodeInstance getOrCreateDNI(DecisionNodeDefinition dnd) {
     	return this.getDecisionNodeInstances().stream()
     	.filter(dni -> dni.getDefinition().equals(dnd))
@@ -106,18 +103,19 @@ public class ProcessInstance extends ProcessStep {
     				return dni;
     	});
     }
-	    
+
+	@Override
 	public ProcessDefinition getDefinition() {
 		return  WrapperCache.getWrappedInstance(ProcessDefinition.class, instance.getPropertyAsInstance(CoreProperties.processDefinition.toString()));
 	}
-	
+
 	@Override
 	public DecisionNodeInstance getInDNI() {
 			Instance inst = instance.getPropertyAsInstance(ProcessStep.CoreProperties.inDNI.toString());
 			if (inst != null)
 				return WrapperCache.getWrappedInstance(DecisionNodeInstance.class, inst);
 			else
-				return null; 
+				return null;
 	}
 
 	@Override
@@ -126,9 +124,10 @@ public class ProcessInstance extends ProcessStep {
 		if (inst != null)
 			return WrapperCache.getWrappedInstance(DecisionNodeInstance.class, inst);
 		else
-			return null; 
+			return null;
 	}
-	
+
+	@Override
 	public Responses.IOResponse removeInput(String inParam, Instance artifact) {
 		IOResponse isOk = super.removeInput(inParam, artifact);
 		if (isOk.getError() == null) {
@@ -141,7 +140,8 @@ public class ProcessInstance extends ProcessStep {
 		}
 		return isOk;
 	}
-	
+
+	@Override
 	public Responses.IOResponse addInput(String inParam, Instance artifact) {
 		IOResponse isOk = super.addInput(inParam, artifact);
 		if (isOk.getError() == null) {
@@ -151,12 +151,12 @@ public class ProcessInstance extends ProcessStep {
 			//when all steps are immediately enabled trigger all dnis to propagate, just to be on the safe side, we would actually only need to trigger those that obtain data from this param at process level
 			// otherwise just first
 			.forEach(dni -> {
-				dni.checkAndExecuteDataMappings(false, false);//dni.tryActivationPropagation(); // to trigger mapping to first steps				
+				dni.checkAndExecuteDataMappings(false, false);//dni.tryActivationPropagation(); // to trigger mapping to first steps
 			});
 		}
 		return isOk;
 	}
-		
+
 	protected List<Events.ProcessChangedEvent> signalChildStepStateChanged(ProcessStep step) {
 		if (step.getActualLifecycleState().equals(State.ENABLED) &&  this.getDefinition().getCondition(Conditions.PRECONDITION).isEmpty()) {
 			if (this.getActualLifecycleState().equals(State.COMPLETED))
@@ -172,32 +172,32 @@ public class ProcessInstance extends ProcessStep {
 			}
 		return Collections.emptyList();
 	}
-	
+
 	protected List<Events.ProcessChangedEvent> signalDNIChanged(DecisionNodeInstance dni) {
 		// we do a combination of postconditions and steps status
 		if (dni.isInflowFulfilled())
 			return tryTransitionToCompleted();
 		else
 			return this.trigger(Trigger.ACTIVATE);
-		
-		
+
+
 //		if (this.getDefinition().getCondition(Conditions.POSTCONDITION).isPresent()) // we have our own process specific post conditions
 //			return Collections.emptyList(); // then we dont care about substep status, and rely only on post condition
 
 //		if (!dni.isInflowFulfilled()) // something not ready yet, so we just cannot be ready yet, perhaps we are not ready anyway
-//			return this.setPostConditionsFulfilled(false); //we can only do this as there is no explicit process-level postcondition specified		
-//		if (dni.isInflowFulfilled() && dni.getDefinition().getOutSteps().size() == 0 && this.areQAconstraintsFulfilled()) {						
+//			return this.setPostConditionsFulfilled(false); //we can only do this as there is no explicit process-level postcondition specified
+//		if (dni.isInflowFulfilled() && dni.getDefinition().getOutSteps().size() == 0 && this.areQAconstraintsFulfilled()) {
 //			List<Events.ProcessChangedEvent> events = this.setPostConditionsFulfilled(true);
-//			if (events.size() > 0) 
+//			if (events.size() > 0)
 //				return events;
-//			else 
+//			else
 //				return trigger(Trigger.MARK_COMPLETE); // the last DNI is fulfilled, and our conditions are all fulfilled
 //		} else
 //			return Collections.emptyList();
 	}
-	
-	
-	
+
+
+
 	@Override
 	protected List<ProcessChangedEvent> setPostConditionsFulfilled(boolean isfulfilled) {
 		if (!isfulfilled) // regular step behavior for unfulfilled postcond
@@ -212,7 +212,7 @@ public class ProcessInstance extends ProcessStep {
 		}
 		return events;
 	}
-	
+
 	@Override
 	protected List<Events.ProcessChangedEvent> setPreConditionsFulfilled(boolean isfulfilled) {
 		if (arePreCondFulfilled() != isfulfilled) {  // a change
@@ -240,45 +240,45 @@ public class ProcessInstance extends ProcessStep {
 			instance.getPropertyAsSingle(ProcessStep.CoreProperties.processedPostCondFulfilled.toString()).set(true);
 		}
 		boolean areAllDNIsInflowFulfilled = this.getDecisionNodeInstances().stream().allMatch(dni -> dni.isInflowFulfilled());
-		if (arePostCondFulfilled() && areConstraintsFulfilled(ProcessStep.CoreProperties.qaState.toString()) && arePreCondFulfilled() && areAllDNIsInflowFulfilled)  
+		if (arePostCondFulfilled() && areConstraintsFulfilled(ProcessStep.CoreProperties.qaState.toString()) && arePreCondFulfilled() && areAllDNIsInflowFulfilled)
 			return this.trigger(StepLifecycle.Trigger.MARK_COMPLETE) ;
 		else
 			return this.trigger(StepLifecycle.Trigger.ACTIVATE);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void addProcessStep(ProcessStep step) {
 		assert(step != null);
 		assert(step.getInstance() != null);
 		instance.getPropertyAsSet(CoreProperties.stepInstances.toString()).add(step.getInstance());
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getProcessSteps() {
 		SetProperty<?> stepList = instance.getPropertyAsSet(CoreProperties.stepInstances.toString());
 		if (stepList != null && stepList.get() != null) {
 			return (Set<ProcessStep>) stepList.get().stream()
 					.map(inst -> WrapperCache.getWrappedInstance(ProcessInstance.getMostSpecializedClass((Instance) inst), (Instance) inst))
-					.collect(Collectors.toSet());	
+					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
-		
+
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public Set<DecisionNodeInstance> getDecisionNodeInstances() {
 		SetProperty<?> stepList = instance.getPropertyAsSet(CoreProperties.decisionNodeInstances.toString());
 		if (stepList != null && stepList.get() != null) {
 			return (Set<DecisionNodeInstance>) stepList.get().stream()
 					.map(inst -> WrapperCache.getWrappedInstance(DecisionNodeInstance.class, (Instance) inst))
-					.collect(Collectors.toSet());	
+					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void addDecisionNodeInstance(DecisionNodeInstance dni) {
 		instance.getPropertyAsSet(CoreProperties.decisionNodeInstances.toString()).add(dni.getInstance());
 	}
-	
+
 	public Set<DecisionNodeInstance> getInstantiatedDNIsHavingStepsOutputAsInput(ProcessStep step, String output) {
 		String stepType = step.getDefinition().getName();
 		return this.getDecisionNodeInstances().stream()
@@ -286,32 +286,34 @@ public class ProcessInstance extends ProcessStep {
 					.anyMatch(md -> md.getFromStepType().equals(stepType) && md.getFromParameter().equals(output)))
 			.collect(Collectors.toSet());
 	}
-	
+
 	public boolean isImmediateDataPropagationEnabled() {
 		if (getProcess() == null)
 			return getDefinition() != null ? getDefinition().isImmediateDataPropagationEnabled() : false;
 		else
 			return getProcess().isImmediateDataPropagationEnabled();
 	}
-	
+
 	public boolean isImmediateInstantiateAllStepsEnabled() {
 		if (getProcess() == null)
 			return getDefinition() != null ? getDefinition().isImmediateInstantiateAllStepsEnabled() : false;
 		else
 			return getProcess().isImmediateInstantiateAllStepsEnabled();
 	}
-	
+
+	@Override
 	public void deleteCascading() {
 		// remove any lower-level instances this step is managing
 		// DNIs and Steps
 		getDecisionNodeInstances().forEach(dni -> dni.deleteCascading());
 		getProcessSteps().forEach(step -> step.deleteCascading());
 		// we are not deleting input and output artifacts as we are just referencing them!
-		// TODO: should we delete configurations?				
+		// TODO: should we delete configurations?
 		// finally delete self via super call
 		super.deleteCascading();
 	}
-	
+
+	@Override
 	public List<ProcessScopedCmd> ensureRuleToStateConsistency() {
 		List<ProcessScopedCmd> incons = new LinkedList<>();
 		incons.addAll(super.ensureRuleToStateConsistency());
@@ -320,7 +322,7 @@ public class ProcessInstance extends ProcessStep {
 				.collect(Collectors.toList()));
 		return incons;
 	}
-	
+
 //	public static List<ProcessDefinitionError> getConstraintValidityStatus(Workspace ws, ProcessDefinition pd) {
 //		List<ProcessDefinitionError> errors = new LinkedList<>();
 //		errors.addAll(pd.checkConstraintValidity());
@@ -339,7 +341,7 @@ public class ProcessInstance extends ProcessStep {
 //			});
 //		return errors;
 //	}
-	
+
 	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws, ProcessDefinition td) {
 		String parentName = td.getProcess() != null ? td.getProcess().getName() : "ROOT";
 		String name = designspaceTypeId+td.getName()+parentName;
@@ -347,7 +349,7 @@ public class ProcessInstance extends ProcessStep {
 //				.filter(it -> !it.isDeleted)
 //				.filter(it -> it.name().equals(designspaceTypeId+td.getName()))
 //				.findAny();
-		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(name)); 
+		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(name));
 		if (thisType.isPresent())
 			return thisType.get();
 		else {
@@ -359,72 +361,72 @@ public class ProcessInstance extends ProcessStep {
 			return typeStep;
 		}
 	}
-	
+
 	protected static Class<? extends InstanceWrapper> getMostSpecializedClass(Instance inst) {
 		// we have the problem, that the WrapperCache will only return a type we ask for (which might be a general type) rather than the most specialized one, hence we need to obtain that type here
 		// we assume that this is used only in here within, and thus that inst is only ProcessDefinition or StepDefinition
 		if (inst.getInstanceType().name().startsWith(designspaceTypeId.toString())) // its a process
 			return ProcessInstance.class;
-		else 
+		else
 			return ProcessStep.class; // for now only those two types
 	}
-	
+
 	public static String generatePrematureRuleName(String stepTypeName, ProcessDefinition pd) {
 		return CRD_PREMATURETRIGGER_PREFIX+stepTypeName+"_"+pd.getName();
 	}
-		
+
 	public static ProcessInstance getInstance(Workspace ws, ProcessDefinition sd) {
 		return getInstance(ws, sd, UUID.randomUUID().toString());
 	}
-	
+
 	public static ProcessInstance getInstance(Workspace ws, ProcessDefinition sd, String namePostfix) {
 		//TODO: not to create duplicate process instances somehow
-		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+namePostfix);		
+		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+namePostfix);
 		ProcessInstance pi = WrapperCache.getWrappedInstance(ProcessInstance.class, instance);
 		pi.init(sd, null, null, ws);
 		return pi;
 	}
-	
+
 	public static ProcessInstance getSubprocessInstance(Workspace ws, ProcessDefinition sd, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, ProcessInstance scope) {
-		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+UUID.randomUUID()); 		
+		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+UUID.randomUUID());
 		ProcessInstance pi = WrapperCache.getWrappedInstance(ProcessInstance.class, instance);
 		pi.setProcess(scope);
 		pi.init(sd, inDNI, outDNI, ws);
 		return pi;
 	}
-	
-	protected void init(ProcessDefinition pdef, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, Workspace ws) {		
+
+	protected void init(ProcessDefinition pdef, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, Workspace ws) {
 		// init first DNI, there should be only one. Needs to be checked earlier with definition creation
 		// we assume consistent, correct specification/definition here
 		instance.getPropertyAsSingle(CoreProperties.processDefinition.toString()).set(pdef.getInstance());
-		super.init(ws, pdef, inDNI, outDNI);	
+		super.init(ws, pdef, inDNI, outDNI);
 		setCreatedAt(getCurrentTimestamp());
 		if (isImmediateInstantiateAllStepsEnabled()) {
 			// instantiate all steps and thereby the DNIs
-			pdef.getStepDefinitions().stream().forEach(sd -> { 
-				ProcessStep step = createAndWireTask(sd); 				
+			pdef.getStepDefinitions().stream().forEach(sd -> {
+				ProcessStep step = createAndWireTask(sd);
 				//step.getInDNI().tryDataPropagationToPrematurelyTriggeredTask(); no point in triggering as there is no input available at this stage
-			});			
+			});
 		} // now also activate first
 		pdef.getDecisionNodeDefinitions().stream()
 			.filter(dnd -> dnd.getInSteps().size() == 0)
 			.forEach(dnd -> {
-				DecisionNodeInstance dni = getOrCreateDNI(dnd);		
-				dni.signalStateChanged(this); //dni.tryActivationPropagation(); // to trigger instantiation of initial steps				
-			});		
+				DecisionNodeInstance dni = getOrCreateDNI(dnd);
+				dni.signalStateChanged(this); //dni.tryActivationPropagation(); // to trigger instantiation of initial steps
+			});
 		// datamapping from proc to DNI is triggered upon adding input, which is not available at this stage
 	}
 
 
 	public void printProcessToConsole(String prefix) {
-		
+
 		System.out.println(prefix+this.toString());
 		String nextIndent = "  "+prefix;
 		this.getProcessSteps().stream().forEach(step -> {
 			if (step instanceof ProcessInstance) {
 				((ProcessInstance) step).printProcessToConsole(nextIndent);
 			} else {
-				
+
 				System.out.println(nextIndent+step.toString());
 			}
 		});

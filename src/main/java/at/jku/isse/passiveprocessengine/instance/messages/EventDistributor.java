@@ -8,17 +8,17 @@ import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedE
 
 public class EventDistributor {
 
-	Set<IProcessEventHandler> handlers = new LinkedHashSet<IProcessEventHandler>();
+	Set<IProcessEventHandler> handlers = new LinkedHashSet<>();
 
-	
+
 	public EventDistributor() {
-		
+
 	}
-	
+
 	public void registerHandler(IProcessEventHandler handler) {
 		handlers.add(handler);
 	}
-	
+
 	public void handleEvents(Collection<ProcessChangedEvent> events) {
 		handlers.forEach(handler -> handler.handleEvents(events));
 	}

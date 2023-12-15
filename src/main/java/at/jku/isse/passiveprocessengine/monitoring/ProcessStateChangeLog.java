@@ -21,7 +21,7 @@ public class ProcessStateChangeLog implements IProcessEventHandler{
 
 	@Autowired
 	ITimeStampProvider timeStampProvider;
-	
+
 	@Override
 	public void handleEvents(Collection<ProcessChangedEvent> events) {
 		events.stream()
@@ -33,14 +33,14 @@ public class ProcessStateChangeLog implements IProcessEventHandler{
 			list.add(event);
 		});
 	}
-	
+
 	public Map<Long, List<ProcessChangedEvent>> logs = new HashMap<>();
-	
+
 	private static Gson gson = new GsonBuilder()
 			 .registerTypeAdapterFactory(new at.jku.isse.passiveprocessengine.monitoring.serialization.MultiTypeAdapterFactory())
 			 .setPrettyPrinting()
 			 .create();
-	
+
 	public String getEventLogAsJson(Long processId) {
 		if (logs.containsKey(processId)) {
 			return gson.toJson(logs.get(processId));

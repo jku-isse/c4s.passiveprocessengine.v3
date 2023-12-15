@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 import at.jku.isse.designspace.core.model.Cardinality;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
@@ -16,7 +17,6 @@ import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
-import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.CoreProperties;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
@@ -27,124 +27,125 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 
-	public static enum CoreProperties {isInflowFulfilled, hasPropagated, dnd, inSteps, outSteps, closingDN};
+	public static enum CoreProperties {isInflowFulfilled, hasPropagated, dnd, inSteps, outSteps, closingDN}
 	public static final String designspaceTypeId = DecisionNodeInstance.class.getSimpleName();
-	
+
 	private boolean isInternalPropagationDone = false;
 	private InterStepDataMapper mapper = null;
-	
+
 	public DecisionNodeInstance(Instance instance) {
 		super(instance);
 	}
-	
+
+	@Override
 	public DecisionNodeDefinition getDefinition() {
 		return  WrapperCache.getWrappedInstance(DecisionNodeDefinition.class, instance.getPropertyAsInstance(CoreProperties.dnd.toString()));
 	}
-	
+
 	private void setInflowFulfilled(boolean isFulfilled) {
 		//if (isInflowFulfilled() != isFulfilled) // a change -> not necessary, is done internally anyway
 		instance.getPropertyAsSingle(CoreProperties.isInflowFulfilled.toString()).set(isFulfilled);
 	}
-	
+
 	public boolean isInflowFulfilled() {
 		return (boolean) instance.getPropertyAsValueOrElse(CoreProperties.isInflowFulfilled.toString(), () -> false);
 	}
-	
+
 	private void setHasPropagated() {
 		instance.getPropertyAsSingle(CoreProperties.hasPropagated.toString()).set(true);
 	}
-	
+
 	public boolean hasPropagated() {
 		return (boolean) instance.getPropertyAsValueOrElse(CoreProperties.hasPropagated.toString(), () -> false);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	protected void addOutStep(ProcessStep step) {
 		instance.getPropertyAsSet(CoreProperties.outSteps.toString()).add(step.getInstance());
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getOutSteps() {
 		return (Set<ProcessStep>) instance.getPropertyAsSet(CoreProperties.outSteps.toString()).stream()
 			.map(inst -> WrapperCache.getWrappedInstance(ProcessInstance.getMostSpecializedClass((Instance) inst), (Instance)inst))
 			.collect(Collectors.toSet());
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public void addInStep(ProcessStep step) {
 		instance.getPropertyAsSet(CoreProperties.inSteps.toString()).add(step.getInstance());
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getInSteps() {
 		return (Set<ProcessStep>) instance.getPropertyAsSet(CoreProperties.inSteps.toString()).stream()
 			.map(inst -> WrapperCache.getWrappedInstance(ProcessInstance.getMostSpecializedClass((Instance) inst), (Instance)inst))
 			.collect(Collectors.toSet());
 	}
-	
+
 	protected List<ProcessChangedEvent> signalStateChanged(ProcessStep step) {
 		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		if( updateInConditionsFullfilledAndCheckIfHasChanged()) {
 			if (isInflowFulfilled()) { // now we transitioned to fulfilled:
 				if (this.getDefinition().getInFlowType().equals(InFlowType.XOR) && !hasPropagated())
-					events.addAll(selectChosenXORStep());				
+					events.addAll(selectChosenXORStep());
 				events.addAll(doActivationPropagation()); // lets see if we need to propagate anything
-			} else { // not we transitioned to unfulfilled, 
+			} else { // not we transitioned to unfulfilled,
 				if (this.getDefinition().getInFlowType().equals(InFlowType.XOR)) { // only relevant if we are XOR DNI
 					// now if not fulfilled and we have already propagated: need to switch branches
 					if (hasPropagated()) {
 						//XOR inflow now unfulfill means the step triggering this was previously complete and is no more (now its e.g., cancelled or postcond no longer fulfilled)
 						//hence no active branch , 	// then needs to reactivate all other branches that have no work expected set.
-						events.addAll(releaseChosenXORStep(step)); 
-					} 
-				} else // releaseChoesenXORStep will result in reevaluation and reentry in this method			
+						events.addAll(releaseChosenXORStep(step));
+					}
+				} else // releaseChoesenXORStep will result in reevaluation and reentry in this method
 					if (this.hasPropagated() && this.getDefinition().getOutSteps().size() == 0) {
 					// just make sure that the process is not complete anymore (may be called several times)
 						events.addAll(this.getProcess().signalDNIChanged(this));
 					}
-			}			
+			}
 		} else { //check if immediate downstream tasks should be instantiated
 			if (isImmediateInstantiateAllStepsEnabled()) {
 				State exp = step.getExpectedLifecycleState();
 				if (exp.equals(State.ACTIVE) || exp.equals(State.ENABLED)) {
 					events.addAll(initiateDownstreamSteps(isImmediateDataPropagationEnabled()));
-				}					
+				}
 			}
 			// if a now completed step (that is not essential in an OR dni) has data propagation delayed until completion, then we wont trigger datapropagation so far and need to do it here
 			if (!isImmediateDataPropagationEnabled() && step.getActualLifecycleState().equals(State.COMPLETED)) {
 				checkAndExecuteDataMappings(this.getDefinition().getOutSteps().size() == 0, false);
 			}
-		}			
+		}
 		return events;
 	}
-	
+
 	public List<Events.ProcessChangedEvent> signalPrevTaskDataChanged(ProcessStep prevTask) {
 		if (isImmediateDataPropagationEnabled() || prevTask.getActualLifecycleState().equals(State.COMPLETED)) {
-			//should we propagate now?		
+			//should we propagate now?
 			boolean isEndOfProcess = false;
 			if (this.getDefinition().getOutSteps().size() == 0 ) {
 				// then we are done with this workflow and execute any final mappings into the workflows output
 				isEndOfProcess = true;
-			}		
+			}
 			return checkAndExecuteDataMappings(isEndOfProcess, false);// we just check everything, not too expensive as mappings are typically few.
 		}
 		return Collections.emptyList();
 	}
-	
-	private boolean updateInConditionsFullfilledAndCheckIfHasChanged() {	
+
+	private boolean updateInConditionsFullfilledAndCheckIfHasChanged() {
 		boolean prioCond = this.isInflowFulfilled();
-		switch(this.getDefinition().getInFlowType()) {		
+		switch(this.getDefinition().getInFlowType()) {
 		case SEQ: //fallthrough as treated just like and
-		case AND: 
+		case AND:
 			// we ignore Expected Canceled and no work expected
-			// we expect other to be E: COMPLETED, thus for a deviation we still propagate all inputs once we progated in the past, 
-			//thus once a prior expected step get cancelled, we remove its mapping			
+			// we expect other to be E: COMPLETED, thus for a deviation we still propagate all inputs once we progated in the past,
+			//thus once a prior expected step get cancelled, we remove its mapping
 			boolean inFlowANDok = getInSteps().stream()
 				.filter(step -> !step.getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED) )
 				.filter(step -> !step.getExpectedLifecycleState().equals(State.CANCELED) )
 				.allMatch(step -> (step.getExpectedLifecycleState().equals(State.COMPLETED) && step.getActualLifecycleState().equals(State.COMPLETED)) );
-			setInflowFulfilled(inFlowANDok);	
-			return inFlowANDok!=prioCond;		
+			setInflowFulfilled(inFlowANDok);
+			return inFlowANDok!=prioCond;
 		case OR:
 			// as soon as one is E: COMPLETED we set fulfillment and activate further, even when deviating
 			boolean inFlowORok = getInSteps().stream()
@@ -163,16 +164,16 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			.filter(step -> !step.getExpectedLifecycleState().equals(State.CANCELED) )
 			.filter(step -> step.getExpectedLifecycleState().equals(State.COMPLETED) && step.getActualLifecycleState().equals(State.COMPLETED) )
 			.collect(Collectors.toList());
-			boolean inFlowXORok = steps.size() == 1; 
+			boolean inFlowXORok = steps.size() == 1;
 			setInflowFulfilled(inFlowXORok);
-			return inFlowXORok!=prioCond; 
+			return inFlowXORok!=prioCond;
 		}
 		return false;
 		// check if have some delayed output that needs to be propagted
 		//if (this.hasPropagated())
 		//	tryActivationPropagation();
 	}
-	
+
 	private List<Events.ProcessChangedEvent> selectChosenXORStep() {
 		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		List<ProcessStep> steps = getInSteps().stream()
@@ -180,7 +181,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 				.filter(step -> !step.getExpectedLifecycleState().equals(State.CANCELED) )
 				.filter(step -> step.getExpectedLifecycleState().equals(State.COMPLETED) && step.getActualLifecycleState().equals(State.COMPLETED) )
 				.collect(Collectors.toList());
-		// now if fulfilled, and not yet propagated: need to 'disable' other branches 
+		// now if fulfilled, and not yet propagated: need to 'disable' other branches
 		ProcessStep chosenStep = steps.get(0);
 		getInSteps().stream()
 			.filter(step -> !step.getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED) )
@@ -194,13 +195,13 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 				path.add(0, this);
 				// deactivate those not on path
 				DecisionNodeInstance correspondingDNI = path.get(path.size()-1);
-				DecisionNodeInstance exclNextDNI = path.size() >= 2 ? path.get(path.size()-2) : null;						
-				events.addAll(deactivateTasksOn(correspondingDNI, exclNextDNI, this)); 
+				DecisionNodeInstance exclNextDNI = path.size() >= 2 ? path.get(path.size()-2) : null;
+				events.addAll(deactivateTasksOn(correspondingDNI, exclNextDNI, this));
 			}
-		}			
+		}
 		return events;
 	}
-	
+
 	private List<Events.ProcessChangedEvent> releaseChosenXORStep(ProcessStep previouslyChosenStep) {
 		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		getInSteps().stream()
@@ -215,19 +216,19 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			path.add(0, this);
 			// deactivate those not on path
 			DecisionNodeInstance correspondingDNI = path.get(path.size()-1);
-			DecisionNodeInstance exclNextDNI = path.size() >= 2 ? path.get(path.size()-2) : null;						
-			events.addAll(activateTasksOn(correspondingDNI, exclNextDNI, this)); 
+			DecisionNodeInstance exclNextDNI = path.size() >= 2 ? path.get(path.size()-2) : null;
+			events.addAll(activateTasksOn(correspondingDNI, exclNextDNI, this));
 		}
-	}			
+	}
 	return events;
 	}
-	
-	public static List<DecisionNodeInstance> findCorrespondingOutFlowPath(DecisionNodeInstance dni, ProcessStep priorityIfPresent) { // finds for this decision node inFlow the corresponding outFlow of a prior DNI, if exists 		
+
+	public static List<DecisionNodeInstance> findCorrespondingOutFlowPath(DecisionNodeInstance dni, ProcessStep priorityIfPresent) { // finds for this decision node inFlow the corresponding outFlow of a prior DNI, if exists
 	if (dni == null)
-		return null;		
+		return null;
 	else {
 		List<DecisionNodeInstance> path = new LinkedList<>();
-		// get any one (existing) predecessor DNIs, 
+		// get any one (existing) predecessor DNIs,
 		DecisionNodeInstance predDNI = null;
 		do {
 			Optional<DecisionNodeInstance> optPred = dni.getInSteps().stream()
@@ -238,63 +239,63 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			if (optPred.isEmpty()) return null; // there is no predecessor, can happen only for start node
 			// now check if this is the outflow
 			predDNI = optPred.get();
-			if (predDNI.getDefinition().getOutSteps().size() > 1) { 
+			if (predDNI.getDefinition().getOutSteps().size() > 1) {
 				path.add(predDNI);
 				return path;
 			}else if (predDNI.getDefinition().getInSteps().size() > 1) {// skip substructure
 				List<DecisionNodeInstance> subPath = findCorrespondingOutFlowPath(predDNI, null);
-				if (subPath == null) // should not happen, but just in case 
+				if (subPath == null) // should not happen, but just in case
 					return null;
 				else {
 					path.addAll(subPath);
 					dni = subPath.get(subPath.size()-1);
 				}
-			} else {// this is a sequential connecting DNI with a single in and out branch/flow which therefore has no corresponding outFlow DNI, thus needs to be skipped	
+			} else {// this is a sequential connecting DNI with a single in and out branch/flow which therefore has no corresponding outFlow DNI, thus needs to be skipped
 				path.add(predDNI);
 				dni = predDNI; // we skip this
 			}
-		} while (true);																		 			
-	}		
+		} while (true);
+	}
 }
-	
+
 	private static List<Events.ProcessChangedEvent> deactivateTasksOn(DecisionNodeInstance thisDNI, DecisionNodeInstance nextExcludeDNI, DecisionNodeInstance finalDNI) {
 		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		thisDNI.getOutSteps().stream()
 			.filter(task -> (nextExcludeDNI == null) || task.getOutDNI() != nextExcludeDNI) // we filter out those on the path
 			.map(task -> {
-				if (!task.getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED)) {					
+				if (!task.getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED)) {
 					events.addAll(task.setWorkExpected(false));
-				} // else we dont set this again, but we need to travers onwards, thus we cant filter out them 
+				} // else we dont set this again, but we need to travers onwards, thus we cant filter out them
 				return task.getOutDNI();
 			})
 			.filter(dni -> dni != finalDNI) // we stop once we reache finalDNI
 			.forEach(dni -> events.addAll(deactivateTasksOn(dni, null, finalDNI)));
 		return events;
 	}
-	
+
 	private static List<Events.ProcessChangedEvent> activateTasksOn(DecisionNodeInstance thisDNI, DecisionNodeInstance nextExcludeDNI, DecisionNodeInstance finalDNI) {
 		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		thisDNI.getOutSteps().stream()
 			.filter(task -> (nextExcludeDNI == null) || task.getOutDNI() != nextExcludeDNI) // we filter out those on the path
 			.map(task -> {
-				if (task.getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED)) {					
+				if (task.getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED)) {
 					events.addAll(task.setWorkExpected(true));
-				} // else we dont set this again, but we need to travers onwards, thus we cant filter out them 
+				} // else we dont set this again, but we need to travers onwards, thus we cant filter out them
 				return task.getOutDNI();
 			})
 			.filter(dni -> dni != finalDNI) // we stop once we reache finalDNI
 			.forEach(dni -> events.addAll(activateTasksOn(dni, null, finalDNI)));
 		return events;
 	}
-	
+
 	private List<Events.ProcessChangedEvent> doActivationPropagation() {
 		// if not yet progressed,
 		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		if (!this.hasPropagated()) {
 			events.addAll(initiateDownstreamSteps(false)); //check and execute datamappings will be called below anyway
 			this.setHasPropagated();
-		} 
-		
+		}
+
 		boolean isEndOfProcess = false;
 		if (this.getDefinition().getOutSteps().size() == 0 ) {
 			// is this the final DNI?
@@ -306,19 +307,19 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 
 		return events;
 	}
-	
+
 	// only to be called internally and by process for moving data into child process
 	protected List<ProcessChangedEvent> checkAndExecuteDataMappings(boolean isEndOfProcess, boolean isPremature) {
 		if (mapper == null) {
-			mapper = new InterStepDataMapper(this.getDefinition(), this.getProcess());			
+			mapper = new InterStepDataMapper(this.getDefinition(), this.getProcess());
 		}
 		return mapper.checkAndExecuteDataMappings(isEndOfProcess, isPremature);
 	}
-	
+
 	private List<ProcessChangedEvent> initiateDownstreamSteps(boolean includeDataPropagation) {
 		if (isInternalPropagationDone) return Collections.emptyList(); // to distinguish between official propagation or premature/immediate propagation
 		// get all out task defs, check if they exist or create them
-		// first time activation		
+		// first time activation
 		List<ProcessChangedEvent> events = new LinkedList<>();
 		this.getProcess().getDefinition().getStepDefinitions().stream()
 		.filter(def -> def.getInDND().equals(this.getDefinition())) //retain only that have this DND as their predecessor
@@ -329,18 +330,19 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 					if (includeDataPropagation) {
 						events.addAll(checkAndExecuteDataMappings(false, true));
 					}
-				});		
+				});
 		isInternalPropagationDone = true;
 		return events;
 	}
-	
+
 	// when a downstream task is prematurely created, we want to be able to propagate existing output to it
 	public List<Events.ProcessChangedEvent> doDataPropagationToPrematurelyTriggeredTask() {
 		return checkAndExecuteDataMappings(false, true);
 	}
-	
-	
-	
+
+
+
+	@Override
 	public void deleteCascading() {
 		// remove any lower-level instances this step is managing, which is none
 		// hence
@@ -358,29 +360,29 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		else
 			return getProcess().isImmediateInstantiateAllStepsEnabled();
 	}
-	
+
 	private boolean isImmediateDataPropagationEnabled() {
 		if (getProcess() == null)
 			return false;
 		else
 			return getProcess().isImmediateDataPropagationEnabled();
 	}
-	
+
 	public DecisionNodeInstance getScopeClosingDecisionNodeOrNull() {
 		if (this.getOutSteps().isEmpty())
 			return null;
-		else {			
+		else {
 			Instance dnd = instance.getPropertyAsInstance(CoreProperties.closingDN.toString());
 			if (dnd != null)
 				return WrapperCache.getWrappedInstance(DecisionNodeInstance.class, dnd);
-			else { 
+			else {
 				DecisionNodeInstance closingDnd = determineScopeClosingDN();
-				instance.getPropertyAsSingle(CoreProperties.closingDN.toString()).set(closingDnd.getInstance());		
+				instance.getPropertyAsSingle(CoreProperties.closingDN.toString()).set(closingDnd.getInstance());
 				return closingDnd;
 			}
 		}
 	}
-	
+
 	private DecisionNodeInstance determineScopeClosingDN() {
 //		List<Step> nextSteps = getOutStepsOf(dn);
 //		if (nextSteps.isEmpty()) return null; // end of the process, closing DN reached
@@ -398,13 +400,13 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 					nextStepOutDNs = nextNextStepOutDNs;
 				}
 				assert(nextStepOutDNs.size() > 0);
-			} 
-			return sameDepthNodes.iterator().next();				
+			}
+			return sameDepthNodes.iterator().next();
 		}
 	}
-	
+
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
-		Optional<InstanceType> thisTypeOpt = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId)); 
+		Optional<InstanceType> thisTypeOpt = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId));
 //		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
 //			.filter(it -> !it.isDeleted)
 //			.filter(it -> it.name().equals(designspaceTypeId))
@@ -423,20 +425,20 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			return thisType;
 		}
 	}
-	
+
 	protected static DecisionNodeInstance getInstance(Workspace ws, DecisionNodeDefinition dnd) {
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), dnd.getName()+"_"+UUID.randomUUID());
 		DecisionNodeInstance dni = WrapperCache.getWrappedInstance(DecisionNodeInstance.class, instance);
 		dni.init(dnd);
 		return dni;
 	}
-	
+
 	protected void init(DecisionNodeDefinition dnd) {
 		instance.getPropertyAsSingle(CoreProperties.dnd.toString()).set(dnd.getInstance());
 		instance.getPropertyAsSingle(CoreProperties.hasPropagated.toString()).set(false);
 		// if kickoff DN, then set inflow fulfillment to true
 		instance.getPropertyAsSingle(CoreProperties.isInflowFulfilled.toString()).set(/*dnd.getInSteps().size() == 0 ? true :*/ false);
-	
+
 	}
 
 	@Override
@@ -444,14 +446,14 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		return "DecisionNodeInstance [" + getDefinition().getName() + ", isInflowFulfilled()="
 				+ isInflowFulfilled() + ", hasPropagated()=" + hasPropagated() + "]";
 	}
-	
+
 	public static final DecisionNodeComparatorByDefinitionOrder comparator = new DecisionNodeComparatorByDefinitionOrder();
-	
+
 	private static class DecisionNodeComparatorByDefinitionOrder implements Comparator<DecisionNodeInstance> {
 		@Override
 		public int compare(DecisionNodeInstance o1, DecisionNodeInstance o2) {
 			return o1.getDefinition().getDepthIndex().compareTo(o2.getDefinition().getDepthIndex());
 		}
-		
+
 	}
 }

@@ -16,5 +16,5 @@ public class ProcessInstanceError {
 				+ errorMsg;
 	}
 
-	
+
 }

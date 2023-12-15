@@ -4,15 +4,15 @@ import at.jku.isse.designspace.core.model.Instance;
 
 
 public class RuntimeMapping {
-	
+
 	public enum FlowDir { outToIn, //from Step output to Step input
 	inToIn, // from process input to Step input
 	outToOut, // from Step output to process output
 	inToOut //from process input to process output
-	};
-	
-	//enum Status { TO_BE_CHECKED, TO_BE_ADDED, TO_BE_REMOVED, CONSISTENT }; 	
-		
+	}
+
+	//enum Status { TO_BE_CHECKED, TO_BE_ADDED, TO_BE_REMOVED, CONSISTENT };
+
 	ProcessStep fromStep;
 	String fromParam;
 	Instance art;
@@ -20,7 +20,7 @@ public class RuntimeMapping {
 	String toParam;
 	FlowDir dir = FlowDir.outToIn;
 	//Status status = Status.TO_BE_CHECKED;
-	
+
 	public RuntimeMapping(ProcessStep fromStep, String fromParam, Instance art, ProcessStep toStep, String toParam) {
 		super();
 		this.fromStep = fromStep;
@@ -29,7 +29,7 @@ public class RuntimeMapping {
 		this.toStep = toStep;
 		this.toParam = toParam;
 	}
-	
+
 	public RuntimeMapping(ProcessStep fromStep, String fromParam, Instance art, ProcessStep toStep, String toParam, FlowDir direction) {
 		super();
 		this.fromStep = fromStep;
@@ -39,7 +39,7 @@ public class RuntimeMapping {
 		this.toParam = toParam;
 		this.dir = direction;
 	}
-	
+
 	public RuntimeMapping() {}
 
 	public ProcessStep getFromStep() {
@@ -97,12 +97,12 @@ public class RuntimeMapping {
 //	public void setStatus(Status status) {
 //		this.status = status;
 //	}
-	
+
 	public RuntimeMapping fluentSetArtifact(Instance art) {
 		this.setArtifact(art);
 		return this;
 	}
-	
+
 	public static RuntimeMapping copyFrom(RuntimeMapping template) {
 		return new RuntimeMapping(template.getFromStep(),
 								template.getFromParam(),
@@ -134,9 +134,7 @@ public class RuntimeMapping {
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
+		if ((obj == null) || (getClass() != obj.getClass()))
 			return false;
 		RuntimeMapping other = (RuntimeMapping) obj;
 		if (art == null) {
