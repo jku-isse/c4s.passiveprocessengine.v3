@@ -9,8 +9,8 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import at.jku.isse.designspace.core.model.Instance;
-import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionScopedElement;
 
 public class TransformationResultAdapterFactory extends MultiTypeAdapterFactory {
 

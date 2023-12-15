@@ -223,7 +223,7 @@ public class ProcessQAStatsMonitor implements IProcessEventHandler {
 		// for every task defined in WFD, check if the corresponding task is either expected to be canceled, noworkexpected, or completed
 		return wfi.getDefinition().getStepDefinitions().stream()
 			.map(sd -> stats.stream()
-						.filter( stat -> stat.getStep().getDefinition().getName().equals(sd.getId()) )
+						.filter( stat -> stat.getStep().getDefinition().getName().equals(sd.getName()) )
 						.findAny()
 						)
 			.allMatch(optStat -> optStat.isPresent() &&

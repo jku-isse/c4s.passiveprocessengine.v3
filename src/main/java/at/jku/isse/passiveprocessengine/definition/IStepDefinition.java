@@ -4,11 +4,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.passiveprocessengine.IdentifiableElement;
+import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.NameIdentifiableElement;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
-public interface IStepDefinition extends IdentifiableElement {
+public interface IStepDefinition extends NameIdentifiableElement {
 
 	Map<String,InstanceType> getExpectedInput();
 	Map<String,InstanceType> getExpectedOutput();

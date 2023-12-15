@@ -40,7 +40,7 @@ public class Commands {
 		@Override
 		public List<Events.ProcessChangedEvent> execute() {
 			if (isFulfilled) {
-				if (getScope().getProcessSteps().stream().noneMatch(t -> t.getDefinition().getId().equals(sd.getId()))) {
+				if (getScope().getProcessSteps().stream().noneMatch(t -> t.getDefinition().getName().equals(sd.getName()))) {
 					ProcessStep step = getScope().createAndWireTask(sd);
 					if (step != null) {
 						// set more precise inputs (or from further distance) --> DNI will use input from further away if defined so in the inter-step data mappings

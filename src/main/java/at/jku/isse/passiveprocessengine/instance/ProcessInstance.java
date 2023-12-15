@@ -83,7 +83,7 @@ public class ProcessInstance extends ProcessStep {
 	public ProcessStep createAndWireTask(StepDefinition sd) {
     	DecisionNodeInstance inDNI = getOrCreateDNI(sd.getInDND());
     	DecisionNodeInstance outDNI = getOrCreateDNI(sd.getOutDND());
-    	if (getProcessSteps().stream().noneMatch(t -> t.getDefinition().getId().equals(sd.getId()))) {
+    	if (getProcessSteps().stream().noneMatch(t -> t.getDefinition().getName().equals(sd.getName()))) {
         	ProcessStep step = ProcessStep.getInstance(ws, sd, inDNI, outDNI, this);
         	//step.setProcess(this);
         	if (step != null) {

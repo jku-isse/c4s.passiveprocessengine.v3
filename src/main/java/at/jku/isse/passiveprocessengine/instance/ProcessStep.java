@@ -27,7 +27,6 @@ import at.jku.isse.designspace.core.model.SingleProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
-import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;

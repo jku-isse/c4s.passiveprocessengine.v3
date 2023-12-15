@@ -7,7 +7,6 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
-import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
@@ -57,7 +56,7 @@ public class ConstraintSpec extends /*InstanceWrapper*/ ProcessDefinitionScopedE
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
-				InstanceType specType = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessDefinitionScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
+				InstanceType specType = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessDefinitionScopedElement.getOrCreateCoreType(ws));
 				// constraintId maps to Instance name property
 				specType.createPropertyType(CoreProperties.constraintSpec.toString(), Cardinality.SINGLE, Workspace.STRING);
 				specType.createPropertyType(CoreProperties.humanReadableDescription.toString(), Cardinality.SINGLE, Workspace.STRING);

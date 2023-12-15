@@ -12,7 +12,7 @@ import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
-import at.jku.isse.passiveprocessengine.modeling.ElementInspectionUtils;
+import at.jku.isse.passiveprocessengine.utils.ElementInspectionUtils;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest

@@ -340,7 +340,7 @@ public class PrematureTriggerGenerator {
 			int result = 1;
 			result = prime * result + ((ioType == null) ? 0 : ioType.hashCode());
 			result = prime * result + ((paramName == null) ? 0 : paramName.hashCode());
-			result = prime * result + ((local == null) ? 0 : local.getId().hashCode());
+			result = prime * result + ((local == null) ? 0 : local.getName().hashCode());
 			return result;
 		}
 	}

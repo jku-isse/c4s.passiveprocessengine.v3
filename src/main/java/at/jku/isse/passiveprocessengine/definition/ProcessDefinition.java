@@ -143,7 +143,7 @@ public class ProcessDefinition extends StepDefinition{
 	public List<ProcessDefinitionError> initializeInstanceTypes(boolean doGeneratePrematureDetectionConstraints) {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
 		InstanceType processInstanceType = ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
-		DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(instance.workspace);
+		DecisionNodeInstance.getOrCreateCoreType(instance.workspace);
 		//List<ProcessException> subProcessExceptions = new ArrayList<>();
 		this.getStepDefinitions().stream().forEach(sd -> {
 			if (sd instanceof ProcessDefinition) {

@@ -1,22 +1,17 @@
 package at.jku.isse.passiveprocessengine;
 
-import java.util.Collection;
-import java.util.stream.Collectors;
-
-import at.jku.isse.designspace.core.model.Instance;
-import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.core.model.Workspace;
-import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
+import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.NameIdentifiableElement;
 
-public abstract class InstanceWrapper implements IdentifiableElement{
+public abstract class InstanceWrapper implements NameIdentifiableElement{
 
 	protected transient Instance instance;
-	protected transient Workspace ws;
-
-	public InstanceWrapper(Instance instance) {
-	//	assert instance != null;
+	protected transient WrapperCache wrapperCache;
+	
+	public InstanceWrapper(Instance instance, WrapperCache wrapperCache) {
 		this.instance = instance;
+		this.wrapperCache = wrapperCache;
 	}
 
 	public Instance getInstance() {
@@ -24,37 +19,19 @@ public abstract class InstanceWrapper implements IdentifiableElement{
 	}
 
 	@Override
-	public String getId() {
-		return instance.id().toString();
-	}
-
-	@Override
 	public String getName() {
-		return instance.name();
+		return instance.getId();
 	}
 
 	public void deleteCascading() {
-		WrapperCache.removeWrapper(getInstance().id());
+		wrapperCache.removeWrapper(getInstance().getId());
 		instance.delete();
 	}
 
 	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
-		WrapperCache.removeWrapper(getInstance().id());
+		wrapperCache.removeWrapper(getInstance().getId());
 		instance.delete();
 	}
 
-	protected ConsistencyRuleType getRuleByNameAndContext(String name, InstanceType context) {
-		Collection<InstanceType> ruleDefinitions = ws.its(ConsistencyRuleType.CONSISTENCY_RULE_TYPE).subTypes();
-        if(ruleDefinitions.isEmpty() || (ruleDefinitions.stream().filter(inst -> !inst.isDeleted).count() == 0))
-            return null;
-        for(ConsistencyRuleType crd: ruleDefinitions.stream()
-        								.filter(inst -> !inst.isDeleted)
-        								.filter(ConsistencyRuleType.class::isInstance)
-        								.map(ConsistencyRuleType.class::cast)
-        								.collect(Collectors.toSet()) ){
-            if (crd.name().equalsIgnoreCase(name) && crd.contextInstanceType().equals(context) )
-                return crd;
-        }
-        return null;
-	}
+
 }

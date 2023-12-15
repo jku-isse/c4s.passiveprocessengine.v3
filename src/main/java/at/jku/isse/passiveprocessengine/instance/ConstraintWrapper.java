@@ -11,10 +11,9 @@ import at.jku.isse.designspace.core.model.SingleProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
-import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
-import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionScopedElement;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -176,7 +175,7 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 	}
 
 	public static ConstraintWrapper getInstance(Workspace ws, ConstraintSpec qaSpec, ZonedDateTime lastChanged, ProcessStep owningStep, ProcessInstance proc) {
-		Instance inst = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws), qaSpec.getId()+proc.getName()+"_"+UUID.randomUUID());
+		Instance inst = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws), qaSpec.getName()+proc.getName()+"_"+UUID.randomUUID());
 		ConstraintWrapper cw = WrapperCache.getWrappedInstance(ConstraintWrapper.class, inst);
 		cw.instance.getPropertyAsSingle(CoreProperties.parentStep.toString()).set(owningStep.getInstance());
 		cw.setSpec(qaSpec);

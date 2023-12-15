@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.modeling;
+package at.jku.isse.passiveprocessengine.utils;
 
 import java.util.Collection;
 import java.util.Comparator;

@@ -13,10 +13,10 @@ import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
-import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
-import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
+import at.jku.isse.passiveprocessengine.instance.ProcessInstanceScopedElement;
 import lombok.Data;
 
 @Component
@@ -57,7 +57,7 @@ public class ProcessConfigBaseElementFactory {
 		InstanceType subType = configFolder.instanceTypeWithName(subtypeName);
 		if (subType == null) {
 			subType = ws.createInstanceType(subtypeName, configFolder, baseType);
-			subType.createPropertyType("processDefinition", Cardinality.SINGLE, ProcessDefinitionScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
+			subType.createPropertyType("processDefinition", Cardinality.SINGLE, ProcessDefinitionScopedElement.getOrCreateCoreType(ws));
 		}
 		return subType;
 	}

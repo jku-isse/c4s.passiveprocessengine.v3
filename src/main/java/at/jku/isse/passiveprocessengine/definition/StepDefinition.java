@@ -9,18 +9,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import at.jku.isse.designspace.core.model.Cardinality;
-import at.jku.isse.designspace.core.model.Instance;
-import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.core.model.MapProperty;
-import at.jku.isse.designspace.core.model.PropertyType;
-import at.jku.isse.designspace.core.model.SetProperty;
-import at.jku.isse.designspace.core.model.Workspace;
-import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
-import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
+import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.extern.slf4j.Slf4j;
@@ -38,8 +31,8 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	public static final String designspaceTypeId = StepDefinition.class.getSimpleName();
 	public static final String NOOPSTEP_PREFIX = "NoOpStep";
 
-	public StepDefinition(Instance instance) {
-		super(instance);
+	public StepDefinition(Instance instance, WrapperCache wrapperCache) {
+		super(instance, wrapperCache);
 	}
 
 	@Override
@@ -237,13 +230,13 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		else {
 			ProcessDefinition pd = this.getProcess();
 			if (pd == null) { // we cannot resolve the id to a decision node without access to the process definition,
-				String msg = String.format("StepDefinition %s %s  has no process definition set while accessing outDND, exiting ...", this.getId(), this.getName() );
+				String msg = String.format("StepDefinition %s  has no process definition set while accessing outDND, exiting ...", this.getName() );
 				log.error(msg);
 				throw new RuntimeException(msg); // fail fast and hard
 			}
 			DecisionNodeDefinition dnd = pd.getDecisionNodeDefinitionByName(id);
 			if (dnd == null) { //if an id is set, then there must be an instance for this, otherwise inconsistent data
-				String msg = String.format("StepDefinition %s %s  outDND with id %s which cannot be found in process definition %s , exiting ...", this.getId(), this.getName(), id, pd.getName() );
+				String msg = String.format("StepDefinition %s  outDND with id %s which cannot be found in process definition %s , exiting ...", this.getName(), id, pd.getName() );
 				log.error(msg);
 				throw new RuntimeException(msg); // fail fast and hard
 			} else
@@ -269,13 +262,13 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		else {
 			ProcessDefinition pd = this.getProcess();
 			if (pd == null) { // we cannot resolve the id to a decision node without access to the process definition,
-				String msg = String.format("StepDefinition %s %s  has no process definition set while accessing inDND, exiting ...", this.getId(), this.getName() );
+				String msg = String.format("StepDefinition %s %s  has no process definition set while accessing inDND, exiting ...", this.getName(), this.getName() );
 				log.error(msg);
 				throw new RuntimeException(msg); // fail fast and hard
 			}
 			DecisionNodeDefinition dnd = pd.getDecisionNodeDefinitionByName(id);
 			if (dnd == null) { //if an id is set, then there must be an instance for this, otherwise inconsistent data
-				String msg = String.format("StepDefinition %s %s  inDND with id %s which cannot be found in process definition %s , exiting ...", this.getId(), this.getName(), id, pd.getName() );
+				String msg = String.format("StepDefinition %s %s  inDND with id %s which cannot be found in process definition %s , exiting ...", this.getName(), this.getName(), id, pd.getName() );
 				log.error(msg);
 				throw new RuntimeException(msg); // fail fast and hard
 			} else
@@ -450,7 +443,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
-				InstanceType stepType = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessDefinitionScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
+				InstanceType stepType = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessDefinitionScopedElement.getOrCreateCoreType(ws));
 				stepType.createPropertyType(CoreProperties.qaConstraints.toString(), Cardinality.SET, ConstraintSpec.getOrCreateDesignSpaceCoreSchema(ws));
 				stepType.createPropertyType(CoreProperties.expectedInput.toString(), Cardinality.MAP, ws.META_INSTANCE_TYPE);
 				stepType.createPropertyType(CoreProperties.expectedOutput.toString(), Cardinality.MAP, ws.META_INSTANCE_TYPE);

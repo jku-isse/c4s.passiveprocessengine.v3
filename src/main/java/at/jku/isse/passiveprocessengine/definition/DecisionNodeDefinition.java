@@ -13,7 +13,6 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
-import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 
@@ -189,7 +188,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
-				InstanceType typeDN = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessDefinitionScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
+				InstanceType typeDN = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessDefinitionScopedElement.getOrCreateCoreType(ws));
 				typeDN.createPropertyType(CoreProperties.inFlowType.toString(), Cardinality.SINGLE, Workspace.STRING);
 				typeDN.createPropertyType(CoreProperties.inSteps.toString(), Cardinality.SET, StepDefinition.getOrCreateDesignSpaceCoreSchema(ws));
 				typeDN.createPropertyType(CoreProperties.outSteps.toString(), Cardinality.SET, StepDefinition.getOrCreateDesignSpaceCoreSchema(ws));

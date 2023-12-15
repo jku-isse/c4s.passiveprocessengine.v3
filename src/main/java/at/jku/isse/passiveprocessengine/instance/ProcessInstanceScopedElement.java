@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine;
+package at.jku.isse.passiveprocessengine.instance;
 
 import java.util.Optional;
 
@@ -6,7 +6,9 @@ import at.jku.isse.designspace.core.model.Cardinality;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
+import at.jku.isse.passiveprocessengine.InstanceWrapper;
+import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionScopedElement;
 
 public abstract class ProcessInstanceScopedElement extends InstanceWrapper {
 
