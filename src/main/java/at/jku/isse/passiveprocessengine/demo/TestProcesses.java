@@ -136,9 +136,9 @@ public class TestProcesses {
 			
 			sd1.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 			sd1.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() = self.in_jiraIn->asList()->first()->asType(<"+typeJira.getQualifiedName()+">).requirements->size()");
-			ConstraintSpec qa1 = ConstraintSpec.createInstance("sd1-qa1-state", "self.out_jiraOut->forAll( issue | issue.state = 'Open')", "All issue states must be 'Open'", 1,ws);
+			ConstraintSpec qa1 = ConstraintSpec.createInstance(Conditions.QA, "sd1-qa1-state", "self.out_jiraOut->forAll( issue | issue.state = 'Open')", "All issue states must be 'Open'",1, ws);
 			sd1.addQAConstraint(qa1);
-			ConstraintSpec qa2 = ConstraintSpec.createInstance("sd1-qa2-state", "self.out_jiraOut->forAll( issue | issue.state <> 'InProgress')", "None of the issue states must be 'InProgress'", 2,ws);
+			ConstraintSpec qa2 = ConstraintSpec.createInstance(Conditions.QA, "sd1-qa2-state", "self.out_jiraOut->forAll( issue | issue.state <> 'InProgress')", "None of the issue states must be 'InProgress'",2, ws);
 			sd1.addQAConstraint(qa2);
 			sd1.setInDND(dnd1);
 			sd1.setOutDND(dnd2);
@@ -151,7 +151,7 @@ public class TestProcesses {
 			sd2.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() >= 0");
 			sd2.addInputToOutputMappingRule("jiraOut", "self.in_jiraIn");//->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and "
 							//+ " self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
-			ConstraintSpec qa3 = ConstraintSpec.createInstance("sd2-qa3-state", "self.in_jiraIn->forAll( issue | issue.state = 'Closed')", "All in issue states must be 'Closed'", 3,ws);
+			ConstraintSpec qa3 = ConstraintSpec.createInstance(Conditions.QA, "sd2-qa3-state", "self.in_jiraIn->forAll( issue | issue.state = 'Closed')", "All in issue states must be 'Closed'",3, ws);
 			sd2.addQAConstraint(qa3);
 			sd2.setInDND(dnd2);
 			sd2.setOutDND(dnd3);
@@ -417,10 +417,10 @@ public class TestProcesses {
 												 + "self.in_jiraIn->forAll( issue | issue.requirements\r\n"
 																					+ "->forAll(req | eventually(req.state = 'ReadyForReview') and eventually( everytime( req.state = 'ReadyForReview' ,  eventually(req.state = 'Released')))))");
 		//until(not(b), a) and always(b, next(until(not(b), a)))
-		ConstraintSpec qa3 = ConstraintSpec.createInstance("sd1-reviewAlwaysBeforeReleased", "self.in_jiraIn->forAll( issue | issue.requirements\r\n"
-				+ "->forAll(req | until(req.state <> 'Released' , req.state = 'ReadyForReview') \r\n"
-				+ "					and everytime( req.state = 'Released', next( asSoonAs( req.state <> 'Released',  until( req.state <> 'Released', req.state = 'ReadyForReview') ) ) ) ) ) "
-				, "All linked requirements must be in state ReadyForReview before being in state Released", 3,ws);
+		ConstraintSpec qa3 = ConstraintSpec.createInstance(Conditions.QA, "sd1-reviewAlwaysBeforeReleased"
+				, "self.in_jiraIn->forAll( issue | issue.requirements\r\n"
+						+ "->forAll(req | until(req.state <> 'Released' , req.state = 'ReadyForReview') \r\n"
+						+ "					and everytime( req.state = 'Released', next( asSoonAs( req.state <> 'Released',  until( req.state <> 'Released', req.state = 'ReadyForReview') ) ) ) ) ) ", "All linked requirements must be in state ReadyForReview before being in state Released",3, ws);
 		sd1.addQAConstraint(qa3);
 		
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));

@@ -143,7 +143,7 @@ public class DefinitionTransformer {
 		//step.getConditions().entrySet().stream().forEach(entry -> pStep.setCondition(entry.getKey(), entry.getValue()));		
 		step.getConditions().entrySet().stream().forEach(entry -> {
 			entry.getValue().stream().forEach(constraint -> {
-				ConstraintSpec spec = ConstraintSpec.createInstance(constraint.getCode(), constraint.getArlRule(), constraint.getDescription(), constraint.getSpecOrderIndex(), constraint.isOverridable(), ws);
+				ConstraintSpec spec = ConstraintSpec.createInstance(entry.getKey(), constraint.getCode(), constraint.getArlRule(), constraint.getDescription(), constraint.getSpecOrderIndex(), constraint.isOverridable(), ws);
 				if (pStep instanceof ProcessDefinition) {
 					spec.setProcess((ProcessDefinition)pStep);
 				} else if (pStep.getProcess() != null) {
@@ -170,7 +170,7 @@ public class DefinitionTransformer {
 		});		
 		step.getIoMapping().entrySet().stream().forEach(entry -> pStep.addInputToOutputMappingRule(entry.getKey(),  trimLegacyIOMappingRule(entry.getValue())));
 		step.getQaConstraints().stream().forEach(constraint -> { 
-			ConstraintSpec spec = ConstraintSpec.createInstance(constraint.getCode(), constraint.getArlRule(), constraint.getDescription(), constraint.getSpecOrderIndex(), constraint.isOverridable(), ws);
+			ConstraintSpec spec = ConstraintSpec.createInstance(Conditions.QA, constraint.getCode(), constraint.getArlRule(), constraint.getDescription(), constraint.getSpecOrderIndex(), constraint.isOverridable(), ws);
 			if (pStep instanceof ProcessDefinition) {
 				spec.setProcess((ProcessDefinition)pStep);
 			} else if (pStep.getProcess() != null) {

@@ -12,11 +12,12 @@ import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
+import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 public class ConstraintSpec extends /*InstanceWrapper*/ ProcessDefinitionScopedElement{
 
 	
-	public static enum CoreProperties {constraintSpec, humanReadableDescription, specOrderIndex, isOverridable, ruleType};
+	public static enum CoreProperties {constraintSpec, humanReadableDescription, specOrderIndex, isOverridable, ruleType, conditionsType};
 	public static final String designspaceTypeId = ConstraintSpec.class.getSimpleName();
 	
 	public ConstraintSpec(Instance instance) {
@@ -43,7 +44,9 @@ public class ConstraintSpec extends /*InstanceWrapper*/ ProcessDefinitionScopedE
 		return (Boolean) instance.getPropertyAsValue(CoreProperties.isOverridable.toString());
 	}
 	
-	
+	public Conditions getConditionType() {
+		return Conditions.valueOf((String)instance.getPropertyAsValue(CoreProperties.conditionsType.toString()));
+	}
 	
 	@Override
 	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
@@ -62,24 +65,26 @@ public class ConstraintSpec extends /*InstanceWrapper*/ ProcessDefinitionScopedE
 				specType.createPropertyType((CoreProperties.specOrderIndex.toString()), Cardinality.SINGLE, Workspace.INTEGER);
 				specType.createPropertyType((CoreProperties.isOverridable.toString()), Cardinality.SINGLE, Workspace.BOOLEAN);
 				specType.createPropertyType((CoreProperties.ruleType.toString()), Cardinality.SINGLE, ConsistencyRuleType.CONSISTENCY_RULE_TYPE);
+				specType.createPropertyType(CoreProperties.conditionsType.toString(), Cardinality.SINGLE, Workspace.STRING);
 				return specType;
 			}
 	}
 	
-	public static ConstraintSpec createInstance(DTOs.Constraint constraintSpec, Workspace ws) {
-		return createInstance(constraintSpec.getCode(), constraintSpec.getArlRule(), constraintSpec.getDescription(), constraintSpec.getSpecOrderIndex(), constraintSpec.isOverridable(), ws );
+	public static ConstraintSpec createInstance(Conditions condition, DTOs.Constraint constraintSpec, Workspace ws) {
+		return createInstance(condition, constraintSpec.getCode(), constraintSpec.getArlRule(), constraintSpec.getDescription(), constraintSpec.getSpecOrderIndex(), constraintSpec.isOverridable(), ws );
 	}
 	
 	@Deprecated
-	public static ConstraintSpec createInstance(String constraintId, String constraintSpec, String humanReadableDescription, int specOrderIndex, Workspace ws) {
-		return createInstance(constraintId, constraintSpec, humanReadableDescription, specOrderIndex, false, ws);
+	public static ConstraintSpec createInstance(Conditions condition, String constraintId, String constraintSpec, String humanReadableDescription, int specOrderIndex, Workspace ws) {
+		return createInstance(condition, constraintId, constraintSpec, humanReadableDescription, specOrderIndex, false, ws);
 	}
-	public static ConstraintSpec createInstance(String constraintId, String constraintSpec, String humanReadableDescription, int specOrderIndex, boolean isOverridable, Workspace ws) {
+	public static ConstraintSpec createInstance(Conditions condition, String constraintId, String constraintSpec, String humanReadableDescription, int specOrderIndex, boolean isOverridable, Workspace ws) {
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), constraintId);
 		instance.getPropertyAsSingle(CoreProperties.constraintSpec.toString()).set(constraintSpec);
 		instance.getPropertyAsSingle(CoreProperties.humanReadableDescription.toString()).set(humanReadableDescription == null ? "" : humanReadableDescription);
 		instance.getPropertyAsSingle(CoreProperties.specOrderIndex.toString()).set(specOrderIndex);
 		instance.getPropertyAsSingle(CoreProperties.isOverridable.toString()).set(isOverridable);		
+		instance.getPropertyAsSingle(CoreProperties.conditionsType.toString()).set(condition.toString());
 		return WrapperCache.getWrappedInstance(ConstraintSpec.class, instance);
 	}
 

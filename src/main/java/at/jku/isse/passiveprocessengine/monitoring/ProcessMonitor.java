@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import at.jku.isse.passiveprocessengine.instance.messages.IProcessEventHandler;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
+import at.jku.isse.passiveprocessengine.instance.messages.Events.ConstraintOverrideEvent;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.QAConstraintFulfillmentChanged;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.QAFulfillmentChanged;
@@ -22,7 +23,7 @@ public class ProcessMonitor implements IProcessEventHandler{
 
 	private ITimeStampProvider timeProvider;
 	private final Logger monitor = LoggerFactory.getLogger("monitor.process");
-	public static enum LogProperties {condition, fulfillment, fromState, toState, stateType};
+	public static enum LogProperties {condition, fulfillment, fromState, toState, stateType, reason, isUndo};
 	
 	public ProcessMonitor(ITimeStampProvider timeProvider) {
 		this.timeProvider = timeProvider;
@@ -61,10 +62,16 @@ public class ProcessMonitor implements IProcessEventHandler{
 		} else if (pce instanceof QAFulfillmentChanged) {
 			QAFulfillmentChanged e = (QAFulfillmentChanged)pce;
 			args.add(3, kv(LogProperties.fulfillment.toString(), e.isFulfilled()));
+		} else if (pce instanceof ConstraintOverrideEvent) { 
+			ConstraintOverrideEvent e = (ConstraintOverrideEvent)pce;
+			args.add(3, kv(UsageMonitor.LogProperties.constraintId.toString(), e.getQacWrapper().getSpec().getConstraintId()));
+			args.add(4, kv(LogProperties.fulfillment.toString(), e.getQacWrapper().getEvalResult()));
+			args.add(5, kv(LogProperties.reason.toString(), e.getReason()));
+			args.add(6, kv(LogProperties.isUndo.toString(), e.isUndo()));
 		} else if (pce instanceof  QAConstraintFulfillmentChanged) {
 			QAConstraintFulfillmentChanged e = (QAConstraintFulfillmentChanged)pce;
 			args.add(3, kv(UsageMonitor.LogProperties.constraintId.toString(), e.getQacWrapper().getSpec().getConstraintId()));
-			args.add(4, kv(LogProperties.fulfillment.toString(), e.getQacWrapper().getEvalResult()));
+			args.add(4, kv(LogProperties.fulfillment.toString(), e.getQacWrapper().getEvalResult()));			
 		} // we ignore DataMappingChangeEvents for now
 		monitor.info("ProcessChangedEvent", args.toArray() );
 	}

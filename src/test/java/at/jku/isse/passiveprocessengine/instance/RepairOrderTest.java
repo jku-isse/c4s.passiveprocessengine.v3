@@ -285,9 +285,9 @@ public class RepairOrderTest {
 				"self.in_jiraIn->size() = 1 " + "and self.in_jiraIn->forAll( issue | issue.state = 'Open') ");
 		sd1.setCondition(Conditions.POSTCONDITION,
 				"self.out_jiraOut->size() = 2 " + "and self.in_jiraIn->forAll( issue2 | issue2.state = 'Closed') ");
-		ConstraintSpec qa2 = ConstraintSpec.createInstance("sd1-qa1-state",
-				"self.out_jiraOut->size() > 0 and self.out_jiraOut->forAll( issue | issue.state = 'Closed')",
-				"All linked issues should be closed", 2, ws);
+		ConstraintSpec qa2 = ConstraintSpec.createInstance(Conditions.QA,
+				"sd1-qa1-state",
+				"self.out_jiraOut->size() > 0 and self.out_jiraOut->forAll( issue | issue.state = 'Closed')", "All linked issues should be closed", 2, ws);
 		sd1.addQAConstraint(qa2);
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);

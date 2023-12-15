@@ -94,4 +94,20 @@ public class Events {
 		}
 	}
 	
+	@EqualsAndHashCode(callSuper = true)
+	@Data
+	public static class ConstraintOverrideEvent extends QAConstraintFulfillmentChanged {
+				
+		final String reason;		
+		final boolean isUndo;
+		
+		public ConstraintOverrideEvent(ProcessInstance proc, ProcessStep step, ConstraintWrapper qacWrapper, String reason, boolean isUndo) {
+			super(proc, step, qacWrapper);
+			this.reason = reason;			
+			this.isUndo = isUndo;
+			
+		}
+	}
+	
+	
 }

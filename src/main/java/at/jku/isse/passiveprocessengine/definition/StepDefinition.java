@@ -146,7 +146,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	@SuppressWarnings("unchecked")
 	@Deprecated(forRemoval = true)
 	public void setCondition(Conditions condition, String ruleAsString) {
-		ConstraintSpec constraint = ConstraintSpec.createInstance(condition+"0", ruleAsString, ruleAsString, 0, false, ws);		
+		ConstraintSpec constraint = ConstraintSpec.createInstance(condition, condition+"0", ruleAsString, ruleAsString, 0, false, ws);		
 		switch(condition) {
 		case ACTIVATION:
 			instance.getPropertyAsSet(CoreProperties.activationconditions.toString()).add(constraint);
