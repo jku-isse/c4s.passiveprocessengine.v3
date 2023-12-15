@@ -112,9 +112,10 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		if (cond != null ) {
 			String value = op.value() != null ? op.value().toString() : "NULL";
 			log.debug(String.format("Step %s has %s evaluate to %s in transaction %s ", this.getName(), cond, value, op.getConclusionId()));
-			SingleProperty prop = instance.getPropertyAsSingle(cond.toString());
-			if (prop.get() == null) 
-				prop.set(cr);
+			//FIXME: check if multiconstraints still need this
+			//SingleProperty prop = instance.getPropertyAsSingle(cond.toString());
+			//if (prop.get() == null) 
+			//	prop.set(cr);
 			return new ConditionChangedCmd(this, cr, cond, Boolean.valueOf(op.value().toString()));
 		} else {
 		// if premature conditions, then delegate to process instance, resp often will need to be on process level anyway

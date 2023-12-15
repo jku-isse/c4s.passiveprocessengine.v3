@@ -193,6 +193,7 @@ public class ProcessDefinition extends StepDefinition{
 //			throw pex;
 			this.setIsWithoutBlockingErrors(false);
 		}
+		ws.concludeTransaction(); // persisting the blocking errors flag
 		return errors;
 	}
 	

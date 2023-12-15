@@ -2,7 +2,9 @@ package at.jku.isse.passiveprocessengine.definition.serialization;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+import at.jku.isse.designspace.core.model.Folder;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
@@ -181,12 +183,26 @@ public class DefinitionTransformer {
 	}
 	
 	private static InstanceType resolveInstanceType(String type, Workspace ws, List<ProcessDefinitionError> errors, ProcessDefinitionScopedElement el, String param) {
-		InstanceType iType = ws.debugInstanceTypeFindByName(type);
+		// search in types folder and below for type			
+		// InstanceType iType = // this returns also deleted types ws.debugInstanceTypeFindByName(type);
+		InstanceType iType = searchInFolderAndBelow(type, ws.TYPES_FOLDER);
 		if (iType == null) {
 			errors.add(new ProcessDefinitionError(el, "Unknown Instance Type", "Input/Output definition "+param+" uses unknown instance type: "+type ));
 			//throw new ProcessException("Process Description uses unknown instance type: "+type);
 		}
 		return iType;
+	}
+	
+	private static InstanceType searchInFolderAndBelow(String type, Folder toSearch) {
+		return toSearch.instanceTypes().stream()
+			.filter(iType -> iType.name().equals(type))
+			.filter(iType -> !iType.isDeleted())
+			.findAny().orElseGet(() -> {
+				return toSearch.subfolders().stream()
+						.map(folder -> searchInFolderAndBelow(type, folder))
+						.filter(Objects::nonNull)
+						.findAny().orElse(null);
+			});
 	}
 	
 	public static DTOs.Process toDTO(ProcessDefinition pDef) {

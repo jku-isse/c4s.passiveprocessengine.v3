@@ -162,7 +162,7 @@ public class Commands {
 		}
 		@Override
 		public String toString() {
-			return "ConditionChangedCmd [" + step.getDefinition().getName() + " " + condition + " : " + isFulfilled
+			return "ConditionChangedCmd [" + step.getDefinition().getName() + " " + crule.name() + " : " + isFulfilled
 					+ "]";
 		}
         
@@ -173,7 +173,7 @@ public class Commands {
 		
 		@Override
 		public String getId() {
-			return "ConditionChangedCmd ["+step.getName()+condition.toString();
+			return "ConditionChangedCmd ["+step.getName()+crule.name();
 		}
     }
     

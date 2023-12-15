@@ -77,7 +77,7 @@ public class ConstraintSpec extends /*InstanceWrapper*/ ProcessDefinitionScopedE
 	public static ConstraintSpec createInstance(String constraintId, String constraintSpec, String humanReadableDescription, int specOrderIndex, boolean isOverridable, Workspace ws) {
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), constraintId);
 		instance.getPropertyAsSingle(CoreProperties.constraintSpec.toString()).set(constraintSpec);
-		instance.getPropertyAsSingle(CoreProperties.humanReadableDescription.toString()).set(humanReadableDescription);
+		instance.getPropertyAsSingle(CoreProperties.humanReadableDescription.toString()).set(humanReadableDescription == null ? "" : humanReadableDescription);
 		instance.getPropertyAsSingle(CoreProperties.specOrderIndex.toString()).set(specOrderIndex);
 		instance.getPropertyAsSingle(CoreProperties.isOverridable.toString()).set(isOverridable);		
 		return WrapperCache.getWrappedInstance(ConstraintSpec.class, instance);

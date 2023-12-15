@@ -76,25 +76,25 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	
 	@Deprecated(forRemoval = true)
 	public Optional<String> getCondition(Conditions condition) {
-		SetProperty<?> qaSet = null;		
+		SetProperty<?> propSet = null;		
 		switch(condition) {
 		case ACTIVATION:
-			qaSet = instance.getPropertyAsSet(CoreProperties.activationconditions.toString());			
+			propSet = instance.getPropertyAsSet(CoreProperties.activationconditions.toString());			
 			break;
 		case CANCELATION:
-			qaSet = instance.getPropertyAsSet(CoreProperties.cancelconditions.toString());
+			propSet = instance.getPropertyAsSet(CoreProperties.cancelconditions.toString());
 			break;
 		case POSTCONDITION:
-			qaSet = instance.getPropertyAsSet(CoreProperties.postconditions.toString());
+			propSet = instance.getPropertyAsSet(CoreProperties.postconditions.toString());
 			break;
 		case PRECONDITION:
-			qaSet = instance.getPropertyAsSet(CoreProperties.preconditions.toString());
+			propSet = instance.getPropertyAsSet(CoreProperties.preconditions.toString());
 			break;
 		default:
 			break;
 		}				
-		if (qaSet != null && qaSet.get() != null) {
-			return qaSet.get().stream()
+		if (propSet != null && propSet.get() != null) {
+			return propSet.get().stream()
 					.map(inst -> WrapperCache.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
 					.filter(Objects::nonNull)
 					.map(spec -> ((ConstraintSpec) spec).getConstraintSpec())
@@ -320,25 +320,27 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		return (String) instance.getPropertyAsValueOrElse(CoreProperties.description.toString(), () -> "");
 	}
 	
-	public List<ProcessDefinitionError> checkConstraintValidity(InstanceType processInstType) {
-	// FIXME: adapt to multiconditions
-		List<ProcessDefinitionError> errors = new LinkedList<>();
-	//	Map<String, String> status = new HashMap<>();
-		InstanceType instType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstType);
-		for (Conditions condition : Conditions.values()) {
-			if (this.getCondition(condition).isPresent()) {
-				String name = "crd_"+condition+"_"+instType.name();
-				ConsistencyRuleType crt = getRuleByNameAndContext(name, instType);
-				if (crt == null) {
-					log.error("Expected Rule for existing process not found: "+name);
-					errors.add(new ProcessDefinitionError(this, "Expected Constraint Not Found - Internal Data Corruption", name));
-					//status.put(name, "Corrupt data - Expected Rule not found");
-				} else {
-					if (crt.hasRuleError())
-						errors.add(new ProcessDefinitionError(this, String.format("Condition % has an error", condition), crt.ruleError()));
-				}
-			}	
+	private void checkConstraintExists(InstanceType instType, ConstraintSpec spec, Conditions condition, List<ProcessDefinitionError> errors) {
+		String name = RuleAugmentation.getConstraintName(condition, spec.getOrderIndex(), instType);
+		ConsistencyRuleType crt = getRuleByNameAndContext(name, instType);
+		if (crt == null) {
+			log.error("Expected Rule for existing process not found: "+name);
+			errors.add(new ProcessDefinitionError(this, "Expected Constraint Not Found - Internal Data Corruption", name));				
+		} else {
+			if (crt.hasRuleError())
+				errors.add(new ProcessDefinitionError(this, String.format("Condition % has an error", spec.getName()), crt.ruleError()));
 		}
+	}
+	
+	public List<ProcessDefinitionError> checkConstraintValidity(InstanceType processInstType) {
+		List<ProcessDefinitionError> errors = new LinkedList<>();
+		InstanceType instType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstType);
+		
+		this.getActivationconditions().stream().forEach(spec -> checkConstraintExists(instType, spec, Conditions.ACTIVATION, errors));
+		this.getCancelconditions().stream().forEach(spec -> checkConstraintExists(instType, spec, Conditions.CANCELATION, errors));
+		this.getPostconditions().stream().forEach(spec -> checkConstraintExists(instType, spec, Conditions.POSTCONDITION, errors));
+		this.getPreconditions().stream().forEach(spec -> checkConstraintExists(instType, spec, Conditions.PRECONDITION, errors));
+		
 		this.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
 				String name = ProcessStep.getDataMappingId(entry, this);
@@ -374,12 +376,9 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	
 
 	
-	public List<ProcessDefinitionError> checkStepStructureValidity() {
-		//FIXME: adapt to multiconstraints 
-		List<ProcessDefinitionError> errors = new LinkedList<>();
-		
-		
-		if (getCondition(Conditions.POSTCONDITION).isEmpty() && !this.getName().startsWith(NOOPSTEP_PREFIX)) {			
+	public List<ProcessDefinitionError> checkStepStructureValidity() {		
+		List<ProcessDefinitionError> errors = new LinkedList<>();				
+		if (getPostconditions().isEmpty() && !this.getName().startsWith(NOOPSTEP_PREFIX)) {			
 			errors.add(new ProcessDefinitionError(this, "No Condition Defined", "Step needs exactly one post condition to signal when a step is considered finished."));
 		}
 		if (getExpectedInput().isEmpty() && !this.getName().startsWith(NOOPSTEP_PREFIX)) {						
@@ -401,18 +400,22 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		return errors;
 	}
 	
+	private void deleteRuleIfExists(InstanceType instType, ConstraintSpec spec, Conditions condition ) {
+		String name = RuleAugmentation.getConstraintName(condition, spec.getOrderIndex(), instType);
+		ConsistencyRuleType crt = getRuleByNameAndContext(name, instType);
+		if (crt != null) crt.delete();
+	}
+	
 	@Override
-	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
-		//FIXME deleting multi constraints:
-		Map<String, String> status = new HashMap<>();
+	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {		
+		
 		InstanceType instType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, null); // for deletion its ok to not provide the process instance type
-		for (Conditions condition : Conditions.values()) {
-			if (this.getCondition(condition).isPresent()) {
-				String name = RuleAugmentation.getConstraintName(condition, instType);
-				ConsistencyRuleType crt = getRuleByNameAndContext(name, instType);
-				if (crt != null) crt.delete();
-			}	
-		}
+		
+		this.getActivationconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.ACTIVATION));
+		this.getCancelconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.CANCELATION));
+		this.getPostconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.POSTCONDITION));
+		this.getPreconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.PRECONDITION));
+		
 		this.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
 				String name = ProcessStep.getDataMappingId(entry, this);
