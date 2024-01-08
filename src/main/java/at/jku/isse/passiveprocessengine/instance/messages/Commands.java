@@ -6,7 +6,7 @@ import java.util.List;
 
 import at.jku.isse.designspace.core.events.PropertyUpdate;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
-import at.jku.isse.passiveprocessengine.definition.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;

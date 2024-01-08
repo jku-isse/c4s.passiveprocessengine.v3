@@ -8,22 +8,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Lists;
-
-import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.core.model.MapProperty;
-import at.jku.isse.designspace.core.model.ReservedNames;
-import at.jku.isse.designspace.core.model.Workspace;
-import at.jku.isse.designspace.rule.arl.expressions.VariableExpression;
-import at.jku.isse.designspace.rule.checker.ArlEvaluator;
-import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.DataSource;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.DataSource.IoType;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.StepParameter;
-import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
+import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
-import at.jku.isse.passiveprocessengine.definition.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.extern.slf4j.Slf4j;

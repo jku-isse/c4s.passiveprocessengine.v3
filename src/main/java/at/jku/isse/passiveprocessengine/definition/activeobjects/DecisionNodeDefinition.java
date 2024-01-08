@@ -1,37 +1,31 @@
-package at.jku.isse.passiveprocessengine.definition;
+package at.jku.isse.passiveprocessengine.definition.activeobjects;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import at.jku.isse.designspace.core.model.Cardinality;
-import at.jku.isse.designspace.core.model.Instance;
-import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.core.model.SetProperty;
-import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
+import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
+import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
 
 public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 
-	public static enum CoreProperties {inFlowType, dataMappingDefinitions, inSteps, outSteps, hierarchyDepth, closingDN}
-
-	public static final String designspaceTypeId = DecisionNodeDefinition.class.getSimpleName();
-
-	public DecisionNodeDefinition(Instance instance) {
-		super(instance);
+	public DecisionNodeDefinition(Instance instance, WrapperCache wrapperCache) {
+		super(instance, wrapperCache);
 	}
 
 	public void setInflowType(InFlowType ift) {
-		instance.getPropertyAsSingle(CoreProperties.inFlowType.toString()).set(ift.toString());
+		instance.setSingleProperty(DecisionNodeDefinitionType.CoreProperties.inFlowType.toString(), ift.toString());
 	}
 
 	public InFlowType getInFlowType() {
-		return InFlowType.valueOf((String) instance.getPropertyAsValueOrElse(CoreProperties.inFlowType.toString(), () -> InFlowType.AND.toString()));
+		return InFlowType.valueOf(instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.inFlowType.toString(), String.class, InFlowType.AND.toString()));
 	}
 
 
@@ -39,12 +33,12 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 		if (this.getOutSteps().isEmpty())
 			return null;
 		else {
-			Instance dnd = instance.getPropertyAsInstance(CoreProperties.closingDN.toString());
+			Instance dnd = instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.closingDN.toString(), Instance.class);
 			if (dnd != null)
-				return WrapperCache.getWrappedInstance(DecisionNodeDefinition.class, dnd);
+				return wrapperCache.getWrappedInstance(DecisionNodeDefinition.class, dnd);
 			else {
 				DecisionNodeDefinition closingDnd = determineScopeClosingDN();
-				instance.getPropertyAsSingle(CoreProperties.closingDN.toString()).set(closingDnd.getInstance());
+				instance.setSingleProperty(DecisionNodeDefinitionType.CoreProperties.closingDN.toString(), closingDnd.getInstance());
 				return closingDnd;
 			}
 		}
@@ -74,55 +68,55 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 
 	@SuppressWarnings("unchecked")
 	protected void addInStep(StepDefinition sd) {
-		instance.getPropertyAsSet(CoreProperties.inSteps.toString()).add(sd.getInstance());
+		instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.inSteps.toString(), Set.class).add(sd.getInstance());
 	}
 
 	@SuppressWarnings("unchecked")
 	protected void addOutStep(StepDefinition sd) {
-		instance.getPropertyAsSet(CoreProperties.outSteps.toString()).add(sd.getInstance());
+		instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.outSteps.toString(), Set.class).add(sd.getInstance());
 	}
 
 	@SuppressWarnings("unchecked")
 	public void addDataMappingDefinition(MappingDefinition md) {
-		instance.getPropertyAsSet(CoreProperties.dataMappingDefinitions.toString()).add(md.getInstance());
+		instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.dataMappingDefinitions.toString(), Set.class).add(md.getInstance());
 	}
 
 	@SuppressWarnings("unchecked")
 	public Set<MappingDefinition> getMappings() {
-		SetProperty<?> mdSet = instance.getPropertyAsSet(CoreProperties.dataMappingDefinitions.toString());
-		if (mdSet != null && mdSet.get() != null) {
-			return (Set<MappingDefinition>) mdSet.get().stream()
-					.map(inst -> WrapperCache.getWrappedInstance(MappingDefinition.class, (Instance) inst))
+		Set mdSet = instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.dataMappingDefinitions.toString(), Set.class);
+		if (mdSet != null ) {
+			return (Set<MappingDefinition>) mdSet.stream()
+					.map(inst -> wrapperCache.getWrappedInstance(MappingDefinition.class, (Instance) inst))
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
 	}
 
 	@SuppressWarnings("unchecked")
 	public Set<StepDefinition> getInSteps() {
-		return (Set<StepDefinition>) instance.getPropertyAsSet(CoreProperties.inSteps.toString()).stream()
+		return (Set<StepDefinition>) instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.inSteps.toString(), Set.class).stream()
 			.filter(Instance.class::isInstance)
 			.map(Instance.class::cast)
-			.map(inst -> WrapperCache.getWrappedInstance(ProcessDefinition.getMostSpecializedClass((Instance) inst), (Instance) inst))
+			.map(inst -> wrapperCache.getWrappedInstance(ProcessDefinition.getMostSpecializedClass((Instance) inst), (Instance) inst))
 			.collect(Collectors.toSet());
 	}
 
 	@SuppressWarnings("unchecked")
 	public Set<StepDefinition> getOutSteps() {
-		return (Set<StepDefinition>) instance.getPropertyAsSet(CoreProperties.outSteps.toString()).stream()
+		return (Set<StepDefinition>) instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.outSteps.toString(), Set.class).stream()
 			.filter(Instance.class::isInstance)
 			.map(Instance.class::cast)
-			.map(inst -> WrapperCache.getWrappedInstance(ProcessDefinition.getMostSpecializedClass((Instance) inst), (Instance) inst))
+			.map(inst -> wrapperCache.getWrappedInstance(ProcessDefinition.getMostSpecializedClass((Instance) inst), (Instance) inst))
 			.collect(Collectors.toSet());
 	}
 
 	public void setDepthIndexRecursive(int indexToSet) {
-		instance.getPropertyAsSingle(CoreProperties.hierarchyDepth.toString()).set(indexToSet);
+		instance.setSingleProperty(DecisionNodeDefinitionType.CoreProperties.hierarchyDepth.toString(), indexToSet);
 		int newIndex = this.getOutSteps().size() > 1 ? indexToSet +1 : indexToSet; // we only increase the depth when we branch out
 		this.getOutSteps().stream().forEach(step -> step.setDepthIndexRecursive(newIndex));
 	}
 
 	public Integer getDepthIndex() {
-		return (Integer) instance.getPropertyAsValueOrElse(CoreProperties.hierarchyDepth.toString(), () -> -1);
+		return instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.hierarchyDepth.toString(), Integer.class, -1);
 	}
 
 	@Override
@@ -178,33 +172,6 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 			}
 		}
 		return errors;
-	}
-
-	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
-		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId));
-		//= ws.debugInstanceTypes().stream()
-		//		.filter(it -> it.name().contentEquals(designspaceTypeId))
-		//		.findAny();
-			if (thisType.isPresent())
-				return thisType.get();
-			else {
-				InstanceType typeDN = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessDefinitionScopedElement.getOrCreateCoreType(ws));
-				typeDN.createPropertyType(CoreProperties.inFlowType.toString(), Cardinality.SINGLE, Workspace.STRING);
-				typeDN.createPropertyType(CoreProperties.inSteps.toString(), Cardinality.SET, StepDefinition.getOrCreateDesignSpaceCoreSchema(ws));
-				typeDN.createPropertyType(CoreProperties.outSteps.toString(), Cardinality.SET, StepDefinition.getOrCreateDesignSpaceCoreSchema(ws));
-				typeDN.createPropertyType(CoreProperties.dataMappingDefinitions.toString(), Cardinality.SET, MappingDefinition.getOrCreateDesignSpaceCoreSchema(ws));
-				typeDN.createPropertyType((CoreProperties.hierarchyDepth.toString()), Cardinality.SINGLE, Workspace.INTEGER);
-				typeDN.createPropertyType(CoreProperties.closingDN.toString(), Cardinality.SINGLE, typeDN);
-				return typeDN;
-			}
-	}
-
-	public static DecisionNodeDefinition getInstance(String dndId, Workspace ws) {
-		Instance instance = ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), dndId);
-		// default SEQ
-		instance.getPropertyAsSingle(CoreProperties.inFlowType.toString()).set(InFlowType.SEQ.toString());
-		instance.getPropertyAsSingle(CoreProperties.hierarchyDepth.toString()).set(-1);
-		return WrapperCache.getWrappedInstance(DecisionNodeDefinition.class, instance);
 	}
 
 	public static enum InFlowType {

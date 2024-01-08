@@ -4,12 +4,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesFactory;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Getter
 public class WrapperCache {
 
-	private static final Map<String, InstanceWrapper> cache = new HashMap<>();
+	final SchemaRegistry schemaRegistry;
+	final ProcessDomainTypesFactory typesFactory;
+	
+	public WrapperCache(SchemaRegistry schemaRegistry, ProcessDomainTypesFactory typesFactory) {
+		this.schemaRegistry = schemaRegistry;
+		this.typesFactory = typesFactory;
+	}
+	
+	private final Map<String, InstanceWrapper> cache = new HashMap<>();
 
 
 	@SuppressWarnings("unchecked")

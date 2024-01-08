@@ -14,7 +14,7 @@ import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionScopedElement;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceScopedElement;
 import lombok.Data;

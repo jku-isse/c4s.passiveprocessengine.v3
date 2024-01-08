@@ -8,7 +8,7 @@ import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.WrapperCache;
-import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionScopedElement;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 
 public abstract class ProcessInstanceScopedElement extends InstanceWrapper {
 

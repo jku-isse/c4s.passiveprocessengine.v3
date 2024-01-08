@@ -7,8 +7,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
-import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.MappingDefinition;
 import at.jku.isse.passiveprocessengine.instance.RuntimeMapping.FlowDir;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;

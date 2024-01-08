@@ -12,8 +12,8 @@ import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.WrapperCache;
-import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
-import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionScopedElement;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

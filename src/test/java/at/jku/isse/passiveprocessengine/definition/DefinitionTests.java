@@ -13,13 +13,13 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
-import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
-import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.MappingDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
-import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 @ExtendWith(SpringExtension.class)

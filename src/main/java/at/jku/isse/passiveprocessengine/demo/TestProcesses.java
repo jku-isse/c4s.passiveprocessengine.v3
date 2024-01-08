@@ -4,12 +4,12 @@ import java.util.ArrayList;
 
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
-import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
-import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
-import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
-import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.MappingDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Constraint;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;

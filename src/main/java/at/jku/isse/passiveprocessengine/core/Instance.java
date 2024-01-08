@@ -4,7 +4,8 @@ public interface Instance {
 
 	String getId();	
 	InstanceType getInstanceType();
-	void delete();
+	void markAsDeleted();
+	boolean isMarkedAsDeleted();
 	
 	Object getPropertyAsSingle(String property);
 	void setSingleProperty(String property, Object value);

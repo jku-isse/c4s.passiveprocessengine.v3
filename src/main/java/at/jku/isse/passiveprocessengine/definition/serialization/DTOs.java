@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory.PropertySchemaDTO;
-import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.Data;
 import lombok.ToString;

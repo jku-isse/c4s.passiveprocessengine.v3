@@ -28,7 +28,7 @@ import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.DerivedPropertyRuleType;
 import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
-import at.jku.isse.passiveprocessengine.definition.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 

@@ -25,7 +25,7 @@ import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
 import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;

@@ -25,12 +25,12 @@ public abstract class InstanceWrapper implements NameIdentifiableElement{
 
 	public void deleteCascading() {
 		wrapperCache.removeWrapper(getInstance().getId());
-		instance.delete();
+		instance.markAsDeleted();
 	}
 
 	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
 		wrapperCache.removeWrapper(getInstance().getId());
-		instance.delete();
+		instance.markAsDeleted();
 	}
 
 
