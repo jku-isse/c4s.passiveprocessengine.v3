@@ -8,6 +8,7 @@ import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 
 public class MappingDefinition extends InstanceWrapper{
 
@@ -58,8 +59,8 @@ public class MappingDefinition extends InstanceWrapper{
 	}
 	
 	@Override
-	public void deleteCascading() {
-		super.deleteCascading();
+	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
+		super.deleteCascading(configFactory);
 	}
 	
 //	public FlowDir getFlowDir() {

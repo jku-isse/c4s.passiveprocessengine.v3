@@ -2,6 +2,7 @@ package at.jku.isse.passiveprocessengine.instance;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,7 @@ import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
+import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.CoreProperties;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
@@ -25,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 
-	public static enum CoreProperties {isInflowFulfilled, hasPropagated, dnd, inSteps, outSteps};
+	public static enum CoreProperties {isInflowFulfilled, hasPropagated, dnd, inSteps, outSteps, closingDN};
 	public static final String designspaceTypeId = DecisionNodeInstance.class.getSimpleName();
 	
 	private boolean isInternalPropagationDone = false;
@@ -69,12 +71,12 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected void addInStep(ProcessStep step) {
+	public void addInStep(ProcessStep step) {
 		instance.getPropertyAsSet(CoreProperties.inSteps.toString()).add(step.getInstance());
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected Set<ProcessStep> getInSteps() {
+	public Set<ProcessStep> getInSteps() {
 		return (Set<ProcessStep>) instance.getPropertyAsSet(CoreProperties.inSteps.toString()).stream()
 			.map(inst -> WrapperCache.getWrappedInstance(ProcessInstance.getMostSpecializedClass((Instance) inst), (Instance)inst))
 			.collect(Collectors.toSet());
@@ -132,6 +134,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	private boolean updateInConditionsFullfilledAndCheckIfHasChanged() {	
 		boolean prioCond = this.isInflowFulfilled();
 		switch(this.getDefinition().getInFlowType()) {		
+		case SEQ: //fallthrough as treated just like and
 		case AND: 
 			// we ignore Expected Canceled and no work expected
 			// we expect other to be E: COMPLETED, thus for a deviation we still propagate all inputs once we progated in the past, 
@@ -363,22 +366,61 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			return getProcess().isImmediateDataPropagationEnabled();
 	}
 	
+	public DecisionNodeInstance getScopeClosingDecisionNodeOrNull() {
+		if (this.getOutSteps().isEmpty())
+			return null;
+		else {			
+			Instance dnd = instance.getPropertyAsInstance(CoreProperties.closingDN.toString());
+			if (dnd != null)
+				return WrapperCache.getWrappedInstance(DecisionNodeInstance.class, dnd);
+			else { 
+				DecisionNodeInstance closingDnd = determineScopeClosingDN();
+				instance.getPropertyAsSingle(CoreProperties.closingDN.toString()).set(closingDnd.getInstance());		
+				return closingDnd;
+			}
+		}
+	}
+	
+	private DecisionNodeInstance determineScopeClosingDN() {
+//		List<Step> nextSteps = getOutStepsOf(dn);
+//		if (nextSteps.isEmpty()) return null; // end of the process, closing DN reached
+		Set<DecisionNodeInstance> nextStepOutDNs = this.getOutSteps().stream().map(step -> step.getOutDNI()).collect(Collectors.toSet());
+		// size must be 1 or greater as we dont allow steps without subsequent DN
+		if (nextStepOutDNs.size() == 1) { // implies the scope closing DN as otherwise there need to be multiple opening subscope ones
+			return nextStepOutDNs.iterator().next();
+		} else {
+			Set<DecisionNodeInstance> sameDepthNodes = new HashSet<>();
+			while (sameDepthNodes.size() != 1) {
+				sameDepthNodes = nextStepOutDNs.stream().filter(nextDN -> nextDN.getDefinition().getDepthIndex() == this.getDefinition().getDepthIndex()).collect(Collectors.toSet());
+				assert(sameDepthNodes.size() <= 1); //closing next nodes can only be on same level or deeper (i.e., larger values)
+				if (sameDepthNodes.size() != 1) {
+					Set<DecisionNodeInstance> nextNextStepOutDNs = nextStepOutDNs.stream().map(nextDN -> nextDN.getScopeClosingDecisionNodeOrNull()).collect(Collectors.toSet());
+					nextStepOutDNs = nextNextStepOutDNs;
+				}
+				assert(nextStepOutDNs.size() > 0);
+			} 
+			return sameDepthNodes.iterator().next();				
+		}
+	}
+	
 	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
-		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId)); 
+		Optional<InstanceType> thisTypeOpt = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId)); 
 //		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
 //			.filter(it -> !it.isDeleted)
 //			.filter(it -> it.name().equals(designspaceTypeId))
 //			.findAny();
-		if (thisType.isPresent())
-			return thisType.get();
+		if (thisTypeOpt.isPresent())
+			return thisTypeOpt.get();
 		else {
-			InstanceType typeStep = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessInstanceScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
-			typeStep.createPropertyType(CoreProperties.isInflowFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
-			typeStep.createPropertyType(CoreProperties.hasPropagated.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
-			typeStep.createPropertyType(CoreProperties.dnd.toString(), Cardinality.SINGLE, DecisionNodeDefinition.getOrCreateDesignSpaceCoreSchema(ws));
-			typeStep.createPropertyType(CoreProperties.inSteps.toString(), Cardinality.SET, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
-			typeStep.createPropertyType(CoreProperties.outSteps.toString(), Cardinality.SET, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
-			return typeStep;
+			InstanceType thisType = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessInstanceScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
+			ProcessInstanceScopedElement.addGenericProcessProperty(thisType);
+			thisType.createPropertyType(CoreProperties.isInflowFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
+			thisType.createPropertyType(CoreProperties.hasPropagated.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
+			thisType.createPropertyType(CoreProperties.dnd.toString(), Cardinality.SINGLE, DecisionNodeDefinition.getOrCreateDesignSpaceCoreSchema(ws));
+			thisType.createPropertyType(CoreProperties.inSteps.toString(), Cardinality.SET, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
+			thisType.createPropertyType(CoreProperties.outSteps.toString(), Cardinality.SET, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
+			thisType.createPropertyType(CoreProperties.closingDN.toString(), Cardinality.SINGLE, thisType);
+			return thisType;
 		}
 	}
 	
@@ -394,6 +436,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		instance.getPropertyAsSingle(CoreProperties.hasPropagated.toString()).set(false);
 		// if kickoff DN, then set inflow fulfillment to true
 		instance.getPropertyAsSingle(CoreProperties.isInflowFulfilled.toString()).set(/*dnd.getInSteps().size() == 0 ? true :*/ false);
+	
 	}
 
 	@Override

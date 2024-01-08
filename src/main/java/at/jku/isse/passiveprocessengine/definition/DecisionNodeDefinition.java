@@ -1,6 +1,7 @@
 package at.jku.isse.passiveprocessengine.definition;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -14,11 +15,11 @@ import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
-import at.jku.isse.passiveprocessengine.definition.StepDefinition.CoreProperties;
+import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 
 public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 
-	public static enum CoreProperties {inFlowType, dataMappingDefinitions, inSteps, outSteps, hierarchyDepth}
+	public static enum CoreProperties {inFlowType, dataMappingDefinitions, inSteps, outSteps, hierarchyDepth, closingDN}
 	
 	public static final String designspaceTypeId = DecisionNodeDefinition.class.getSimpleName();
 	
@@ -32,6 +33,44 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 	
 	public InFlowType getInFlowType() {
 		return InFlowType.valueOf((String) instance.getPropertyAsValueOrElse(CoreProperties.inFlowType.toString(), () -> InFlowType.AND.toString()));
+	}
+		
+	
+	public DecisionNodeDefinition getScopeClosingDecisionNodeOrNull() {
+		if (this.getOutSteps().isEmpty())
+			return null;
+		else {			
+			Instance dnd = instance.getPropertyAsInstance(CoreProperties.closingDN.toString());
+			if (dnd != null)
+				return WrapperCache.getWrappedInstance(DecisionNodeDefinition.class, dnd);
+			else { 
+				DecisionNodeDefinition closingDnd = determineScopeClosingDN();
+				instance.getPropertyAsSingle(CoreProperties.closingDN.toString()).set(closingDnd.getInstance());		
+				return closingDnd;
+			}
+		}
+	}
+			
+	private DecisionNodeDefinition determineScopeClosingDN() {
+//		List<Step> nextSteps = getOutStepsOf(dn);
+//		if (nextSteps.isEmpty()) return null; // end of the process, closing DN reached
+		Set<DecisionNodeDefinition> nextStepOutDNs = this.getOutSteps().stream().map(step -> step.getOutDND()).collect(Collectors.toSet());
+		// size must be 1 or greater as we dont allow steps without subsequent DN
+		if (nextStepOutDNs.size() == 1) { // implies the scope closing DN as otherwise there need to be multiple opening subscope ones
+			return nextStepOutDNs.iterator().next();
+		} else {
+			Set<DecisionNodeDefinition> sameDepthNodes = new HashSet<>();
+			while (sameDepthNodes.size() != 1) {
+				sameDepthNodes = nextStepOutDNs.stream().filter(nextDN -> nextDN.getDepthIndex() == this.getDepthIndex()).collect(Collectors.toSet());
+				assert(sameDepthNodes.size() <= 1); //closing next nodes can only be on same level or deeper (i.e., larger values)
+				if (sameDepthNodes.size() != 1) {
+					Set<DecisionNodeDefinition> nextNextStepOutDNs = nextStepOutDNs.stream().map(nextDN -> nextDN.getScopeClosingDecisionNodeOrNull()).collect(Collectors.toSet());
+					nextStepOutDNs = nextNextStepOutDNs;
+				}
+				assert(nextStepOutDNs.size() > 0);
+			} 
+			return sameDepthNodes.iterator().next();				
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -88,10 +127,10 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 	}
 	
 	@Override
-	public void deleteCascading() {
-		this.getMappings().forEach(md -> md.deleteCascading());
+	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
+		this.getMappings().forEach(md -> md.deleteCascading(configFactory));
 		// no instanceType for DNI to delete, all processes use the same one.
-		super.deleteCascading();
+		super.deleteCascading(configFactory);
 	}
 	
 	public List<ProcessDefinitionError> checkDecisionNodeStructureValidity() {
@@ -150,25 +189,26 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
-				InstanceType typeStep = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessDefinitionScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
-				typeStep.createPropertyType(CoreProperties.inFlowType.toString(), Cardinality.SINGLE, Workspace.STRING);
-				typeStep.createPropertyType(CoreProperties.inSteps.toString(), Cardinality.SET, StepDefinition.getOrCreateDesignSpaceCoreSchema(ws));
-				typeStep.createPropertyType(CoreProperties.outSteps.toString(), Cardinality.SET, StepDefinition.getOrCreateDesignSpaceCoreSchema(ws));
-				typeStep.createPropertyType(CoreProperties.dataMappingDefinitions.toString(), Cardinality.SET, MappingDefinition.getOrCreateDesignSpaceCoreSchema(ws));
-				typeStep.createPropertyType((CoreProperties.hierarchyDepth.toString()), Cardinality.SINGLE, Workspace.INTEGER);
-				return typeStep;
+				InstanceType typeDN = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessDefinitionScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
+				typeDN.createPropertyType(CoreProperties.inFlowType.toString(), Cardinality.SINGLE, Workspace.STRING);
+				typeDN.createPropertyType(CoreProperties.inSteps.toString(), Cardinality.SET, StepDefinition.getOrCreateDesignSpaceCoreSchema(ws));
+				typeDN.createPropertyType(CoreProperties.outSteps.toString(), Cardinality.SET, StepDefinition.getOrCreateDesignSpaceCoreSchema(ws));
+				typeDN.createPropertyType(CoreProperties.dataMappingDefinitions.toString(), Cardinality.SET, MappingDefinition.getOrCreateDesignSpaceCoreSchema(ws));
+				typeDN.createPropertyType((CoreProperties.hierarchyDepth.toString()), Cardinality.SINGLE, Workspace.INTEGER);
+				typeDN.createPropertyType(CoreProperties.closingDN.toString(), Cardinality.SINGLE, typeDN);
+				return typeDN;
 			}
 	}
 
 	public static DecisionNodeDefinition getInstance(String dndId, Workspace ws) {
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), dndId);
-		// default AND
-		instance.getPropertyAsSingle(CoreProperties.inFlowType.toString()).set(InFlowType.AND.toString());
+		// default SEQ
+		instance.getPropertyAsSingle(CoreProperties.inFlowType.toString()).set(InFlowType.SEQ.toString());
 		instance.getPropertyAsSingle(CoreProperties.hierarchyDepth.toString()).set(-1);
 		return WrapperCache.getWrappedInstance(DecisionNodeDefinition.class, instance);
 	}
 	
 	public static enum InFlowType {
-		AND, OR, XOR;
+		AND, OR, XOR, SEQ;
 	}
 }

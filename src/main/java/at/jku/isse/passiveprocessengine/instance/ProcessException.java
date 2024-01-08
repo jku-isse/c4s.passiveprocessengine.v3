@@ -18,7 +18,7 @@ public class ProcessException extends Exception {
 	
 	@Override
 	public String getMessage() {
-		return mainMessage + " : \r\n "+errorMessages.stream().collect(Collectors.joining(",","[","]")); 
+		return mainMessage +errorMessages.stream().collect(Collectors.joining(","," : \r\n[","]")); 
 	}
 	
 	

@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory.PropertySchemaDTO;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.Data;
@@ -25,25 +26,49 @@ public class DTOs {
 		
 	}
 	
-	@EqualsAndHashCode( onlyExplicitlyIncluded = true)
 	@ToString(doNotUseGetters = true)
 	@Data
 	public abstract static class Element implements Typed{
 		String _type = this.getClass().getSimpleName();
-		@EqualsAndHashCode.Include
 		private String code;
 		String description;
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Element other = (Element) obj;
+			return Objects.equals(code, other.code);
+		}
+		@Override
+		public int hashCode() {
+			return Objects.hash(code);
+		}
 	}
 	
-	@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
-	public static class QAConstraint extends Element {
-		String arlRule;
+	public static class Constraint extends Element {
+		final String arlRule;
 		int specOrderIndex = 0;
+		boolean isOverridable = false;
+		
+		@Override
+		public boolean equals(Object obj) {
+			return super.equals(obj);
+		}
+
+		@Override
+		public int hashCode() {
+			return super.hashCode();
+		}
 	}
 	
-	@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
+	//@EqualsAndHashCode(callSuper = true)
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class Step extends Element {
@@ -52,8 +77,8 @@ public class DTOs {
 		Map<String,String> input = new HashMap<>();
 		Map<String,String> output = new HashMap<>();
 		Map<String,String> ioMapping = new HashMap<>();
-		Map<Conditions,String> conditions = new HashMap<>();
-		Set<QAConstraint> qaConstraints = new HashSet<>();
+		Map<Conditions,List<Constraint>> conditions = new HashMap<>();
+		Set<Constraint> qaConstraints = new HashSet<>();
 		int specOrderIndex = 0;
 		String html_url;	
 				
@@ -83,6 +108,16 @@ public class DTOs {
 		protected void toPlantUMLDataflow(StringBuffer sb) {
 			sb.append("\r\n  class \""+this.getCode()+"\"");
 		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return super.equals(obj);
+		}
+
+		@Override
+		public int hashCode() {
+			return super.hashCode();
+		}
 	} 
 
 	@ToString(doNotUseGetters = true)
@@ -101,20 +136,28 @@ public class DTOs {
 		}
 	}
 	
-	@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class DecisionNode extends Element {
-		InFlowType inflowType = InFlowType.AND; //default value
+		InFlowType inflowType = InFlowType.SEQ; //default value
 		Set<Mapping> mapping = new HashSet<>();
 		int depthIndex = -1;	
 		
 		protected void toPlantUMLDataflow(StringBuffer sb) {
 			mapping.forEach(m -> sb.append("\r\n \""+m.getFromStep()+"\" -down-> \""+m.getToStep()+"\" : \""+m.getToParam()+"\""));
 		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			return super.equals(obj);
+		}
+
+		@Override
+		public int hashCode() {
+			return super.hashCode();
+		}
 	}
 	
-	@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	public static class Process extends Step {
@@ -122,6 +165,7 @@ public class DTOs {
 		List<DecisionNode> dns = new LinkedList<>();
 		Map<String, String> prematureStepConditions = new HashMap<>();
 		Map<String, String> processConfig = new HashMap<>();
+		Map<String, Set<PropertySchemaDTO>> configs = new HashMap<>();  
 		
 		public Step getStepByCode(String code) {
 			return steps.stream().filter(step -> step.getCode().equals(code)).findAny().orElse(null);
@@ -203,6 +247,16 @@ public class DTOs {
 			}
 		}
 		
+		@Override
+		public boolean equals(Object obj) {
+			return super.equals(obj);
+		}
+
+		@Override
+		public int hashCode() {
+			return super.hashCode();
+		}
+		
 		public String toPlantUMLDataflowAsClassDiagram() {
 			StringBuffer sb = new StringBuffer("@startuml\r\n skin rose \r\n title Dataflow "+this.getCode()+"\r\n");											
 			toPlantUMLDataflow(sb);
@@ -237,10 +291,12 @@ public class DTOs {
 			sb.append("{");
 			
 			sb.append("\r\n");
-			sb.append("\r\n note");
-	        this.input.forEach((var, type) -> sb.append("\r\n  in: "+var));
-	        this.output.forEach((var, type) -> sb.append("\r\n  out: "+var));
-	        sb.append("\r\n end note");
+			if (input.size() > 0 && output.size() > 0) {
+				sb.append("\r\n note");
+				this.input.forEach((var, type) -> sb.append("\r\n  in: "+var));
+				this.output.forEach((var, type) -> sb.append("\r\n  out: "+var));
+				sb.append("\r\n end note");
+			}
 			if (!this.qaConstraints.isEmpty()) {
 				//sb.append("\r\nnote right");
 				sb.append(this.qaConstraints.stream()
@@ -283,7 +339,7 @@ public class DTOs {
 				DecisionNode closingDN = getScopeClosingDN(inDN);
 				AtomicInteger count = new AtomicInteger(0);				
 				// process steps				
-				subsequentSteps.forEach(nextStep -> {
+				subsequentSteps.stream().map(nextStep -> {
 					if (count.getAndIncrement() == 0)
 						sb.append("\r\nfork");
 					else {
@@ -292,9 +348,20 @@ public class DTOs {
 					nextStep.toPlantUML(sb);					
 					DecisionNode nextDN = this.getOutDNof(nextStep);
 					if (!nextDN.equals(closingDN)) { // found a subscope
-						toPlantUMLsubscope(nextDN, sb);
-					}
+						DecisionNode nextNode = toPlantUMLsubscope(nextDN, sb); // but what to do with the returned DNs
+						if (nextNode != closingDN)
+							return nextNode;
+						else 
+							return null;
+					} else
+						return null;
+				})
+				.filter(Objects::nonNull)
+				.distinct()
+				.forEach(nextNode -> { 
+					toPlantUMLsubscope(nextNode, sb);	
 				});
+				
 				sb.append("\r\nend fork {"+closingDN.getInflowType()+"}");				
 				
 				// recursive call to outdn if this is scope as further subscopes

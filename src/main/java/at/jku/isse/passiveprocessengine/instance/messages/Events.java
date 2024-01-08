@@ -69,6 +69,17 @@ public class Events {
 	
 	@EqualsAndHashCode(callSuper = true)
 	@Data
+	public static class PartialConditionFulfillmentChanged extends ConditionFulfillmentChanged {
+		final String partialConditionName;
+		
+		public PartialConditionFulfillmentChanged(ProcessInstance proc, ProcessStep step, Conditions condition, boolean fulfilled, String partialConditionName) {
+			super(proc, step, condition, fulfilled);			
+			this.partialConditionName = partialConditionName;
+		}
+	}
+	
+	@EqualsAndHashCode(callSuper = true)
+	@Data
 	public static class StepStateTransitionEvent extends ProcessChangedEvent {
 		
 		State oldState;
@@ -82,5 +93,21 @@ public class Events {
 			this.isActualState = isActualState;
 		}
 	}
+	
+	@EqualsAndHashCode(callSuper = true)
+	@Data
+	public static class ConstraintOverrideEvent extends QAConstraintFulfillmentChanged {
+				
+		final String reason;		
+		final boolean isUndo;
+		
+		public ConstraintOverrideEvent(ProcessInstance proc, ProcessStep step, ConstraintWrapper qacWrapper, String reason, boolean isUndo) {
+			super(proc, step, qacWrapper);
+			this.reason = reason;			
+			this.isUndo = isUndo;
+			
+		}
+	}
+	
 	
 }
