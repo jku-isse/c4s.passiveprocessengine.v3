@@ -18,9 +18,9 @@ import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
-import at.jku.isse.passiveprocessengine.WrapperCache;
-import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
@@ -106,14 +106,14 @@ public class ProcessInstance extends ProcessStep {
 
 	@Override
 	public ProcessDefinition getDefinition() {
-		return  WrapperCache.getWrappedInstance(ProcessDefinition.class, instance.getPropertyAsInstance(CoreProperties.processDefinition.toString()));
+		return  Context.getWrappedInstance(ProcessDefinition.class, instance.getPropertyAsInstance(CoreProperties.processDefinition.toString()));
 	}
 
 	@Override
 	public DecisionNodeInstance getInDNI() {
 			Instance inst = instance.getPropertyAsInstance(ProcessStep.CoreProperties.inDNI.toString());
 			if (inst != null)
-				return WrapperCache.getWrappedInstance(DecisionNodeInstance.class, inst);
+				return Context.getWrappedInstance(DecisionNodeInstance.class, inst);
 			else
 				return null;
 	}
@@ -122,7 +122,7 @@ public class ProcessInstance extends ProcessStep {
 	public DecisionNodeInstance getOutDNI() {
 		Instance inst = instance.getPropertyAsInstance(ProcessStep.CoreProperties.outDNI.toString());
 		if (inst != null)
-			return WrapperCache.getWrappedInstance(DecisionNodeInstance.class, inst);
+			return Context.getWrappedInstance(DecisionNodeInstance.class, inst);
 		else
 			return null;
 	}
@@ -258,7 +258,7 @@ public class ProcessInstance extends ProcessStep {
 		SetProperty<?> stepList = instance.getPropertyAsSet(CoreProperties.stepInstances.toString());
 		if (stepList != null && stepList.get() != null) {
 			return (Set<ProcessStep>) stepList.get().stream()
-					.map(inst -> WrapperCache.getWrappedInstance(ProcessInstance.getMostSpecializedClass((Instance) inst), (Instance) inst))
+					.map(inst -> Context.getWrappedInstance(ProcessInstance.getMostSpecializedClass((Instance) inst), (Instance) inst))
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
 
@@ -269,7 +269,7 @@ public class ProcessInstance extends ProcessStep {
 		SetProperty<?> stepList = instance.getPropertyAsSet(CoreProperties.decisionNodeInstances.toString());
 		if (stepList != null && stepList.get() != null) {
 			return (Set<DecisionNodeInstance>) stepList.get().stream()
-					.map(inst -> WrapperCache.getWrappedInstance(DecisionNodeInstance.class, (Instance) inst))
+					.map(inst -> Context.getWrappedInstance(DecisionNodeInstance.class, (Instance) inst))
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
 	}
@@ -382,14 +382,14 @@ public class ProcessInstance extends ProcessStep {
 	public static ProcessInstance getInstance(Workspace ws, ProcessDefinition sd, String namePostfix) {
 		//TODO: not to create duplicate process instances somehow
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+namePostfix);
-		ProcessInstance pi = WrapperCache.getWrappedInstance(ProcessInstance.class, instance);
+		ProcessInstance pi = Context.getWrappedInstance(ProcessInstance.class, instance);
 		pi.init(sd, null, null, ws);
 		return pi;
 	}
 
 	public static ProcessInstance getSubprocessInstance(Workspace ws, ProcessDefinition sd, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, ProcessInstance scope) {
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws, sd), sd.getName()+"_"+UUID.randomUUID());
-		ProcessInstance pi = WrapperCache.getWrappedInstance(ProcessInstance.class, instance);
+		ProcessInstance pi = Context.getWrappedInstance(ProcessInstance.class, instance);
 		pi.setProcess(scope);
 		pi.init(sd, inDNI, outDNI, ws);
 		return pi;

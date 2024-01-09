@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.core.Instance;
@@ -17,7 +17,6 @@ import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.core.InstanceType.PropertyType;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.definition.IStepDefinition;
-import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessStepDefinitionType;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
@@ -29,8 +28,8 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 	public static final String NOOPSTEP_PREFIX = "NoOpStep";
 
-	public StepDefinition(Instance instance, WrapperCache wrapperCache) {
-		super(instance, wrapperCache);
+	public StepDefinition(Instance instance, Context context) {
+		super(instance, context);
 	}
 
 	@Override
@@ -87,7 +86,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		}
 		if (propSet != null ) {
 			return propSet.stream()
-					.map(inst -> wrapperCache.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
 					.filter(Objects::nonNull)
 					.map(spec -> ((ConstraintSpec) spec).getConstraintSpec())
 					.findAny();
@@ -100,7 +99,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		Set<?> qaSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.preconditions.toString(), Set.class);
 		if (qaSet != null) {
 			return qaSet.stream()
-					.map(inst -> wrapperCache.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
 					.map(obj -> (ConstraintSpec)obj)
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
@@ -111,7 +110,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		Set<?> qaSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.postconditions.toString(), Set.class);
 		if (qaSet != null) {
 			return qaSet.stream()
-					.map(inst -> wrapperCache.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
 					.map(obj -> (ConstraintSpec)obj)
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
@@ -122,7 +121,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		Set<?> qaSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.cancelconditions.toString(), Set.class);
 		if (qaSet != null) {
 			return qaSet.stream()
-					.map(inst -> wrapperCache.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
 					.map(obj -> (ConstraintSpec)obj)
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
@@ -133,7 +132,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		Set<?> qaSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.activationconditions.toString(), Set.class);
 		if (qaSet != null) {
 			return qaSet.stream()
-					.map(inst -> wrapperCache.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
 					.map(obj -> (ConstraintSpec)obj)
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
@@ -142,7 +141,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	@SuppressWarnings("unchecked")
 	@Deprecated(forRemoval = true)
 	public void setCondition(Conditions condition, String ruleAsString) {
-		ConstraintSpec constraint = ConstraintSpec.createInstance(condition, condition+"0", ruleAsString, ruleAsString, 0, false, ws);
+		ConstraintSpec constraint = context.getDefinitionFactoryIndex().getConstraintFactory().createInstance(condition, condition+"0", ruleAsString, ruleAsString, 0, false);
 		switch(condition) {
 		case ACTIVATION:
 			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.activationconditions.toString(), Set.class).add(constraint);
@@ -188,7 +187,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		Set<?> qaSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.qaConstraints.toString(), Set.class);
 		if (qaSet != null ) {
 			return  qaSet.stream()
-					.map(inst -> wrapperCache.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
 					.map(obj -> (ConstraintSpec)obj)
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
@@ -318,7 +317,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 	private void checkConstraintExists(InstanceType instType, ConstraintSpec spec, Conditions condition, List<ProcessDefinitionError> errors) {
 		String name = RuleAugmentation.getConstraintName(condition, spec.getOrderIndex(), instType);
-		RuleDefinition crt = wrapperCache.getSchemaRegistry().getRuleByNameAndContext(name, instType);
+		RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
 		if (crt == null) {
 			log.error("Expected Rule for existing process not found: "+name);
 			errors.add(new ProcessDefinitionError(this, "Expected Constraint Not Found - Internal Data Corruption", name));
@@ -359,7 +358,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		this.getQAConstraints().stream()
 			.forEach(spec -> {
 				String specId = ProcessStep.getQASpecId(spec, pd);
-				RuleDefinition crt = wrapperCache.getSchemaRegistry().getRuleByNameAndContext(specId, instType);//RuleDefinition.RuleDefinitionExists(ws,  specId, instType, spec.getQaConstraintSpec());
+				RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(specId, instType);//RuleDefinition.RuleDefinitionExists(ws,  specId, instType, spec.getQaConstraintSpec());
 				if (crt == null) {
 					log.error("Expected Rule for existing process not found: "+specId);
 					errors.add(new ProcessDefinitionError(this, "Expected QA Constraint Not Found - Internal Data Corruption", specId));
@@ -398,7 +397,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 	private void deleteRuleIfExists(InstanceType instType, ConstraintSpec spec, Conditions condition ) {
 		String name = RuleAugmentation.getConstraintName(condition, spec.getOrderIndex(), instType);
-		RuleDefinition crt = wrapperCache.getSchemaRegistry().getRuleByNameAndContext(name, instType);
+		RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
 		if (crt != null) 
 			crt.markAsDeleted();
 	}
@@ -416,7 +415,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		this.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
 				String name = ProcessStep.getDataMappingId(entry, this);
-				RuleDefinition crt = wrapperCache.getSchemaRegistry().getRuleByNameAndContext(name, instType);
+				RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
 				if (crt != null) crt.markAsDeleted();
 			});
 		//delete qa constraints:
@@ -424,7 +423,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		this.getQAConstraints().stream()
 			.forEach(spec -> {
 				String specId = ProcessStep.getQASpecId(spec, pd);
-				RuleDefinition crt = wrapperCache.getSchemaRegistry().getRuleByNameAndContext(specId, instType);
+				RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(specId, instType);
 				if (crt != null) 
 					crt.markAsDeleted();
 				spec.deleteCascading(configFactory);

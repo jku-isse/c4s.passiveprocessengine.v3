@@ -14,7 +14,6 @@ public abstract class BuildInType implements InstanceType {
 
 	@Override
 	public boolean isMarkedAsDeleted() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -58,6 +57,11 @@ public abstract class BuildInType implements InstanceType {
 	@Override
 	public void createSinglePropertyType(String name, InstanceType complexType) {
 		// no op
+	}
+	
+	@Override
+	public boolean isOfTypeOrAnySubtype(InstanceType instanceToCompareTo) {		
+		return false;
 	}
 	
 	@Override

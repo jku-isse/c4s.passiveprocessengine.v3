@@ -14,7 +14,7 @@ import at.jku.isse.designspace.core.model.Cardinality;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
-import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
@@ -38,7 +38,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 
 	@Override
 	public DecisionNodeDefinition getDefinition() {
-		return  WrapperCache.getWrappedInstance(DecisionNodeDefinition.class, instance.getPropertyAsInstance(CoreProperties.dnd.toString()));
+		return  Context.getWrappedInstance(DecisionNodeDefinition.class, instance.getPropertyAsInstance(CoreProperties.dnd.toString()));
 	}
 
 	private void setInflowFulfilled(boolean isFulfilled) {
@@ -66,7 +66,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getOutSteps() {
 		return (Set<ProcessStep>) instance.getPropertyAsSet(CoreProperties.outSteps.toString()).stream()
-			.map(inst -> WrapperCache.getWrappedInstance(ProcessInstance.getMostSpecializedClass((Instance) inst), (Instance)inst))
+			.map(inst -> Context.getWrappedInstance(ProcessInstance.getMostSpecializedClass((Instance) inst), (Instance)inst))
 			.collect(Collectors.toSet());
 	}
 
@@ -78,7 +78,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getInSteps() {
 		return (Set<ProcessStep>) instance.getPropertyAsSet(CoreProperties.inSteps.toString()).stream()
-			.map(inst -> WrapperCache.getWrappedInstance(ProcessInstance.getMostSpecializedClass((Instance) inst), (Instance)inst))
+			.map(inst -> Context.getWrappedInstance(ProcessInstance.getMostSpecializedClass((Instance) inst), (Instance)inst))
 			.collect(Collectors.toSet());
 	}
 
@@ -373,7 +373,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		else {
 			Instance dnd = instance.getPropertyAsInstance(CoreProperties.closingDN.toString());
 			if (dnd != null)
-				return WrapperCache.getWrappedInstance(DecisionNodeInstance.class, dnd);
+				return Context.getWrappedInstance(DecisionNodeInstance.class, dnd);
 			else {
 				DecisionNodeInstance closingDnd = determineScopeClosingDN();
 				instance.getPropertyAsSingle(CoreProperties.closingDN.toString()).set(closingDnd.getInstance());
@@ -427,7 +427,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 
 	protected static DecisionNodeInstance getInstance(Workspace ws, DecisionNodeDefinition dnd) {
 		Instance instance = ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), dnd.getName()+"_"+UUID.randomUUID());
-		DecisionNodeInstance dni = WrapperCache.getWrappedInstance(DecisionNodeInstance.class, instance);
+		DecisionNodeInstance dni = Context.getWrappedInstance(DecisionNodeInstance.class, instance);
 		dni.init(dnd);
 		return dni;
 	}

@@ -45,7 +45,7 @@ import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
-import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -672,7 +672,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 				effects.get(Type.POSITIVE).stream()
 						.filter(se -> se instanceof ContextualizedPositiveSideEffect<?>)
 						.forEach(se -> monitor.repairActionExecuted(se.getInconsistency(),
-															WrapperCache.getWrappedInstance(ProcessStep.class, se.getInconsistency().contextInstance()),
+															Context.getWrappedInstance(ProcessStep.class, se.getInconsistency().contextInstance()),
 															Repair_template.toRepairTemplate(((ContextualizedPositiveSideEffect<ConsistencyRule>) se).getMatchingRepair()).asString(),
 															-1));
 			}

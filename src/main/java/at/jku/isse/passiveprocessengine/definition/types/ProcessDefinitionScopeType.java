@@ -8,13 +8,13 @@ import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesFactory.TypeProvider;
 
-public class ProcessDefinitionCoreType  implements TypeProvider {
+public class ProcessDefinitionScopeType  implements TypeProvider {
 
 	public static enum CoreProperties {process, orderIndex};
 	private SchemaRegistry schemaRegistry;
-	public static final String typeId = ProcessDefinitionCoreType.class.getSimpleName();
+	public static final String typeId = ProcessDefinitionScopeType.class.getSimpleName();
 	
-	public ProcessDefinitionCoreType(SchemaRegistry schemaRegistry) {
+	public ProcessDefinitionScopeType(SchemaRegistry schemaRegistry) {
 		this.schemaRegistry = schemaRegistry;
 	}
 	
@@ -26,8 +26,8 @@ public class ProcessDefinitionCoreType  implements TypeProvider {
 		else {
 			InstanceType type = schemaRegistry.createNewInstanceType(typeId);
 			factory.registerType(ProcessDefinitionScopedElement.class, type);
-			type.createSinglePropertyType(ProcessDefinitionCoreType.CoreProperties.process.toString(), type);
-			type.createSinglePropertyType((ProcessDefinitionCoreType.CoreProperties.orderIndex.toString()), BuildInType.INTEGER);
+			type.createSinglePropertyType(ProcessDefinitionScopeType.CoreProperties.process.toString(), type);
+			type.createSinglePropertyType((ProcessDefinitionScopeType.CoreProperties.orderIndex.toString()), BuildInType.INTEGER);
 			
 		}
 	}

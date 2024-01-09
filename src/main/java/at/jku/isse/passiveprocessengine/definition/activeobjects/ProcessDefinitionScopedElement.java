@@ -1,33 +1,33 @@
 package at.jku.isse.passiveprocessengine.definition.activeobjects;
 
+import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
-import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.Instance;
-import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionCoreType;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionScopeType;
 
 public abstract class ProcessDefinitionScopedElement extends InstanceWrapper {
 
-	public ProcessDefinitionScopedElement(Instance instance, WrapperCache wrapperCache) {
-		super(instance, wrapperCache);
+	public ProcessDefinitionScopedElement(Instance instance, Context context) {
+		super(instance, context);
 	}
 
 	public void setProcess(ProcessDefinition pi) {
-		instance.setSingleProperty(ProcessDefinitionCoreType.CoreProperties.process.toString(), pi.getInstance());
+		instance.setSingleProperty(ProcessDefinitionScopeType.CoreProperties.process.toString(), pi.getInstance());
 	}
 
 	public void setProcOrderIndex(int index) {
-		instance.setSingleProperty(ProcessDefinitionCoreType.CoreProperties.orderIndex.toString(), index);
+		instance.setSingleProperty(ProcessDefinitionScopeType.CoreProperties.orderIndex.toString(), index);
 	}
 
 	public Integer getProcOrderIndex() {
-		return instance.getTypedProperty(ProcessDefinitionCoreType.CoreProperties.orderIndex.toString(), Integer.class, -1);
+		return instance.getTypedProperty(ProcessDefinitionScopeType.CoreProperties.orderIndex.toString(), Integer.class, -1);
 	}
 
 	public ProcessDefinition getProcess() {
-		Instance pi = instance.getTypedProperty(ProcessDefinitionCoreType.CoreProperties.process.toString(), Instance.class);
+		Instance pi = instance.getTypedProperty(ProcessDefinitionScopeType.CoreProperties.process.toString(), Instance.class);
 		if (pi != null)
-			return wrapperCache.getWrappedInstance(ProcessDefinition.class, pi);
+			return context.getWrappedInstance(ProcessDefinition.class, pi);
 		else return null;
 	}
 

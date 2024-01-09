@@ -24,7 +24,7 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.model.WorkspaceListener;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
-import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ConditionChangedCmd;
@@ -109,7 +109,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 					&& (op.name().startsWith("in_")
 					      || op.name().startsWith("out_"))
 					&& isOfStepType(element.id()) ) {
-					ProcessStep step = WrapperCache.getWrappedInstance(ProcessStep.class, (Instance)element);
+					ProcessStep step = Context.getWrappedInstance(ProcessStep.class, (Instance)element);
 					Id addedId = (Id) op.value();
 					Element added = ws.findElement(addedId);
 					log.debug(String.format("%s %s now also contains %s", element.name(),
@@ -136,7 +136,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 				&& (op.name().startsWith("in_")
 				      || op.name().startsWith("out_"))
 				&& isOfStepType(element.id()) ) {
-				ProcessStep step = WrapperCache.getWrappedInstance(ProcessStep.class, (Instance)element);
+				ProcessStep step = Context.getWrappedInstance(ProcessStep.class, (Instance)element);
 				log.info(String.format("%s %s removed %s", element.name(),
 																op.name(),
 																op.indexOrKey()
@@ -159,7 +159,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 			ConsistencyRule cr = (ConsistencyRule)element;
 			Instance context = cr.contextInstance();
 			if (isOfStepType(context.id())) { // rule belonging to a step,
-				ProcessStep step = WrapperCache.getWrappedInstance(ProcessStep.class, context);
+				ProcessStep step = Context.getWrappedInstance(ProcessStep.class, context);
 				stats.incrementRuleUpdateEventCount();
 				ProcessScopedCmd effect = step.prepareRuleEvaluationChange(cr, op);
 //				log.debug(String.format("CRD of type %s for step %s updated %s to %s", element.name(), context.name(),

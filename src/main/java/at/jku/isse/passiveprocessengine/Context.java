@@ -3,26 +3,35 @@ package at.jku.isse.passiveprocessengine;
 import java.util.HashMap;
 import java.util.Map;
 
+import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
+import at.jku.isse.passiveprocessengine.definition.factories.DefinitionFactoryIndex;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesFactory;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Getter
-public class WrapperCache {
+public class Context {
 
+	final InstanceRepository instanceRepository;
 	final SchemaRegistry schemaRegistry;
 	final ProcessDomainTypesFactory typesFactory;
+	final ProcessConfigBaseElementFactory configFactory;
+	final DefinitionFactoryIndex definitionFactoryIndex;
+				
+	private final Map<String, InstanceWrapper> cache = new HashMap<>();
 	
-	public WrapperCache(SchemaRegistry schemaRegistry, ProcessDomainTypesFactory typesFactory) {
+	public Context(InstanceRepository instanceRepository, SchemaRegistry schemaRegistry, ProcessDomainTypesFactory typesFactory,
+			ProcessConfigBaseElementFactory configFactory, DefinitionFactoryIndex definitionFactoryIndex) {
+		this.instanceRepository = instanceRepository;
 		this.schemaRegistry = schemaRegistry;
 		this.typesFactory = typesFactory;
+		this.configFactory = configFactory;
+		this.definitionFactoryIndex = definitionFactoryIndex;
 	}
-	
-	private final Map<String, InstanceWrapper> cache = new HashMap<>();
-
 
 	@SuppressWarnings("unchecked")
 	public <T extends InstanceWrapper> T getWrappedInstance(Class<? extends InstanceWrapper> clazz, Instance instance) {
@@ -46,7 +55,7 @@ public class WrapperCache {
 			// otherwise we take the constructor of that class that takes an Instance object as parameter
 			// and create it, passing it the instance object
 			// assumption: every managed class implements such an constructor, (otherwise will fail fast here anyway)
-			T t = (T) clazz.getConstructor(Instance.class).newInstance(instance);
+			T t = (T) clazz.getConstructor(Instance.class, Context.class).newInstance(instance, this);
 			//t.ws = instance.workspace;
 			cache.put(instance.getId(), t);
 			return t;
@@ -61,4 +70,6 @@ public class WrapperCache {
 	public void removeWrapper(String id) {
 		cache.remove(id);
 	}
+
+
 }

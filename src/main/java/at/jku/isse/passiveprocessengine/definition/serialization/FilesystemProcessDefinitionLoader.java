@@ -8,8 +8,8 @@ import java.nio.file.Files;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 
-import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

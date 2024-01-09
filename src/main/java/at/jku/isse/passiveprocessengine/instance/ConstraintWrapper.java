@@ -11,7 +11,7 @@ import at.jku.isse.designspace.core.model.SingleProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
-import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import lombok.extern.slf4j.Slf4j;
@@ -74,7 +74,7 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 
 	public ConstraintSpec getSpec() {
 		Instance qainst = instance.getPropertyAsInstance(CoreProperties.qaSpec.toString());
-		return WrapperCache.getWrappedInstance(ConstraintSpec.class, qainst);
+		return Context.getWrappedInstance(ConstraintSpec.class, qainst);
 	}
 
 	private void setSpec(ConstraintSpec qaSpec) {
@@ -84,7 +84,7 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 	public ProcessStep getParentStep() {
 		Instance step = instance.getPropertyAsInstance(CoreProperties.parentStep.toString());
 		if (step != null)
-			return WrapperCache.getWrappedInstance(ProcessStep.class, step);
+			return Context.getWrappedInstance(ProcessStep.class, step);
 		else
 			return null;
 	}
@@ -176,7 +176,7 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 
 	public static ConstraintWrapper getInstance(Workspace ws, ConstraintSpec qaSpec, ZonedDateTime lastChanged, ProcessStep owningStep, ProcessInstance proc) {
 		Instance inst = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws), qaSpec.getName()+proc.getName()+"_"+UUID.randomUUID());
-		ConstraintWrapper cw = WrapperCache.getWrappedInstance(ConstraintWrapper.class, inst);
+		ConstraintWrapper cw = Context.getWrappedInstance(ConstraintWrapper.class, inst);
 		cw.instance.getPropertyAsSingle(CoreProperties.parentStep.toString()).set(owningStep.getInstance());
 		cw.setSpec(qaSpec);
 		cw.setLastChanged(lastChanged);

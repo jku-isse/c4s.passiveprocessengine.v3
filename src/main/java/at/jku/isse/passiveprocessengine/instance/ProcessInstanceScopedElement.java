@@ -7,7 +7,7 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
-import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 
 public abstract class ProcessInstanceScopedElement extends InstanceWrapper {
@@ -28,7 +28,7 @@ public abstract class ProcessInstanceScopedElement extends InstanceWrapper {
 	public ProcessInstance getProcess() {
 		Instance pi = instance.getPropertyAsInstance(CoreProperties.process.toString());
 		if (pi != null)
-			return WrapperCache.getWrappedInstance(ProcessInstance.class, pi);
+			return Context.getWrappedInstance(ProcessInstance.class, pi);
 		else return null;
 	}
 

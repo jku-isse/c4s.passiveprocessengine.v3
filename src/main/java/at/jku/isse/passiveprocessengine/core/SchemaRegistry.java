@@ -35,4 +35,10 @@ public interface SchemaRegistry {
 	 * allows for existence of rule of different name but same rule string.
 	 */
 	public RuleDefinition getRuleByNameAndContext(String ruleName, InstanceType context);
+	
+	
+	/**
+	 * @return a set of all currently registered instance types that are not marked as deleted
+	 */	
+	public Set<InstanceType> getAllNonDeletedInstanceTypes();
 }

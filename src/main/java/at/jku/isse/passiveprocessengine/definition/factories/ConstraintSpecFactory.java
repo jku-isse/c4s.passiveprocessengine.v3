@@ -1,6 +1,6 @@
 package at.jku.isse.passiveprocessengine.definition.factories;
 
-import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
@@ -11,10 +11,10 @@ import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 public class ConstraintSpecFactory {
 	InstanceRepository repository;
-	WrapperCache wrapperCache;
+	Context wrapperCache;
 	ProcessDomainTypesFactory typesFactory;
 	
-	public ConstraintSpecFactory(InstanceRepository repository, WrapperCache wrapperCache, ProcessDomainTypesFactory typesFactory) {
+	public ConstraintSpecFactory(InstanceRepository repository, Context wrapperCache, ProcessDomainTypesFactory typesFactory) {
 		this.repository = repository;
 		this.wrapperCache = wrapperCache;
 		this.typesFactory = typesFactory;

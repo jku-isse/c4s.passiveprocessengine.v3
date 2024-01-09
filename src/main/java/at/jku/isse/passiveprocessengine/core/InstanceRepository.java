@@ -1,6 +1,7 @@
 package at.jku.isse.passiveprocessengine.core;
 
 import java.util.Optional;
+import java.util.Set;
 
 public class InstanceRepository {
 
@@ -17,6 +18,9 @@ public class InstanceRepository {
 		throw new RuntimeException();
 	}
 	
+	public Set<Instance> getAllInstancesOfTypeOrSubtype(InstanceType type) {
+		throw new RuntimeException();
+	}
 	
 	/**
 	 * @return SchemaRegistry responsible for managing all data types available in this repository

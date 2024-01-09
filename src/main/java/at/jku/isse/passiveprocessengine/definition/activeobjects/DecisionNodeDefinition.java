@@ -7,17 +7,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.core.Instance;
-import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
 
 public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 
-	public DecisionNodeDefinition(Instance instance, WrapperCache wrapperCache) {
-		super(instance, wrapperCache);
+	public DecisionNodeDefinition(Instance instance, Context context) {
+		super(instance, context);
 	}
 
 	public void setInflowType(InFlowType ift) {
@@ -35,7 +34,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 		else {
 			Instance dnd = instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.closingDN.toString(), Instance.class);
 			if (dnd != null)
-				return wrapperCache.getWrappedInstance(DecisionNodeDefinition.class, dnd);
+				return context.getWrappedInstance(DecisionNodeDefinition.class, dnd);
 			else {
 				DecisionNodeDefinition closingDnd = determineScopeClosingDN();
 				instance.setSingleProperty(DecisionNodeDefinitionType.CoreProperties.closingDN.toString(), closingDnd.getInstance());
@@ -86,7 +85,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 		Set mdSet = instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.dataMappingDefinitions.toString(), Set.class);
 		if (mdSet != null ) {
 			return (Set<MappingDefinition>) mdSet.stream()
-					.map(inst -> wrapperCache.getWrappedInstance(MappingDefinition.class, (Instance) inst))
+					.map(inst -> context.getWrappedInstance(MappingDefinition.class, (Instance) inst))
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
 	}
@@ -96,7 +95,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 		return (Set<StepDefinition>) instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.inSteps.toString(), Set.class).stream()
 			.filter(Instance.class::isInstance)
 			.map(Instance.class::cast)
-			.map(inst -> wrapperCache.getWrappedInstance(ProcessDefinition.getMostSpecializedClass((Instance) inst), (Instance) inst))
+			.map(inst -> context.getWrappedInstance(ProcessDefinition.getMostSpecializedClass((Instance) inst), (Instance) inst))
 			.collect(Collectors.toSet());
 	}
 
@@ -105,7 +104,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 		return (Set<StepDefinition>) instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.outSteps.toString(), Set.class).stream()
 			.filter(Instance.class::isInstance)
 			.map(Instance.class::cast)
-			.map(inst -> wrapperCache.getWrappedInstance(ProcessDefinition.getMostSpecializedClass((Instance) inst), (Instance) inst))
+			.map(inst -> context.getWrappedInstance(ProcessDefinition.getMostSpecializedClass((Instance) inst), (Instance) inst))
 			.collect(Collectors.toSet());
 	}
 

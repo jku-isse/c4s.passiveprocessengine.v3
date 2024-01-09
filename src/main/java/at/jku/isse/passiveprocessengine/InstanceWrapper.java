@@ -7,11 +7,11 @@ import at.jku.isse.passiveprocessengine.core.NameIdentifiableElement;
 public abstract class InstanceWrapper implements NameIdentifiableElement{
 
 	protected transient Instance instance;
-	protected transient WrapperCache wrapperCache;
+	protected transient Context context;
 	
-	public InstanceWrapper(Instance instance, WrapperCache wrapperCache) {
+	public InstanceWrapper(Instance instance, Context context) {
 		this.instance = instance;
-		this.wrapperCache = wrapperCache;
+		this.context = context;
 	}
 
 	public Instance getInstance() {
@@ -24,12 +24,12 @@ public abstract class InstanceWrapper implements NameIdentifiableElement{
 	}
 
 	public void deleteCascading() {
-		wrapperCache.removeWrapper(getInstance().getId());
+		context.removeWrapper(getInstance().getId());
 		instance.markAsDeleted();
 	}
 
 	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
-		wrapperCache.removeWrapper(getInstance().getId());
+		context.removeWrapper(getInstance().getId());
 		instance.markAsDeleted();
 	}
 

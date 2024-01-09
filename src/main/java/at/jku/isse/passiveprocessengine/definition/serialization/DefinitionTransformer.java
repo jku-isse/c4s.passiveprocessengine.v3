@@ -1,20 +1,21 @@
 package at.jku.isse.passiveprocessengine.definition.serialization;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
-import at.jku.isse.designspace.core.model.Folder;
-import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.core.model.Workspace;
+import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
-import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.MappingDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.factories.DefinitionFactoryIndex;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Constraint;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Process;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
@@ -23,21 +24,28 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DefinitionTransformer {
 
-	public static ProcessDefinition fromDTO(DTOs.Process procDTO, Workspace ws, boolean isInStaging, List<ProcessDefinitionError> errors, ProcessConfigBaseElementFactory configFactory)  {
-		ProcessDefinition procDef = ProcessDefinition.getInstance(procDTO.getCode(), ws);
-		initProcessFromDTO(procDTO, procDef, ws, 0, isInStaging, errors, configFactory);
-		return procDef;
+	private final DefinitionFactoryIndex factories;	
+	private final List<ProcessDefinitionError> errors = new LinkedList<>();
+	private final DTOs.Process rootProcDTO;		
+	
+	public DefinitionTransformer(DTOs.Process procDTO, DefinitionFactoryIndex factories) {
+		this.rootProcDTO = procDTO;	
+	}
+	
+	public ProcessDefinition fromDTO(boolean isInStaging)  {		
+		return initProcessFromDTO(rootProcDTO, 0, isInStaging);		
 	}
 
-	private static void initProcessFromDTO(DTOs.Process procDTO, ProcessDefinition pDef, Workspace ws, int depth, boolean isInStaging, List<ProcessDefinitionError> errors, ProcessConfigBaseElementFactory configFactory) {
+	private ProcessDefinition initProcessFromDTO(DTOs.Process procDTO, int depth, boolean isInStaging) {
+		ProcessDefinition processDefinition = ProcessDefinition.getInstance(procDTO.getCode(), ws);
 		if (!isInStaging) {
 			cleanStagingRewriting(procDTO);
 		}
-		createOrUpdateConfig(procDTO, pDef, configFactory);
+		createOrUpdateConfig(procDTO, processDefinition);
 
 		// first DNDs
 		procDTO.getDns().stream().forEach(dn -> {
-			DecisionNodeDefinition dnd = pDef.createDecisionNodeDefinition(dn.getCode(), ws);
+			DecisionNodeDefinition dnd = processDefinition.createDecisionNodeDefinition(dn.getCode());
 			dnd.setInflowType(dn.getInflowType());
 			// we need to set the mappings only later, in case there are subprocesses which update the mapping name
 //			dn.getMapping().stream().forEach(m ->
@@ -45,49 +53,50 @@ public class DefinitionTransformer {
 //					MappingDefinition.getInstance(m.getFromStep(), m.getFromParam(), m.getToStep(), m.getToParam(), ws)) );
 		});
 		// then Steps
-		procDTO.getSteps().stream().forEach(sd -> {
-			StepDefinition sDef = null;
-			if (sd instanceof DTOs.Process) { // a subprocess
-				sDef = createSubprocess((DTOs.Process)sd, ws, procDTO, isInStaging, errors, configFactory);
-				sDef.setProcess(pDef);
+		procDTO.getSteps().stream().forEach(stepDTO -> {
+			StepDefinition stepDefinition = null;
+			if (stepDTO instanceof DTOs.Process) { // a subprocess
+				stepDefinition = createSubprocess((DTOs.Process)stepDTO, isInStaging);
+				stepDefinition.setProcess(processDefinition);
 				//FIXME: child process instance type will not point to this type of parent process instance type, for accessing any configuration
-				pDef.addStepDefinition(sDef);
+				processDefinition.addStepDefinition(stepDefinition);
 			} else {
-				sDef = pDef.createStepDefinition(sd.getCode() ,ws);
-				initStepFromDTO(sd, sDef, ws, errors);
+				stepDefinition = processDefinition.createStepDefinition(stepDTO.getCode() ,ws);
+				initStepFromDTO(stepDTO, stepDefinition);
 			}
-			sDef.setInDND(pDef.getDecisionNodeDefinitionByName(sd.getInDNDid()));
-			sDef.setOutDND(pDef.getDecisionNodeDefinitionByName(sd.getOutDNDid()));
+			stepDefinition.setInDND(processDefinition.getDecisionNodeDefinitionByName(stepDTO.getInDNDid()));
+			stepDefinition.setOutDND(processDefinition.getDecisionNodeDefinitionByName(stepDTO.getOutDNDid()));
 		});
 		//then create the DND mappings
 		procDTO.getDns().stream()
 			.forEach(dn -> {
-				DecisionNodeDefinition dnd = pDef.getDecisionNodeDefinitionByName(dn.getCode());
+				DecisionNodeDefinition dnd = processDefinition.getDecisionNodeDefinitionByName(dn.getCode());
 				dn.getMapping().stream().forEach(m ->
 					dnd.addDataMappingDefinition(
 						MappingDefinition.getInstance(m.getFromStep(), m.getFromParam(), m.getToStep(), m.getToParam(), ws)) );
 		});
 		// then process itself
-		initStepFromDTO(procDTO, pDef, ws, errors);
+		initStepFromDTO(procDTO, processDefinition);
 
-		pDef.setDepthIndexRecursive(depth);
-		pDef.setElementOrder();
+		processDefinition.setDepthIndexRecursive(depth);
+		processDefinition.setElementOrder();
+		
 	}
 
-	private static void createOrUpdateConfig(Process procDTO, ProcessDefinition pDef, ProcessConfigBaseElementFactory configFactory) {
+	private void createOrUpdateConfig(DTOs.Process procDTO, ProcessDefinition processDefinition) {
 		// first create process config schema if it does not exists
 		procDTO.getConfigs().entrySet().stream().forEach(entry -> {
-			String configName = entry.getKey();
-			InstanceType procConfig = configFactory.getOrCreateProcessSpecificSubtype(configName, pDef);
+			String configName = entry.getKey();			
+			InstanceType procConfig = factories.getProcessConfigFactory().getOrCreateProcessSpecificSubtype(configName, processDefinition);
 			// then add the properties if they dont exist yet
-			configFactory.augmentConfig(entry.getValue(), procConfig);
+			factories.getProcessConfigFactory().augmentConfig(entry.getValue(), procConfig);
 			// then add as input to process DTO if it doesnt yet exist, of if so, overrides with most concrete subtype
-			procDTO.getInput().put(configName, procConfig.name());
+			procDTO.getInput().put(configName, procConfig.getName());
 			//TODO: how this dynamic input setting works with configurations in subprocesses!? (mapping, staging, preset config names, etc.)
 		});
 	}
 
-	private static ProcessDefinition createSubprocess(DTOs.Process subProcess, Workspace ws, DTOs.Process parentProc, boolean isInStaging, List<ProcessDefinitionError> errors, ProcessConfigBaseElementFactory configFactory) {
+	private ProcessDefinition createSubprocess(DTOs.Process subProcess, DTOs.Process parentProc, boolean isInStaging) {
 		// first rename the subprocess to be unique and
 		String parentProcName = parentProc.getCode();
 		String oldSubProcName = subProcess.getCode();
@@ -97,7 +106,7 @@ public class DefinitionTransformer {
 		replaceStepNamesInMappings(subProcess, oldSubProcName, newSubProcName); // in the subprocess
 		replaceStepNamesInMappings(parentProc, oldSubProcName, newSubProcName); // but also in the parent process, but WONT undo later
 
-		ProcessDefinition pDef = fromDTO(subProcess, ws, isInStaging, errors, configFactory);
+		ProcessDefinition pDef = initProcessFromDTO(subProcess, 0, isInStaging);
 		//undo mappings and naming
 		replaceStepNamesInMappings(subProcess, newSubProcName, oldSubProcName);
 //		if (isInStaging) {
@@ -136,9 +145,9 @@ public class DefinitionTransformer {
 			.forEach(mapping -> mapping.setToStep(newStepName)));
 	}
 
-	private static void initStepFromDTO(DTOs.Step step, StepDefinition pStep, Workspace ws, List<ProcessDefinitionError> errors) {
-		step.getInput().entrySet().stream().forEach(entry -> pStep.addExpectedInput(entry.getKey(), resolveInstanceType(entry.getValue(), ws, errors, pStep, entry.getKey())));
-		step.getOutput().entrySet().stream().forEach(entry -> pStep.addExpectedOutput(entry.getKey(), resolveInstanceType(entry.getValue(), ws, errors, pStep, entry.getKey())));
+	private static void initStepFromDTO(DTOs.Step step, StepDefinition pStep) {
+		step.getInput().entrySet().stream().forEach(entry -> pStep.addExpectedInput(entry.getKey(), resolveInstanceType(entry.getValue(),pStep, entry.getKey())));
+		step.getOutput().entrySet().stream().forEach(entry -> pStep.addExpectedOutput(entry.getKey(), resolveInstanceType(entry.getValue(), pStep, entry.getKey())));
 		//step.getConditions().entrySet().stream().forEach(entry -> pStep.setCondition(entry.getKey(), entry.getValue()));
 		step.getConditions().entrySet().stream().forEach(entry -> {
 			entry.getValue().stream().forEach(constraint -> {
@@ -181,7 +190,7 @@ public class DefinitionTransformer {
 		pStep.setDescription(step.getDescription());
 	}
 
-	private static InstanceType resolveInstanceType(String type, Workspace ws, List<ProcessDefinitionError> errors, ProcessDefinitionScopedElement el, String param) {
+	private static InstanceType resolveInstanceType(String type, ProcessDefinitionScopedElement el, String param) {
 		// search in types folder and below for type
 		// InstanceType iType = // this returns also deleted types ws.debugInstanceTypeFindByName(type);
 		InstanceType iType = searchInFolderAndBelow(type, ws.TYPES_FOLDER);
@@ -204,9 +213,9 @@ public class DefinitionTransformer {
 			});
 	}
 
-	public static DTOs.Process toDTO(ProcessDefinition pDef) {
+	public static DTOs.Process toDTO(ProcessDefinition processDefinition) {
 		DTOs.Process proc = new Process();
-		pDef.getStepDefinitions().stream().forEach(pStep -> {
+		processDefinition.getStepDefinitions().stream().forEach(pStep -> {
 			DTOs.Step step = new DTOs.Step();
 			if (pStep instanceof ProcessDefinition) {
 				proc.getSteps().add(toDTO((ProcessDefinition) pStep));
@@ -216,7 +225,7 @@ public class DefinitionTransformer {
 			}
 
 		});
-		pDef.getDecisionNodeDefinitions().stream().forEach(dnd -> {
+		processDefinition.getDecisionNodeDefinitions().stream().forEach(dnd -> {
 			DTOs.DecisionNode dn = new DTOs.DecisionNode();
 			dn.setCode(dnd.getName());
 			dn.setInflowType(dnd.getInFlowType());
@@ -227,7 +236,7 @@ public class DefinitionTransformer {
 			});
 			proc.getDns().add(dn);
 		});
-		initDTOfromStep(proc, pDef);
+		initDTOfromStep(proc, processDefinition);
 		return proc;
 	}
 
@@ -237,8 +246,8 @@ public class DefinitionTransformer {
 			step.setInDNDid(pStep.getInDND().getName());
 		if (pStep.getOutDND() != null)
 			step.setOutDNDid(pStep.getOutDND().getName());
-		pStep.getExpectedInput().entrySet().stream().forEach(entry -> step.getInput().put(entry.getKey(), entry.getValue().name()));
-		pStep.getExpectedOutput().entrySet().stream().forEach(entry -> step.getOutput().put(entry.getKey(), entry.getValue().name()));
+		pStep.getExpectedInput().entrySet().stream().forEach(entry -> step.getInput().put(entry.getKey(), entry.getValue().getName()));
+		pStep.getExpectedOutput().entrySet().stream().forEach(entry -> step.getOutput().put(entry.getKey(), entry.getValue().getName()));
 		pStep.getQAConstraints().stream().forEach(qac -> {
 			DTOs.Constraint qa = new DTOs.Constraint(qac.getConstraintSpec());
 			qa.setCode(qac.getConstraintId());
