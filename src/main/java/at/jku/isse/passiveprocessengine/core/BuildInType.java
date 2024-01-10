@@ -1,5 +1,8 @@
 package at.jku.isse.passiveprocessengine.core;
 
+import java.util.Collections;
+import java.util.Set;
+
 public abstract class BuildInType implements InstanceType {
 
 	@Override
@@ -68,6 +71,16 @@ public abstract class BuildInType implements InstanceType {
 	public PropertyType getPropertyType(String propertyName) {
 		// no op
 		return null;
+	}
+	
+	@Override
+	public Set<InstanceType> getAllSubtypesRecursively() {
+		return Collections.emptySet();
+	}
+
+	@Override
+	public String getName() {
+		return getId();
 	}
 
 	public static InstanceType STRING = new BuildInType() {

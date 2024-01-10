@@ -148,7 +148,7 @@ public class ProcessDefinition extends StepDefinition{
 
 
 
-	public StepDefinition createStepDefinition(String stepId) {
+	public StepDefinition createAndAddStepDefinition(String stepId) {
 		StepDefinition sd = context.getDefinitionFactoryIndex().getStepDefinitionFactory().createInstance(stepId);
 				//StepDefinition.getInstance(stepId, ws); // any other initialization there
 		sd.setProcess(this);
