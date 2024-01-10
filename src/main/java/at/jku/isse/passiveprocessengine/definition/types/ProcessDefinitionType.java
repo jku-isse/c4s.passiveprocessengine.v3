@@ -8,7 +8,7 @@ import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesFactory.TypeProvider;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry.TypeProvider;
 
 public class ProcessDefinitionType implements TypeProvider{
 
@@ -24,7 +24,7 @@ public class ProcessDefinitionType implements TypeProvider{
 	}
 	
 	@Override
-	public void registerTypeInFactory(ProcessDomainTypesFactory factory) {
+	public void registerTypeInFactory(ProcessDomainTypesRegistry factory) {
 		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
 		if (thisType.isPresent())
 			factory.registerType(ProcessDefinition.class, thisType.get());

@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
@@ -19,8 +18,8 @@ import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.definition.IStepDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessStepDefinitionType;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -316,7 +315,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	}
 
 	private void checkConstraintExists(InstanceType instType, ConstraintSpec spec, Conditions condition, List<ProcessDefinitionError> errors) {
-		String name = RuleAugmentation.getConstraintName(condition, spec.getOrderIndex(), instType);
+		String name = SpecificProcessStepType.getConstraintName(condition, spec.getOrderIndex(), instType);
 		RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
 		if (crt == null) {
 			log.error("Expected Rule for existing process not found: "+name);
@@ -338,8 +337,8 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 		this.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
-				String name = ProcessStep.getDataMappingId(entry, this);
-				String propName = ProcessStep.CRD_DATAMAPPING_PREFIX+entry.getKey();
+				String name = SpecificProcessStepType.getDataMappingId(entry, this);
+				String propName = SpecificProcessStepType.CRD_DATAMAPPING_PREFIX+entry.getKey();
 				//InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstType);
 				PropertyType ioPropType = instType.getPropertyType(propName);
 				InstanceType ruleType = ioPropType.getInstanceType();
@@ -357,7 +356,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		ProcessDefinition pd = this.getProcess() !=null ? this.getProcess() : (ProcessDefinition)this;
 		this.getQAConstraints().stream()
 			.forEach(spec -> {
-				String specId = ProcessStep.getQASpecId(spec, pd);
+				String specId = SpecificProcessStepType.getQASpecId(spec, pd);
 				RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(specId, instType);//RuleDefinition.RuleDefinitionExists(ws,  specId, instType, spec.getQaConstraintSpec());
 				if (crt == null) {
 					log.error("Expected Rule for existing process not found: "+specId);
@@ -396,7 +395,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	}
 
 	private void deleteRuleIfExists(InstanceType instType, ConstraintSpec spec, Conditions condition ) {
-		String name = RuleAugmentation.getConstraintName(condition, spec.getOrderIndex(), instType);
+		String name = SpecificProcessStepType.getConstraintName(condition, spec.getOrderIndex(), instType);
 		RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
 		if (crt != null) 
 			crt.markAsDeleted();
@@ -414,7 +413,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 		this.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
-				String name = ProcessStep.getDataMappingId(entry, this);
+				String name = SpecificProcessStepType.getDataMappingId(entry, this);
 				RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
 				if (crt != null) crt.markAsDeleted();
 			});
@@ -422,7 +421,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		ProcessDefinition pd = this.getProcess() !=null ? this.getProcess() : (ProcessDefinition)this;
 		this.getQAConstraints().stream()
 			.forEach(spec -> {
-				String specId = ProcessStep.getQASpecId(spec, pd);
+				String specId = SpecificProcessStepType.getQASpecId(spec, pd);
 				RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(specId, instType);
 				if (crt != null) 
 					crt.markAsDeleted();

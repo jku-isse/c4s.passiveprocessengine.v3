@@ -1,5 +1,7 @@
 package at.jku.isse.passiveprocessengine.definition.activeobjects;
 
+import java.util.Comparator;
+
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
@@ -8,6 +10,8 @@ import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 public class ConstraintSpec extends  ProcessDefinitionScopedElement{
+
+
 
 
 	public ConstraintSpec(Instance instance, Context context) {
@@ -35,11 +39,17 @@ public class ConstraintSpec extends  ProcessDefinitionScopedElement{
 	}
 
 	public Conditions getConditionType() {
-		return Conditions.valueOf((String)instance.getTypedProperty(ConstraintSpecType.CoreProperties.conditionsType.toString(), String.class));
+		return Conditions.valueOf(instance.getTypedProperty(ConstraintSpecType.CoreProperties.conditionsType.toString(), String.class));
 	}
 
 	@Override
 	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
 		instance.markAsDeleted();
 	}
+	
+	public static Comparator<ConstraintSpec> COMPARATOR_BY_ORDERINDEX = new Comparator<>() {
+	@Override
+	public int compare(ConstraintSpec o1, ConstraintSpec o2) {
+		return o1.getOrderIndex().compareTo(o2.getOrderIndex()) ;
+	}};
 }

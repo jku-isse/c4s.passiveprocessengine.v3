@@ -8,7 +8,7 @@ import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionType.CoreProperties;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesFactory.TypeProvider;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry.TypeProvider;
 
 public class MappingDefinitionType  implements TypeProvider {
 
@@ -21,7 +21,7 @@ public class MappingDefinitionType  implements TypeProvider {
 	}
 	
 	@Override
-	public void registerTypeInFactory(ProcessDomainTypesFactory factory) {
+	public void registerTypeInFactory(ProcessDomainTypesRegistry factory) {
 		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
 		if (thisType.isPresent())
 			factory.registerType(MappingDefinition.class, thisType.get());

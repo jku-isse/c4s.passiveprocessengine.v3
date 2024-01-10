@@ -2,26 +2,19 @@ package at.jku.isse.passiveprocessengine.definition.activeobjects;
 
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
-import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator;
-import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
-import at.jku.isse.passiveprocessengine.instance.DecisionNodeInstance;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -118,7 +111,7 @@ public class ProcessDefinition extends StepDefinition{
 		InstanceType thisType = this.getInstance().getInstanceType(); //.getOrCreateDesignSpaceInstanceType(ws, this);
 		this.getPrematureTriggers().entrySet().stream()
 		.forEach(entry -> {
-			String name = ProcessInstance.generatePrematureRuleName(entry.getKey(), this);
+			String name = SpecificProcessInstanceType.generatePrematureRuleName(entry.getKey(), this);
 			RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, thisType);//RuleDefinition.consistencyRuleTypeExists(ws,  name, thisType, entry.getValue());
 			if (crt != null) 
 				crt.markAsDeleted();

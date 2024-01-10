@@ -7,7 +7,7 @@ import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesFactory.TypeProvider;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry.TypeProvider;
 
 public class ConstraintSpecType implements TypeProvider {
 
@@ -21,7 +21,7 @@ public class ConstraintSpecType implements TypeProvider {
 	}
 	
 	@Override
-	public void registerTypeInFactory(ProcessDomainTypesFactory factory) {
+	public void registerTypeInFactory(ProcessDomainTypesRegistry factory) {
 		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
 		if (thisType.isEmpty())
 			factory.registerType(ConstraintSpec.class, thisType.get());

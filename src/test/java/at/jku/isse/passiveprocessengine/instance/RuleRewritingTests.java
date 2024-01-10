@@ -24,8 +24,9 @@ import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+
 import static at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer.stripForComparison;
 
 @ExtendWith(SpringExtension.class)

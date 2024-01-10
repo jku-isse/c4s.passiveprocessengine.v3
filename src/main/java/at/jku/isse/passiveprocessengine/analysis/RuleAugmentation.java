@@ -1,6 +1,5 @@
 package at.jku.isse.passiveprocessengine.analysis;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,8 +15,8 @@ import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -36,12 +35,6 @@ public class RuleAugmentation {
 		this.stepType = stepType;
 	}
 
-	public static Comparator<ConstraintSpec> CONSTRAINTCOMPARATOR = new Comparator<>() {
-		@Override
-		public int compare(ConstraintSpec o1, ConstraintSpec o2) {
-			return o1.getOrderIndex().compareTo(o2.getOrderIndex()) ;
-		}};
-
 	// This works for non-temporal constraints only
 	public List<ProcessDefinitionError> augmentAndCreateConditions()  {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
@@ -53,9 +46,9 @@ public class RuleAugmentation {
 		}
 
 		sd.getPreconditions().stream()
-		.sorted(CONSTRAINTCOMPARATOR)
+		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = getConstraintName(Conditions.PRECONDITION, spec.getOrderIndex(), stepType);
+			String specId = SpecificProcessStepType.getConstraintName(Conditions.PRECONDITION, spec.getOrderIndex(), stepType);
 			if (spec.getConstraintSpec() != null) {
 				String arl = spec.getConstraintSpec();
 				try {
@@ -69,9 +62,9 @@ public class RuleAugmentation {
 			}
 		});
 		sd.getPostconditions().stream()
-		.sorted(CONSTRAINTCOMPARATOR)
+		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = getConstraintName(Conditions.POSTCONDITION, spec.getOrderIndex(), stepType);
+			String specId = SpecificProcessStepType.getConstraintName(Conditions.POSTCONDITION, spec.getOrderIndex(), stepType);
 			if (spec.getConstraintSpec() != null) {
 				String arl = spec.getConstraintSpec();
 				try {
@@ -85,9 +78,9 @@ public class RuleAugmentation {
 			}
 		});
 		sd.getCancelconditions().stream()
-		.sorted(CONSTRAINTCOMPARATOR)
+		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = getConstraintName(Conditions.CANCELATION, spec.getOrderIndex(), stepType);
+			String specId = SpecificProcessStepType.getConstraintName(Conditions.CANCELATION, spec.getOrderIndex(), stepType);
 			if (spec.getConstraintSpec() != null) {
 				String arl = spec.getConstraintSpec();
 				try {
@@ -101,9 +94,9 @@ public class RuleAugmentation {
 			}
 		});
 		sd.getActivationconditions().stream()
-		.sorted(CONSTRAINTCOMPARATOR)
+		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = getConstraintName(Conditions.ACTIVATION, spec.getOrderIndex(), stepType);
+			String specId = SpecificProcessStepType.getConstraintName(Conditions.ACTIVATION, spec.getOrderIndex(), stepType);
 			if (spec.getConstraintSpec() != null) {
 				String arl = spec.getConstraintSpec();
 				try {
@@ -117,38 +110,12 @@ public class RuleAugmentation {
 			}
 		});
 
-		//old constraints support
-//		for (Conditions condition : Conditions.values()) {
-//			if (sd.getCondition(condition).isPresent()) {
-//				if (sd.getCondition(condition).get() != null) {
-//					//with subprocesses we might have run augmentation before, thus check and skip
-//					if (stepType.getPropertyType(condition.toString()) != null)//
-//						break;
-//					// as the output cannot be changed directly
-//					// repairing the output makes no sense, but rather its datamapping definition, so we replace all out_xxx occurences with the datamapping definition
-//					String arl = sd.getCondition(condition).get();
-//					try {
-//						arl = rewriteConstraint(arl);
-//						log.debug(String.format("Augmented %s for %s to %s", condition, sd.getName(), arl));
-//					// if the error is from augmentation, still keep the original rule (with perhaps not as useful repairs)
-//					// if the original rule has error, then this will be captured later anyway.
-//					ConsistencyRuleType crd = ConsistencyRuleType.create(ws, stepType, getConstraintName(condition, stepType), arl);
-//					// not evaluated yet here, assert ConsistencyUtils.crdValid(crd);
-//					 stepType.createPropertyType(condition.toString(), Cardinality.SINGLE, crd);
-//					} catch(Exception e) {
-//						errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting condition %s : %s", condition, arl), e.getMessage()));
-//						//pex.getErrorMessages().add(String.format("Error aumenting %s : %s", arl, e.getMessage()));
-//					}
-//				}
-//			}
-//		}
-
 		//qa constraints:
 		ProcessDefinition pd = sd.getProcess() !=null ? sd.getProcess() : (ProcessDefinition)sd;
 		sd.getQAConstraints().stream()
-			.sorted(CONSTRAINTCOMPARATOR)
+			.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 			.forEach(spec -> {
-				String specId = ProcessStep.getQASpecId(spec, pd);
+				String specId = SpecificProcessStepType.getQASpecId(spec, pd);
 				if (spec.getConstraintSpec() != null) {
 					String arl = spec.getConstraintSpec();
 					try {
@@ -164,15 +131,6 @@ public class RuleAugmentation {
 		if (errors.isEmpty())
 			propertyMetadata.put(RESERVED_PROPERTY_STEP_AUGMENTATION_STATUS, "success");
 		return errors;
-	}
-
-	public static String getConstraintName(Conditions condition, int specOrderIndex, InstanceType stepType) {
-		return "crd_"+condition+specOrderIndex+"_"+stepType.name();
-	}
-
-	public static String getConstraintName(Conditions condition, InstanceType stepType) {
-		//return "crd_"+condition+"_"+stepType.name();
-		return getConstraintName(condition, 0, stepType);
 	}
 
 	private String rewriteConstraint(String constraint) throws Exception {

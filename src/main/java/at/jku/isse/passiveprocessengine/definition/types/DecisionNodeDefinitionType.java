@@ -9,7 +9,7 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDef
 import at.jku.isse.passiveprocessengine.definition.activeobjects.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesFactory.TypeProvider;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry.TypeProvider;
 
 public class DecisionNodeDefinitionType implements TypeProvider {
 
@@ -23,7 +23,7 @@ public class DecisionNodeDefinitionType implements TypeProvider {
 	
 	
 	@Override
-	public void registerTypeInFactory(ProcessDomainTypesFactory factory) {
+	public void registerTypeInFactory(ProcessDomainTypesRegistry factory) {
 		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
 			if (thisType.isPresent())
 				factory.registerType(DecisionNodeDefinition.class, thisType.get());

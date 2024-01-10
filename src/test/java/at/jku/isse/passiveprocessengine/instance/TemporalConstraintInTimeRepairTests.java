@@ -24,11 +24,11 @@ import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionS
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts.JiraStates;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
 import at.jku.isse.passiveprocessengine.instance.messages.WorkspaceListenerSequencer;
 import at.jku.isse.passiveprocessengine.monitoring.CurrentSystemTimeProvider;
@@ -125,7 +125,7 @@ class TemporalConstraintInTimeRepairTests {
 		assert(sd1.getActualLifecycleState() == State.ENABLED);		
 		// lets checkout repairs:		
 		Optional<ConsistencyRule> crOpt = sd1.getQAstatus().stream()
-					.map(cw -> cw.getCr())
+					.map(cw -> cw.getRuleResult())
 					.findAny(); //we only have one here
 		RepairNode repairTree = RuleService.repairTree(crOpt.get());
 		RepairTests.printRepairActions(repairTree);		
@@ -143,7 +143,7 @@ class TemporalConstraintInTimeRepairTests {
 		InstanceTests.printFullProcessToLog(proc);
 		// now we are still enabled
 		crOpt = sd1.getQAstatus().stream()
-				.map(cw -> cw.getCr())
+				.map(cw -> cw.getRuleResult())
 				.findAny(); //we only have one here
 		repairTree = RuleService.repairTree(crOpt.get());
 		RepairTests.printRepairActions(repairTree);

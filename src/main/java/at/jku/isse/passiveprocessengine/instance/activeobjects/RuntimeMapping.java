@@ -1,7 +1,6 @@
-package at.jku.isse.passiveprocessengine.instance;
+package at.jku.isse.passiveprocessengine.instance.activeobjects;
 
-import at.jku.isse.designspace.core.model.Instance;
-
+import at.jku.isse.passiveprocessengine.core.Instance;
 
 public class RuntimeMapping {
 
@@ -116,7 +115,7 @@ public class RuntimeMapping {
 	public String toString() {
 		String from = fromStep != null ? fromStep.getName() : "UNKNOWN";
 		String to = fromStep != null ? toStep.getName() : "UNKNOWN";
-		return "Mapping " + dir + " [art=" + art.name() + " from=" + from + ":" + fromParam + ", to="
+		return "Mapping " + dir + " [art=" + art.getName() + " from=" + from + ":" + fromParam + ", to="
 				+ to + ":" + toParam + "]";
 	}
 
@@ -124,7 +123,7 @@ public class RuntimeMapping {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((art == null) ? 0 : art.id().hashCode());
+		result = prime * result + ((art == null) ? 0 : art.getId().hashCode());
 		result = prime * result + ((toParam == null) ? 0 : toParam.hashCode());
 		result = prime * result + ((toStep == null) ? 0 : toStep.hashCode());
 		return result;

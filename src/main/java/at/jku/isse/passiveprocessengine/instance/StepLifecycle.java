@@ -5,6 +5,8 @@ import com.github.oxo42.stateless4j.StateMachineConfig;
 import com.github.oxo42.stateless4j.delegates.Func2;
 import com.github.oxo42.stateless4j.triggers.TriggerWithParameters1;
 
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+
 public class StepLifecycle {
 
 	public static enum Conditions { PRECONDITION, POSTCONDITION, ACTIVATION, CANCELATION, DATAMAPPING, QA }

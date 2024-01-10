@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.instance;
 
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
 import lombok.Data;
 
 @Data

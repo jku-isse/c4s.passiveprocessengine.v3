@@ -19,11 +19,15 @@ import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts.JiraStates;
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.instance.*;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep.CoreProperties;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintWrapper;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
 import at.jku.isse.passiveprocessengine.instance.messages.WorkspaceListenerSequencer;
+import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
+import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType.CoreProperties;
 import at.jku.isse.passiveprocessengine.monitoring.CurrentSystemTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
@@ -237,8 +241,8 @@ class InstanceTestsAfterPersistence {
 			td.getDefinition().getQAConstraints().stream().forEach(entry -> {
 				//InstanceType type = td.getInstance().getProperty(ProcessStep.getQASpecId(entry, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, td.getDefinition()))).propertyType().referencedInstanceType();
 				String id = ProcessStep.getQASpecId(entry, pd);
-				ConstraintWrapper cw = Context.getWrappedInstance(ConstraintWrapper.class, (Instance) td.getInstance().getPropertyAsMap(CoreProperties.qaState.toString()).get(id));
-				ConsistencyRuleType crt = (ConsistencyRuleType)cw.getCr().getInstanceType();
+				ConstraintWrapper cw = Context.getWrappedInstance(ConstraintWrapper.class, (Instance) td.getInstance().getPropertyAsMap(AbstractProcessStepType.CoreProperties.qaState.toString()).get(id));
+				ConsistencyRuleType crt = (ConsistencyRuleType)cw.getRuleResult().getInstanceType();
 				assertTrue(ConsistencyUtils.crdValid(crt));
 				String eval = (String) crt.ruleEvaluations().get().stream()
 								.map(rule -> ((Rule)rule).result()+"" )

@@ -11,9 +11,9 @@ import org.slf4j.LoggerFactory;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.service.RuleService;
-import at.jku.isse.passiveprocessengine.instance.ConstraintWrapper;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintWrapper;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import net.logstash.logback.argument.StructuredArgument;
 
 public class UsageMonitor {
@@ -74,13 +74,13 @@ public class UsageMonitor {
 
 	public void constraintedViewed(ConstraintWrapper cw, String userId) { //if not fulfilled, implies that repairtree was loaded
 		int repairCount = 0;
-		if (!cw.getEvalResult() && cw.getCr() != null) {
-			RepairNode repairTree = RuleService.repairTree(cw.getCr());
+		if (!cw.getEvalResult() && cw.getRuleResult() != null) {
+			RepairNode repairTree = RuleService.repairTree(cw.getRuleResult());
 			repairCount = repairTree.getRepairActions().size();
 			// TODO: obtain also maxRank?
 		}
 		List<StructuredArgument> args = getDefaultArguments(cw.getProcess(), userId, UsageEvents.ConstraintViewed.toString());
-		args.add(kv(LogProperties.constraintId.toString(), cw.getSpec().getConstraintId()));
+		args.add(kv(LogProperties.constraintId.toString(), cw.getConstraintSpec().getConstraintId()));
 		args.add(kv(LogProperties.evalResult.toString(), cw.getEvalResult()));
 		args.add(kv(LogProperties.guidanceSize.toString(), repairCount));
 		monitor.info("Constraint viewed", args.toArray());

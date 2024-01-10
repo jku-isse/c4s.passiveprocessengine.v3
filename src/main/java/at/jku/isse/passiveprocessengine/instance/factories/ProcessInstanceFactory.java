@@ -1,113 +1,64 @@
 package at.jku.isse.passiveprocessengine.instance.factories;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.UUID;
 
-import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator;
-import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
-import at.jku.isse.passiveprocessengine.core.RuleDefinition;
-import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
+import at.jku.isse.passiveprocessengine.Context;
+import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.instance.DecisionNodeInstance;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+import at.jku.isse.passiveprocessengine.instance.factories.FactoryIndex.DomainInstanceFactory;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 
-public class ProcessInstanceFactory {
-	//TODO: move to instance factory
-		public List<ProcessDefinitionError> initializeInstanceTypes(boolean doGeneratePrematureDetectionConstraints) {
-			List<ProcessDefinitionError> errors = new LinkedList<>();
-			InstanceType processInstanceType = ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
-			DecisionNodeInstance.getOrCreateCoreType(instance.workspace);
-			//List<ProcessException> subProcessExceptions = new ArrayList<>();
-			this.getStepDefinitions().stream().forEach(sd -> {
-				if (sd instanceof ProcessDefinition) {
-						errors.addAll(((ProcessDefinition)sd).initializeInstanceTypes(doGeneratePrematureDetectionConstraints));
-				} else
-					ProcessStep.getOrCreateDesignSpaceInstanceType(instance.workspace, sd, processInstanceType);
-			});
-			errors.addAll(checkProcessStructure());
-//			if (!subProcessExceptions.isEmpty())
-//				return errors;
-			ws.concludeTransaction();
-//			List<String> augmentationErrors = new LinkedList<>();
-			errors.addAll(new RuleAugmentation(ws, this, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstanceType)).augmentAndCreateConditions());
-			this.getStepDefinitions().stream().forEach(sd -> {
-					errors.addAll(new RuleAugmentation(ws, sd, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, sd, processInstanceType)).augmentAndCreateConditions());
-			});
-			errors.addAll(checkConstraintValidity());
-			if (errors.isEmpty() ) {
-				// now lets also create premature rules here, as we need the process to exist first
-				if (doGeneratePrematureDetectionConstraints) {
-					new PrematureTriggerGenerator(ws, this).generatePrematureConstraints();
-					ws.concludeTransaction();
-				}
-				// even if there are augementation errors, these were due to unsupported constructs in the constraint during augmentation, but the constraints are ok,
-				// thus we store and run the process, but report back that augmentation didn;t work.
-//				if (!augmentationErrors.isEmpty()) {
-//					ProcessException pex = new ProcessException("Constraint Augmentation unsuccessful, but continuing nevertheless without augmentation.");
-//					pex.setErrorMessages(augmentationErrors);
-//					throw pex;
-//				}
-				this.setIsWithoutBlockingErrors(true);
-			} else {
-				log.info("Blocking newly added process due to constraint errors: "+getName());
-//				ProcessException pex = new ProcessException("Constraints contain at least one error");
-//				// here we dont care if there were augmentation errors, as these are most likely due to the constraint errors anyway.
-//				validity.values().stream()
-//					.flatMap(vmap -> vmap.entrySet().stream())
-//					.filter(entry -> !entry.getValue().equals("valid"))
-//					.forEach(entry -> pex.getErrorMessages().add(entry.getKey()+": "+entry.getValue()));
-//				deleteCascading();
-//				ws.concludeTransaction();
-//				throw pex;
-				this.setIsWithoutBlockingErrors(false);
-			}
-			ws.concludeTransaction(); // persisting the blocking errors flag
-			return errors;
-		}
+public class ProcessInstanceFactory extends DomainInstanceFactory {
+						
+	public ProcessInstanceFactory(InstanceRepository repository, Context context,
+			ProcessDomainTypesRegistry typesFactory) {
+		super(repository, context, typesFactory);		
+	}
+	
+	public ProcessInstance getInstance(ProcessDefinition processDef, String namePostfix) {
+		//TODO: not to create duplicate process instances somehow		
+		Instance instance = repository.createInstance(processDef.getName()+"_"+namePostfix, typesFactory.getTypeByName(SpecificProcessInstanceType.getProcessName(processDef)));
+		ProcessInstance process = context.getWrappedInstance(ProcessInstance.class, instance);
+		process.inject(factoryIndex.getProcessStepFactory(), factoryIndex.getDecisionNodeInstanceFactory());
+		init(process, processDef, null, null);
+		return process;
+	}
 
-		public List<ProcessDefinitionError> checkConstraintValidity() {
-			List<ProcessDefinitionError> overallStatus = new LinkedList<>();
-			InstanceType processInstType = ProcessInstance.getOrCreateDesignSpaceInstanceType(ws, this);
-			//premature constraints:
-			this.getPrematureTriggers().entrySet().stream()
-				.forEach(entry -> {
-					String ruleId = ProcessInstance.generatePrematureRuleName(entry.getKey(), this);
-					RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(ruleId, processInstType); //.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
-					if (crt == null) {
-						log.error("Expected Rule for existing process not found: "+ruleId);
-						overallStatus.add(new ProcessDefinitionError(this, "Expected Premature Trigger Rule Not Found - Internal Data Corruption", ruleId));
-					} else
-						if (crt.hasRuleError())
-							overallStatus.add(new ProcessDefinitionError(this, String.format("Premature Trigger Rule % has an error", ruleId), crt.getRuleError()));
-				});
-			getStepDefinitions().forEach(sd -> overallStatus.addAll( sd.checkConstraintValidity(processInstType)));
-			return overallStatus;
-		}
-
-		public List<ProcessDefinitionError> checkProcessStructure() {
-			List<ProcessDefinitionError> status = new LinkedList<>();
-			if (this.getDecisionNodeDefinitions().stream().filter(dnd -> dnd.getInSteps().isEmpty()).count() > 1)
-				status.add(new ProcessDefinitionError(this, "Invalid Process Structure", "More than one entry decision node found"));
-			if (this.getDecisionNodeDefinitions().stream().filter(dnd -> dnd.getOutSteps().isEmpty()).count() > 1)
-				status.add(new ProcessDefinitionError(this, "Invalid Process Structure", "More than one exit decision node found"));
-			if (getExpectedInput().isEmpty()) {
-				status.add(new ProcessDefinitionError(this, "No Input Defined", "Step needs at least one input."));
-			}
-			getExpectedInput().forEach((in, type) -> {
-				if (type == null)
-					status.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of input '"+in+"' could not be resolved"));
+	public ProcessInstance getSubprocessInstance(ProcessDefinition subprocessDef, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, ProcessInstance scope) {
+		Instance instance = repository.createInstance(subprocessDef.getName()+"_"+UUID.randomUUID(), typesFactory.getTypeByName(SpecificProcessInstanceType.getProcessName(subprocessDef)));
+		ProcessInstance process = context.getWrappedInstance(ProcessInstance.class, instance);
+		process.setProcess(scope);
+		process.inject(factoryIndex.getProcessStepFactory(), factoryIndex.getDecisionNodeInstanceFactory());
+		init(process, subprocessDef, inDNI, outDNI);
+		return process;
+	}
+	
+	private void init(ProcessInstance process, ProcessDefinition pdef, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI) {
+		
+		// init first DNI, there should be only one. Needs to be checked earlier with definition creation
+		// we assume consistent, correct specification/definition here
+		process.getInstance().setSingleProperty(SpecificProcessInstanceType.CoreProperties.processDefinition.toString(), pdef.getInstance());
+		factoryIndex.getProcessStepFactory().init(process, pdef, inDNI, outDNI);		
+		
+		if (process.isImmediateInstantiateAllStepsEnabled()) {
+			// instantiate all steps and thereby the DNIs
+			pdef.getStepDefinitions().stream().forEach(sd -> {
+				ProcessStep step = process.createAndWireTask(sd);
+				//step.getInDNI().tryDataPropagationToPrematurelyTriggeredTask(); no point in triggering as there is no input available at this stage
 			});
-			getExpectedOutput().forEach((out, type) -> {
-				if (type == null)
-					status.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of output '"+out+"' could not be resolved"));
+		} // now also activate first
+		pdef.getDecisionNodeDefinitions().stream()
+			.filter(dnd -> dnd.getInSteps().size() == 0)
+			.forEach(dnd -> {
+				DecisionNodeInstance dni = process.getOrCreateDNI(dnd);
+				dni.signalStateChanged(process); //dni.tryActivationPropagation(); // to trigger instantiation of initial steps
 			});
+		// datamapping from proc to DNI is triggered upon adding input, which is not available at this stage
+	}
 
-			getStepDefinitions().stream()
-				.filter(sd -> !(sd instanceof ProcessDefinition))
-				.forEach(sd -> status.addAll( sd.checkStepStructureValidity()));
-			getDecisionNodeDefinitions().forEach(dnd -> status.addAll(dnd.checkDecisionNodeStructureValidity()));
-			return status;
-		}
 }

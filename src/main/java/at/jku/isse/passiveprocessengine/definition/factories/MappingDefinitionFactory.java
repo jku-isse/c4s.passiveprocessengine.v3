@@ -4,15 +4,15 @@ import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.MappingDefinition;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesFactory;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry;
 
 public class MappingDefinitionFactory {
 
 	InstanceRepository repository;
 	Context wrapperCache;
-	ProcessDomainTypesFactory typesFactory;
+	ProcessDomainTypesRegistry typesFactory;
 	
-	public MappingDefinitionFactory(InstanceRepository repository, Context wrapperCache, ProcessDomainTypesFactory typesFactory) {
+	public MappingDefinitionFactory(InstanceRepository repository, Context wrapperCache, ProcessDomainTypesRegistry typesFactory) {
 		this.repository = repository;
 		this.wrapperCache = wrapperCache;
 		this.typesFactory = typesFactory;

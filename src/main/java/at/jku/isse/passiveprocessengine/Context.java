@@ -8,7 +8,7 @@ import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.definition.factories.DefinitionFactoryIndex;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesFactory;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,13 +18,13 @@ public class Context {
 
 	final InstanceRepository instanceRepository;
 	final SchemaRegistry schemaRegistry;
-	final ProcessDomainTypesFactory typesFactory;
+	final ProcessDomainTypesRegistry typesFactory;
 	final ProcessConfigBaseElementFactory configFactory;
 	final DefinitionFactoryIndex definitionFactoryIndex;
 				
 	private final Map<String, InstanceWrapper> cache = new HashMap<>();
 	
-	public Context(InstanceRepository instanceRepository, SchemaRegistry schemaRegistry, ProcessDomainTypesFactory typesFactory,
+	public Context(InstanceRepository instanceRepository, SchemaRegistry schemaRegistry, ProcessDomainTypesRegistry typesFactory,
 			ProcessConfigBaseElementFactory configFactory, DefinitionFactoryIndex definitionFactoryIndex) {
 		this.instanceRepository = instanceRepository;
 		this.schemaRegistry = schemaRegistry;
