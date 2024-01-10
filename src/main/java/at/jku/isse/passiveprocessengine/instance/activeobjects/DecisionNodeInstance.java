@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.instance;
+package at.jku.isse.passiveprocessengine.instance.activeobjects;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -7,82 +7,79 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
-import at.jku.isse.designspace.core.model.Cardinality;
-import at.jku.isse.designspace.core.model.Instance;
-import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.Context;
+import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
+import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
 public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 
-	public static enum CoreProperties {isInflowFulfilled, hasPropagated, dnd, inSteps, outSteps, closingDN}
-	public static final String designspaceTypeId = DecisionNodeInstance.class.getSimpleName();
-
 	private boolean isInternalPropagationDone = false;
 	private InterStepDataMapper mapper = null;
 
-	public DecisionNodeInstance(Instance instance) {
-		super(instance);
+	public DecisionNodeInstance(Instance instance, Context context) {
+		super(instance, context);
 	}
 
 	@Override
 	public DecisionNodeDefinition getDefinition() {
-		return  Context.getWrappedInstance(DecisionNodeDefinition.class, instance.getPropertyAsInstance(CoreProperties.dnd.toString()));
+		return  context.getWrappedInstance(DecisionNodeDefinition.class, instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.dnd.toString(), Instance.class));
 	}
 
 	private void setInflowFulfilled(boolean isFulfilled) {
 		//if (isInflowFulfilled() != isFulfilled) // a change -> not necessary, is done internally anyway
-		instance.getPropertyAsSingle(CoreProperties.isInflowFulfilled.toString()).set(isFulfilled);
+		instance.setSingleProperty(DecisionNodeInstanceType.CoreProperties.isInflowFulfilled.toString(), isFulfilled);
 	}
 
 	public boolean isInflowFulfilled() {
-		return (boolean) instance.getPropertyAsValueOrElse(CoreProperties.isInflowFulfilled.toString(), () -> false);
+		return instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.isInflowFulfilled.toString(), Boolean.class,  false);
 	}
 
 	private void setHasPropagated() {
-		instance.getPropertyAsSingle(CoreProperties.hasPropagated.toString()).set(true);
+		instance.setSingleProperty(DecisionNodeInstanceType.CoreProperties.hasPropagated.toString(), true);
 	}
 
 	public boolean hasPropagated() {
-		return (boolean) instance.getPropertyAsValueOrElse(CoreProperties.hasPropagated.toString(), () -> false);
+		return instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.hasPropagated.toString(), Boolean.class, false);
 	}
 
+	// not to be used outside of ProcessStepInstanceFactory
 	@SuppressWarnings("unchecked")
-	protected void addOutStep(ProcessStep step) {
-		instance.getPropertyAsSet(CoreProperties.outSteps.toString()).add(step.getInstance());
+	public void addOutStep(ProcessStep step) {
+		instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.outSteps.toString(), Set.class).add(step.getInstance());
 	}
 
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getOutSteps() {
-		return (Set<ProcessStep>) instance.getPropertyAsSet(CoreProperties.outSteps.toString()).stream()
-			.map(inst -> Context.getWrappedInstance(ProcessInstance.getMostSpecializedClass((Instance) inst), (Instance)inst))
+		return (Set<ProcessStep>) instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.outSteps.toString(), Set.class).stream()
+			.map(inst -> context.getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((Instance) inst), (Instance)inst))
 			.collect(Collectors.toSet());
 	}
 
 	@SuppressWarnings("unchecked")
 	public void addInStep(ProcessStep step) {
-		instance.getPropertyAsSet(CoreProperties.inSteps.toString()).add(step.getInstance());
+		instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.inSteps.toString(), Set.class).add(step.getInstance());
 	}
 
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getInSteps() {
-		return (Set<ProcessStep>) instance.getPropertyAsSet(CoreProperties.inSteps.toString()).stream()
-			.map(inst -> Context.getWrappedInstance(ProcessInstance.getMostSpecializedClass((Instance) inst), (Instance)inst))
+		return (Set<ProcessStep>) instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.inSteps.toString(), Set.class).stream()
+			.map(inst -> context.getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((Instance) inst), (Instance)inst))
 			.collect(Collectors.toSet());
 	}
 
-	protected List<ProcessChangedEvent> signalStateChanged(ProcessStep step) {
+	// only use within package or factory
+	public List<ProcessChangedEvent> signalStateChanged(ProcessStep step) {
 		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		if( updateInConditionsFullfilledAndCheckIfHasChanged()) {
 			if (isInflowFulfilled()) { // now we transitioned to fulfilled:
@@ -371,12 +368,12 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		if (this.getOutSteps().isEmpty())
 			return null;
 		else {
-			Instance dnd = instance.getPropertyAsInstance(CoreProperties.closingDN.toString());
+			Instance dnd = instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.closingDN.toString(), Instance.class);
 			if (dnd != null)
-				return Context.getWrappedInstance(DecisionNodeInstance.class, dnd);
+				return context.getWrappedInstance(DecisionNodeInstance.class, dnd);
 			else {
 				DecisionNodeInstance closingDnd = determineScopeClosingDN();
-				instance.getPropertyAsSingle(CoreProperties.closingDN.toString()).set(closingDnd.getInstance());
+				instance.setSingleProperty(DecisionNodeInstanceType.CoreProperties.closingDN.toString(), closingDnd.getInstance());
 				return closingDnd;
 			}
 		}
@@ -404,41 +401,28 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		}
 	}
 
-	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
-		Optional<InstanceType> thisTypeOpt = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId));
-//		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
-//			.filter(it -> !it.isDeleted)
-//			.filter(it -> it.name().equals(designspaceTypeId))
-//			.findAny();
-		if (thisTypeOpt.isPresent())
-			return thisTypeOpt.get();
-		else {
-			InstanceType thisType = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessInstanceScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
-			ProcessInstanceScopedElement.addGenericProcessProperty(thisType);
-			thisType.createPropertyType(CoreProperties.isInflowFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
-			thisType.createPropertyType(CoreProperties.hasPropagated.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
-			thisType.createPropertyType(CoreProperties.dnd.toString(), Cardinality.SINGLE, DecisionNodeDefinition.getOrCreateDesignSpaceCoreSchema(ws));
-			thisType.createPropertyType(CoreProperties.inSteps.toString(), Cardinality.SET, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
-			thisType.createPropertyType(CoreProperties.outSteps.toString(), Cardinality.SET, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
-			thisType.createPropertyType(CoreProperties.closingDN.toString(), Cardinality.SINGLE, thisType);
-			return thisType;
-		}
-	}
+//	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
+//		Optional<InstanceType> thisTypeOpt = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId));
+////		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
+////			.filter(it -> !it.isDeleted)
+////			.filter(it -> it.name().equals(designspaceTypeId))
+////			.findAny();
+//		if (thisTypeOpt.isPresent())
+//			return thisTypeOpt.get();
+//		else {
+//			InstanceType thisType = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessInstanceScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
+//			ProcessInstanceScopedElement.addGenericProcessProperty(thisType);
+//			thisType.createPropertyType(CoreProperties.isInflowFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
+//			thisType.createPropertyType(CoreProperties.hasPropagated.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
+//			thisType.createPropertyType(CoreProperties.dnd.toString(), Cardinality.SINGLE, DecisionNodeDefinition.getOrCreateDesignSpaceCoreSchema(ws));
+//			thisType.createPropertyType(CoreProperties.inSteps.toString(), Cardinality.SET, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
+//			thisType.createPropertyType(CoreProperties.outSteps.toString(), Cardinality.SET, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
+//			thisType.createPropertyType(CoreProperties.closingDN.toString(), Cardinality.SINGLE, thisType);
+//			return thisType;
+//		}
+//	}
 
-	protected static DecisionNodeInstance getInstance(Workspace ws, DecisionNodeDefinition dnd) {
-		Instance instance = ws.createInstance(getOrCreateDesignSpaceCoreSchema(ws), dnd.getName()+"_"+UUID.randomUUID());
-		DecisionNodeInstance dni = Context.getWrappedInstance(DecisionNodeInstance.class, instance);
-		dni.init(dnd);
-		return dni;
-	}
 
-	protected void init(DecisionNodeDefinition dnd) {
-		instance.getPropertyAsSingle(CoreProperties.dnd.toString()).set(dnd.getInstance());
-		instance.getPropertyAsSingle(CoreProperties.hasPropagated.toString()).set(false);
-		// if kickoff DN, then set inflow fulfillment to true
-		instance.getPropertyAsSingle(CoreProperties.isInflowFulfilled.toString()).set(/*dnd.getInSteps().size() == 0 ? true :*/ false);
-
-	}
 
 	@Override
 	public String toString() {

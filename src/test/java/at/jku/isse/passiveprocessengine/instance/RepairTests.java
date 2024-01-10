@@ -30,7 +30,7 @@ import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest

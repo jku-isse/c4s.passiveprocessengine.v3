@@ -26,5 +26,9 @@ public interface InstanceType extends Instance {
 		final String name;
 		final CARDINALITIES cardinality;
 		final InstanceType instanceType;
+		public boolean isAssignable(Object object) {
+			// TODO Auto-generated method stub
+			return false;
+		}
 	};
 }

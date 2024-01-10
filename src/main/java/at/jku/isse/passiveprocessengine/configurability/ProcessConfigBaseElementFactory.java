@@ -11,7 +11,8 @@ import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstanceScopedElement;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
+import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType;
 import lombok.Data;
 
 @Component
@@ -38,7 +39,7 @@ public class ProcessConfigBaseElementFactory {
         baseType = configFolder.instanceTypeWithName(TYPENAME);
         if (baseType == null) {
         	baseType = ws.createInstanceType(TYPENAME, configFolder, ProcessInstanceScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
-        	ProcessInstanceScopedElement.addGenericProcessProperty(baseType);
+        	ConstraintWrapperType.addGenericProcessProperty(baseType);
         	baseType.createPropertyType("description", Cardinality.SINGLE, Workspace.STRING);
         }
 	}

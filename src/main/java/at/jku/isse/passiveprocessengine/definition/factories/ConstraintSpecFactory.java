@@ -6,15 +6,15 @@ import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesFactory;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 public class ConstraintSpecFactory {
 	InstanceRepository repository;
 	Context wrapperCache;
-	ProcessDomainTypesFactory typesFactory;
+	ProcessDomainTypesRegistry typesFactory;
 	
-	public ConstraintSpecFactory(InstanceRepository repository, Context wrapperCache, ProcessDomainTypesFactory typesFactory) {
+	public ConstraintSpecFactory(InstanceRepository repository, Context wrapperCache, ProcessDomainTypesRegistry typesFactory) {
 		this.repository = repository;
 		this.wrapperCache = wrapperCache;
 		this.typesFactory = typesFactory;

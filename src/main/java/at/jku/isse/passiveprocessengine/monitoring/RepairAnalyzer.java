@@ -46,7 +46,7 @@ import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Setter;

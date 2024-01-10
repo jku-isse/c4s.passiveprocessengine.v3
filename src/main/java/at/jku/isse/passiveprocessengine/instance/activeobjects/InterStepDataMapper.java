@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.instance;
+package at.jku.isse.passiveprocessengine.instance.activeobjects;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -9,8 +9,8 @@ import java.util.stream.Stream;
 
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.MappingDefinition;
-import at.jku.isse.passiveprocessengine.instance.RuntimeMapping.FlowDir;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.RuntimeMapping.FlowDir;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.DataMappingChangedEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ public class InterStepDataMapper {
 		this.process = process;
 	}
 
-	protected List<Events.ProcessChangedEvent> checkAndExecuteDataMappings(boolean isEndOfProcess, boolean isPremature) {
+	public List<Events.ProcessChangedEvent> checkAndExecuteDataMappings(boolean isEndOfProcess, boolean isPremature) {
 		// all mappings of this DNI resolved:
 		Set<RuntimeMapping> templates = definition.getMappings().stream()
 				.map(mdef -> resolveMappingDefinitionToTemplates(mdef, isEndOfProcess, isPremature))

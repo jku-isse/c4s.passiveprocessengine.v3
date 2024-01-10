@@ -21,9 +21,11 @@ import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.StepP
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 import lombok.Data;
 
 public class PrematureTriggerGenerator {
@@ -61,7 +63,7 @@ public class PrematureTriggerGenerator {
 		pd.getPrematureTriggers().entrySet().stream()
 		.forEach(entry -> {
 			if (entry.getValue() != null) {
-				String ruleName = ProcessInstance.generatePrematureRuleName(entry.getKey(), pd);
+				String ruleName = SpecificProcessInstanceType.generatePrematureRuleName(entry.getKey(), pd);
 				ConsistencyRuleType crt = ConsistencyRuleType.create(ws, procType, ruleName, entry.getValue());
 				//typeStep.createPropertyType("crd_premature_"+entry.getKey(), Cardinality.SINGLE, crt);	// not sure we need a property here
 				pd.setPrematureConstraintNameStepDefinition(ruleName, entry.getKey());
@@ -194,7 +196,7 @@ public class PrematureTriggerGenerator {
 		if (dsSet.isEmpty()) {
 				varCount++;
 				String fullPath = ensureUniqueVarNames(String.format("self.stepInstances->select(step"+varCount+" | step"+varCount+".stepDefinition.name = '%s') \r\n"
-						+ " ->any()->asType(<root/types/"+ProcessStep.getProcessStepName(step)+">).in_%s ", step.getName(), parameter.getName()),
+						+ " ->any()->asType(<root/types/"+SpecificProcessStepType.getProcessStepName(step)+">).in_%s ", step.getName(), parameter.getName()),
 						procInstType);
 				DataSource local = new DataSource(step, parameter.getName(), IoType.stepIn, fullPath);
 				local.getUpstreamSources().add(local); //its its own root node
@@ -252,7 +254,7 @@ public class PrematureTriggerGenerator {
 		// otherwise prepare the path to this outparam
 		varCount++;
 		String fullPath = ensureUniqueVarNames(String.format("self.stepInstances->select(step"+varCount+" | step"+varCount+".stepDefinition.name = '%s') \r\n"
-				+ " ->any()->asType(<root/types/"+ProcessStep.getProcessStepName(step)+">).out_%s ", step.getName(), outParam.getName()),
+				+ " ->any()->asType(<root/types/"+SpecificProcessStepType.getProcessStepName(step)+">).out_%s ", step.getName(), outParam.getName()),
 				procInstType);
 		DataSource local = new DataSource(step, outParam.getName(), IoType.stepOut, fullPath);
 		local.getUpstreamSources().add(local); //its its own root node

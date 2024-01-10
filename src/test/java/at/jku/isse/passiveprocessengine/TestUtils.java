@@ -13,10 +13,12 @@ import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.instance.ConstraintWrapper;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintWrapper;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 
 public class TestUtils {
 
@@ -37,8 +39,8 @@ public class TestUtils {
 			td.getDefinition().getQAConstraints().stream().forEach(entry -> {
 				//InstanceType type = td.getInstance().getProperty(ProcessStep.getQASpecId(entry, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, td.getDefinition()))).propertyType().referencedInstanceType();
 				String id = ProcessStep.getQASpecId(entry, pd);
-				ConstraintWrapper cw = Context.getWrappedInstance(ConstraintWrapper.class, (Instance) td.getInstance().getPropertyAsMap(ProcessStep.CoreProperties.qaState.toString()).get(id));
-				ConsistencyRuleType crt = (ConsistencyRuleType)cw.getCr().getInstanceType();
+				ConstraintWrapper cw = Context.getWrappedInstance(ConstraintWrapper.class, (Instance) td.getInstance().getPropertyAsMap(AbstractProcessStepType.CoreProperties.qaState.toString()).get(id));
+				ConsistencyRuleType crt = (ConsistencyRuleType)cw.getRuleResult().getInstanceType();
 				assertTrue(ConsistencyUtils.crdValid(crt));
 				String eval = (String) crt.ruleEvaluations().get().stream()
 								.map(rule -> ((Rule)rule).result()+"" )
@@ -61,7 +63,7 @@ public class TestUtils {
 		proc.getDefinition().getPrematureTriggers().entrySet().stream()
 		.forEach(entry -> {
 			if (entry.getValue() != null) {
-				String ruleName = ProcessInstance.generatePrematureRuleName(entry.getKey(), proc.getDefinition());
+				String ruleName = SpecificProcessInstanceType.generatePrematureRuleName(entry.getKey(), proc.getDefinition());
 				Collection<InstanceType> ruleDefinitions = proc.getInstance().workspace.its(ConsistencyRuleType.CONSISTENCY_RULE_TYPE).subTypes();
 		        if(! ruleDefinitions.isEmpty() && !(ruleDefinitions.stream().filter(inst -> !inst.isDeleted).count() == 0)) {
 		        	for(InstanceType crt: ruleDefinitions.stream().filter(inst -> !inst.isDeleted).collect(Collectors.toSet() )){

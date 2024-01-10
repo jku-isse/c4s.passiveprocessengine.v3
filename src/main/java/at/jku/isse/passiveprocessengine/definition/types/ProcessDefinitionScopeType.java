@@ -6,7 +6,7 @@ import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesFactory.TypeProvider;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry.TypeProvider;
 
 public class ProcessDefinitionScopeType  implements TypeProvider {
 
@@ -19,7 +19,7 @@ public class ProcessDefinitionScopeType  implements TypeProvider {
 	}
 	
 	@Override
-	public void registerTypeInFactory(ProcessDomainTypesFactory factory) {
+	public void registerTypeInFactory(ProcessDomainTypesRegistry factory) {
 		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
 		if (thisType.isPresent())
 			factory.registerType(ProcessDefinitionScopedElement.class, thisType.get());

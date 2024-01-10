@@ -4,13 +4,13 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import at.jku.isse.designspace.core.events.PropertyUpdate;
-import at.jku.isse.designspace.rule.model.ConsistencyRule;
+import at.jku.isse.passiveprocessengine.core.PropertyChange;
+import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -82,7 +82,7 @@ public class Commands {
 	@Data
 	public static class QAConstraintChangedCmd extends ProcessScopedCmd {
 		private final ProcessStep step;
-		private final ConsistencyRule crule;
+		private final RuleResult crule;
 		 private final boolean isFulfilled;
 
 		@Override
@@ -92,7 +92,7 @@ public class Commands {
 
 		@Override
 		public String toString() {
-			return "QAConstraintChangedCmd [" + step.getDefinition().getName() + " " + crule.getInstanceType().name() +":"+ isFulfilled + "]";
+			return "QAConstraintChangedCmd [" + step.getDefinition().getName() + " " + crule.getInstanceType().getName() +":"+ isFulfilled + "]";
 		}
 
 		@Override
@@ -102,7 +102,7 @@ public class Commands {
 
 		@Override
 		public String getId() {
-			return "QAConstraintChangedCmd [" +step.getName()+crule.getInstanceType().name();
+			return "QAConstraintChangedCmd [" +step.getName()+crule.getInstanceType().getName();
 		}
 	}
 
@@ -110,7 +110,7 @@ public class Commands {
 	@Data
 	public static class IOMappingConsistencyCmd extends ProcessScopedCmd {
 		private final ProcessStep step;
-		private final ConsistencyRule crule;
+		private final RuleResult crule;
 		private final boolean isInconsistent;
 
 		@Override
@@ -123,7 +123,7 @@ public class Commands {
 
 		@Override
 		public String toString() {
-			return "IOMappingInconsistentCmd [" + step.getDefinition().getName() + " " + crule.getInstanceType().name() + "]";
+			return "IOMappingInconsistentCmd [" + step.getDefinition().getName() + " " + crule.getInstanceType().getName() + "]";
 		}
 
 		@Override
@@ -133,7 +133,7 @@ public class Commands {
 
 		@Override
 		public String getId() {
-			return "IOMappingInconsistentCmd [" +step.getName()+crule.getInstanceType().name();
+			return "IOMappingInconsistentCmd [" +step.getName()+crule.getInstanceType().getName();
 		}
 	}
 
@@ -141,20 +141,20 @@ public class Commands {
     @Data
     public static class ConditionChangedCmd extends ProcessScopedCmd {
         private final ProcessStep step;
-        private final ConsistencyRule crule;
+        private final RuleResult ruleResult;
         private final Conditions condition;
         private final boolean isFulfilled;
 		@Override
 		public List<Events.ProcessChangedEvent> execute() {
 			switch(condition) {
 			case ACTIVATION:
-				return step.processActivationConditionsChange(crule, isFulfilled);
+				return step.processActivationConditionsChange(ruleResult, isFulfilled);
 			case CANCELATION:
-				return step.processCancelConditionsChange(crule, isFulfilled);
+				return step.processCancelConditionsChange(ruleResult, isFulfilled);
 			case POSTCONDITION:
-				return step.processPostConditionsChange(crule, isFulfilled);
+				return step.processPostConditionsChange(ruleResult, isFulfilled);
 			case PRECONDITION:
-				return step.processPreConditionsChange(crule, isFulfilled);
+				return step.processPreConditionsChange(ruleResult, isFulfilled);
 			default:
 				return Collections.emptyList();
 			}
@@ -162,7 +162,7 @@ public class Commands {
 		}
 		@Override
 		public String toString() {
-			return "ConditionChangedCmd [" + step.getDefinition().getName() + " " + crule.name() + " : " + isFulfilled
+			return "ConditionChangedCmd [" + step.getDefinition().getName() + " " + ruleResult.getName() + " : " + isFulfilled
 					+ "]";
 		}
 
@@ -173,23 +173,23 @@ public class Commands {
 
 		@Override
 		public String getId() {
-			return "ConditionChangedCmd ["+step.getName()+crule.name();
+			return "ConditionChangedCmd ["+step.getName()+ruleResult.getName();
 		}
     }
 
 	@Data
 	public static class OutputChangedCmd extends ProcessScopedCmd {
 		private final ProcessStep step;
-		private final PropertyUpdate change;
+		private final PropertyChange.Update change;
 
 		@Override
 		public List<Events.ProcessChangedEvent> execute() {
-			return step.processOutputChangedCmd(change.name().substring(4));
+			return step.processOutputChangedCmd(change.getName().substring(4));
 		}
 
 		@Override
 		public String toString() {
-			return "OutputChangedCmd [" + step.getDefinition().getName() + " " + change.name() + "]";
+			return "OutputChangedCmd [" + step.getDefinition().getName() + " " + change.getName() + "]";
 		}
 
 		@Override
@@ -199,7 +199,7 @@ public class Commands {
 
 		@Override
 		public String getId() {
-			return "OutputChangedCmd [" +step.getName()+change.name();
+			return "OutputChangedCmd [" +step.getName()+change.getName();
 		}
 	}
 
