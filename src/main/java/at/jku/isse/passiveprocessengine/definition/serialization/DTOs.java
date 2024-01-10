@@ -66,6 +66,13 @@ public class DTOs {
 		public int hashCode() {
 			return super.hashCode();
 		}
+		
+		public String getCode() {
+			if (super.getCode() == null)
+				return arlRule;
+			else 
+				return super.getCode();
+		}
 	}
 	
 	//@EqualsAndHashCode(callSuper = true)

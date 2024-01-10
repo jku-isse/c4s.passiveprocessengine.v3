@@ -31,7 +31,7 @@ class DefinitionTests {
 	
 	@BeforeEach
 	void setup() throws Exception {
-		ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		ws = WorkspaceService.PUBLIC_WORKSPACE;// createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		ws.setAutoUpdate(true);
 		typeJira = TestArtifacts.getJiraInstanceType(ws);
 	}

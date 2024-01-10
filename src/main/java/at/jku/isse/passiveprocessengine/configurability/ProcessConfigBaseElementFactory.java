@@ -19,7 +19,7 @@ import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import lombok.Data;
 
-@Component
+
 public class ProcessConfigBaseElementFactory {
 	     			
 	private Workspace ws;
