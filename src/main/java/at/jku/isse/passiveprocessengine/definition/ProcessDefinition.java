@@ -161,7 +161,7 @@ public class ProcessDefinition extends StepDefinition{
 //			return errors;
 		ws.concludeTransaction();
 //		List<String> augmentationErrors = new LinkedList<>();
-		errors.addAll(new RuleAugmentation(ws, this, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstanceType)).augmentAndCreateConditions()); 
+		errors.addAll(new RuleAugmentation(ws, this, processInstanceType).augmentAndCreateConditions()); 
 		this.getStepDefinitions().stream().forEach(sd -> {
 				errors.addAll(new RuleAugmentation(ws, sd, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, sd, processInstanceType)).augmentAndCreateConditions()); 
 		});
