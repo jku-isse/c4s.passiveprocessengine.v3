@@ -1,5 +1,6 @@
-package at.jku.isse.passiveprocessengine.analysis;
+package at.jku.isse.passiveprocessengine.definition.factories;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -7,10 +8,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.DataSource;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.DataSource.IoType;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.StepParameter;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.RuleDefinition;
+import at.jku.isse.passiveprocessengine.core.RuleDefinitionFactory;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
@@ -24,107 +28,104 @@ public class RuleAugmentation {
 
 	public static final String RESERVED_PROPERTY_STEP_AUGMENTATION_STATUS = "@stepAugmentationStatus";
 
-	private Workspace ws;
-	private StepDefinition sd;
+	private StepDefinition stepDef;
 	private InstanceType stepType;
 	private int varCount = 0;
+	private RuleDefinitionFactory ruleFactory;
 
-	public RuleAugmentation(Workspace ws, StepDefinition sd, InstanceType stepType) {
-		this.ws = ws;
-		this.sd = sd;
+	public RuleAugmentation(StepDefinition sd, InstanceType stepType, RuleDefinitionFactory ruleFactory) {		
+		this.stepDef = sd;
 		this.stepType = stepType;
+		this.ruleFactory = ruleFactory;
 	}
 
 	// This works for non-temporal constraints only
 	public List<ProcessDefinitionError> augmentAndCreateConditions()  {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
-		MapProperty<String> propertyMetadata = stepType.getPropertyAsMap(ReservedNames.INSTANCETYPE_PROPERTY_METADATA);
+		Map<String, String> propertyMetadata = stepType.getTypedProperty("INSTANCETYPE_PROPERTY_METADATA", Map.class);
 		String augmentationStatus = propertyMetadata.get(RESERVED_PROPERTY_STEP_AUGMENTATION_STATUS);
 		if (augmentationStatus != null) {
-			log.debug("Skipping augmentation of already augmented step "+sd.getName());
+			log.debug("Skipping augmentation of already augmented step "+stepDef.getName());
 			return errors; // then we already augmented this step
 		}
 
-		sd.getPreconditions().stream()
+		stepDef.getPreconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = SpecificProcessStepType.getConstraintName(Conditions.PRECONDITION, spec.getOrderIndex(), stepType);
+			String specId = ProcessDefinitionFactory.getConstraintName(Conditions.PRECONDITION, spec.getOrderIndex(), stepType);
 			if (spec.getConstraintSpec() != null) {
 				String arl = spec.getConstraintSpec();
 				try {
 					arl = rewriteConstraint(arl);
-					log.debug(String.format("Augmented constraint %s for %s to %s", specId, sd.getName(), arl));
+					log.debug(String.format("Augmented constraint %s for %s to %s", specId, stepDef.getName(), arl));
 				} catch(Exception e) {
-					errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
+					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
 				}
-				ConsistencyRuleType crt = ConsistencyRuleType.create(ws, stepType, specId, arl);
+				RuleDefinition crt =  ruleFactory.createInstance(stepType, specId, arl);
 				//TODO check if that needs to be stored, references anywhere
 			}
 		});
-		sd.getPostconditions().stream()
+		stepDef.getPostconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = SpecificProcessStepType.getConstraintName(Conditions.POSTCONDITION, spec.getOrderIndex(), stepType);
+			String specId = ProcessDefinitionFactory.getConstraintName(Conditions.POSTCONDITION, spec.getOrderIndex(), stepType);
 			if (spec.getConstraintSpec() != null) {
 				String arl = spec.getConstraintSpec();
 				try {
 					arl = rewriteConstraint(arl);
-					log.debug(String.format("Augmented constraint %s for %s to %s", specId, sd.getName(), arl));
+					log.debug(String.format("Augmented constraint %s for %s to %s", specId, stepDef.getName(), arl));
 				} catch(Exception e) {
-					errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
+					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
 				}
-				ConsistencyRuleType crt = ConsistencyRuleType.create(ws, stepType, specId, arl);
-				//TODO check if that needs to be stored, references anywhere
+				RuleDefinition crt =  ruleFactory.createInstance( stepType, specId, arl);
 			}
 		});
-		sd.getCancelconditions().stream()
+		stepDef.getCancelconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = SpecificProcessStepType.getConstraintName(Conditions.CANCELATION, spec.getOrderIndex(), stepType);
+			String specId = ProcessDefinitionFactory.getConstraintName(Conditions.CANCELATION, spec.getOrderIndex(), stepType);
 			if (spec.getConstraintSpec() != null) {
 				String arl = spec.getConstraintSpec();
 				try {
 					arl = rewriteConstraint(arl);
-					log.debug(String.format("Augmented constraint %s for %s to %s", specId, sd.getName(), arl));
+					log.debug(String.format("Augmented constraint %s for %s to %s", specId, stepDef.getName(), arl));
 				} catch(Exception e) {
-					errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
+					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
 				}
-				ConsistencyRuleType crt = ConsistencyRuleType.create(ws, stepType, specId, arl);
-				//TODO check if that needs to be stored, references anywhere
+				RuleDefinition crt =  ruleFactory.createInstance( stepType, specId, arl);
 			}
 		});
-		sd.getActivationconditions().stream()
+		stepDef.getActivationconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = SpecificProcessStepType.getConstraintName(Conditions.ACTIVATION, spec.getOrderIndex(), stepType);
+			String specId = ProcessDefinitionFactory.getConstraintName(Conditions.ACTIVATION, spec.getOrderIndex(), stepType);
 			if (spec.getConstraintSpec() != null) {
 				String arl = spec.getConstraintSpec();
 				try {
 					arl = rewriteConstraint(arl);
-					log.debug(String.format("Augmented constraint %s for %s to %s", specId, sd.getName(), arl));
+					log.debug(String.format("Augmented constraint %s for %s to %s", specId, stepDef.getName(), arl));
 				} catch(Exception e) {
-					errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
+					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
 				}
-				ConsistencyRuleType crt = ConsistencyRuleType.create(ws, stepType, specId, arl);
-				//TODO check if that needs to be stored, references anywhere
+				RuleDefinition crt =  ruleFactory.createInstance( stepType, specId, arl);
 			}
 		});
 
 		//qa constraints:
-		ProcessDefinition pd = sd.getProcess() !=null ? sd.getProcess() : (ProcessDefinition)sd;
-		sd.getQAConstraints().stream()
+		ProcessDefinition pd = stepDef.getProcess() !=null ? stepDef.getProcess() : (ProcessDefinition)stepDef;
+		stepDef.getQAConstraints().stream()
 			.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 			.forEach(spec -> {
-				String specId = SpecificProcessStepType.getQASpecId(spec, pd);
+				String specId = ProcessDefinitionFactory.getQASpecId(spec, pd);
 				if (spec.getConstraintSpec() != null) {
 					String arl = spec.getConstraintSpec();
 					try {
 						arl = rewriteConstraint(arl);
-						log.debug(String.format("Augmented QA for %s to %s", sd.getName(), arl));
+						log.debug(String.format("Augmented QA for %s to %s", stepDef.getName(), arl));
 					} catch(Exception e) {
-						errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting QA Constraint %s : %s", spec.getConstraintId(), arl), e.getMessage()));
+						errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting QA Constraint %s : %s", spec.getConstraintId(), arl), e.getMessage()));
 					}
-					ConsistencyRuleType crt = ConsistencyRuleType.create(ws, stepType, specId, arl);
+					RuleDefinition crt =  ruleFactory.createInstance(stepType, specId, arl);
 				}
 			});
 
@@ -139,7 +140,7 @@ public class RuleAugmentation {
 		ArlEvaluator ae = new ArlEvaluator(stepType, constraint);
 		constraint = ae.syntaxTree.getOriginalARL(0, false);
 
-		List<StepParameter> singleUsage = PrematureTriggerGenerator.extractStepParameterUsageFromConstraint(sd, constraint);
+		List<StepParameter> singleUsage = PrematureTriggerGenerator.extractStepParameterUsageFromConstraint(stepDef, constraint);
 		// we need to obtain for every in and out param that we have a source for the location, and then replace from the back every this location with the path from the source
 		// every param can only be at a unique set of position, not shared with any other param, hence location/position index can serve as key
 		Map<Integer, StepParameter> loc2param = new HashMap<>();
@@ -157,7 +158,9 @@ public class RuleAugmentation {
 			}
 		}
 		// now check which pos and thus param goes first for replacement.
-		for( int pos : Lists.reverse(loc2param.keySet().stream().sorted().collect(Collectors.toList()))) {
+		List<Integer> paramList = loc2param.keySet().stream().sorted().collect(Collectors.toList());
+		Collections.reverse(paramList);
+		for( int pos : paramList) {
 			StepParameter param = loc2param.get(pos);
 
 			String extParam = "self.out_"+param.getName();
@@ -166,7 +169,7 @@ public class RuleAugmentation {
 			String pre = constraint.substring(0, pos);
 			String post = constraint.substring(pos+extParam.length());
 			try {
-				String replacement = getFirstOccuranceOfOutParam(sd, param).getNavPath();
+				String replacement = getFirstOccuranceOfOutParam(stepDef, param).getNavPath();
 				constraint = pre + replacement + post;
 			} catch(IllegalArgumentException ex) {
 				constraint = pre + extParam + post; // i.e, no replacement
@@ -214,8 +217,8 @@ public class RuleAugmentation {
 
 	// experiment with Temporal constraints
 	private void augmentTemporalPrecondition() {
-		Optional<String> preconditionOpt = sd.getCondition(Conditions.PRECONDITION);
-		if ( preconditionOpt.isEmpty() || sd.getInDND().getInSteps().isEmpty())
+		Optional<String> preconditionOpt = stepDef.getCondition(Conditions.PRECONDITION);
+		if ( preconditionOpt.isEmpty() || stepDef.getInDND().getInSteps().isEmpty())
 			return;// there is no precondition or this is the first process step
 		// for each prior step, if the completion status changes, then we reenable
 		// rule is something like for an AND:

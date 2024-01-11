@@ -4,11 +4,11 @@ import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
+import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry.TypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry.TypeProvider;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintWrapper;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 
@@ -47,12 +47,12 @@ public class AbstractProcessStepType implements TypeProvider {
 			type.createSinglePropertyType(CoreProperties.processedActivationCondFulfilled.toString(),  BuildInType.BOOLEAN);
 			type.createSinglePropertyType(CoreProperties.isWorkExpected.toString(), BuildInType.BOOLEAN);
 			// opposable no longer possible as, we cant then set it for pre/post, etc
-			type.createMapPropertyType(CoreProperties.qaState.toString(), BuildInType.STRING, factory.getType(ConstraintWrapper.class));
+			type.createMapPropertyType(CoreProperties.qaState.toString(), BuildInType.STRING, factory.getType(ConstraintResultWrapper.class));
 			//check if we need to set step parent on opposite end --> we do now set it upon instantiation
-			type.createMapPropertyType(CoreProperties.preconditions.toString(), BuildInType.STRING, factory.getType(ConstraintWrapper.class));
-			type.createMapPropertyType(CoreProperties.postconditions.toString(),BuildInType.STRING, factory.getType(ConstraintWrapper.class));
-			type.createMapPropertyType(CoreProperties.cancelconditions.toString(), BuildInType.STRING, factory.getType(ConstraintWrapper.class));
-			type.createMapPropertyType(CoreProperties.activationconditions.toString(), BuildInType.STRING, factory.getType(ConstraintWrapper.class));
+			type.createMapPropertyType(CoreProperties.preconditions.toString(), BuildInType.STRING, factory.getType(ConstraintResultWrapper.class));
+			type.createMapPropertyType(CoreProperties.postconditions.toString(),BuildInType.STRING, factory.getType(ConstraintResultWrapper.class));
+			type.createMapPropertyType(CoreProperties.cancelconditions.toString(), BuildInType.STRING, factory.getType(ConstraintResultWrapper.class));
+			type.createMapPropertyType(CoreProperties.activationconditions.toString(), BuildInType.STRING, factory.getType(ConstraintResultWrapper.class));
 
 		}
 		

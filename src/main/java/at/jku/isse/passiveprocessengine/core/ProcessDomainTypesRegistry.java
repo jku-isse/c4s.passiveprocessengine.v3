@@ -1,10 +1,9 @@
-package at.jku.isse.passiveprocessengine.definition.types;
+package at.jku.isse.passiveprocessengine.core;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
 import lombok.NonNull;
 
 public class ProcessDomainTypesRegistry {
@@ -29,5 +28,13 @@ public class ProcessDomainTypesRegistry {
 	
 	public static interface TypeProvider {
 		void registerTypeInFactory(ProcessDomainTypesRegistry factory);
+	}
+	
+	public static abstract class TypeProviderBase implements TypeProvider {
+		final protected SchemaRegistry schemaRegistry;
+		
+		public TypeProviderBase(SchemaRegistry schemaRegistry) {
+			this.schemaRegistry = schemaRegistry;
+		}
 	}
 }

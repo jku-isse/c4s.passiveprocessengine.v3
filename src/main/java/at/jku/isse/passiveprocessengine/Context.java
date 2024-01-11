@@ -3,12 +3,13 @@ package at.jku.isse.passiveprocessengine;
 import java.util.HashMap;
 import java.util.Map;
 
-import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
+import at.jku.isse.passiveprocessengine.core.FactoryIndex;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
+import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.definition.factories.DefinitionFactoryIndex;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry;
+import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,18 +20,18 @@ public class Context {
 	final InstanceRepository instanceRepository;
 	final SchemaRegistry schemaRegistry;
 	final ProcessDomainTypesRegistry typesFactory;
-	final ProcessConfigBaseElementFactory configFactory;
-	final DefinitionFactoryIndex definitionFactoryIndex;
+	final ProcessConfigBaseElementType configFactory;	
+	final FactoryIndex factoryIndex;
 				
 	private final Map<String, InstanceWrapper> cache = new HashMap<>();
 	
 	public Context(InstanceRepository instanceRepository, SchemaRegistry schemaRegistry, ProcessDomainTypesRegistry typesFactory,
-			ProcessConfigBaseElementFactory configFactory, DefinitionFactoryIndex definitionFactoryIndex) {
+			ProcessConfigBaseElementType configFactory, FactoryIndex factoryIndex) {
 		this.instanceRepository = instanceRepository;
 		this.schemaRegistry = schemaRegistry;
 		this.typesFactory = typesFactory;
-		this.configFactory = configFactory;
-		this.definitionFactoryIndex = definitionFactoryIndex;
+		this.configFactory = configFactory;		
+		this.factoryIndex = factoryIndex;
 	}
 
 	@SuppressWarnings("unchecked")

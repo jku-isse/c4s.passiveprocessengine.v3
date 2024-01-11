@@ -1,8 +1,8 @@
 package at.jku.isse.passiveprocessengine;
 
-import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.NameIdentifiableElement;
+import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 
 public abstract class InstanceWrapper implements NameIdentifiableElement{
 
@@ -28,7 +28,7 @@ public abstract class InstanceWrapper implements NameIdentifiableElement{
 		instance.markAsDeleted();
 	}
 
-	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
+	public void deleteCascading(ProcessConfigBaseElementType configFactory) {
 		context.removeWrapper(getInstance().getId());
 		instance.markAsDeleted();
 	}

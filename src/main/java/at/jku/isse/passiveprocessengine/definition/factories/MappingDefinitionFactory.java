@@ -3,8 +3,8 @@ package at.jku.isse.passiveprocessengine.definition.factories;
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
+import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.MappingDefinition;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry;
 
 public class MappingDefinitionFactory {
 

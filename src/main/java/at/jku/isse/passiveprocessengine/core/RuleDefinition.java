@@ -4,4 +4,5 @@ public interface RuleDefinition extends InstanceType {
 
 	public boolean hasRuleError();
 	public String getRuleError();
+	
 }

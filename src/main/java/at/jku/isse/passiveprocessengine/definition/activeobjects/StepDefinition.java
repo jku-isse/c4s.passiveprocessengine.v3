@@ -10,15 +10,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.core.InstanceType.PropertyType;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.definition.IStepDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
+import at.jku.isse.passiveprocessengine.definition.factories.ProcessDefinitionFactory;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessStepDefinitionType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 import lombok.extern.slf4j.Slf4j;
 
@@ -140,19 +141,19 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	@SuppressWarnings("unchecked")
 	@Deprecated(forRemoval = true)
 	public void setCondition(Conditions condition, String ruleAsString) {
-		ConstraintSpec constraint = context.getDefinitionFactoryIndex().getConstraintFactory().createInstance(condition, condition+"0", ruleAsString, ruleAsString, 0, false);
+		ConstraintSpec constraint = context.getFactoryIndex().getConstraintFactory().createInstance(condition, condition+"0", ruleAsString, ruleAsString, 0, false);
 		switch(condition) {
 		case ACTIVATION:
-			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.activationconditions.toString(), Set.class).add(constraint);
+			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.activationconditions.toString(), Set.class).add(constraint.getInstance());
 			break;
 		case CANCELATION:
-			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.cancelconditions.toString(), Set.class).add(constraint);
+			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.cancelconditions.toString(), Set.class).add(constraint.getInstance());
 			break;
 		case POSTCONDITION:
-			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.postconditions.toString(), Set.class).add(constraint);
+			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.postconditions.toString(), Set.class).add(constraint.getInstance());
 			break;
 		case PRECONDITION:
-			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.preconditions.toString(), Set.class).add(constraint);
+			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.preconditions.toString(), Set.class).add(constraint.getInstance());
 			break;
 		default:
 			break;
@@ -315,7 +316,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	}
 
 	private void checkConstraintExists(InstanceType instType, ConstraintSpec spec, Conditions condition, List<ProcessDefinitionError> errors) {
-		String name = SpecificProcessStepType.getConstraintName(condition, spec.getOrderIndex(), instType);
+		String name = ProcessDefinitionFactory.getConstraintName(condition, spec.getOrderIndex(), instType);
 		RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
 		if (crt == null) {
 			log.error("Expected Rule for existing process not found: "+name);
@@ -337,8 +338,8 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 		this.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
-				String name = SpecificProcessStepType.getDataMappingId(entry, this);
-				String propName = SpecificProcessStepType.CRD_DATAMAPPING_PREFIX+entry.getKey();
+				String name = ProcessDefinitionFactory.getDataMappingId(entry, this);
+				String propName = ProcessDefinitionFactory.CRD_DATAMAPPING_PREFIX+entry.getKey();
 				//InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstType);
 				PropertyType ioPropType = instType.getPropertyType(propName);
 				InstanceType ruleType = ioPropType.getInstanceType();
@@ -356,7 +357,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		ProcessDefinition pd = this.getProcess() !=null ? this.getProcess() : (ProcessDefinition)this;
 		this.getQAConstraints().stream()
 			.forEach(spec -> {
-				String specId = SpecificProcessStepType.getQASpecId(spec, pd);
+				String specId = ProcessDefinitionFactory.getQASpecId(spec, pd);
 				RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(specId, instType);//RuleDefinition.RuleDefinitionExists(ws,  specId, instType, spec.getQaConstraintSpec());
 				if (crt == null) {
 					log.error("Expected Rule for existing process not found: "+specId);
@@ -395,14 +396,14 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	}
 
 	private void deleteRuleIfExists(InstanceType instType, ConstraintSpec spec, Conditions condition ) {
-		String name = SpecificProcessStepType.getConstraintName(condition, spec.getOrderIndex(), instType);
+		String name = ProcessDefinitionFactory.getConstraintName(condition, spec.getOrderIndex(), instType);
 		RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
 		if (crt != null) 
 			crt.markAsDeleted();
 	}
 
 	@Override
-	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
+	public void deleteCascading() {
 
 		InstanceType instType = this.instance.getInstanceType();//ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, null); // for deletion its ok to not provide the process instance type
 
@@ -413,7 +414,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 		this.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
-				String name = SpecificProcessStepType.getDataMappingId(entry, this);
+				String name = ProcessDefinitionFactory.getDataMappingId(entry, this);
 				RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
 				if (crt != null) crt.markAsDeleted();
 			});
@@ -421,15 +422,15 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		ProcessDefinition pd = this.getProcess() !=null ? this.getProcess() : (ProcessDefinition)this;
 		this.getQAConstraints().stream()
 			.forEach(spec -> {
-				String specId = SpecificProcessStepType.getQASpecId(spec, pd);
+				String specId = ProcessDefinitionFactory.getQASpecId(spec, pd);
 				RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(specId, instType);
 				if (crt != null) 
 					crt.markAsDeleted();
-				spec.deleteCascading(configFactory);
+				spec.deleteCascading();
 			});
 
 		instType.markAsDeleted();
-		super.deleteCascading(configFactory);
+		super.deleteCascading();
 	}
 
 

@@ -4,10 +4,10 @@ import java.util.Comparator;
 
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 
 public class ConstraintSpec extends  ProcessDefinitionScopedElement{
 
@@ -43,7 +43,7 @@ public class ConstraintSpec extends  ProcessDefinitionScopedElement{
 	}
 
 	@Override
-	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
+	public void deleteCascading(ProcessConfigBaseElementType configFactory) {
 		instance.markAsDeleted();
 	}
 	

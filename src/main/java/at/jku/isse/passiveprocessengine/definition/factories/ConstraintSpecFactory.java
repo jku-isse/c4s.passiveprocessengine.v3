@@ -3,10 +3,10 @@ package at.jku.isse.passiveprocessengine.definition.factories;
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
+import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 public class ConstraintSpecFactory {
@@ -28,6 +28,7 @@ public class ConstraintSpecFactory {
 	public ConstraintSpec createInstance(Conditions condition, String constraintId, String constraintSpec, String humanReadableDescription, int specOrderIndex) {
 		return createInstance(condition, constraintId, constraintSpec, humanReadableDescription, specOrderIndex, false);
 	}
+	
 	public ConstraintSpec createInstance(Conditions condition, String constraintId, String constraintSpec, String humanReadableDescription, int specOrderIndex, boolean isOverridable) {
 		Instance instance = repository.createInstance(constraintId, typesFactory.getType(ConstraintSpec.class));
 		instance.setSingleProperty(ConstraintSpecType.CoreProperties.constraintSpec.toString(),constraintSpec);

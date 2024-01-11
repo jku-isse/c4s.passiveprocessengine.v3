@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.service.RuleService;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintWrapper;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import net.logstash.logback.argument.StructuredArgument;
@@ -72,7 +72,7 @@ public class UsageMonitor {
 		monitor.info("Step viewed", args.toArray());
 	}
 
-	public void constraintedViewed(ConstraintWrapper cw, String userId) { //if not fulfilled, implies that repairtree was loaded
+	public void constraintedViewed(ConstraintResultWrapper cw, String userId) { //if not fulfilled, implies that repairtree was loaded
 		int repairCount = 0;
 		if (!cw.getEvalResult() && cw.getRuleResult() != null) {
 			RepairNode repairTree = RuleService.repairTree(cw.getRuleResult());

@@ -4,18 +4,18 @@ import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
+import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry.TypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry.TypeProvider;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintWrapper;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 
 public class ConstraintWrapperType implements TypeProvider {
 	
 	public static enum CoreProperties {qaSpec, lastChanged, crule, parentStep, isOverriden, overrideValue, overrideReason}
-	public static final String typeId = ConstraintWrapper.class.getSimpleName();
+	public static final String typeId = ConstraintResultWrapper.class.getSimpleName();
 
 	private SchemaRegistry schemaRegistry;
 	
@@ -27,10 +27,10 @@ public class ConstraintWrapperType implements TypeProvider {
 	public void registerTypeInFactory(ProcessDomainTypesRegistry factory) {
 		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
 		if (thisType.isPresent())
-			factory.registerType(ConstraintWrapper.class, thisType.get());
+			factory.registerType(ConstraintResultWrapper.class, thisType.get());
 		else {
 			InstanceType type = schemaRegistry.createNewInstanceType(typeId, factory.getType(ProcessInstanceScopedElement.class));
-			factory.registerType(ConstraintWrapper.class, type);
+			factory.registerType(ConstraintResultWrapper.class, type);
 			
 			// so ugly:
 			ProcessInstanceScopeType.addGenericProcessProperty(type, factory);

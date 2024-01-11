@@ -15,13 +15,13 @@ import com.github.oxo42.stateless4j.StateMachine;
 
 import at.jku.isse.designspace.core.events.PropertyUpdate;
 import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.core.PropertyChange;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.factories.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
@@ -187,7 +187,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		String id = cr.getName();
 		//ConstraintWrapper cw = qaState.get(id);
 		//in one occasion found null instance in map, which should not happen!!!
-		ConstraintWrapper cw = context.getWrappedInstance(ConstraintWrapper.class, (Instance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).get(id));
+		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).get(id));
 		cw.setCrIfEmpty(cr);
 		//cw.setEvalResult(fulfilled);
 		cw.setLastChanged(getProcess().getCurrentTimestamp());
@@ -223,9 +223,9 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 
 	@SuppressWarnings("unchecked")
-	public Set<ConstraintWrapper> getQAstatus() {
-		return (Set<ConstraintWrapper>) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).values().stream()
-		.map(inst -> context.getWrappedInstance(ConstraintWrapper.class, (Instance) inst))
+	public Set<ConstraintResultWrapper> getQAstatus() {
+		return (Set<ConstraintResultWrapper>) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).values().stream()
+		.map(inst -> context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) inst))
 		.collect(Collectors.toSet());		
 	}
 
@@ -313,20 +313,20 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		// DNIs are deleted at process level, not managed here
 		//qaState.values().forEach(cw -> cw.deleteCascading());
 		instance.getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).values().stream()
-		.map(inst -> context.getWrappedInstance(ConstraintWrapper.class, (Instance) inst))
-		.forEach(cw -> ((ConstraintWrapper)cw).deleteCascading());		
+		.map(inst -> context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) inst))
+		.forEach(cw -> ((ConstraintResultWrapper)cw).deleteCascading());		
 		instance.getTypedProperty(AbstractProcessStepType.CoreProperties.preconditions.toString(), Map.class).values().stream()
-		.map(inst -> context.getWrappedInstance(ConstraintWrapper.class, (Instance) inst))
-		.forEach(cw -> ((ConstraintWrapper)cw).deleteCascading());
+		.map(inst -> context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) inst))
+		.forEach(cw -> ((ConstraintResultWrapper)cw).deleteCascading());
 		instance.getTypedProperty(AbstractProcessStepType.CoreProperties.postconditions.toString(), Map.class).values().stream()
-		.map(inst -> context.getWrappedInstance(ConstraintWrapper.class, (Instance) inst))
-		.forEach(cw -> ((ConstraintWrapper)cw).deleteCascading());
+		.map(inst -> context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) inst))
+		.forEach(cw -> ((ConstraintResultWrapper)cw).deleteCascading());
 		instance.getTypedProperty(AbstractProcessStepType.CoreProperties.activationconditions.toString(), Map.class).values().stream()
-		.map(inst -> context.getWrappedInstance(ConstraintWrapper.class, (Instance) inst))
-		.forEach(cw -> ((ConstraintWrapper)cw).deleteCascading());
+		.map(inst -> context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) inst))
+		.forEach(cw -> ((ConstraintResultWrapper)cw).deleteCascading());
 		instance.getTypedProperty(AbstractProcessStepType.CoreProperties.cancelconditions.toString(), Map.class).values().stream()
-		.map(inst -> context.getWrappedInstance(ConstraintWrapper.class, (Instance) inst))
-		.forEach(cw -> ((ConstraintWrapper)cw).deleteCascading());
+		.map(inst -> context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) inst))
+		.forEach(cw -> ((ConstraintResultWrapper)cw).deleteCascading());
 		// we are not deleting input and output artifacts as we are just referencing them!
 		// finally delete self
 		super.deleteCascading();
@@ -454,16 +454,16 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 //		if (expQA != actualQA)
 //			return false; // as long as the expected QA is not the actual number of QA checks, the eval cant be true;
 		return instance.getTypedProperty(constraintProperty, Map.class).values().stream()
-			.map(inst -> context.getWrappedInstance(ConstraintWrapper.class, (Instance) inst))
-			.allMatch(cw -> ((ConstraintWrapper)cw).getEvalResult());
+			.map(inst -> context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) inst))
+			.allMatch(cw -> ((ConstraintResultWrapper)cw).getEvalResult());
 	}
 
 	@SuppressWarnings("unchecked")
-	public Set<ConstraintWrapper> getConstraints(String constraintProperty) {
-		return (Set<ConstraintWrapper>) instance.getTypedProperty(constraintProperty, Map.class).values().stream()
-				.map(inst -> context.getWrappedInstance(ConstraintWrapper.class, (Instance) inst))
+	public Set<ConstraintResultWrapper> getConstraints(String constraintProperty) {
+		return (Set<ConstraintResultWrapper>) instance.getTypedProperty(constraintProperty, Map.class).values().stream()
+				.map(inst -> context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) inst))
 				.filter(Objects::nonNull)
-				.map(ConstraintWrapper.class::cast)
+				.map(ConstraintResultWrapper.class::cast)
 				.collect(Collectors.toSet());
 	}
 
@@ -484,7 +484,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		return this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
 	}
 
-	public List<Events.ProcessChangedEvent> processConditionsChanged(ConstraintWrapper cw) {
+	public List<Events.ProcessChangedEvent> processConditionsChanged(ConstraintResultWrapper cw) {
 		List<ProcessChangedEvent> events;
 		boolean newResult = cw.getEvalResult();
 		switch(cw.getConstraintSpec().getConditionType()) {
@@ -514,7 +514,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 
 	public List<Events.ProcessChangedEvent> processPostConditionsChange(RuleResult cr, boolean isfulfilled) {
 		String id = cr.getName();
-		ConstraintWrapper cw = context.getWrappedInstance(ConstraintWrapper.class, (Instance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.postconditions.toString(), Map.class).get(id));
+		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.postconditions.toString(), Map.class).get(id));
 		cw.setCrIfEmpty(cr);
 		cw.setLastChanged(getProcess().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.postconditions.toString());
@@ -549,7 +549,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 
 	public List<Events.ProcessChangedEvent> processPreConditionsChange(RuleResult cr, boolean isfulfilled) {
 		String id = cr.getName();
-		ConstraintWrapper cw = context.getWrappedInstance(ConstraintWrapper.class, (Instance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.preconditions.toString(), Map.class).get(id));
+		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.preconditions.toString(), Map.class).get(id));
 		cw.setCrIfEmpty(cr);
 		cw.setLastChanged(getProcess().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.preconditions.toString());
@@ -587,7 +587,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 
 	public List<Events.ProcessChangedEvent> processCancelConditionsChange(RuleResult cr, boolean isfulfilled) {
 		String id = cr.getName();
-		ConstraintWrapper cw = context.getWrappedInstance(ConstraintWrapper.class, (Instance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.cancelconditions.toString(), Map.class).get(id));
+		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.cancelconditions.toString(), Map.class).get(id));
 		cw.setCrIfEmpty(cr);
 		cw.setLastChanged(getProcess().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.cancelconditions.toString());
@@ -617,7 +617,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 
 	public List<Events.ProcessChangedEvent> processActivationConditionsChange(RuleResult cr, boolean isFulfilled) {
 		String id = cr.getName();
-		ConstraintWrapper cw = context.getWrappedInstance(ConstraintWrapper.class, (Instance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.activationconditions.toString(), Map.class).get(id));
+		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.activationconditions.toString(), Map.class).get(id));
 		cw.setCrIfEmpty(cr);
 		cw.setLastChanged(getProcess().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.activationconditions.toString());

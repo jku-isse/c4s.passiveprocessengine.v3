@@ -10,6 +10,7 @@ import java.util.List;
 
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.serialization.ProcessRegistry.ProcessDeployResult;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -18,13 +19,6 @@ public class FilesystemProcessDefinitionLoader {
 	public static final JsonDefinitionSerializer serializer = new JsonDefinitionSerializer();
 
 	protected ProcessRegistry registry;
-
-	// Added Code
-	public ProcessRegistry getRegistry()
-	{
-		return this.registry;
-	}
-	// END
 
 	public FilesystemProcessDefinitionLoader(ProcessRegistry registry) {
 		this.registry = registry;
@@ -46,9 +40,9 @@ public class FilesystemProcessDefinitionLoader {
                 DTOs.Process procD = serializer.fromJson(new String(encoded, Charset.defaultCharset()));
                 if (procD != null) {
                 	try {
-                		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>>  result = registry.storeProcessDefinition(procD, false);
-						if (result != null && !result.getValue().isEmpty()) {
-							log.warn("Error loading process definition from file system: "+result.getKey().getName()+"\r\n"+result.getValue());
+                		ProcessDeployResult result = registry.createProcessDefinitionIfNotExisting(procD);
+						if (result != null && !result.getDefinitionErrors().isEmpty()) {
+							log.warn("Error loading process definition from file system: "+result.getProcDef().getName()+"\r\n"+result.getDefinitionErrors());
 						} else if (result == null) {
 							log.info("Loading of process definition "+procD.getCode()+" defered to when workspace is available");
 						}

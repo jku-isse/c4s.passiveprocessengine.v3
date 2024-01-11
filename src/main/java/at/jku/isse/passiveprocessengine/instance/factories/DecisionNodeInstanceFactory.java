@@ -5,13 +5,13 @@ import java.util.UUID;
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
+import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
+import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
-import at.jku.isse.passiveprocessengine.instance.factories.FactoryIndex.DomainInstanceFactory;
 import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
 
-public class DecisionNodeInstanceFactory extends DomainInstanceFactory {
+public class DecisionNodeInstanceFactory extends DomainFactory {
 
 	
 	public DecisionNodeInstanceFactory(InstanceRepository repository, Context context,
@@ -20,8 +20,8 @@ public class DecisionNodeInstanceFactory extends DomainInstanceFactory {
 	}
 
 	public DecisionNodeInstance getInstance(DecisionNodeDefinition dnd) {				
-		Instance instance = repository.createInstance(dnd.getName()+"_"+UUID.randomUUID(), typesFactory.getType(DecisionNodeInstance.class));
-		DecisionNodeInstance dni = context.getWrappedInstance(DecisionNodeInstance.class, instance);
+		Instance instance = getRepository().createInstance(dnd.getName()+"_"+UUID.randomUUID(), getTypesFactory().getType(DecisionNodeInstance.class));
+		DecisionNodeInstance dni = getContext().getWrappedInstance(DecisionNodeInstance.class, instance);
 		//dni.init(dnd);
 		instance.setSingleProperty(DecisionNodeInstanceType.CoreProperties.dnd.toString(),dnd.getInstance());
 		instance.setSingleProperty(DecisionNodeInstanceType.CoreProperties.hasPropagated.toString(),false);

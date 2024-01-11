@@ -4,7 +4,7 @@ import java.time.OffsetDateTime;
 
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintWrapper;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import lombok.AllArgsConstructor;
@@ -35,9 +35,9 @@ public class Events {
 	@Data
 	public static class QAConstraintFulfillmentChanged extends ProcessChangedEvent {
 
-		final ConstraintWrapper qacWrapper;
+		final ConstraintResultWrapper qacWrapper;
 
-		public QAConstraintFulfillmentChanged(ProcessInstance proc, ProcessStep step, ConstraintWrapper qacWrapper) {
+		public QAConstraintFulfillmentChanged(ProcessInstance proc, ProcessStep step, ConstraintResultWrapper qacWrapper) {
 			super(proc, step, null);
 			this.qacWrapper = qacWrapper;
 		}
@@ -101,7 +101,7 @@ public class Events {
 		final String reason;
 		final boolean isUndo;
 
-		public ConstraintOverrideEvent(ProcessInstance proc, ProcessStep step, ConstraintWrapper qacWrapper, String reason, boolean isUndo) {
+		public ConstraintOverrideEvent(ProcessInstance proc, ProcessStep step, ConstraintResultWrapper qacWrapper, String reason, boolean isUndo) {
 			super(proc, step, qacWrapper);
 			this.reason = reason;
 			this.isUndo = isUndo;

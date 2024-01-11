@@ -3,42 +3,66 @@ package at.jku.isse.passiveprocessengine.definition.serialization;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
-import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
+import at.jku.isse.passiveprocessengine.core.FactoryIndex;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
-import at.jku.isse.passiveprocessengine.definition.activeobjects.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
-import at.jku.isse.passiveprocessengine.definition.factories.DefinitionFactoryIndex;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Constraint;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Process;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessConfigType;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DefinitionTransformer {
 
-	private final DefinitionFactoryIndex factories;	
+	public static final String CONFIG_KEY_doGeneratePrematureRules = "doGeneratePrematureRules";
+	public static final String CONFIG_KEY_doImmediateInstantiateAllSteps = "doImmediateInstantiateAllSteps";
+	
+	private final FactoryIndex factories;	
 	private final SchemaRegistry schemaRegistry;
 	private final List<ProcessDefinitionError> errors = new LinkedList<>();
 	private final DTOs.Process rootProcDTO;		
+	private final ProcessDomainTypesRegistry typesFactory;
 	
-	public DefinitionTransformer(DTOs.Process procDTO, DefinitionFactoryIndex factories, SchemaRegistry schemaRegistry) {
+	public DefinitionTransformer(DTOs.Process procDTO, FactoryIndex factories, SchemaRegistry schemaRegistry, ProcessDomainTypesRegistry typesFactory) {
 		this.rootProcDTO = procDTO;	
 		this.factories = factories;
 		this.schemaRegistry = schemaRegistry;
+		this.typesFactory = typesFactory;
+	}
+	
+	public List<ProcessDefinitionError> getErrors() {
+		return errors;
 	}
 	
 	public ProcessDefinition fromDTO(boolean isInStaging)  {		
-		return initProcessFromDTO(rootProcDTO, 0, isInStaging);		
+		ProcessDefinition processDef = initProcessFromDTO(rootProcDTO, 0, isInStaging);		
+		
+		if (errors.isEmpty()) { //if there are type errors, we dont even try to create rules
+			boolean doGeneratePrematureRules = false;
+			if (Boolean.parseBoolean(rootProcDTO.getProcessConfig().getOrDefault(CONFIG_KEY_doGeneratePrematureRules, "false")))
+				doGeneratePrematureRules = true;
+			errors.addAll(factories.getProcessDefinitionFactory().initializeInstanceTypes(processDef,doGeneratePrematureRules));
+			
+			boolean doImmediatePropagate = !doGeneratePrematureRules;
+			processDef.setImmediateDataPropagationEnabled(doImmediatePropagate);
+			boolean doImmediateInstantiateAllSteps = false;
+			if (Boolean.parseBoolean(rootProcDTO.getProcessConfig().getOrDefault(CONFIG_KEY_doImmediateInstantiateAllSteps, "true")))
+				doImmediateInstantiateAllSteps = true;
+			processDef.setImmediateInstantiateAllStepsEnabled(doImmediateInstantiateAllSteps);
+		} else {
+			processDef.setIsWithoutBlockingErrors(false);
+		}
+		return processDef;
 	}
 
 	private ProcessDefinition initProcessFromDTO(DTOs.Process procDTO, int depth, boolean isInStaging) {
@@ -85,16 +109,22 @@ public class DefinitionTransformer {
 
 		processDefinition.setDepthIndexRecursive(depth);
 		processDefinition.setElementOrder();
-		
+		return processDefinition;
 	}
 
 	private void createOrUpdateConfig(DTOs.Process procDTO, ProcessDefinition processDefinition) {
 		// first create process config schema if it does not exists
 		procDTO.getConfigs().entrySet().stream().forEach(entry -> {
-			String configName = entry.getKey();			
-			InstanceType procConfig = factories.getProcessConfigFactory().getOrCreateProcessSpecificSubtype(configName, processDefinition);
+			String configName = entry.getKey();		
+			
+			SpecificProcessConfigType configProvider = new SpecificProcessConfigType(schemaRegistry, processDefinition, configName, entry.getValue(), factories.getRuleDefinitionFactory());
 			// then add the properties if they dont exist yet
-			factories.getProcessConfigFactory().augmentConfig(entry.getValue(), procConfig);
+			configProvider.registerTypeInFactory(typesFactory);
+			
+			InstanceType procConfig = typesFactory.getTypeByName(configProvider.getSubtypeName()); 
+					//factories.getProcessConfigFactory().getOrCreateProcessSpecificSubtype(configName, processDefinition);
+			
+			//factories.getProcessConfigFactory().augmentConfig(entry.getValue(), procConfig);
 			// then add as input to process DTO if it doesnt yet exist, of if so, overrides with most concrete subtype
 			procDTO.getInput().put(configName, procConfig.getName());
 			//TODO: how this dynamic input setting works with configurations in subprocesses!? (mapping, staging, preset config names, etc.)
@@ -150,6 +180,8 @@ public class DefinitionTransformer {
 			.forEach(mapping -> mapping.setToStep(newStepName)));
 	}
 
+	
+	
 	private void initStepFromDTO(DTOs.Step stepDTO, StepDefinition step) {
 		stepDTO.getInput().entrySet().stream().forEach(entry -> step.addExpectedInput(entry.getKey(), resolveInstanceType(entry.getValue(),step, entry.getKey())));
 		stepDTO.getOutput().entrySet().stream().forEach(entry -> step.addExpectedOutput(entry.getKey(), resolveInstanceType(entry.getValue(), step, entry.getKey())));

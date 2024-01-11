@@ -8,10 +8,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
+import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 
 public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 
@@ -119,7 +119,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 	}
 
 	@Override
-	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
+	public void deleteCascading(ProcessConfigBaseElementType configFactory) {
 		this.getMappings().forEach(md -> md.deleteCascading(configFactory));
 		// no instanceType for DNI to delete, all processes use the same one.
 		super.deleteCascading(configFactory);

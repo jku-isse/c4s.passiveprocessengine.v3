@@ -25,7 +25,6 @@ import at.jku.isse.passiveprocessengine.definition.serialization.ProcessRegistry
 import at.jku.isse.passiveprocessengine.definition.serialization.ProcessRegistry.ProcessDeployResult;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
-import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
@@ -33,6 +32,7 @@ import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
 import at.jku.isse.passiveprocessengine.instance.messages.WorkspaceListenerSequencer;
+import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 import at.jku.isse.passiveprocessengine.monitoring.CurrentSystemTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 
@@ -53,7 +53,7 @@ class ReplacementTests {
 	void setup() throws Exception {
 		RuleService.setEvaluator(new ArlRuleEvaluator());
 		ws = WorkspaceService.PUBLIC_WORKSPACE;
-		procReg.inject(ws, new ProcessConfigBaseElementFactory(ws));
+		procReg.inject(ws, new ProcessConfigBaseElementType(ws));
 		RuleService.currentWorkspace = ws;
 		EventDistributor eventDistrib = new EventDistributor();
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());

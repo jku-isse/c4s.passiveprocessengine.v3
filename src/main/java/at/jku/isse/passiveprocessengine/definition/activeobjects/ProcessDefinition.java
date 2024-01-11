@@ -9,15 +9,14 @@ import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
-import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
+import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class ProcessDefinition extends StepDefinition{
 
 	public ProcessDefinition(Instance instance, Context context) {
@@ -105,9 +104,9 @@ public class ProcessDefinition extends StepDefinition{
 	}
 
 	@Override
-	public void deleteCascading(ProcessConfigBaseElementFactory configFactory) {
-		getDecisionNodeDefinitions().forEach(dnd -> dnd.deleteCascading(configFactory));
-		getStepDefinitions().forEach(sd -> sd.deleteCascading(configFactory));
+	public void deleteCascading() {
+		getDecisionNodeDefinitions().forEach(dnd -> dnd.deleteCascading());
+		getStepDefinitions().forEach(sd -> sd.deleteCascading());
 		InstanceType thisType = this.getInstance().getInstanceType(); //.getOrCreateDesignSpaceInstanceType(ws, this);
 		this.getPrematureTriggers().entrySet().stream()
 		.forEach(entry -> {
@@ -118,12 +117,12 @@ public class ProcessDefinition extends StepDefinition{
 		});
 		// delete configtype
 		this.getExpectedInput().entrySet().stream()
-		.filter(entry -> entry.getValue().isOfTypeOrAnySubtype(configFactory.getBaseType()))
+		.filter(entry -> entry.getValue().isOfTypeOrAnySubtype(context.getTypesFactory().getTypeByName(ProcessConfigBaseElementType.typeId)))
 		.forEach(configEntry -> {
-			InstanceType procConfig = configFactory.getOrCreateProcessSpecificSubtype(configEntry.getKey(), this);
+			InstanceType procConfig = context.getConfigFactory().getOrCreateProcessSpecificSubtype(configEntry.getKey(), this);
 			procConfig.markAsDeleted();
 		});
-		super.deleteCascading(configFactory);
+		super.deleteCascading();
 		thisType.markAsDeleted();
 	}
 
@@ -142,7 +141,7 @@ public class ProcessDefinition extends StepDefinition{
 
 
 	public StepDefinition createAndAddStepDefinition(String stepId) {
-		StepDefinition sd = context.getDefinitionFactoryIndex().getStepDefinitionFactory().createInstance(stepId);
+		StepDefinition sd = context.getFactoryIndex().getStepDefinitionFactory().createInstance(stepId);
 				//StepDefinition.getInstance(stepId, ws); // any other initialization there
 		sd.setProcess(this);
 		this.addStepDefinition(sd);
@@ -150,7 +149,7 @@ public class ProcessDefinition extends StepDefinition{
 	}
 
 	public DecisionNodeDefinition createDecisionNodeDefinition(String dndId) {
-		DecisionNodeDefinition dnd =  context.getDefinitionFactoryIndex().getDecisionNodeDefinitionFactory().createInstance(dndId); // any other initialization there
+		DecisionNodeDefinition dnd =  context.getFactoryIndex().getDecisionNodeDefinitionFactory().createInstance(dndId); // any other initialization there
 		dnd.setProcess(this);
 		this.addDecisionNodeDefinition(dnd);
 		return dnd;

@@ -166,7 +166,7 @@ public class PrematureTriggerGenerator {
 	}
 
 	// returns all in/out parameters that are used in a constraint
-	protected static List<StepParameter> extractStepParameterUsageFromConstraint(StepDefinition step, String constraint) {
+	public static List<StepParameter> extractStepParameterUsageFromConstraint(StepDefinition step, String constraint) {
 		List<StepParameter> usage = new LinkedList<>();
 		usage.addAll(step.getExpectedInput().keySet().stream()
 			.filter(param -> constraint.contains("self.in_"+param))

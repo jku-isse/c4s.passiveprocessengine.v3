@@ -5,15 +5,15 @@ import java.util.UUID;
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
+import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
+import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
-import at.jku.isse.passiveprocessengine.instance.factories.FactoryIndex.DomainInstanceFactory;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 
-public class ProcessInstanceFactory extends DomainInstanceFactory {
+public class ProcessInstanceFactory extends DomainFactory {
 						
 	public ProcessInstanceFactory(InstanceRepository repository, Context context,
 			ProcessDomainTypesRegistry typesFactory) {
@@ -22,16 +22,16 @@ public class ProcessInstanceFactory extends DomainInstanceFactory {
 	
 	public ProcessInstance getInstance(ProcessDefinition processDef, String namePostfix) {
 		//TODO: not to create duplicate process instances somehow		
-		Instance instance = repository.createInstance(processDef.getName()+"_"+namePostfix, typesFactory.getTypeByName(SpecificProcessInstanceType.getProcessName(processDef)));
-		ProcessInstance process = context.getWrappedInstance(ProcessInstance.class, instance);
+		Instance instance = getRepository().createInstance(processDef.getName()+"_"+namePostfix, getTypesFactory().getTypeByName(SpecificProcessInstanceType.getProcessName(processDef)));
+		ProcessInstance process = getContext().getWrappedInstance(ProcessInstance.class, instance);
 		process.inject(factoryIndex.getProcessStepFactory(), factoryIndex.getDecisionNodeInstanceFactory());
 		init(process, processDef, null, null);
 		return process;
 	}
 
 	public ProcessInstance getSubprocessInstance(ProcessDefinition subprocessDef, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, ProcessInstance scope) {
-		Instance instance = repository.createInstance(subprocessDef.getName()+"_"+UUID.randomUUID(), typesFactory.getTypeByName(SpecificProcessInstanceType.getProcessName(subprocessDef)));
-		ProcessInstance process = context.getWrappedInstance(ProcessInstance.class, instance);
+		Instance instance = getRepository().createInstance(subprocessDef.getName()+"_"+UUID.randomUUID(), getTypesFactory().getTypeByName(SpecificProcessInstanceType.getProcessName(subprocessDef)));
+		ProcessInstance process = getContext().getWrappedInstance(ProcessInstance.class, instance);
 		process.setProcess(scope);
 		process.inject(factoryIndex.getProcessStepFactory(), factoryIndex.getDecisionNodeInstanceFactory());
 		init(process, subprocessDef, inDNI, outDNI);

@@ -13,11 +13,11 @@ import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ConstraintWrapper extends ProcessInstanceScopedElement {
+public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 
 	private volatile ZonedDateTime lastChanged;
 
-	public ConstraintWrapper(Instance instance, Context context) {
+	public ConstraintResultWrapper(Instance instance, Context context) {
 		super(instance, context);
 
 	}

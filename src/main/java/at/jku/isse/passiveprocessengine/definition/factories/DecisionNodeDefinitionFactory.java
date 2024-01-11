@@ -3,10 +3,10 @@ package at.jku.isse.passiveprocessengine.definition.factories;
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
+import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDomainTypesRegistry;
 
 public class DecisionNodeDefinitionFactory {
 	InstanceRepository repository;

@@ -8,7 +8,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-import at.jku.isse.designspace.core.model.Instance;
+import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 
@@ -35,7 +35,7 @@ public class TransformationResultAdapterFactory extends MultiTypeAdapterFactory 
 		return new TypeAdapter<>() {
 			@Override
 			public void write(JsonWriter out, Instance value) throws IOException {
-				instanceDelegate.write(out, value.name());
+				instanceDelegate.write(out, value.getName());
 			}
 
 			@Override

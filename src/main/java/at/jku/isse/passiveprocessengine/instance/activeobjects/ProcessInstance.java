@@ -36,8 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProcessInstance extends ProcessStep {
 
-	public static final String CRD_PREMATURETRIGGER_PREFIX = "crd_prematuretrigger_";
-
 	protected ZonedDateTime createdAt;
 	private ProcessStepInstanceFactory stepFactory;
 	private DecisionNodeInstanceFactory decisionNodeFactory;
@@ -73,7 +71,7 @@ public class ProcessInstance extends ProcessStep {
 	@Override
 	public ProcessScopedCmd prepareRuleEvaluationChange(RuleResult ruleResult, PropertyChange.Set op) {
 		RuleDefinition crt = (RuleDefinition)ruleResult.getInstanceType();
-		if (crt.getName().startsWith(CRD_PREMATURETRIGGER_PREFIX) ) {
+		if (crt.getName().startsWith(SpecificProcessInstanceType.CRD_PREMATURETRIGGER_PREFIX) ) {
 			log.debug(String.format("Queuing execution of Premature Trigger of step %s , trigger is now %s ", crt.getName(), op.getValue().toString()));
 			StepDefinition sd = getDefinition().getStepDefinitionForPrematureConstraint(crt.getName());
 			if (this.getProcessSteps().stream().anyMatch(step -> step.getDefinition().equals(sd)))

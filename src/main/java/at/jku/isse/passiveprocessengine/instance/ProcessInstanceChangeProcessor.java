@@ -14,6 +14,10 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+import at.jku.isse.designspace.core.model.Element;
+import at.jku.isse.designspace.core.model.Workspace;
+import at.jku.isse.designspace.core.model.WorkspaceListener;
+import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;

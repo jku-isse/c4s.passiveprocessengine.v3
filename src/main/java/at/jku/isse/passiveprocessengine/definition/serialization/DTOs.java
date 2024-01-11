@@ -12,9 +12,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory.PropertySchemaDTO;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessConfigType.PropertySchemaDTO;
 import lombok.Data;
 import lombok.ToString;
 
@@ -62,6 +62,13 @@ public class DTOs {
 		@Override
 		public int hashCode() {
 			return super.hashCode();
+		}
+		
+		public String getCode() {
+			if (super.getCode() == null)
+				return arlRule;
+			else 
+				return super.getCode();
 		}
 	}
 

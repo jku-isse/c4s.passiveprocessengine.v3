@@ -13,7 +13,12 @@ public interface InstanceType extends Instance {
 	void createSinglePropertyType(String name, InstanceType type);
 	PropertyType getPropertyType(String propertyName);
 	
-	// accessing type hierarchy
+	/**
+	 * 
+	 * @param instanceToCompareTo
+	 * @return true if  the instance type this is called on, is of equals type or a subtype of 'instanceToCompareTo'
+	 * accessing the type hierarchy
+	 */
 	boolean isOfTypeOrAnySubtype(InstanceType instanceToCompareTo);
 	Set<InstanceType> getAllSubtypesRecursively();
 	

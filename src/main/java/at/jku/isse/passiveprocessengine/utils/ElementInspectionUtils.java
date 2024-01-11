@@ -22,7 +22,7 @@ import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintWrapper;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
@@ -132,7 +132,7 @@ public class ElementInspectionUtils {
     		td.getDefinition().getQAConstraints().stream().forEach(entry -> {
     			//InstanceType type = td.getInstance().getProperty(ProcessStep.getQASpecId(entry, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, td.getDefinition()))).propertyType().referencedInstanceType();
     			String id = ProcessStep.getQASpecId(entry, pd);
-    			ConstraintWrapper cw = Context.getWrappedInstance(ConstraintWrapper.class, (Instance) td.getInstance().getPropertyAsMap(AbstractProcessStepType.CoreProperties.qaState.toString()).get(id));
+    			ConstraintResultWrapper cw = Context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) td.getInstance().getPropertyAsMap(AbstractProcessStepType.CoreProperties.qaState.toString()).get(id));
     			ConsistencyRuleType crt = (ConsistencyRuleType)cw.getRuleResult().getInstanceType();
     			if (crt.hasRuleError()) {
     				pex.getErrorMessages().add(crt.ruleError());
