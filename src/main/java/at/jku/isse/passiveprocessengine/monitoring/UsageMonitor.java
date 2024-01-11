@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.service.RuleService;
+import at.jku.isse.passiveprocessengine.core.RuleResult;
+import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
@@ -19,14 +21,16 @@ import net.logstash.logback.argument.StructuredArgument;
 public class UsageMonitor {
 
 	private ITimeStampProvider timeProvider;
+	private RuleServiceWrapper ruleService;
 
 	private final Logger monitor = LoggerFactory.getLogger("monitor.usage");
 
 	public static enum UsageEvents {ProcessViewed, StepViewed, ConstraintViewed, GuidanceExecuted, ProcessDeleted, ProcessCreated}
 	public static enum LogProperties {rootProcessInstanceId, processInstanceId, processDefinitionId, stepDefinitionId, evalResult, guidanceSize, constraintId, repairTemplate, repairRank, originTime, eventType, userId}
 
-	public UsageMonitor(ITimeStampProvider timeProvider) {
+	public UsageMonitor(ITimeStampProvider timeProvider, RuleServiceWrapper ruleService) {
 		this.timeProvider = timeProvider;
+		this.ruleService = ruleService;
 	}
 
 	private StructuredArgument getTime() {
@@ -75,7 +79,7 @@ public class UsageMonitor {
 	public void constraintedViewed(ConstraintResultWrapper cw, String userId) { //if not fulfilled, implies that repairtree was loaded
 		int repairCount = 0;
 		if (!cw.getEvalResult() && cw.getRuleResult() != null) {
-			RepairNode repairTree = RuleService.repairTree(cw.getRuleResult());
+			RepairNode repairTree = ruleService.repairTree(cw.getRuleResult());
 			repairCount = repairTree.getRepairActions().size();
 			// TODO: obtain also maxRank?
 		}
@@ -86,10 +90,10 @@ public class UsageMonitor {
 		monitor.info("Constraint viewed", args.toArray());
 	}
 
-	public void repairActionExecuted(ConsistencyRule processScopedRule, ProcessStep step, String selectedRepairTemplate, int rank) {
+	public void repairActionExecuted(RuleResult processScopedRuleResult, ProcessStep step, String selectedRepairTemplate, int rank) {
 		List<StructuredArgument> args = getDefaultArguments(step.getProcess(), null, UsageEvents.GuidanceExecuted.toString());
 		args.add(kv(LogProperties.repairTemplate.toString(), selectedRepairTemplate));
-		args.add(kv(LogProperties.constraintId.toString(), processScopedRule.consistencyRuleDefinition().name()));
+		args.add(kv(LogProperties.constraintId.toString(), processScopedRuleResult.getInstanceType().getName()));
 		args.add(kv(LogProperties.repairRank.toString(), rank));
 		monitor.debug("Guidance executed", args.toArray());
 

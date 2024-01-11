@@ -5,13 +5,6 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import at.jku.isse.designspace.core.model.CollectionProperty;
-import at.jku.isse.designspace.core.model.Instance;
-import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.core.model.MapProperty;
-import at.jku.isse.designspace.core.model.Property;
-import at.jku.isse.designspace.core.model.PropertyType;
-import at.jku.isse.designspace.core.model.SingleProperty;
 import at.jku.isse.designspace.rule.arl.repair.AbstractRepairAction;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.arl.repair.RestrictionNode;
@@ -19,6 +12,8 @@ import at.jku.isse.designspace.rule.arl.repair.UnknownRepairValue;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.passiveprocessengine.Context;
+import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
@@ -118,7 +113,7 @@ public class ElementInspectionUtils {
     	.peek(td -> System.out.println("Visiting Step: "+td.getName()))
     	.forEach(td -> {
     		td.getDefinition().getInputToOutputMappingRules().entrySet().stream().forEach(entry -> {
-    			InstanceType type = td.getInstance().getProperty("crd_datamapping_"+entry.getKey()).propertyType().referencedInstanceType();
+    			InstanceType type = td.getInstance().getInstanceType().getPropertyType("crd_datamapping_"+entry.getKey()).getInstanceType();
     			ConsistencyRuleType crt = (ConsistencyRuleType)type;
     			if (crt.hasRuleError()) {
     				pex.getErrorMessages().add(crt.ruleError());

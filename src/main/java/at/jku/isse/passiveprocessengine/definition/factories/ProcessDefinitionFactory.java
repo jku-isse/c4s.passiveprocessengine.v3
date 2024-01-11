@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
@@ -16,27 +15,32 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
+import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class ProcessDefinitionFactory {
 	InstanceRepository repository;
 	Context context;
 	ProcessDomainTypesRegistry typesFactory;
+	RuleServiceWrapper ruleService;
 
 	public static final String CRD_PREFIX = "crd_";
 	public static final String CRD_DATAMAPPING_PREFIX = "crd_datamapping_";
 	public static final String CRD_QASPEC_PREFIX = "crd_qaspec_";
 
 
-	public ProcessDefinitionFactory(InstanceRepository repository, Context context, ProcessDomainTypesRegistry typesFactory) {
+	public ProcessDefinitionFactory(InstanceRepository repository, Context context, ProcessDomainTypesRegistry typesFactory, RuleServiceWrapper ruleService) {
 		this.repository = repository;
 		this.context = context;
 		this.typesFactory = typesFactory;
+		this.ruleService = ruleService;
 	}
 
 	/**
@@ -50,6 +54,13 @@ public class ProcessDefinitionFactory {
 		return context.getWrappedInstance(ProcessDefinition.class, instance);				
 	}
 
+	/**
+	 * 
+	 * @param processDef
+	 * @param doGeneratePrematureDetectionConstraints (ignored for now)
+	 * @return any errors that occurred while instantiating all specific StepTypes and their respective RuleDefinitions, includes rule augmentation
+	 * includes checking of process wellformedness constraints
+	 */
 	public List<ProcessDefinitionError> initializeInstanceTypes(ProcessDefinition processDef, boolean doGeneratePrematureDetectionConstraints) {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
 		SpecificProcessInstanceType typeProvider = new SpecificProcessInstanceType(context.getSchemaRegistry(), processDef);
@@ -78,17 +89,17 @@ public class ProcessDefinitionFactory {
 		errors.addAll(checkProcessStructure(processDef));
 		context.getInstanceRepository().concludeTransaction();
 		//				List<String> augmentationErrors = new LinkedList<>();
-		errors.addAll(new RuleAugmentation(processDef, processInstanceType, context.getFactoryIndex().getRuleDefinitionFactory()).augmentAndCreateConditions());
+		errors.addAll(new RuleAugmentation(processDef, processInstanceType, context.getFactoryIndex().getRuleDefinitionFactory(), ruleService).augmentAndCreateConditions());
 		processDef.getStepDefinitions().stream().forEach(stepDef -> {
-			errors.addAll(new RuleAugmentation(stepDef, typesFactory.getTypeByName(SpecificProcessStepType.getProcessStepName(stepDef)), context.getFactoryIndex().getRuleDefinitionFactory()).augmentAndCreateConditions());
+			errors.addAll(new RuleAugmentation(stepDef, typesFactory.getTypeByName(SpecificProcessStepType.getProcessStepName(stepDef)), context.getFactoryIndex().getRuleDefinitionFactory(), ruleService).augmentAndCreateConditions());
 		});
 		errors.addAll(checkConstraintValidity(processDef, processInstanceType));
 		if (errors.isEmpty() ) {
 			// now lets also create premature rules here, as we need the process to exist first
-			if (doGeneratePrematureDetectionConstraints) {
-				new PrematureTriggerGenerator(ws, this).generatePrematureConstraints();
-				context.getInstanceRepository().concludeTransaction();
-			}
+	//		if (doGeneratePrematureDetectionConstraints) {
+	//			new PrematureTriggerGenerator(ws, this).generatePrematureConstraints();
+	//			context.getInstanceRepository().concludeTransaction();
+	//		}
 			// even if there are augementation errors, these were due to unsupported constructs in the constraint during augmentation, but the constraints are ok,
 			// thus we store and run the process, but report back that augmentation didn;t work.
 			//					if (!augmentationErrors.isEmpty()) {

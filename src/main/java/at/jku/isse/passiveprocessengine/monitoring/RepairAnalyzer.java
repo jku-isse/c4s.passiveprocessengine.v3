@@ -672,7 +672,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 				effects.get(Type.POSITIVE).stream()
 						.filter(se -> se instanceof ContextualizedPositiveSideEffect<?>)
 						.forEach(se -> monitor.repairActionExecuted(se.getInconsistency(),
-															Context.getWrappedInstance(ProcessStep.class, se.getInconsistency().contextInstance()),
+															context.getWrappedInstance(ProcessStep.class, se.getInconsistency().contextInstance()),
 															Repair_template.toRepairTemplate(((ContextualizedPositiveSideEffect<ConsistencyRule>) se).getMatchingRepair()).asString(),
 															-1));
 			}

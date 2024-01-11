@@ -8,7 +8,7 @@ import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
-import at.jku.isse.passiveprocessengine.definition.factories.DefinitionFactoryIndex;
+import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -22,16 +22,18 @@ public class Context {
 	final ProcessDomainTypesRegistry typesFactory;
 	final ProcessConfigBaseElementType configFactory;	
 	final FactoryIndex factoryIndex;
+	final InputToOutputMapper ioMapper;
 				
 	private final Map<String, InstanceWrapper> cache = new HashMap<>();
 	
 	public Context(InstanceRepository instanceRepository, SchemaRegistry schemaRegistry, ProcessDomainTypesRegistry typesFactory,
-			ProcessConfigBaseElementType configFactory, FactoryIndex factoryIndex) {
+			ProcessConfigBaseElementType configFactory, FactoryIndex factoryIndex, InputToOutputMapper ioMapper) {
 		this.instanceRepository = instanceRepository;
 		this.schemaRegistry = schemaRegistry;
 		this.typesFactory = typesFactory;
 		this.configFactory = configFactory;		
 		this.factoryIndex = factoryIndex;
+		this.ioMapper = ioMapper;
 	}
 
 	@SuppressWarnings("unchecked")

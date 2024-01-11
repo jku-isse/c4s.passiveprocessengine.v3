@@ -21,6 +21,7 @@ import at.jku.isse.passiveprocessengine.core.PropertyChange;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.factories.ProcessDefinitionFactory;
 import at.jku.isse.passiveprocessengine.definition.factories.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
@@ -92,16 +93,16 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		} else {
 		// if premature conditions, then delegate to process instance, resp often will need to be on process level anyway
 			// input to putput mappings
-			if (crt.getName().startsWith(SpecificProcessStepType.CRD_DATAMAPPING_PREFIX) ) {
+			if (crt.getName().startsWith(ProcessDefinitionFactory.CRD_DATAMAPPING_PREFIX) ) {
 				if (!Boolean.valueOf(op.getValue().toString())) { // an unfulfilled datamapping rules
 				// now we need to "repair" this, i.e., set the output accordingly
 					log.debug(String.format("Datamapping %s queued for repair", crt.getName()));
-					return new IOMappingConsistencyCmd(this, cr, true);
+					return new IOMappingConsistencyCmd(this, cr, true, context.getIoMapper());
 				} else {
 					log.debug(String.format("Datamapping %s now consistent", crt.getName()));
-					return new IOMappingConsistencyCmd(this, cr, false);
+					return new IOMappingConsistencyCmd(this, cr, false, context.getIoMapper());
 				}
-			} else if (crt.getName().startsWith(SpecificProcessStepType.CRD_QASPEC_PREFIX) ) { // a qa constraint
+			} else if (crt.getName().startsWith(ProcessDefinitionFactory.CRD_QASPEC_PREFIX) ) { // a qa constraint
 				log.debug(String.format("QA Constraint %s now %s ", crt.getName(), op.getValue() != null ? op.getValue().toString() : "NULL"));
 				//processQAEvent(cr, op); Boolean.parseBoolean(op.value().toString())
 				return op.getValue() != null ? new QAConstraintChangedCmd(this, cr, Boolean.parseBoolean(op.getValue().toString())) :
@@ -114,16 +115,16 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 
 	private Conditions determineCondition(RuleDefinition crt) {
 		 //FIXME better matching needed
-		if (crt.getName().startsWith(SpecificProcessStepType.CRD_PREFIX+Conditions.PRECONDITION.toString()))
+		if (crt.getName().startsWith(ProcessDefinitionFactory.CRD_PREFIX+Conditions.PRECONDITION.toString()))
 			return Conditions.PRECONDITION;
-		else if (crt.getName().startsWith(SpecificProcessStepType.CRD_PREFIX+Conditions.POSTCONDITION.toString()))
+		else if (crt.getName().startsWith(ProcessDefinitionFactory.CRD_PREFIX+Conditions.POSTCONDITION.toString()))
 			return Conditions.POSTCONDITION;
-		else if (crt.getName().startsWith(SpecificProcessStepType.CRD_PREFIX+Conditions.ACTIVATION.toString()))
+		else if (crt.getName().startsWith(ProcessDefinitionFactory.CRD_PREFIX+Conditions.ACTIVATION.toString()))
 			return Conditions.ACTIVATION;
-		else if (crt.getName().startsWith(SpecificProcessStepType.CRD_PREFIX+Conditions.CANCELATION.toString()))
+		else if (crt.getName().startsWith(ProcessDefinitionFactory.CRD_PREFIX+Conditions.CANCELATION.toString()))
 			return Conditions.CANCELATION;
 		else {
-			if (!crt.getName().startsWith(SpecificProcessStepType.CRD_DATAMAPPING_PREFIX) && !crt.getName().startsWith(SpecificProcessStepType.CRD_QASPEC_PREFIX))
+			if (!crt.getName().startsWith(ProcessDefinitionFactory.CRD_DATAMAPPING_PREFIX) && !crt.getName().startsWith(ProcessDefinitionFactory.CRD_QASPEC_PREFIX))
 					log.error("Unknown consistency rule: "+crt.getName());
 			return null;
 		}

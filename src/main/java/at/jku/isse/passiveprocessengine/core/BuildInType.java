@@ -21,11 +21,6 @@ public abstract class BuildInType implements InstanceType {
 	}
 
 	@Override
-	public Object getPropertyAsSingle(String property) {
-		return null;
-	}
-
-	@Override
 	public void setSingleProperty(String property, Object value) {
 		// no op
 	}

@@ -10,9 +10,8 @@ import at.jku.isse.designspace.rule.arl.repair.Repair;
 import at.jku.isse.designspace.rule.arl.repair.RepairAction;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.arl.repair.RepairTreeFilter;
-import at.jku.isse.designspace.rule.model.ConsistencyRule;
-import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
-import at.jku.isse.designspace.rule.service.RuleService;
+import at.jku.isse.passiveprocessengine.core.RuleResult;
+import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import lombok.extern.slf4j.Slf4j;
@@ -22,22 +21,28 @@ public class InputToOutputMapper {
 
 	private static RepairTreeFilter rtf = new OutputUpdateRepairTreeFilter();
 
+	private RuleServiceWrapper ruleService;
+	
+	public InputToOutputMapper(RuleServiceWrapper ruleService) {
+		this.ruleService = ruleService;
+	}
+	
+	
 	@SuppressWarnings("unchecked")
-	public static List<Events.ProcessChangedEvent> mapInputToOutputInStepScope(ProcessStep step, ConsistencyRule crule) {
-		if (crule.isConsistent()) {
-			log.info("MappingRule became consistent while request was queued "+crule.toString());
+	public List<Events.ProcessChangedEvent> mapInputToOutputInStepScope(ProcessStep step, RuleResult ruleResult) {
+		if (ruleResult.isConsistent()) {
+			log.info("MappingRule became consistent while request was queued "+ruleResult.toString());
 			return Collections.emptyList(); // nothing to do
 		}
 
-		ConsistencyRuleType crt = (ConsistencyRuleType) crule.getInstanceType();
-		RepairNode repairTree = RuleService.repairTree(crule);
+		RepairNode repairTree = ruleService.repairTree(ruleResult);
 		rtf.filterRepairTree(repairTree);
 		//DONE: if there are (only) concrete repair actions (which should be the case with symmetric difference)
 
 		Set<Repair> repairs = repairTree.getRepairs();
 		if (repairs == null) {
-			String state = crule.isConsistent() ? "CONSISTENT" : "INCONSISTENT";
-			log.error("FATAL: No repairs could be created for "+state+" "+crt.name());
+			String state = ruleResult.isConsistent() ? "CONSISTENT" : "INCONSISTENT";
+			log.error("FATAL: No repairs could be created for "+state+" "+ruleResult.getInstanceType().getName());
 			// check if there is a rule error, print that, hence later retry needed
 			return Collections.emptyList();
 		} else {
@@ -51,7 +56,7 @@ public class InputToOutputMapper {
 				}
 			}
 			, () -> {
-				log.error("No concrete Repairs found for "+crt.name());
+				log.error("No concrete Repairs found for "+ruleResult.getInstanceType().getName());
 				//TODO: THIS NEEDS TO BE FIXED:		throw new RuntimeException("Datamapping could not be repaired");
 			}
 					);

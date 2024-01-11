@@ -112,11 +112,12 @@ public class Commands {
 		private final ProcessStep step;
 		private final RuleResult crule;
 		private final boolean isInconsistent;
+		private final InputToOutputMapper ioMapper;
 
 		@Override
 		public List<Events.ProcessChangedEvent> execute() {
 			if (isInconsistent)
-				return InputToOutputMapper.mapInputToOutputInStepScope(step, crule);
+				return ioMapper.mapInputToOutputInStepScope(step, crule);
 			else // nothing to do
 				return Collections.emptyList();
 		}

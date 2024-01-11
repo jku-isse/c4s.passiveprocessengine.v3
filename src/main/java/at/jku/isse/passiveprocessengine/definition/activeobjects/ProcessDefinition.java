@@ -119,7 +119,7 @@ public class ProcessDefinition extends StepDefinition{
 		this.getExpectedInput().entrySet().stream()
 		.filter(entry -> entry.getValue().isOfTypeOrAnySubtype(context.getTypesFactory().getTypeByName(ProcessConfigBaseElementType.typeId)))
 		.forEach(configEntry -> {
-			InstanceType procConfig = context.getConfigFactory().getOrCreateProcessSpecificSubtype(configEntry.getKey(), this);
+			InstanceType procConfig = configEntry.getValue().getInstanceType(); // context.getConfigFactory().getOrCreateProcessSpecificSubtype(configEntry.getKey(), this);
 			procConfig.markAsDeleted();
 		});
 		super.deleteCascading();

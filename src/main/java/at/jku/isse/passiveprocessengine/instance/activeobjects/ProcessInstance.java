@@ -210,7 +210,7 @@ public class ProcessInstance extends ProcessStep {
 		if (arePostCondFulfilled() != isfulfilled) { // a change
 			ProcessInstance pi = getParentProcessOrThisIfProcessElseNull();
 			events.add(new Events.ConditionFulfillmentChanged(pi, this, Conditions.POSTCONDITION, isfulfilled));
-			instance.getPropertyAsSingle(AbstractProcessStepType.CoreProperties.processedPostCondFulfilled.toString()).set(isfulfilled);
+			instance.setSingleProperty(AbstractProcessStepType.CoreProperties.processedPostCondFulfilled.toString(), isfulfilled);
 			events.addAll(tryTransitionToCompleted());
 		}
 		return events;
@@ -222,14 +222,14 @@ public class ProcessInstance extends ProcessStep {
 			List<Events.ProcessChangedEvent> events = new LinkedList<>();
 			ProcessInstance pi = getParentProcessOrThisIfProcessElseNull();
 			events.add(new Events.ConditionFulfillmentChanged(pi, this, Conditions.PRECONDITION, isfulfilled));
-			instance.getPropertyAsSingle(AbstractProcessStepType.CoreProperties.processedPreCondFulfilled.toString()).set(isfulfilled);
+			instance.setSingleProperty(AbstractProcessStepType.CoreProperties.processedPreCondFulfilled.toString(), isfulfilled);
 			if (isfulfilled)  {
-				events.addAll(this.trigger(StepLifecycle.Trigger.ENABLE)) ;
+				events.addAll(this.trigger(Trigger.ENABLE)) ;
 				events.addAll(tryTransitionToCompleted()) ;
 			}
 			else {
 				//if (!actualSM.isInState(State.CANCELED)) // no need to check any longer as CANCELED state only reacts to uncancel triggers
-				events.addAll(this.trigger(StepLifecycle.Trigger.RESET));
+				events.addAll(this.trigger(Trigger.RESET));
 				// we stay in cancelled even if there are preconditions no longer fulfilled,
 				// if we are no longer cancelled, and precond do not hold, then reset
 			}
@@ -240,13 +240,13 @@ public class ProcessInstance extends ProcessStep {
 
 	private List<Events.ProcessChangedEvent> tryTransitionToCompleted() {
 		if (this.getDefinition().getPostconditions().isEmpty()) {
-			instance.getPropertyAsSingle(AbstractProcessStepType.CoreProperties.processedPostCondFulfilled.toString()).set(true);
+			instance.setSingleProperty(AbstractProcessStepType.CoreProperties.processedPostCondFulfilled.toString(), true);
 		}
 		boolean areAllDNIsInflowFulfilled = this.getDecisionNodeInstances().stream().allMatch(dni -> dni.isInflowFulfilled());
 		if (arePostCondFulfilled() && areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.qaState.toString()) && arePreCondFulfilled() && areAllDNIsInflowFulfilled)
-			return this.trigger(StepLifecycle.Trigger.MARK_COMPLETE) ;
+			return this.trigger(Trigger.MARK_COMPLETE) ;
 		else
-			return this.trigger(StepLifecycle.Trigger.ACTIVATE);
+			return this.trigger(Trigger.ACTIVATE);
 	}
 
 	@SuppressWarnings("unchecked")
