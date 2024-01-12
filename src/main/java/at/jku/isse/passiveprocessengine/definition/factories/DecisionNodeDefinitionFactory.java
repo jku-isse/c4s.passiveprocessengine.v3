@@ -1,9 +1,9 @@
 package at.jku.isse.passiveprocessengine.definition.factories;
 
 import at.jku.isse.passiveprocessengine.Context;
+import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
-import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
@@ -11,9 +11,9 @@ import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionT
 public class DecisionNodeDefinitionFactory {
 	InstanceRepository repository;
 	Context wrapperCache;
-	ProcessDomainTypesRegistry typesFactory;
+	DomainTypesRegistry typesFactory;
 	
-	public DecisionNodeDefinitionFactory(InstanceRepository repository, Context wrapperCache, ProcessDomainTypesRegistry typesFactory) {
+	public DecisionNodeDefinitionFactory(InstanceRepository repository, Context wrapperCache, DomainTypesRegistry typesFactory) {
 		this.repository = repository;
 		this.wrapperCache = wrapperCache;
 		this.typesFactory = typesFactory;

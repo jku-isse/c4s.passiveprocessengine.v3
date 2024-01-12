@@ -26,14 +26,11 @@ public interface InstanceType extends Instance {
 	
 	public static enum CARDINALITIES { SINGLE, LIST, SET, MAP };
 	
-	@Data
-	public static class PropertyType {
-		final String name;
-		final CARDINALITIES cardinality;
-		final InstanceType instanceType;
-		public boolean isAssignable(Object object) {
-			// TODO Auto-generated method stub
-			return false;
-		}
+	
+	public static interface PropertyType {
+		String getName();
+		CARDINALITIES getCardinality();
+		InstanceType getInstanceType();
+		boolean isAssignable(Object object);
 	};
 }

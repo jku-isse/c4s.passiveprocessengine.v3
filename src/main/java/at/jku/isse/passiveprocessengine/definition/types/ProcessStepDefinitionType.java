@@ -4,9 +4,8 @@ import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
-import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry.TypeProvider;
+import at.jku.isse.passiveprocessengine.core.TypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
@@ -21,27 +20,32 @@ public class ProcessStepDefinitionType implements TypeProvider {
 	hierarchyDepth}
 	public static final String typeId = StepDefinition.class.getSimpleName();
 	private SchemaRegistry schemaRegistry;
+	private final InstanceType type;
 
 	public ProcessStepDefinitionType(SchemaRegistry schemaRegistry) {
 		this.schemaRegistry = schemaRegistry;
+		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		if (thisType.isPresent()) {
+			schemaRegistry.registerType(StepDefinition.class, thisType.get());
+			this.type = thisType.get();
+		} else {
+			InstanceType type = schemaRegistry.createNewInstanceType(typeId,  schemaRegistry.getType(ProcessDefinitionScopedElement.class));
+			schemaRegistry.registerType(StepDefinition.class, type);
+			this.type = type;
+		}
 	}
 	
 	
 	@Override
-	public void registerTypeInFactory(ProcessDomainTypesRegistry factory) {
-		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
-			if (thisType.isPresent())
-				factory.registerType(StepDefinition.class, thisType.get());
-			else {
-				InstanceType type = schemaRegistry.createNewInstanceType(typeId,  factory.getType(ProcessDefinitionScopedElement.class));
-				factory.registerType(StepDefinition.class, type);
-				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.qaConstraints.toString(), factory.getType(ConstraintSpec.class));
+	public void produceTypeProperties() {
+		
+				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.qaConstraints.toString(), schemaRegistry.getType(ConstraintSpec.class));
 				type.createMapPropertyType(ProcessStepDefinitionType.CoreProperties.expectedInput.toString(), BuildInType.STRING, BuildInType.METATYPE);
 				type.createMapPropertyType(ProcessStepDefinitionType.CoreProperties.expectedOutput.toString(), BuildInType.STRING, BuildInType.METATYPE);
-				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.preconditions.toString(), factory.getType(ConstraintSpec.class));
-				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.postconditions.toString(), factory.getType(ConstraintSpec.class));
-				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.cancelconditions.toString(), factory.getType(ConstraintSpec.class));
-				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.activationconditions.toString(), factory.getType(ConstraintSpec.class));
+				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.preconditions.toString(), schemaRegistry.getType(ConstraintSpec.class));
+				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.postconditions.toString(), schemaRegistry.getType(ConstraintSpec.class));
+				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.cancelconditions.toString(), schemaRegistry.getType(ConstraintSpec.class));
+				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.activationconditions.toString(), schemaRegistry.getType(ConstraintSpec.class));
 				type.createSinglePropertyType(ProcessStepDefinitionType.CoreProperties.inDND.toString(), BuildInType.STRING);
 				type.createSinglePropertyType(ProcessStepDefinitionType.CoreProperties.outDND.toString(), BuildInType.STRING);
 				type.createMapPropertyType((ProcessStepDefinitionType.CoreProperties.ioMappingRules.toString()), BuildInType.STRING, BuildInType.STRING);
@@ -49,7 +53,6 @@ public class ProcessStepDefinitionType implements TypeProvider {
 				type.createSinglePropertyType((ProcessStepDefinitionType.CoreProperties.hierarchyDepth.toString()), BuildInType.INTEGER);
 				type.createSinglePropertyType((ProcessStepDefinitionType.CoreProperties.html_url.toString()), BuildInType.STRING);
 				type.createSinglePropertyType((ProcessStepDefinitionType.CoreProperties.description.toString()), BuildInType.STRING);
-			}
 	}
 
 }

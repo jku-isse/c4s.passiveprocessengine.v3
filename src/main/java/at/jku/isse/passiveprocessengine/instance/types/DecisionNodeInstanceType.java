@@ -4,9 +4,8 @@ import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
-import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry.TypeProvider;
+import at.jku.isse.passiveprocessengine.core.TypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
@@ -25,7 +24,7 @@ public class DecisionNodeInstanceType implements TypeProvider {
 	}
 
 	@Override
-	public void registerTypeInFactory(ProcessDomainTypesRegistry factory) {
+	public void produceTypeProperties() {
 		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
 		if (thisType.isPresent())
 			factory.registerType(DecisionNodeInstance.class, thisType.get());

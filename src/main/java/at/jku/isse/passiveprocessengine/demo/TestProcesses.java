@@ -16,19 +16,25 @@ import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 public class TestProcesses {
 
+	TestArtifacts artifactFactory;
+	
+	public TestProcesses(TestArtifacts artifactFactory) {
+		this.artifactFactory = artifactFactory;
+	}
+	
 	// process with two parallel subtasks, each taking the same jira issue as input, both completing when that issue is set to closed
 	// no qa constraints applied, datamapping only for one subtask, subproc complete when both subtasks are complete (AND cond)
-	public static ProcessDefinition getSimpleSubprocessDefinition(Workspace ws, boolean doInitType) throws ProcessException {
-		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
-		ProcessDefinition procDef = ProcessDefinition.getInstance("subproc1", ws);
+	public ProcessDefinition getSimpleSubprocessDefinition(boolean doInitType) throws ProcessException {
+		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		ProcessDefinition procDef = ProcessDefinition.getInstance("subproc1");
 		procDef.addExpectedInput("jiraIn", typeJira);
 		procDef.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 		procDef.addExpectedOutput("jiraOut", typeJira);
 		//procDef.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() > 0");
 		//no definition how many outputs, there is a possibility to provide output, but completion is upon subtask completion
-		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dndSubStart", ws);
-		DecisionNodeDefinition dnd2 = procDef.createDecisionNodeDefinition("dndSubEnd", ws);
-		StepDefinition sd1 = procDef.createStepDefinition("subtask1", ws);
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dndSubStart" );
+		DecisionNodeDefinition dnd2 = procDef.createDecisionNodeDefinition("dndSubEnd" );
+		StepDefinition sd1 = procDef.createStepDefinition("subtask1" );
 		sd1.addExpectedInput("jiraIn", typeJira);
 		sd1.addExpectedOutput("jiraOut", typeJira);
 		sd1.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
@@ -38,7 +44,7 @@ public class TestProcesses {
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);
 		sd1.setSpecOrderIndex(11);
-		StepDefinition sd2 = procDef.createStepDefinition("subtask2", ws);
+		StepDefinition sd2 = procDef.createStepDefinition("subtask2" );
 		sd2.addExpectedInput("jiraIn", typeJira);
 		sd2.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 		sd2.setCondition(Conditions.POSTCONDITION, "self.in_jiraIn->forAll( issue | issue.state = 'Closed')");
@@ -57,17 +63,17 @@ public class TestProcesses {
 	}
 
 	// simple process, two AND branches, on of the subbranches is a subprocess, no QA, simple datamapping, all using same completion condition of step set to closed
-	public static ProcessDefinition getSimpleSuperProcessDefinition(Workspace ws) throws ProcessException {
-		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
-		ProcessDefinition procDef = ProcessDefinition.getInstance("parentproc1", ws);
+	public ProcessDefinition getSimpleSuperProcessDefinition( ) throws ProcessException {
+		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		ProcessDefinition procDef = ProcessDefinition.getInstance("parentproc1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
 		procDef.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 		procDef.addExpectedOutput("jiraOut", typeJira);
 		//procDef.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() > 0");
 		//no definition how many outputs, there is a possibility to provide output, but completion is upon subtask completion
-		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dndParentStart", ws);
-		DecisionNodeDefinition dnd2 = procDef.createDecisionNodeDefinition("dndParentEnd", ws);
-		StepDefinition sd1 = procDef.createStepDefinition("paratask1", ws);
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dndParentStart" );
+		DecisionNodeDefinition dnd2 = procDef.createDecisionNodeDefinition("dndParentEnd" );
+		StepDefinition sd1 = procDef.createStepDefinition("paratask1" );
 		sd1.addExpectedInput("jiraIn", typeJira);
 		sd1.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 		sd1.setCondition(Conditions.POSTCONDITION, "self.in_jiraIn->forAll( issue | issue.state = 'Closed')");
@@ -93,21 +99,21 @@ public class TestProcesses {
 		return procDef;
 	}
 
-	public static ProcessDefinition getSimple2StepProcessDefinition(Workspace ws) throws ProcessException {
-			InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
-			ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
+	public ProcessDefinition getSimple2StepProcessDefinition( ) throws ProcessException {
+			InstanceType typeJira = artifactFactory.getJiraInstanceType();
+			ProcessDefinition procDef = ProcessDefinition.getInstance("proc1" );
 			procDef.addExpectedInput("jiraIn", typeJira);
 			procDef.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 			procDef.addExpectedOutput("jiraOut", typeJira);
 			procDef.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() > 0");
 	//		ws.debugInstanceTypes().stream().forEach(it -> System.out.println(it));
-			DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1", ws);
+			DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1" );
 			//dnd1.setInflowType(InFlowType.AND);
-			DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2", ws);
+			DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2" );
 			//dnd2.setInflowType(InFlowType.AND);
-			DecisionNodeDefinition dnd3 =  procDef.createDecisionNodeDefinition("dnd3", ws);
+			DecisionNodeDefinition dnd3 =  procDef.createDecisionNodeDefinition("dnd3" );
 
-			StepDefinition sd1 = procDef.createStepDefinition("sd1", ws);
+			StepDefinition sd1 = procDef.createStepDefinition("sd1" );
 			sd1.addExpectedInput("jiraIn", typeJira);
 			sd1.addExpectedOutput("jiraOut", typeJira);
 			//sd1.addInputToOutputMappingRule("jiraIn2jiraOut", "self.in_jiraIn->forAll(elem | result->includes(elem) = self.out_jiraOut->excludes(elem))-> size() = 0"); // i.e., the symetricDifference is empty, i.e., the same elements need to be in both lists
@@ -135,22 +141,22 @@ public class TestProcesses {
 
 			sd1.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 			sd1.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() = self.in_jiraIn->asList()->first()->asType(<"+typeJira.getQualifiedName()+">).requirements->size()");
-			ConstraintSpec qa1 = ConstraintSpec.createInstance(Conditions.QA, "sd1-qa1-state", "self.out_jiraOut->forAll( issue | issue.state = 'Open')", "All issue states must be 'Open'",1, ws);
+			ConstraintSpec qa1 = ConstraintSpec.createInstance(Conditions.QA, "sd1-qa1-state", "self.out_jiraOut->forAll( issue | issue.state = 'Open')", "All issue states must be 'Open'",1 );
 			sd1.addQAConstraint(qa1);
-			ConstraintSpec qa2 = ConstraintSpec.createInstance(Conditions.QA, "sd1-qa2-state", "self.out_jiraOut->forAll( issue | issue.state <> 'InProgress')", "None of the issue states must be 'InProgress'",2, ws);
+			ConstraintSpec qa2 = ConstraintSpec.createInstance(Conditions.QA, "sd1-qa2-state", "self.out_jiraOut->forAll( issue | issue.state <> 'InProgress')", "None of the issue states must be 'InProgress'",2 );
 			sd1.addQAConstraint(qa2);
 			sd1.setInDND(dnd1);
 			sd1.setOutDND(dnd2);
 			sd1.setSpecOrderIndex(1);
 
-			StepDefinition sd2 = procDef.createStepDefinition("sd2", ws);
+			StepDefinition sd2 = procDef.createStepDefinition("sd2" );
 			sd2.addExpectedInput("jiraIn", typeJira);
 			sd2.addExpectedOutput("jiraOut", typeJira);
 			sd2.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() >= 1");
 			sd2.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() >= 0");
 			sd2.addInputToOutputMappingRule("jiraOut", "self.in_jiraIn");//->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and "
 							//+ " self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
-			ConstraintSpec qa3 = ConstraintSpec.createInstance(Conditions.QA, "sd2-qa3-state", "self.in_jiraIn->forAll( issue | issue.state = 'Closed')", "All in issue states must be 'Closed'",3, ws);
+			ConstraintSpec qa3 = ConstraintSpec.createInstance(Conditions.QA, "sd2-qa3-state", "self.in_jiraIn->forAll( issue | issue.state = 'Closed')", "All in issue states must be 'Closed'",3 );
 			sd2.addQAConstraint(qa3);
 			sd2.setInDND(dnd2);
 			sd2.setOutDND(dnd3);
@@ -163,15 +169,15 @@ public class TestProcesses {
 			return procDef;
 		}
 
-	public static ProcessDefinition getComplexSingleStepProcessDefinition(Workspace ws) throws ProcessException {
-		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
-		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
+	public ProcessDefinition getComplexSingleStepProcessDefinition( ) throws ProcessException {
+		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
 		procDef.addExpectedOutput("jiraOut", typeJira);
-		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1", ws);
-		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2", ws);
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1" );
+		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2" );
 
-		StepDefinition sd1 = procDef.createStepDefinition("sd1", ws);
+		StepDefinition sd1 = procDef.createStepDefinition("sd1" );
 		sd1.addExpectedInput("jiraIn", typeJira);
 		sd1.addExpectedOutput("jiraOut", typeJira);
 		sd1.addInputToOutputMappingRule("jiraOut",
@@ -200,14 +206,14 @@ public class TestProcesses {
 		return procDef;
 	}
 
-	public static ProcessDefinition get2StepProcessDefinitionWithSymmetricDiffMapping(Workspace ws) throws ProcessException {
-		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
-		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
+	public ProcessDefinition get2StepProcessDefinitionWithSymmetricDiffMapping( ) throws ProcessException {
+		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
-		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1", ws);
-		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2", ws);
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1" );
+		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2" );
 
-		StepDefinition sd1 = procDef.createStepDefinition("sd1", ws);
+		StepDefinition sd1 = procDef.createStepDefinition("sd1" );
 		sd1.addExpectedInput("jiraIn", typeJira);
 		sd1.addExpectedOutput("jiraOut", typeJira);
 
@@ -229,15 +235,15 @@ public class TestProcesses {
 		return procDef;
 	}
 
-	public static ProcessDefinition get2StepProcessDefinitionWithUnionMapping(Workspace ws) throws ProcessException {
-		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
-		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
+	public ProcessDefinition get2StepProcessDefinitionWithUnionMapping( ) throws ProcessException {
+		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
 		procDef.addExpectedInput("jiraIn2", typeJira);
-		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1", ws);
-		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2", ws);
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1" );
+		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2" );
 
-		StepDefinition sd1 = procDef.createStepDefinition("sd1", ws);
+		StepDefinition sd1 = procDef.createStepDefinition("sd1" );
 		sd1.addExpectedInput("jiraIn", typeJira);
 		sd1.addExpectedInput("jiraIn2", typeJira);
 		sd1.addExpectedOutput("jiraOut", typeJira);
@@ -262,15 +268,15 @@ public class TestProcesses {
 		return procDef;
 	}
 
-	public static ProcessDefinition get2StepProcessDefinitionWithExistsCheck(Workspace ws) throws ProcessException {
-		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
-		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
+	public ProcessDefinition get2StepProcessDefinitionWithExistsCheck( ) throws ProcessException {
+		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
 		procDef.addExpectedInput("jiraIn2", typeJira);
-		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1", ws);
-		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2", ws);
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1" );
+		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2" );
 
-		StepDefinition sd1 = procDef.createStepDefinition("sd1", ws);
+		StepDefinition sd1 = procDef.createStepDefinition("sd1" );
 		sd1.addExpectedInput("jiraIn", typeJira);
 		sd1.addExpectedInput("jiraIn2", typeJira);
 		sd1.addExpectedOutput("jiraOut", typeJira);
@@ -298,15 +304,15 @@ public class TestProcesses {
 		return procDef;
 	}
 
-	public static ProcessDefinition getSingleStepProcessDefinitionWithOutput(Workspace ws) throws ProcessException {
-		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
-		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
+	public ProcessDefinition getSingleStepProcessDefinitionWithOutput( ) throws ProcessException {
+		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
 
-		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1", ws);
-		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2", ws);
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1" );
+		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2" );
 
-		StepDefinition sd1 = procDef.createStepDefinition("sd1", ws);
+		StepDefinition sd1 = procDef.createStepDefinition("sd1" );
 		sd1.addExpectedInput("jiraIn", typeJira);
 		sd1.addExpectedOutput("jiraOut", typeJira);
 
@@ -333,17 +339,17 @@ public class TestProcesses {
 		return procDef;
 	}
 
-	public static ProcessDefinition getSimpleXORDefinition(Workspace ws) throws ProcessException {
-		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
-		ProcessDefinition procDef = ProcessDefinition.getInstance("xorproc1", ws);
+	public ProcessDefinition getSimpleXORDefinition( ) throws ProcessException {
+		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		ProcessDefinition procDef = ProcessDefinition.getInstance("xorproc1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
 		procDef.addExpectedOutput("jiraOut", typeJira);
 		//procDef.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() > 0");
 		//no definition how many outputs, there is a possibility to provide output, but completion is upon subtask completion
-		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dndXORStart", ws);
-		DecisionNodeDefinition dnd2 = procDef.createDecisionNodeDefinition("dndXOREnd", ws);
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dndXORStart" );
+		DecisionNodeDefinition dnd2 = procDef.createDecisionNodeDefinition("dndXOREnd" );
 		dnd2.setInflowType(InFlowType.XOR);
-		StepDefinition sd1 = procDef.createStepDefinition("alt1", ws);
+		StepDefinition sd1 = procDef.createStepDefinition("alt1" );
 		sd1.addExpectedInput("jiraIn", typeJira);
 		sd1.addExpectedOutput("jiraOut", typeJira);
 		sd1.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
@@ -353,7 +359,7 @@ public class TestProcesses {
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);
 		sd1.setSpecOrderIndex(11);
-		StepDefinition sd2 = procDef.createStepDefinition("alt2", ws);
+		StepDefinition sd2 = procDef.createStepDefinition("alt2" );
 		sd2.addExpectedInput("jiraIn", typeJira);
 		sd2.addExpectedOutput("jiraOut", typeJira);
 		sd2.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
@@ -375,13 +381,13 @@ public class TestProcesses {
 		return procDef;
 	}
 
-	public static ProcessDefinition getSimpleTemporalProcessDefinitionWithoutQA(Workspace ws) throws ProcessException {
-		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
-		ProcessDefinition procDef = ProcessDefinition.getInstance("temporal1", ws);
+	public ProcessDefinition getSimpleTemporalProcessDefinitionWithoutQA( ) throws ProcessException {
+		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		ProcessDefinition procDef = ProcessDefinition.getInstance("temporal1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
-		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("start1", ws);
-		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("end2", ws);
-		StepDefinition sd1 = procDef.createStepDefinition("step1", ws);
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("start1" );
+		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("end2" );
+		StepDefinition sd1 = procDef.createStepDefinition("step1" );
 		sd1.addExpectedInput("jiraIn", typeJira);
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);
@@ -399,13 +405,13 @@ public class TestProcesses {
 		return procDef;
 	}
 
-	public static ProcessDefinition getSimpleTemporalProcessDefinitionWithQA(Workspace ws) throws ProcessException {
-		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
-		ProcessDefinition procDef = ProcessDefinition.getInstance("temporal1", ws);
+	public ProcessDefinition getSimpleTemporalProcessDefinitionWithQA( ) throws ProcessException {
+		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		ProcessDefinition procDef = ProcessDefinition.getInstance("temporal1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
-		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("start1", ws);
-		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("end2", ws);
-		StepDefinition sd1 = procDef.createStepDefinition("step1", ws);
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("start1" );
+		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("end2" );
+		StepDefinition sd1 = procDef.createStepDefinition("step1" );
 		sd1.addExpectedInput("jiraIn", typeJira);
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);
@@ -419,7 +425,7 @@ public class TestProcesses {
 		ConstraintSpec qa3 = ConstraintSpec.createInstance(Conditions.QA, "sd1-reviewAlwaysBeforeReleased"
 				, "self.in_jiraIn->forAll( issue | issue.requirements\r\n"
 						+ "->forAll(req | until(req.state <> 'Released' , req.state = 'ReadyForReview') \r\n"
-						+ "					and everytime( req.state = 'Released', next( asSoonAs( req.state <> 'Released',  until( req.state <> 'Released', req.state = 'ReadyForReview') ) ) ) ) ) ", "All linked requirements must be in state ReadyForReview before being in state Released",3, ws);
+						+ "					and everytime( req.state = 'Released', next( asSoonAs( req.state <> 'Released',  until( req.state <> 'Released', req.state = 'ReadyForReview') ) ) ) ) ) ", "All linked requirements must be in state ReadyForReview before being in state Released",3 );
 		sd1.addQAConstraint(qa3);
 
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
@@ -430,13 +436,13 @@ public class TestProcesses {
 	}
 
 	// not ( eventually(a, next( eventually(a))))
-	public static ProcessDefinition getSimpleTemporalProcessDefinitionWithSequenceAbsence(Workspace ws) throws ProcessException {
-		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
-		ProcessDefinition procDef = ProcessDefinition.getInstance("temporal1", ws);
+	public ProcessDefinition getSimpleTemporalProcessDefinitionWithSequenceAbsence( ) throws ProcessException {
+		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		ProcessDefinition procDef = ProcessDefinition.getInstance("temporal1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
-		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("start1", ws);
-		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("end2", ws);
-		StepDefinition sd1 = procDef.createStepDefinition("step1", ws);
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("start1" );
+		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("end2" );
+		StepDefinition sd1 = procDef.createStepDefinition("step1" );
 		sd1.addExpectedInput("jiraIn", typeJira);
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);
@@ -455,13 +461,13 @@ public class TestProcesses {
 		return procDef;
 	}
 
-	public static DTOs.Process getSimpleDTOSubprocess(Workspace ws) {
-		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
+	public DTOs.Process getSimpleDTOSubprocess( ) {
+		InstanceType typeJira = artifactFactory.getJiraInstanceType();
 		DTOs.Process procD = new DTOs.Process();
 		procD.setCode("TestSerializeProc1");
 		procD.setDescription("Test for Serialization");
-		procD.getInput().put("jiraIn", typeJira.name());
-		procD.getOutput().put("jiraOut", typeJira.name());
+		procD.getInput().put("jiraIn", typeJira.getName());
+		procD.getOutput().put("jiraOut", typeJira.getName());
 		procD.getConditions().computeIfAbsent(Conditions.PRECONDITION, k -> new ArrayList<>()).add(new Constraint("self.in_jiraIn->size() = 1"));
 
 		DTOs.DecisionNode dn1 = new DTOs.DecisionNode();
@@ -475,8 +481,8 @@ public class TestProcesses {
 
 		DTOs.Step sd1 = new DTOs.Step();
 		sd1.setCode("subtask1");
-		sd1.getInput().put("jiraIn", typeJira.name());
-		sd1.getOutput().put("jiraOut", typeJira.name());
+		sd1.getInput().put("jiraIn", typeJira.getName());
+		sd1.getOutput().put("jiraOut", typeJira.getName());
 		sd1.getConditions().computeIfAbsent(Conditions.PRECONDITION, k -> new ArrayList<>()).add(new Constraint("self.in_jiraIn->size() = 1"));
 		sd1.getConditions().computeIfAbsent(Conditions.POSTCONDITION, k -> new ArrayList<>()).add(new Constraint( "self.in_jiraIn->size() = 1 and self.in_jiraIn->forAll( issue | issue.state = 'Closed')"));
 		sd1.getIoMapping().put("jiraOut", "self.in_jiraIn");//->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
@@ -486,7 +492,7 @@ public class TestProcesses {
 
 		DTOs.Step sd2 = new DTOs.Step();
 		sd2.setCode("subtask2");
-		sd2.getInput().put("jiraIn", typeJira.name());
+		sd2.getInput().put("jiraIn", typeJira.getName());
 		sd2.getConditions().computeIfAbsent(Conditions.PRECONDITION, k -> new ArrayList<>()).add(new Constraint("self.in_jiraIn->size() = 1"));
 		sd2.getConditions().computeIfAbsent(Conditions.POSTCONDITION, k -> new ArrayList<>()).add(new Constraint("self.in_jiraIn->size() = 1 and self.in_jiraIn->forAll( issue | issue.state = 'Closed')"));
 		sd2.setInDNDid(dn1.getCode());
@@ -500,13 +506,13 @@ public class TestProcesses {
 		return procD;
 	}
 
-	public static DTOs.Process getSimpleSuperDTOProcessDefinition(Workspace ws) {
-		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
+	public DTOs.Process getSimpleSuperDTOProcessDefinition( ) {
+		InstanceType typeJira = artifactFactory.getJiraInstanceType();
 		DTOs.Process procD = new DTOs.Process();
 		procD.setCode("TestSerializeParentProc1");
 		procD.setDescription("Test for Serialization");
-		procD.getInput().put("jiraIn", typeJira.name());
-		procD.getOutput().put("jiraOut", typeJira.name());
+		procD.getInput().put("jiraIn", typeJira.getName());
+		procD.getOutput().put("jiraOut", typeJira.getName());
 		procD.getConditions().computeIfAbsent(Conditions.PRECONDITION, k -> new ArrayList<>()).add(new Constraint( "self.in_jiraIn->size() = 1"));
 		DTOs.DecisionNode dn1 = new DTOs.DecisionNode();
 		dn1.setCode("dndParentStart");
@@ -519,14 +525,14 @@ public class TestProcesses {
 
 		DTOs.Step sd1 = new DTOs.Step();
 		sd1.setCode("paratask1");
-		sd1.getInput().put("jiraIn", typeJira.name());
+		sd1.getInput().put("jiraIn", typeJira.getName());
 		sd1.getConditions().computeIfAbsent(Conditions.PRECONDITION, k -> new ArrayList<>()).add(new Constraint( "self.in_jiraIn->size() = 1"));
 		sd1.getConditions().computeIfAbsent(Conditions.POSTCONDITION, k -> new ArrayList<>()).add(new Constraint( "self.in_jiraIn->forAll( issue | issue.state = 'Closed')"));
 		sd1.setInDNDid(dn1.getCode());
 		sd1.setOutDNDid(dn2.getCode());
 		procD.getSteps().add(sd1);
 
-		DTOs.Step sd2 = getSimpleDTOSubprocess(ws);
+		DTOs.Step sd2 = getSimpleDTOSubprocess();
 		sd2.setInDNDid(dn1.getCode());
 		sd2.setOutDNDid(dn2.getCode());
 		procD.getSteps().add(sd2);
@@ -538,7 +544,7 @@ public class TestProcesses {
 		return procD;
 	}
 
-	public static DTOs.Process getMinimalGithubBasedProcess() {
+	public DTOs.Process getMinimalGithubBasedProcess() {
 		DTOs.Process procD = new DTOs.Process();
 		procD.setCode("DemoMinimalGithubProcesses");
 		procD.setDescription("Test Accessing Github");

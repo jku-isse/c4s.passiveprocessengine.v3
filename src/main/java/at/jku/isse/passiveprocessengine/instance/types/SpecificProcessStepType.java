@@ -3,9 +3,8 @@ package at.jku.isse.passiveprocessengine.instance.types;
 import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.InstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
-import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry.TypeProviderBase;
+import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 
@@ -31,7 +30,7 @@ public class SpecificProcessStepType extends TypeProviderBase {
 	}
 	
 	@Override
-	public void registerTypeInFactory(ProcessDomainTypesRegistry factory) {
+	public void produceTypeProperties() {
 		String stepName = SpecificProcessStepType.getProcessStepName(stepDef);
 		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(stepName);
 		if (thisType.isPresent())

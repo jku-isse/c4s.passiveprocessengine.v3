@@ -6,12 +6,12 @@ import java.util.Optional;
 import java.util.Set;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
+import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.core.InstanceType.CARDINALITIES;
-import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
-import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry.TypeProvider;
+import at.jku.isse.passiveprocessengine.core.TypeProvider;
 import at.jku.isse.passiveprocessengine.core.RuleDefinitionFactory;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
@@ -38,7 +38,7 @@ public class SpecificProcessConfigType implements TypeProvider {
 	}
 
 	@Override
-	public void registerTypeInFactory(ProcessDomainTypesRegistry factory) {
+	public void produceTypeProperties() {
 		String subtypeName = getSubtypeName();
 		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(subtypeName);
 		if (thisType.isPresent())
@@ -99,7 +99,7 @@ public class SpecificProcessConfigType implements TypeProvider {
 			return (getInstanceType(schemaRegistry) != null && getCardinality() != null);
 		}
 
-		public boolean addPropertyToType(InstanceType processConfig, ProcessDomainTypesRegistry factory, SchemaRegistry schemaRegistry, RuleDefinitionFactory ruleFactory) {
+		public boolean addPropertyToType(InstanceType processConfig, DomainTypesRegistry factory, SchemaRegistry schemaRegistry, RuleDefinitionFactory ruleFactory) {
 			InstanceType baseType = factory.getTypeByName(ProcessConfigBaseElementType.typeId);
 			
 			if (processConfig != null

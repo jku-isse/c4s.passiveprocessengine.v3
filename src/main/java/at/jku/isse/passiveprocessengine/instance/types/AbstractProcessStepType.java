@@ -4,9 +4,8 @@ import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
-import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry.TypeProvider;
+import at.jku.isse.passiveprocessengine.core.TypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
@@ -26,7 +25,7 @@ public class AbstractProcessStepType implements TypeProvider {
 	}
 	
 	@Override
-	public void registerTypeInFactory(ProcessDomainTypesRegistry factory) {
+	public void produceTypeProperties() {
 		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
 		if (thisType.isPresent())
 			factory.registerType(ProcessStep.class, thisType.get());

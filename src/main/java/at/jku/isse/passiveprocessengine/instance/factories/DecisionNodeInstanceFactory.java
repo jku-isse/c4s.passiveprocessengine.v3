@@ -5,7 +5,7 @@ import java.util.UUID;
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
-import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
+import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
@@ -15,7 +15,7 @@ public class DecisionNodeInstanceFactory extends DomainFactory {
 
 	
 	public DecisionNodeInstanceFactory(InstanceRepository repository, Context context,
-			ProcessDomainTypesRegistry typesFactory) {
+			DomainTypesRegistry typesFactory) {
 		super(repository, context, typesFactory);		
 	}
 

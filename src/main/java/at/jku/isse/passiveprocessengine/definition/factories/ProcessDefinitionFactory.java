@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Map;
 
 import at.jku.isse.passiveprocessengine.Context;
+import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ProcessDefinitionFactory {
 	InstanceRepository repository;
 	Context context;
-	ProcessDomainTypesRegistry typesFactory;
+	DomainTypesRegistry typesFactory;
 	RuleServiceWrapper ruleService;
 
 	public static final String CRD_PREFIX = "crd_";
@@ -36,7 +36,7 @@ public class ProcessDefinitionFactory {
 	public static final String CRD_QASPEC_PREFIX = "crd_qaspec_";
 
 
-	public ProcessDefinitionFactory(InstanceRepository repository, Context context, ProcessDomainTypesRegistry typesFactory, RuleServiceWrapper ruleService) {
+	public ProcessDefinitionFactory(InstanceRepository repository, Context context, DomainTypesRegistry typesFactory, RuleServiceWrapper ruleService) {
 		this.repository = repository;
 		this.context = context;
 		this.typesFactory = typesFactory;
@@ -64,7 +64,7 @@ public class ProcessDefinitionFactory {
 	public List<ProcessDefinitionError> initializeInstanceTypes(ProcessDefinition processDef, boolean doGeneratePrematureDetectionConstraints) {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
 		SpecificProcessInstanceType typeProvider = new SpecificProcessInstanceType(context.getSchemaRegistry(), processDef);
-		typeProvider.registerTypeInFactory(typesFactory);				
+		typeProvider.produceTypeProperties();				
 		InstanceType processInstanceType = typesFactory.getTypeByName(SpecificProcessInstanceType.getProcessName(processDef)); //) ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
 		//DecisionNodeInstance.getOrCreateCoreType(instance.workspace);
 		//List<ProcessException> subProcessExceptions = new ArrayList<>();
@@ -74,7 +74,7 @@ public class ProcessDefinitionFactory {
 			} else {
 				// create the specific step type
 				SpecificProcessStepType stepTypeProvider = new SpecificProcessStepType(context.getSchemaRegistry(), stepDef, processInstanceType);
-				stepTypeProvider.registerTypeInFactory(typesFactory);	
+				stepTypeProvider.produceTypeProperties();	
 				InstanceType stepInstanceType = typesFactory.getTypeByName(SpecificProcessStepType.getProcessStepName(stepDef));
 				stepDef.getInputToOutputMappingRules().entrySet().stream()
 				.forEach(entry -> {

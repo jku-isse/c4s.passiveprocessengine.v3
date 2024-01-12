@@ -4,9 +4,8 @@ import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
-import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry.TypeProvider;
+import at.jku.isse.passiveprocessengine.core.TypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 
@@ -16,27 +15,30 @@ public class ConstraintSpecType implements TypeProvider {
 
 	private SchemaRegistry schemaRegistry;
 	public static final String typeId = ConstraintSpecType.class.getSimpleName();
+	private final InstanceType type;
 	
 	public ConstraintSpecType(SchemaRegistry schemaRegistry) {
 		this.schemaRegistry = schemaRegistry;
+		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		if (thisType.isPresent()) {
+			schemaRegistry.registerType(ConstraintSpec.class, thisType.get());
+			this.type = thisType.get();
+		} else {
+			InstanceType type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getType(ProcessDefinitionScopedElement.class));
+			schemaRegistry.registerType(ConstraintSpec.class, type);
+			this.type = type;
+		}
 	}
 	
 	@Override
-	public void registerTypeInFactory(ProcessDomainTypesRegistry factory) {
-		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
-		if (thisType.isEmpty())
-			factory.registerType(ConstraintSpec.class, thisType.get());
-		else {
-			InstanceType specType = schemaRegistry.createNewInstanceType(typeId, factory.getType(ProcessDefinitionScopedElement.class));
-			factory.registerType(ConstraintSpec.class, specType);
-			// constraintId maps to Instance name property
-			specType.createSinglePropertyType(CoreProperties.constraintSpec.toString(), BuildInType.STRING);
-			specType.createSinglePropertyType(CoreProperties.humanReadableDescription.toString(),  BuildInType.STRING);
-			specType.createSinglePropertyType(CoreProperties.specOrderIndex.toString(),  BuildInType.INTEGER);
-			specType.createSinglePropertyType(CoreProperties.isOverridable.toString(),  BuildInType.BOOLEAN);
-			specType.createSinglePropertyType(CoreProperties.ruleType.toString(),  BuildInType.RULE);
-			specType.createSinglePropertyType(CoreProperties.conditionsType.toString(),  BuildInType.STRING);
-		}
+	public void produceTypeProperties() {
+		// constraintId maps to Instance name property
+		type.createSinglePropertyType(CoreProperties.constraintSpec.toString(), BuildInType.STRING);
+		type.createSinglePropertyType(CoreProperties.humanReadableDescription.toString(),  BuildInType.STRING);
+		type.createSinglePropertyType(CoreProperties.specOrderIndex.toString(),  BuildInType.INTEGER);
+		type.createSinglePropertyType(CoreProperties.isOverridable.toString(),  BuildInType.BOOLEAN);
+		type.createSinglePropertyType(CoreProperties.ruleType.toString(),  BuildInType.RULE);
+		type.createSinglePropertyType(CoreProperties.conditionsType.toString(),  BuildInType.STRING);
 	}
 
 }

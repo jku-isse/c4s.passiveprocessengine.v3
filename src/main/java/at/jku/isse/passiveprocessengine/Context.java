@@ -3,6 +3,7 @@ package at.jku.isse.passiveprocessengine;
 import java.util.HashMap;
 import java.util.Map;
 
+import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
@@ -19,18 +20,16 @@ public class Context {
 
 	final InstanceRepository instanceRepository;
 	final SchemaRegistry schemaRegistry;
-	final ProcessDomainTypesRegistry typesFactory;
 	final ProcessConfigBaseElementType configFactory;	
 	final FactoryIndex factoryIndex;
 	final InputToOutputMapper ioMapper;
 				
 	private final Map<String, InstanceWrapper> cache = new HashMap<>();
 	
-	public Context(InstanceRepository instanceRepository, SchemaRegistry schemaRegistry, ProcessDomainTypesRegistry typesFactory,
+	public Context(InstanceRepository instanceRepository, SchemaRegistry schemaRegistry, 
 			ProcessConfigBaseElementType configFactory, FactoryIndex factoryIndex, InputToOutputMapper ioMapper) {
 		this.instanceRepository = instanceRepository;
-		this.schemaRegistry = schemaRegistry;
-		this.typesFactory = typesFactory;
+		this.schemaRegistry = schemaRegistry;		
 		this.configFactory = configFactory;		
 		this.factoryIndex = factoryIndex;
 		this.ioMapper = ioMapper;

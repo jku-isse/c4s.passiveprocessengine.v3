@@ -15,8 +15,10 @@ import java.util.stream.Collectors;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessConfigType.PropertySchemaDTO;
+import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 public class DTOs {
 
@@ -26,9 +28,10 @@ public class DTOs {
 	}
 
 	@ToString(doNotUseGetters = true)
-	@Data
+	@Data	
+	@SuperBuilder
 	public abstract static class Element implements Typed{
-		String _type = this.getClass().getSimpleName();
+		final String _type = this.getClass().getSimpleName();
 		private String code;
 		String description;
 
@@ -49,10 +52,11 @@ public class DTOs {
 
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
+	@SuperBuilder
 	public static class Constraint extends Element {
 		final String arlRule;
-		int specOrderIndex = 0;
-		boolean isOverridable = false;
+		@Builder.Default int specOrderIndex = 0;
+		@Builder.Default boolean isOverridable = false;
 
 		@Override
 		public boolean equals(Object obj) {
@@ -75,6 +79,7 @@ public class DTOs {
 	//@EqualsAndHashCode(callSuper = true)
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
+	@SuperBuilder
 	public static class Step extends Element {
 		String inDNDid;
 		String outDNDid;
@@ -142,6 +147,7 @@ public class DTOs {
 
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
+	@SuperBuilder
 	public static class DecisionNode extends Element {
 		InFlowType inflowType = InFlowType.SEQ; //default value
 		Set<Mapping> mapping = new HashSet<>();
@@ -164,6 +170,7 @@ public class DTOs {
 
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
+	@SuperBuilder
 	public static class Process extends Step {
 		List<Step> steps = new LinkedList<>();
 		List<DecisionNode> dns = new LinkedList<>();

@@ -51,7 +51,7 @@ public class ProcessRegistry {
 
 	public void inject() {		
 		// TODO: restructure designspace so that process type is available upon constructor call
-		processDefinitionType = context.getTypesFactory().getType(ProcessDefinition.class); // ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);
+		processDefinitionType = context.getSchemaRegistry().getType(ProcessDefinition.class); // ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);
 		assert(processDefinitionType != null);
 		context.getSchemaRegistry().getAllNonDeletedInstanceTypes().stream().forEach(itype -> log.debug(String.format("Available instance type %s ", itype.getId())));
 		isInit = true;
@@ -63,7 +63,7 @@ public class ProcessRegistry {
 		});
 		tempStorePD.clear();
 		
-		processInstanceType = context.getTypesFactory().getType(ProcessInstance.class); 
+		processInstanceType = context.getSchemaRegistry().getType(ProcessInstance.class); 
 	}
 
 
@@ -144,7 +144,7 @@ public class ProcessRegistry {
 		} 
 		// no else as if in staging, we continue here in any case
 		log.debug("Storing new process: "+process.getCode());
-		DefinitionTransformer transformer = new DefinitionTransformer(process, context.getFactoryIndex(), context.getSchemaRegistry(), context.getTypesFactory());			
+		DefinitionTransformer transformer = new DefinitionTransformer(process, context.getFactoryIndex(), context.getSchemaRegistry(), context.getSchemaRegistry());			
 		ProcessDefinition pd = transformer.fromDTO(isInStaging);
 		List<ProcessDefinitionError> errors = transformer.getErrors();
 
@@ -162,7 +162,7 @@ public class ProcessRegistry {
 		Map<String, Map<String, Set<Instance>>> prevProcInput = new HashMap<>();
 
 		// we actually dont need to find the process definition type, but the specific process instance type declaration
-		InstanceType specProcDefType = context.getTypesFactory().getTypeByName(SpecificProcessInstanceType.getProcessName(pDef)); 
+		InstanceType specProcDefType = context.getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(pDef)); 
 		context.getInstanceRepository().getAllInstancesOfTypeOrSubtype(specProcDefType).stream()
 		.filter(inst -> !inst.isMarkedAsDeleted())
 		.map(inst -> context.getWrappedInstance(ProcessInstance.class, inst))

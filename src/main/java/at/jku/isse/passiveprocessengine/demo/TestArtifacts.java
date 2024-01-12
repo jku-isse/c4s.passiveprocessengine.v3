@@ -1,11 +1,13 @@
 package at.jku.isse.passiveprocessengine.demo;
 
 import java.util.Optional;
+import java.util.Set;
 
-import at.jku.isse.designspace.core.model.Cardinality;
-import at.jku.isse.designspace.core.model.Instance;
-import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.core.model.Workspace;
+import at.jku.isse.passiveprocessengine.core.BuildInType;
+import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.InstanceRepository;
+import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 
 public class TestArtifacts {
 
@@ -13,107 +15,115 @@ public class TestArtifacts {
 	public static enum CoreProperties { requirementIDs, state, requirements, bugs, parent, html_url, upstream, downstream }
 	public static enum JiraStates { Open, InProgress, Closed, ReadyForReview, Released}
 
-	public static InstanceType getJiraInstanceType(Workspace ws) {
-		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
-				.filter(it -> it.name().contentEquals(DEMOISSUETYPE))
-				.findAny();
+	InstanceRepository repository;
+	SchemaRegistry schemaRegistry;
+	
+	public TestArtifacts(InstanceRepository repository, SchemaRegistry schemaRegistry) {
+		this.repository = repository;
+		this.schemaRegistry = schemaRegistry;
+	}
+	
+	public InstanceType getJiraInstanceType() {
+		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(DEMOISSUETYPE);
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
-				InstanceType typeJira = ws.createInstanceType(DEMOISSUETYPE, ws.TYPES_FOLDER);
-				typeJira.createPropertyType(CoreProperties.requirementIDs.toString(), Cardinality.SET, Workspace.STRING);
-				typeJira.createPropertyType(CoreProperties.state.toString(), Cardinality.SINGLE, Workspace.STRING);
-				typeJira.createPropertyType(CoreProperties.requirements.toString(), Cardinality.SET, typeJira);
-				typeJira.createPropertyType(CoreProperties.bugs.toString(), Cardinality.SET, typeJira);
-				typeJira.createPropertyType(CoreProperties.parent.toString(), Cardinality.SINGLE, typeJira);
-				typeJira.createOpposablePropertyType(CoreProperties.upstream.toString(), Cardinality.SET, typeJira, CoreProperties.downstream.toString(), Cardinality.SET);
-				typeJira.createPropertyType(CoreProperties.html_url.toString(), Cardinality.SINGLE, Workspace.STRING);
+				InstanceType typeJira = schemaRegistry.createNewInstanceType(DEMOISSUETYPE);
+				typeJira.createSetPropertyType(CoreProperties.requirementIDs.toString(), BuildInType.STRING);
+				typeJira.createSinglePropertyType(CoreProperties.state.toString(), BuildInType.STRING);
+				typeJira.createSetPropertyType(CoreProperties.requirements.toString(), typeJira);
+				typeJira.createSetPropertyType(CoreProperties.bugs.toString(),  typeJira);
+				typeJira.createSinglePropertyType(CoreProperties.parent.toString(),  typeJira);
+				typeJira.createSetPropertyType(CoreProperties.upstream.toString(),  typeJira);
+				typeJira.createSetPropertyType(CoreProperties.downstream.toString(),  typeJira);
+				//typeJira.createOpposablePropertyType(CoreProperties.upstream.toString(), Cardinality.SET, typeJira, CoreProperties.downstream.toString(), Cardinality.SET);				
+				typeJira.createSinglePropertyType(CoreProperties.html_url.toString(), BuildInType.STRING);
 				return typeJira;
 			}
 	}
 
-	public static Instance getJiraInstance(Workspace ws, String name, String... reqIds) {
-		Instance jira = ws.createInstance(getJiraInstanceType(ws), name);
-		jira.getProperty(CoreProperties.html_url.toString()).set("http://localhost:7171/home");
+	public Instance getJiraInstance(String name, String... reqIds) {
+		Instance jira = repository.createInstance(name, getJiraInstanceType());
+		jira.setSingleProperty(CoreProperties.html_url.toString(),"http://localhost:7171/home");
 		setStateToJiraInstance(jira, JiraStates.Open);
 		for(String id : reqIds) {
-			jira.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add(id);
+			jira.getTypedProperty(TestArtifacts.CoreProperties.requirementIDs.toString(), Set.class).add(id);
 		}
 		return jira;
 	}
 
-	public static void addReqIdsToJira(Instance jira, String... reqIds) {
+	public void addReqIdsToJira(Instance jira, String... reqIds) {
 		for(String id : reqIds) {
-			jira.getPropertyAsSet(TestArtifacts.CoreProperties.requirementIDs.toString()).add(id);
+			jira.getTypedProperty(TestArtifacts.CoreProperties.requirementIDs.toString(), Set.class).add(id);
 		}
 	}
 
-	public static void addJiraToJira(Instance jira, Instance jiraToAdd) {
-		jira.getPropertyAsSet(TestArtifacts.CoreProperties.requirements.toString()).add(jiraToAdd);
+	public void addJiraToJira(Instance jira, Instance jiraToAdd) {
+		jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).add(jiraToAdd);
 	}
 
-	public static void removeJiraFromJira(Instance jira, Instance jiraToRemove) {
-		jira.getPropertyAsSet(TestArtifacts.CoreProperties.requirements.toString()).remove(jiraToRemove);
+	public void removeJiraFromJira(Instance jira, Instance jiraToRemove) {
+		jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).remove(jiraToRemove);
 	}
 
-	public static void setStateToJiraInstance(Instance inst, JiraStates state) {
-		inst.getProperty(CoreProperties.state.toString()).set(state.toString());
+	public void setStateToJiraInstance(Instance inst, JiraStates state) {
+		inst.setSingleProperty(CoreProperties.state.toString(), state.toString());
 	}
 
-	public static void addJiraToJiraBug(Instance jira, Instance bugToAdd) {
-		jira.getPropertyAsSet(TestArtifacts.CoreProperties.bugs.toString()).add(bugToAdd);
+	public void addJiraToJiraBug(Instance jira, Instance bugToAdd) {
+		jira.getTypedProperty(TestArtifacts.CoreProperties.bugs.toString(), Set.class).add(bugToAdd);
 	}
 
-	public static void removeJiraFromJiraBug(Instance jira, Instance bugToRemove) {
-		jira.getPropertyAsSet(TestArtifacts.CoreProperties.bugs.toString()).remove(bugToRemove);
+	public void removeJiraFromJiraBug(Instance jira, Instance bugToRemove) {
+		jira.getTypedProperty(TestArtifacts.CoreProperties.bugs.toString(), Set.class).remove(bugToRemove);
 	}
 
-	public static void addParentToJira(Instance inst, Instance parent) {
-		inst.getProperty(CoreProperties.parent.toString()).set(parent);
+	public void addParentToJira(Instance inst, Instance parent) {
+		inst.setSingleProperty(CoreProperties.parent.toString(),parent);
 	}
 
-	public static void addUpstream(Instance inst, Instance toAdd) {
-		inst.getPropertyAsSet(TestArtifacts.CoreProperties.upstream.toString()).add(toAdd);
+	public void addUpstream(Instance inst, Instance toAdd) {
+		inst.getTypedProperty(TestArtifacts.CoreProperties.upstream.toString(), Set.class).add(toAdd);
 	}
 
-	public static void addDownstream(Instance inst, Instance toAdd) {
-		inst.getPropertyAsSet(TestArtifacts.CoreProperties.downstream.toString()).add(toAdd);
+	public void addDownstream(Instance inst, Instance toAdd) {
+		inst.getTypedProperty(TestArtifacts.CoreProperties.downstream.toString(), Set.class).add(toAdd);
 	}
 
-	public static void removeUpstream(Instance inst, Instance toRemove) {
-		inst.getPropertyAsSet(TestArtifacts.CoreProperties.upstream.toString()).remove(toRemove);
+	public void removeUpstream(Instance inst, Instance toRemove) {
+		inst.getTypedProperty(TestArtifacts.CoreProperties.upstream.toString(), Set.class).remove(toRemove);
 	}
 
-	public static void removeDownstream(Instance inst, Instance toRemove) {
-		inst.getPropertyAsSet(TestArtifacts.CoreProperties.downstream.toString()).remove(toRemove);
+	public void removeDownstream(Instance inst, Instance toRemove) {
+		inst.getTypedProperty(TestArtifacts.CoreProperties.downstream.toString(), Set.class).remove(toRemove);
 	}
 
 	public static JiraStates getState(Instance inst) {
-		String state= (String) inst.getPropertyAsValueOrElse(CoreProperties.state.toString(), () -> JiraStates.Open.toString());
+		String state= (String) inst.getTypedProperty(CoreProperties.state.toString(), String.class, JiraStates.Open.toString());
 		return JiraStates.valueOf(state);
 	}
 
-	public static InstanceType getDemoGitIssueType(Workspace ws) {
-		InstanceType typeGitDemo = ws.createInstanceType("git_issue", ws.TYPES_FOLDER);
-		typeGitDemo.createPropertyType("linkedIssues", Cardinality.SET, typeGitDemo);
-		typeGitDemo.createPropertyType("labels", Cardinality.SET, Workspace.STRING);
-		typeGitDemo.createPropertyType("state", Cardinality.SINGLE, Workspace.STRING);
-		typeGitDemo.createPropertyType("title", Cardinality.SINGLE, Workspace.STRING);
+	public InstanceType getDemoGitIssueType() {
+		InstanceType typeGitDemo = schemaRegistry.createNewInstanceType("git_issue");
+		typeGitDemo.createSetPropertyType("linkedIssues", typeGitDemo);
+		typeGitDemo.createSetPropertyType("labels", BuildInType.STRING);
+		typeGitDemo.createSinglePropertyType("state", BuildInType.STRING);
+		typeGitDemo.createSinglePropertyType("title",  BuildInType.STRING);
 		return typeGitDemo;
 	}
 
-	public static InstanceType getTestAzureIssueType(Workspace ws) {
-		InstanceType typeAzureTest = ws.createInstanceType("azure_workitem", ws.TYPES_FOLDER);
-		InstanceType typeAzureStateTest = ws.createInstanceType("azure_workitemstate", ws.TYPES_FOLDER);
-		InstanceType typeAzureTypeTest = ws.createInstanceType("azure_workitemtype", ws.TYPES_FOLDER);
-		InstanceType typeAzureLinkTypeTest = ws.createInstanceType("workitem_link", ws.TYPES_FOLDER);
+	public InstanceType getTestAzureIssueType() {
+		InstanceType typeAzureTest = schemaRegistry.createNewInstanceType("azure_workitem");
+		InstanceType typeAzureStateTest = schemaRegistry.createNewInstanceType("azure_workitemstate");
+		InstanceType typeAzureTypeTest = schemaRegistry.createNewInstanceType("azure_workitemtype");
+		InstanceType typeAzureLinkTypeTest = schemaRegistry.createNewInstanceType("workitem_link");
 
-		typeAzureTest.createPropertyType("relatedItems", Cardinality.SET, typeAzureLinkTypeTest);
-		typeAzureTest.createPropertyType("state", Cardinality.SINGLE, typeAzureStateTest);
-		typeAzureTest.createPropertyType("workItemType", Cardinality.SINGLE, typeAzureTypeTest);
+		typeAzureTest.createSetPropertyType("relatedItems", typeAzureLinkTypeTest);
+		typeAzureTest.createSinglePropertyType("state", typeAzureStateTest);
+		typeAzureTest.createSinglePropertyType("workItemType", typeAzureTypeTest);
 
-		typeAzureLinkTypeTest.createPropertyType("linkTo", Cardinality.SINGLE, typeAzureTest);
-		typeAzureLinkTypeTest.createPropertyType("linkType", Cardinality.SINGLE, typeAzureTypeTest);
+		typeAzureLinkTypeTest.createSinglePropertyType("linkTo", typeAzureTest);
+		typeAzureLinkTypeTest.createSinglePropertyType("linkType", typeAzureTypeTest);
 
 
 		return typeAzureTest;

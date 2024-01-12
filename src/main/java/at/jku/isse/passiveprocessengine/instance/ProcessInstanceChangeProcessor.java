@@ -15,6 +15,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import at.jku.isse.designspace.core.model.Element;
+import at.jku.isse.designspace.core.model.Id;
+import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.model.WorkspaceListener;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
@@ -171,16 +173,6 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 	@Override
 	public void handleUpdated(Collection<Operation> operations) {
 		handleUpdates(operations);
-	}
-
-	private void checkTransactionId(long id) {
-		long local = latestTransaction.getAcquire();
-		if (local > id) {
-			log.error(String.format("Encountered Operation with an outdated transaction id: top current known id %s vs obtained id %s", local, id));
-		}
-		if (latestTransaction.getAcquire() < id) {
-			latestTransaction.set(id);
-		}
 	}
 
 	protected Set<ProcessInstance> handleUpdates(Collection<Operation> operations) {

@@ -5,9 +5,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
+import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessDomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
@@ -31,9 +31,9 @@ public class DefinitionTransformer {
 	private final SchemaRegistry schemaRegistry;
 	private final List<ProcessDefinitionError> errors = new LinkedList<>();
 	private final DTOs.Process rootProcDTO;		
-	private final ProcessDomainTypesRegistry typesFactory;
+	private final DomainTypesRegistry typesFactory;
 	
-	public DefinitionTransformer(DTOs.Process procDTO, FactoryIndex factories, SchemaRegistry schemaRegistry, ProcessDomainTypesRegistry typesFactory) {
+	public DefinitionTransformer(DTOs.Process procDTO, FactoryIndex factories, SchemaRegistry schemaRegistry, DomainTypesRegistry typesFactory) {
 		this.rootProcDTO = procDTO;	
 		this.factories = factories;
 		this.schemaRegistry = schemaRegistry;
@@ -119,7 +119,7 @@ public class DefinitionTransformer {
 			
 			SpecificProcessConfigType configProvider = new SpecificProcessConfigType(schemaRegistry, processDefinition, configName, entry.getValue(), factories.getRuleDefinitionFactory());
 			// then add the properties if they dont exist yet
-			configProvider.registerTypeInFactory(typesFactory);
+			configProvider.produceTypeProperties();
 			
 			InstanceType procConfig = typesFactory.getTypeByName(configProvider.getSubtypeName()); 
 					//factories.getProcessConfigFactory().getOrCreateProcessSpecificSubtype(configName, processDefinition);
@@ -254,9 +254,9 @@ public class DefinitionTransformer {
 //	}
 
 	public static DTOs.Process toDTO(ProcessDefinition processDefinition) {
-		DTOs.Process proc = new Process();
+		DTOs.Process proc = Process.builder().build();
 		processDefinition.getStepDefinitions().stream().forEach(pStep -> {
-			DTOs.Step step = new DTOs.Step();
+			DTOs.Step step = DTOs.Step.builder().build();
 			if (pStep instanceof ProcessDefinition) {
 				proc.getSteps().add(toDTO((ProcessDefinition) pStep));
 			} else {
@@ -266,9 +266,10 @@ public class DefinitionTransformer {
 
 		});
 		processDefinition.getDecisionNodeDefinitions().stream().forEach(dnd -> {
-			DTOs.DecisionNode dn = new DTOs.DecisionNode();
-			dn.setCode(dnd.getName());
-			dn.setInflowType(dnd.getInFlowType());
+			DTOs.DecisionNode dn = DTOs.DecisionNode.builder()
+			.code(dnd.getName())
+			.inflowType(dnd.getInFlowType())
+			.build();
 			dnd.getMappings().stream().forEach(md -> {
 				DTOs.Mapping mapping = new DTOs.Mapping(md.getFromStepType(), md.getFromParameter(), md.getToStepType(), md.getToParameter());
 				dn.getMapping().add(mapping);
@@ -288,13 +289,14 @@ public class DefinitionTransformer {
 			step.setOutDNDid(pStep.getOutDND().getName());
 		pStep.getExpectedInput().entrySet().stream().forEach(entry -> step.getInput().put(entry.getKey(), entry.getValue().getName()));
 		pStep.getExpectedOutput().entrySet().stream().forEach(entry -> step.getOutput().put(entry.getKey(), entry.getValue().getName()));
-		pStep.getQAConstraints().stream().forEach(qac -> {
-			DTOs.Constraint qa = new DTOs.Constraint(qac.getConstraintSpec());
-			qa.setCode(qac.getConstraintId());
-			qa.setDescription(qac.getHumanReadableDescription());
-			qa.setSpecOrderIndex(qac.getOrderIndex());
-			qa.setOverridable(qac.isOverridable());
-			step.getQaConstraints().add(qa );
+		pStep.getQAConstraints().stream().forEach(spec -> {
+			DTOs.Constraint constraint = DTOs.Constraint.builder().arlRule(spec.getConstraintSpec())
+			 .code(spec.getConstraintId())
+			 .description(spec.getHumanReadableDescription())
+			 .specOrderIndex(spec.getOrderIndex())
+			 .isOverridable(spec.isOverridable())
+			 .build();
+			step.getQaConstraints().add(constraint );
 
 		});
 		pStep.getInputToOutputMappingRules().entrySet().stream().forEach(entry -> step.getIoMapping().put(entry.getKey(), entry.getValue()));
@@ -303,39 +305,41 @@ public class DefinitionTransformer {
 //			pStep.getCondition(cond).ifPresent(condARL -> step.getConditions().put(cond, condARL));
 //		}
 		pStep.getActivationconditions().stream().forEach(spec -> {
-			Constraint constraint = new Constraint(spec.getConstraintSpec());
-			constraint.setCode(spec.getName());
-			constraint.setDescription(spec.getHumanReadableDescription());
-			constraint.setSpecOrderIndex(spec.getOrderIndex());
-			constraint.setOverridable(spec.isOverridable());
+			DTOs.Constraint constraint = DTOs.Constraint.builder().arlRule(spec.getConstraintSpec())
+					 .code(spec.getConstraintId())
+					 .description(spec.getHumanReadableDescription())
+					 .specOrderIndex(spec.getOrderIndex())
+					 .isOverridable(spec.isOverridable())
+					 .build();
 			step.getConditions().computeIfAbsent(Conditions.ACTIVATION, k -> new ArrayList<>()).add(constraint);
 		});
 		pStep.getCancelconditions().stream().forEach(spec -> {
-			Constraint constraint = new Constraint(spec.getConstraintSpec());
-			constraint.setCode(spec.getName());
-			constraint.setDescription(spec.getHumanReadableDescription());
-			constraint.setSpecOrderIndex(spec.getOrderIndex());
-			constraint.setOverridable(spec.isOverridable());
+			DTOs.Constraint constraint = DTOs.Constraint.builder().arlRule(spec.getConstraintSpec())
+					 .code(spec.getConstraintId())
+					 .description(spec.getHumanReadableDescription())
+					 .specOrderIndex(spec.getOrderIndex())
+					 .isOverridable(spec.isOverridable())
+					 .build();
 			step.getConditions().computeIfAbsent(Conditions.CANCELATION, k -> new ArrayList<>()).add(constraint);
 		});
 		pStep.getPreconditions().stream().forEach(spec -> {
-			Constraint constraint = new Constraint(spec.getConstraintSpec());
-			constraint.setCode(spec.getName());
-			constraint.setDescription(spec.getHumanReadableDescription());
-			constraint.setSpecOrderIndex(spec.getOrderIndex());
-			constraint.setOverridable(spec.isOverridable());
+			DTOs.Constraint constraint = DTOs.Constraint.builder().arlRule(spec.getConstraintSpec())
+					 .code(spec.getConstraintId())
+					 .description(spec.getHumanReadableDescription())
+					 .specOrderIndex(spec.getOrderIndex())
+					 .isOverridable(spec.isOverridable())
+					 .build();
 			step.getConditions().computeIfAbsent(Conditions.PRECONDITION, k -> new ArrayList<>()).add(constraint);
 		});
 		pStep.getPostconditions().stream().forEach(spec -> {
-			Constraint constraint = new Constraint(spec.getConstraintSpec());
-			constraint.setCode(spec.getName());
-			constraint.setDescription(spec.getHumanReadableDescription());
-			constraint.setSpecOrderIndex(spec.getOrderIndex());
-			constraint.setOverridable(spec.isOverridable());
+			DTOs.Constraint constraint = DTOs.Constraint.builder().arlRule(spec.getConstraintSpec())
+					 .code(spec.getConstraintId())
+					 .description(spec.getHumanReadableDescription())
+					 .specOrderIndex(spec.getOrderIndex())
+					 .isOverridable(spec.isOverridable())
+					 .build();
 			step.getConditions().computeIfAbsent(Conditions.POSTCONDITION, k -> new ArrayList<>()).add(constraint);
 		});
-
-
 		step.setHtml_url(pStep.getHtml_url());
 		step.setDescription(pStep.getDescription());
 	}

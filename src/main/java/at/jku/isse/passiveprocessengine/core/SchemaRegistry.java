@@ -3,7 +3,7 @@ package at.jku.isse.passiveprocessengine.core;
 import java.util.Optional;
 import java.util.Set;
 
-public interface SchemaRegistry {
+public interface SchemaRegistry extends DomainTypesRegistry{
 
 	/**
 	 * @param fqnTypeId

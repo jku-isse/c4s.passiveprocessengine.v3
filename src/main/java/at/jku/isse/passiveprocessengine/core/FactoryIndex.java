@@ -36,7 +36,7 @@ public class FactoryIndex {
 		
 		final InstanceRepository repository;
 		final Context context;
-		final ProcessDomainTypesRegistry typesFactory;				
+		final DomainTypesRegistry typesFactory;				
 		
 		public void inject(FactoryIndex index) {
 			this.factoryIndex = index;
