@@ -8,26 +8,24 @@ import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProvider;
+import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 
-public class SpecificProcessInstanceType implements TypeProvider {
+public class SpecificProcessInstanceType extends TypeProviderBase {
 
 	public static enum CoreProperties {stepInstances, decisionNodeInstances, processDefinition, createdAt}
 
-	private SchemaRegistry schemaRegistry;
-	
 	private final ProcessDefinition procDef;
 
 	public static final String CRD_PREMATURETRIGGER_PREFIX = "crd_prematuretrigger_";
-
 	public static final String typeId = ProcessInstance.class.getSimpleName();
 	
 		
 	public SpecificProcessInstanceType(SchemaRegistry schemaRegistry, ProcessDefinition procDef) {
-		this.schemaRegistry = schemaRegistry;
+		super(schemaRegistry);
 		this.procDef = procDef;
 	}
 	
@@ -35,16 +33,17 @@ public class SpecificProcessInstanceType implements TypeProvider {
 	public void produceTypeProperties() {
 		String processName = getProcessName(procDef);
 		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(processName);
-		if (thisType.isPresent())
-			factory.registerTypeByName(thisType.get());	
-		else {
+		if (thisType.isPresent()) {
+			schemaRegistry.registerTypeByName(thisType.get());	
+			this.type = thisType.get();
+		} else {
 			String processAsTaskName = SpecificProcessStepType.getProcessStepName(procDef);
-			InstanceType type = schemaRegistry.createNewInstanceType(processName, factory.getTypeByName(processAsTaskName));
-			factory.registerTypeByName(type);		
+			type = schemaRegistry.createNewInstanceType(processName, schemaRegistry.getTypeByName(processAsTaskName));
+			schemaRegistry.registerTypeByName(type);		
 
-			type.createSinglePropertyType(SpecificProcessInstanceType.CoreProperties.processDefinition.toString(), factory.getType(ProcessDefinition.class));
-			type.createSetPropertyType(SpecificProcessInstanceType.CoreProperties.stepInstances.toString(), factory.getType(ProcessStep.class));
-			type.createSetPropertyType(SpecificProcessInstanceType.CoreProperties.decisionNodeInstances.toString(), factory.getType(DecisionNodeInstance.class));
+			type.createSinglePropertyType(SpecificProcessInstanceType.CoreProperties.processDefinition.toString(), schemaRegistry.getType(ProcessDefinition.class));
+			type.createSetPropertyType(SpecificProcessInstanceType.CoreProperties.stepInstances.toString(), schemaRegistry.getType(ProcessStep.class));
+			type.createSetPropertyType(SpecificProcessInstanceType.CoreProperties.decisionNodeInstances.toString(), schemaRegistry.getType(DecisionNodeInstance.class));
 			type.createSinglePropertyType(SpecificProcessInstanceType.CoreProperties.createdAt.toString(), BuildInType.STRING);			
 		}
 

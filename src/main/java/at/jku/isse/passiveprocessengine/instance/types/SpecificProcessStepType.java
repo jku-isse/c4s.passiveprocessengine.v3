@@ -17,8 +17,6 @@ public class SpecificProcessStepType extends TypeProviderBase {
 	private final StepDefinition stepDef;
 	private final InstanceType processType;
 
-
-
 	public static final String PREFIX_OUT = "out_";
 	public static final String PREFIX_IN = "in_";
 
@@ -34,10 +32,10 @@ public class SpecificProcessStepType extends TypeProviderBase {
 		String stepName = SpecificProcessStepType.getProcessStepName(stepDef);
 		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(stepName);
 		if (thisType.isPresent())
-			factory.registerTypeByName(thisType.get());	
+			schemaRegistry.registerTypeByName(thisType.get());	
 		else {
-			InstanceType type = schemaRegistry.createNewInstanceType(stepName, factory.getType(ProcessStep.class));
-			factory.registerTypeByName(type);		
+			InstanceType type = schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getType(ProcessStep.class));
+			schemaRegistry.registerTypeByName(type);		
 
 			stepDef.getExpectedInput().entrySet().stream()
 			.forEach(entry -> {
@@ -47,7 +45,7 @@ public class SpecificProcessStepType extends TypeProviderBase {
 			.forEach(entry -> {
 				type.createSinglePropertyType(PREFIX_OUT+entry.getKey(), entry.getValue());
 			});
-			// DONE IN ProcessDefinitionFactory
+			// DONE IN ProcessDefinitionschemaRegistry
 			//			stepDef.getInputToOutputMappingRules().entrySet().stream()
 //			.forEach(entry -> {
 //				if (entry.getValue() != null) {
@@ -63,7 +61,7 @@ public class SpecificProcessStepType extends TypeProviderBase {
 				//else
 				//typeStep.getPropertyType(ProcessInstanceScopedElement.CoreProperties.process.toString()).setInstanceType(processType);
 			} else {
-				ProcessInstanceScopeType.addGenericProcessProperty(type, factory);
+				ProcessInstanceScopeType.addGenericProcessProperty(type, schemaRegistry);
 			}
 		}
 

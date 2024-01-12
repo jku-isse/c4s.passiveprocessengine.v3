@@ -51,20 +51,27 @@ public class DesignspaceInstanceTypeWrapper implements InstanceType {
 
 	@Override
 	public void setSingleProperty(@NonNull String property, Object value) {
-		// TODO Auto-generated method stub
-		
+		delegate.getPropertyAsSingle(property).set(value);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getTypedProperty(@NonNull String property, @NonNull Class<T> clazz) {
-		// TODO Auto-generated method stub
-		return null;
+		Object value = delegate.getPropertyAsValueOrNull(property);
+		if (value == null) 
+			return null;
+		else 
+			return (T)value;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getTypedProperty(@NonNull String property, @NonNull Class<T> clazz, T defaultValue) {
-		// TODO Auto-generated method stub
-		return null;
+		Object value = delegate.getPropertyAsValueOrNull(property);
+		if (value == null) 
+			return defaultValue;
+		else 
+			return (T)value;
 	}
 	
 	
@@ -91,6 +98,7 @@ public class DesignspaceInstanceTypeWrapper implements InstanceType {
 
 	@Override
 	public PropertyType getPropertyType(String propertyName) {
+		@SuppressWarnings("rawtypes")
 		at.jku.isse.designspace.core.model.PropertyType propType = delegate.getPropertyType(propertyName);
 		if (propType != null) {
 			PropertyTypeWrapper propertyType = propertyWrappers.computeIfAbsent(propertyName, k -> new PropertyTypeWrapper(propType, dsSchemaRegistry));

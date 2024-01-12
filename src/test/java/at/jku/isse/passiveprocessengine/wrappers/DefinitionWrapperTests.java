@@ -31,9 +31,9 @@ import at.jku.isse.passiveprocessengine.instance.activeobjects.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-public class WrapperTests {
+public class DefinitionWrapperTests {
 	
-	SchemaRegistry schemaReg;	
+	protected SchemaRegistry schemaReg;	
 	
 	@BeforeEach
 	void setup() throws Exception {
@@ -43,7 +43,7 @@ public class WrapperTests {
 		registerAllDefinitionTypes();
 	}
 	
-	private void registerAllDefinitionTypes() {
+	protected void registerAllDefinitionTypes() {
 		ProcessDefinitionScopeType scopeTypeProvider = new ProcessDefinitionScopeType(schemaReg);		
 		ConstraintSpecType specTypeProvider = new ConstraintSpecType(schemaReg);		
 		MappingDefinitionType mapTypeProvider = new MappingDefinitionType(schemaReg);		

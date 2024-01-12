@@ -25,9 +25,8 @@ public class DecisionNodeDefinitionType implements TypeProvider {
 			schemaRegistry.registerType(DecisionNodeDefinition.class, thisType.get());
 			this.type = thisType.get();
 		} else {
-			InstanceType type = schemaRegistry.createNewInstanceType(typeId,  schemaRegistry.getType(ProcessDefinitionScopedElement.class));
+			type = schemaRegistry.createNewInstanceType(typeId,  schemaRegistry.getType(ProcessDefinitionScopedElement.class));
 			schemaRegistry.registerType(DecisionNodeDefinition.class, type);
-			this.type = type;
 		}
 	}
 	

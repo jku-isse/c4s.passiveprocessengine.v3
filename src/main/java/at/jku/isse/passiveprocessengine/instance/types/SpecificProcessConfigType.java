@@ -7,21 +7,17 @@ import java.util.Set;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
-import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.core.InstanceType.CARDINALITIES;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
-import at.jku.isse.passiveprocessengine.core.TypeProvider;
+import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.core.RuleDefinitionFactory;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
-import at.jku.isse.passiveprocessengine.instance.ProcessException;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
 import lombok.Data;
 
 
-public class SpecificProcessConfigType implements TypeProvider {
+public class SpecificProcessConfigType extends TypeProviderBase {
 	
 	private SchemaRegistry schemaRegistry;
 	private ProcessDefinition processDef;
@@ -30,7 +26,7 @@ public class SpecificProcessConfigType implements TypeProvider {
 	private RuleDefinitionFactory ruleFactory;
 	
 	public SpecificProcessConfigType(SchemaRegistry schemaRegistry, ProcessDefinition processDef, String prefix, Set<PropertySchemaDTO> props, RuleDefinitionFactory ruleFactory) {
-		this.schemaRegistry = schemaRegistry;
+		super(schemaRegistry);
 		this.processDef = processDef;
 		this.prefix = prefix;
 		this.props = props;
@@ -41,30 +37,23 @@ public class SpecificProcessConfigType implements TypeProvider {
 	public void produceTypeProperties() {
 		String subtypeName = getSubtypeName();
 		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(subtypeName);
-		if (thisType.isPresent())
-			factory.registerTypeByName(thisType.get());
-		else {
-			InstanceType type = schemaRegistry.createNewInstanceType(subtypeName, factory.getTypeByName(ProcessConfigBaseElementType.typeId));
-			factory.registerTypeByName(type);			
+		if (thisType.isPresent()) {
+			schemaRegistry.registerTypeByName(thisType.get());
+			this.type = thisType.get();
+		} else {
+			type = schemaRegistry.createNewInstanceType(subtypeName, schemaRegistry.getTypeByName(ProcessConfigBaseElementType.typeId));
+			schemaRegistry.registerTypeByName(type);			
 							
-			type.createSinglePropertyType("processDefinition", factory.getType(ProcessDefinitionScopedElement.class));
+			type.createSinglePropertyType("processDefinition", schemaRegistry.getType(ProcessDefinition.class));
 			// augment config
 			Map<PropertySchemaDTO, Boolean> result = new HashMap<>();
-			props.forEach(prop -> result.put(prop, prop.addPropertyToType(type, factory, schemaRegistry, ruleFactory)));
+			props.forEach(prop -> result.put(prop, prop.addPropertyToType(type, schemaRegistry, schemaRegistry, ruleFactory)));
 		}									
 	}
 
 	public String getSubtypeName() {
 		return prefix+"_"+processDef.getName();
 	}
-
-//	public Map<PropertySchemaDTO, Boolean> augmentConfig(Set<PropertySchemaDTO> props, InstanceType configType) {
-//		Map<PropertySchemaDTO, Boolean> result = new HashMap<>();
-//		props.forEach(prop -> result.put(prop, prop.addPropertyToType(configType, this)));
-//		return result;
-//	}
-
-
 
 	@Data
 	public static class PropertySchemaDTO {
