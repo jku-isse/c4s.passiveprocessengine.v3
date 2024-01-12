@@ -97,7 +97,7 @@ public class SerializationAfterPersistenceTest {
 	
 	@Test
 	void testOutputFromProcessDef() throws ProcessException {
-		Workspace ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
+		Workspace ws = WorkspaceService.PUBLIC_WORKSPACE; //WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER, null, false, false);
 		ProcessDefinition inPD = TestProcesses.getSimple2StepProcessDefinition(ws);
 		DTOs.Process procD = DefinitionTransformer.toDTO(inPD);
 		String jsonProc = json.toJson(procD);

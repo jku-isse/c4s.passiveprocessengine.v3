@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.instance;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -566,7 +567,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		String id = cr.name();		
 		ConstraintWrapper cw = WrapperCache.getWrappedInstance(ConstraintWrapper.class, (Instance) instance.getPropertyAsMap(CoreProperties.preconditions.toString()).get(id));
 		cw.setCrIfEmpty(cr);		
-		cw.setLastChanged(getProcess().getCurrentTimestamp());			
+		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());			
 		boolean newState = areConstraintsFulfilled(CoreProperties.preconditions.toString()); 
 		List<Events.ProcessChangedEvent> events =  setPreConditionsFulfilled(newState);
 		if (events.isEmpty())
@@ -603,7 +604,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		String id = cr.name();		
 		ConstraintWrapper cw = WrapperCache.getWrappedInstance(ConstraintWrapper.class, (Instance) instance.getPropertyAsMap(CoreProperties.cancelconditions.toString()).get(id));
 		cw.setCrIfEmpty(cr);		
-		cw.setLastChanged(getProcess().getCurrentTimestamp());			
+		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());			
 		boolean newState = areConstraintsFulfilled(CoreProperties.cancelconditions.toString()); 
 		List<Events.ProcessChangedEvent> events =  setCancelConditionsFulfilled(newState);
 		if (events.isEmpty())
@@ -633,7 +634,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		String id = cr.name();		
 		ConstraintWrapper cw = WrapperCache.getWrappedInstance(ConstraintWrapper.class, (Instance) instance.getPropertyAsMap(CoreProperties.activationconditions.toString()).get(id));
 		cw.setCrIfEmpty(cr);		
-		cw.setLastChanged(getProcess().getCurrentTimestamp());			
+		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());			
 		boolean newState = areConstraintsFulfilled(CoreProperties.activationconditions.toString()); 
 		List<Events.ProcessChangedEvent> events =  setActivationConditionsFulfilled(newState);
 		if (events.isEmpty())
@@ -970,7 +971,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		sd.getQAConstraints().stream()
 		.forEach(spec -> { 
 			String qid = getQASpecId(spec, pd);			
-			ConstraintWrapper cw = ConstraintWrapper.getInstance(ws, spec, getProcess().getCurrentTimestamp(), this, this.getProcess());
+			ConstraintWrapper cw = ConstraintWrapper.getInstance(ws, spec, getProcess().getCurrentTimestamp(), this, getParentProcessOrThisIfProcessElseNull());
 			instance.getPropertyAsMap(CoreProperties.qaState.toString()).put(qid, cw.getInstance());
 		});
 		// init of multi constraint wrappers:
@@ -978,31 +979,40 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		.sorted(RuleAugmentation.CONSTRAINTCOMPARATOR)
 		.forEach(spec -> {
 			String specId = RuleAugmentation.getConstraintName(Conditions.POSTCONDITION, spec.getOrderIndex(), this.getInstance().getInstanceType());		
-			ConstraintWrapper cw = ConstraintWrapper.getInstance(ws, spec, getProcess().getCurrentTimestamp(), this, this.getProcess());
+			ConstraintWrapper cw = ConstraintWrapper.getInstance(ws, spec, ZonedDateTime.now(), this, getParentProcessOrThisIfProcessElseNull());
 			instance.getPropertyAsMap(CoreProperties.postconditions.toString()).put(specId, cw.getInstance());
 		});
 		sd.getPreconditions().stream()
 		.sorted(RuleAugmentation.CONSTRAINTCOMPARATOR)
 		.forEach(spec -> {
 			String specId = RuleAugmentation.getConstraintName(Conditions.PRECONDITION, spec.getOrderIndex(), this.getInstance().getInstanceType());		
-			ConstraintWrapper cw = ConstraintWrapper.getInstance(ws, spec, getProcess().getCurrentTimestamp(), this, this.getProcess());
+			ConstraintWrapper cw = ConstraintWrapper.getInstance(ws, spec, ZonedDateTime.now(), this, getParentProcessOrThisIfProcessElseNull());
 			instance.getPropertyAsMap(CoreProperties.preconditions.toString()).put(specId, cw.getInstance());
 		});
 		sd.getCancelconditions().stream()
 		.sorted(RuleAugmentation.CONSTRAINTCOMPARATOR)
 		.forEach(spec -> {
 			String specId = RuleAugmentation.getConstraintName(Conditions.CANCELATION, spec.getOrderIndex(), this.getInstance().getInstanceType());		
-			ConstraintWrapper cw = ConstraintWrapper.getInstance(ws, spec, getProcess().getCurrentTimestamp(), this, this.getProcess());
+			ConstraintWrapper cw = ConstraintWrapper.getInstance(ws, spec, ZonedDateTime.now(), this, getParentProcessOrThisIfProcessElseNull());
 			instance.getPropertyAsMap(CoreProperties.cancelconditions.toString()).put(specId, cw.getInstance());
 		});
 		sd.getActivationconditions().stream()
 		.sorted(RuleAugmentation.CONSTRAINTCOMPARATOR)
 		.forEach(spec -> {
 			String specId = RuleAugmentation.getConstraintName(Conditions.ACTIVATION, spec.getOrderIndex(), this.getInstance().getInstanceType());		
-			ConstraintWrapper cw = ConstraintWrapper.getInstance(ws, spec, getProcess().getCurrentTimestamp(), this, this.getProcess());
+			ConstraintWrapper cw = ConstraintWrapper.getInstance(ws, spec, ZonedDateTime.now(), this, getParentProcessOrThisIfProcessElseNull());
 			instance.getPropertyAsMap(CoreProperties.activationconditions.toString()).put(specId, cw.getInstance());
 		});
 	}
+	
+//	private ProcessInstance getParentOrThisProcess() {
+//		ProcessInstance process = getProcess(); //from parent
+//		if (process == null && this instanceof ProcessInstance) {
+//			return (ProcessInstance)this; 
+//		} else {
+//			return process;
+//		}
+//	}
 	
 	@Override
 	public String toString() {

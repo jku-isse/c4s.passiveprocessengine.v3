@@ -149,16 +149,16 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		ConstraintSpec constraint = ConstraintSpec.createInstance(condition, condition+"0", ruleAsString, ruleAsString, 0, false, ws);		
 		switch(condition) {
 		case ACTIVATION:
-			instance.getPropertyAsSet(CoreProperties.activationconditions.toString()).add(constraint);
+			instance.getPropertyAsSet(CoreProperties.activationconditions.toString()).add(constraint.getInstance());
 			break;
 		case CANCELATION:
-			instance.getPropertyAsSet(CoreProperties.cancelconditions.toString()).add(constraint);
+			instance.getPropertyAsSet(CoreProperties.cancelconditions.toString()).add(constraint.getInstance());
 			break;
 		case POSTCONDITION:
-			instance.getPropertyAsSet(CoreProperties.postconditions.toString()).add(constraint);
+			instance.getPropertyAsSet(CoreProperties.postconditions.toString()).add(constraint.getInstance());
 			break;
 		case PRECONDITION:
-			instance.getPropertyAsSet(CoreProperties.preconditions.toString()).add(constraint);
+			instance.getPropertyAsSet(CoreProperties.preconditions.toString()).add(constraint.getInstance());
 			break;
 		default:
 			break;
