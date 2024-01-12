@@ -1,4 +1,4 @@
-package at.jku.isse.designspace.passiveprocessengine.definition;
+package at.jku.isse.passiveprocessengine.definition;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -48,8 +48,9 @@ class TestPrematureTriggerConstraints {
 		String file = path+"/src/test/resources/prematuretest.json"; 
 		String content = Files.readString(Paths.get(file));	
 		DTOs.Process procD = json.fromJson(content);
+		
 		ProcessRegistry preg = new ProcessRegistry();
-		preg.inject(ws,new ProcessConfigBaseElementFactory(ws));
+		preg.inject(ws, new ProcessConfigBaseElementFactory(ws));
 		ProcessDefinition pd = preg.storeProcessDefinition(procD, false).getKey();
 		// = DefinitionTransformer.fromDTO(procD, ws);
 		//new PrematureTriggerGenerator(ws, pd).generatePrematureConstraints();
@@ -71,7 +72,7 @@ class TestPrematureTriggerConstraints {
 		String content = Files.readString(Paths.get(file));	
 		DTOs.Process procD = json.fromJson(content);
 		ProcessRegistry preg = new ProcessRegistry();
-		preg.inject(ws,new ProcessConfigBaseElementFactory(ws));
+		preg.inject(ws, new ProcessConfigBaseElementFactory(ws));
 		ProcessDefinition pd = preg.storeProcessDefinition(procD, false).getKey();
 		//ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
 		//new PrematureTriggerGenerator().generatePrematureConstraints(pd);
@@ -93,7 +94,7 @@ class TestPrematureTriggerConstraints {
 		String content = Files.readString(Paths.get(file));	
 		DTOs.Process procD = json.fromJson(content);
 		ProcessRegistry preg = new ProcessRegistry();
-		preg.inject(ws,new ProcessConfigBaseElementFactory(ws));
+		preg.inject(ws, new ProcessConfigBaseElementFactory(ws));
 		ProcessDefinition pd = preg.storeProcessDefinition(procD, false).getKey();
 //		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
 //		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
@@ -114,7 +115,7 @@ class TestPrematureTriggerConstraints {
 		String content = Files.readString(Paths.get(file));	
 		DTOs.Process procD = json.fromJson(content);
 		ProcessRegistry preg = new ProcessRegistry();
-		preg.inject(ws,new ProcessConfigBaseElementFactory(ws));
+		preg.inject(ws, new ProcessConfigBaseElementFactory(ws));
 		ProcessDefinition pd = preg.storeProcessDefinition(procD, false).getKey();
 //		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
 //		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
@@ -132,7 +133,7 @@ class TestPrematureTriggerConstraints {
 		String content = Files.readString(Paths.get(file));	
 		DTOs.Process procD = json.fromJson(content);
 		ProcessRegistry preg = new ProcessRegistry();
-		preg.inject(ws,new ProcessConfigBaseElementFactory(ws));
+		preg.inject(ws, new ProcessConfigBaseElementFactory(ws));
 		ProcessDefinition pd = preg.storeProcessDefinition(procD, false).getKey();
 //		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
 //		new PrematureTriggerGenerator().generatePrematureConstraints(pd);
@@ -151,7 +152,7 @@ class TestPrematureTriggerConstraints {
 		String content = Files.readString(Paths.get(file));	
 		DTOs.Process procD = json.fromJson(content);
 		ProcessRegistry preg = new ProcessRegistry();
-		preg.inject(ws,new ProcessConfigBaseElementFactory(ws));
+		preg.inject(ws, new ProcessConfigBaseElementFactory(ws));
 		ProcessDefinition pd = preg.storeProcessDefinition(procD, false).getKey();
 //		ProcessDefinition pd = DefinitionTransformer.fromDTO(procD, ws);
 //		new PrematureTriggerGenerator().generatePrematureConstraints(pd);

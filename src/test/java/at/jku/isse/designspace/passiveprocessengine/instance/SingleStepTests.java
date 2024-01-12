@@ -20,6 +20,7 @@ import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
+import at.jku.isse.passiveprocessengine.instance.InstanceTests;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;

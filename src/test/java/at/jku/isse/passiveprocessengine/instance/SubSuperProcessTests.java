@@ -1,4 +1,4 @@
-package at.jku.isse.designspace.passiveprocessengine.instance;
+package at.jku.isse.passiveprocessengine.instance;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -22,7 +22,6 @@ import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
-import at.jku.isse.passiveprocessengine.instance.InstanceTests;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;

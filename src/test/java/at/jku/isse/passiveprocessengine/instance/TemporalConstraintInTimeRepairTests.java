@@ -1,4 +1,4 @@
-package at.jku.isse.designspace.passiveprocessengine.instance;
+package at.jku.isse.passiveprocessengine.instance;
 
 import java.util.Optional;
 
@@ -24,7 +24,6 @@ import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionS
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts.JiraStates;
-import at.jku.isse.passiveprocessengine.instance.InstanceTests;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;

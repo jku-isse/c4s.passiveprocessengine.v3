@@ -1,4 +1,4 @@
-package at.jku.isse.designspace.passiveprocessengine.instance;
+package at.jku.isse.passiveprocessengine.instance;
 
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
@@ -28,11 +28,10 @@ import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.ReservedNames;
 import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
-import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.QAConstraintSpec;
+import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
@@ -63,18 +62,19 @@ public class RepairOrderTest {
 	static RepairStats rs = new RepairStats();
 	static RepairNodeScorer scorer=new SortOnRestriction();
 	static ReplayTimeProvider timeProvider=new ReplayTimeProvider();
+	static RepairFeatureToggle rtf=new RepairFeatureToggle(true,false,false);
 	@BeforeEach
 	void setup() throws Exception {
 		RuleService.setEvaluator(new ArlRuleEvaluator());
-		ws = WorkspaceService.PUBLIC_WORKSPACE; //.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER,
-				//null, true, false);
+		ws = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, WorkspaceService.ANY_USER,
+				null, true, false);
 		// ws = WorkspaceService.PUBLIC_WORKSPACE;
 		RuleService.currentWorkspace = ws;
 		EventDistributor eventDistrib = new EventDistributor();
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
 		eventDistrib.registerHandler(monitor);
 		ProcessInstanceChangeProcessor picp = new ProcessInstanceChangeProcessor(ws, eventDistrib);
-		repAnalyzer = new RepairAnalyzer(ws, rs,scorer,timeProvider, new UsageMonitor(timeProvider),new RepairFeatureToggle());
+		repAnalyzer = new RepairAnalyzer(ws, rs,scorer,timeProvider, new UsageMonitor(timeProvider),rtf);
 		WorkspaceListenerSequencer wsls = new WorkspaceListenerSequencer(ws);
 		wsls.registerListener(repAnalyzer);
 		wsls.registerListener(picp);
