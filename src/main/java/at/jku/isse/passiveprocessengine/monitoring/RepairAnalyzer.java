@@ -57,6 +57,7 @@ import at.jku.isse.designspace.rule.arl.repair.order.RepairNodeScorer;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairStats;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairTreeSorter;
 import at.jku.isse.designspace.rule.arl.repair.order.Repair_template;
+import at.jku.isse.designspace.rule.arl.repair.order.RestrictionAnalysisDS;
 import at.jku.isse.designspace.rule.arl.repair.order.SortOnRepairPercentage;
 import at.jku.isse.designspace.rule.arl.repair.order.SortOnRestriction;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
@@ -87,7 +88,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 	Map<PropertyUpdate, Set<SideEffect<ConsistencyRule>>> collectedImpact = new LinkedHashMap<>();
 	// last/latest repair for rule (updated at the end of previous iteration)
 	Map<ConsistencyRule, RepairNode> repairForRule = new HashMap<>();
-	
+
 	//WITH CHANGE TO DS440 no longer needed, changes of properties and rule results occur in same transaction notification
 	// collecting all updates as long as no rule result changes,i.e., no rule was
 	// reevaluated resulting in a change
@@ -107,15 +108,17 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 	ProcessChangeEvents pce;
 	RepairNodeScorer scorer;
 	ITimeStampProvider time;
+	RepairFeatureToggle rft;
 	// end
 
-	public RepairAnalyzer(Workspace ws, RepairStats rs, RepairNodeScorer scorer, ITimeStampProvider timeprovider, UsageMonitor monitor) {
-
+	public RepairAnalyzer(Workspace ws, RepairStats rs, RepairNodeScorer scorer, ITimeStampProvider timeprovider
+			,UsageMonitor monitor,RepairFeatureToggle rft) {
 		this.ws = ws;
 		this.pce=new ProcessChangeEvents(rs);
 		this.scorer = scorer;
 		this.time=timeprovider;
 		this.monitor = monitor;
+		this.rft=rft;
 	}
 
 	public void inject(Workspace ws2) {
@@ -194,71 +197,71 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 		//traversing through current operations
 		//extracting list of elements that are created
 		Set<Element> ignorePropertyValueOfElement = new HashSet<>();
-		
+
 		for (Operation operation : operations) {
-            Element element = WorkspaceService.getWorkspaceElement(ws, operation.elementId());
-            if (element.isDeleted()) ignorePropertyValueOfElement.add(element);  //often there are changes immediately preceeding a delete (as part of a delete). these should be ignored also
-            if (element instanceof InstanceType) {
-                InstanceType instanceType = (InstanceType)element;
-                if (operation instanceof ElementCreate) {
-                    if (instanceType instanceof RuleType) {
-                    	ignorePropertyValueOfElement.add(instanceType);
-                    }
-                   
-                } // Might need later
-                /*else if (operation instanceof PropertyUpdate) {
+			Element element = WorkspaceService.getWorkspaceElement(ws, operation.elementId());
+			if (element.isDeleted()) ignorePropertyValueOfElement.add(element);  //often there are changes immediately preceeding a delete (as part of a delete). these should be ignored also
+			if (element instanceof InstanceType) {
+				InstanceType instanceType = (InstanceType)element;
+				if (operation instanceof ElementCreate) {
+					if (instanceType instanceof RuleType) {
+						ignorePropertyValueOfElement.add(instanceType);
+					}
+
+				} // Might need later
+				/*else if (operation instanceof PropertyUpdate) {
                     if (!ignorePropertyValueOfElement.contains(instanceType)) {
                         if (instanceType instanceof RuleType) {
                              }
                     }
                 } */else if (operation instanceof ElementDelete) {
-                    if (instanceType instanceof RuleType) {
-                        ignorePropertyValueOfElement.add(instanceType);
-                    }
+                	if (instanceType instanceof RuleType) {
+                		ignorePropertyValueOfElement.add(instanceType);
+                	}
                 }
-            }
-            else if (element instanceof Instance) {
-                Instance instance = (Instance)element;
-                if (operation instanceof ElementCreate) {
-                    if (!(instance instanceof Rule)) {
-                    	ignorePropertyValueOfElement.add(instance);
-                    }
-                } else if (operation instanceof PropertyUpdate) {
-                    if (!ignorePropertyValueOfElement.contains(instance)) {
-                        if (!(instance instanceof Rule)) {
-                        	String propU="";
-                        	if(operation instanceof PropertyUpdateAdd)
-                        		propU="Add";
-                        	else if(operation instanceof PropertyUpdateRemove)
-                        		propU="Remove";
-                        	else if(operation instanceof PropertyUpdateSet)
-                        		propU="Set";
-                        	String propName=((PropertyUpdate) operation).name();
-                        	String iType=instance.getInstanceType().name();
-                        	InstanceType it=instance.getInstanceType();
-                        	if(!propName.contains("/@") 
-                        			&& !iType.equalsIgnoreCase("Folder") 
-                        			&& !iType.equalsIgnoreCase("ConstraintWrapper")
-                        			&& !iType.startsWith("Process") 
-                        			&& !iType.startsWith("Decision") 
-                        			&& !iType.contains("cache"))
-                        	{
-                        	PropertyChange_DS addprop=new PropertyChange_DS(propName, 1);
-                        	pce.addPropertyChange(propU, instance.getInstanceType(), addprop);
-                        	}
-                          }
-                    }
-                } else if (operation instanceof ElementDelete) {
-                    if (!(instance instanceof Rule)) {
-                    	ignorePropertyValueOfElement.add(instance);
-                    }
-                }
-            }
-        }
-		
-		
-		
-		
+			}
+			else if (element instanceof Instance) {
+				Instance instance = (Instance)element;
+				if (operation instanceof ElementCreate) {
+					if (!(instance instanceof Rule)) {
+						ignorePropertyValueOfElement.add(instance);
+					}
+				} else if (operation instanceof PropertyUpdate) {
+					if (!ignorePropertyValueOfElement.contains(instance)) {
+						if (!(instance instanceof Rule)) {
+							String propU="";
+							if(operation instanceof PropertyUpdateAdd)
+								propU="Add";
+							else if(operation instanceof PropertyUpdateRemove)
+								propU="Remove";
+							else if(operation instanceof PropertyUpdateSet)
+								propU="Set";
+							String propName=((PropertyUpdate) operation).name();
+							String iType=instance.getInstanceType().name();
+							InstanceType it=instance.getInstanceType();
+							if(!propName.contains("/@") 
+									&& !iType.equalsIgnoreCase("Folder") 
+									&& !iType.equalsIgnoreCase("ConstraintWrapper")
+									&& !iType.startsWith("Process") 
+									&& !iType.startsWith("Decision") 
+									&& !iType.contains("cache"))
+							{
+								PropertyChange_DS addprop=new PropertyChange_DS(propName, 1);
+								pce.addPropertyChange(propU, instance.getInstanceType(), addprop);
+							}
+						}
+					}
+				} else if (operation instanceof ElementDelete) {
+					if (!(instance instanceof Rule)) {
+						ignorePropertyValueOfElement.add(instance);
+					}
+				}
+			}
+		}
+
+
+
+
 		// REPLACED determineChangedRuleEvaluations(operations);
 		// if changedRuleResult is empty, then there has been no rule changes and this
 		// notification was about other operations, queue those that are relevant
@@ -880,43 +883,63 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 			.stream().map(se -> se.getInconsistency().name()).collect(Collectors.joining(", ", "[", "]"))));
 		});
 	}
-
-	// Code by AB
-
-	public void processLatestChanges() {
-
+	public void processLatestChanges()
+	{
 		latestImpact.entrySet().stream().forEach(entryPU->{
-
 			for(SideEffect<ConsistencyRule> se_cre: entryPU.getValue())
 			{
-				/*Storing the data of all changes along with  their details i.e. effectType, constraint, operation, process, etc. */
 				ConsistencyRule cre = se_cre.getInconsistency();
 				Instance stepInst = cre.contextInstance();
 				String rule=cre.getProperty("name").getValue().toString();
-				Event_DS event=new Event_DS(entryPU.getKey(), null, se_cre,cre, cre.isConsistent(), stepInst, null, time.getLastChangeTimeStamp(), 0, 0, 0);
-				this.pce.addAllExecuteEventLog(event);
-				this.pce.identifyUndo(event);
-				if(se_cre.getSideEffectType()==SideEffect.Type.POSITIVE)
-				{
-					/*For ranking we are only counting these changes w.r.t the constraint. As they are the ones
+				RepairNode rn = repairForRule.get(cre);
+				if(this.rft.isSortEnabled()) // sorting is enabled
+				{/*Storing the data of all changes along with  their details i.e. effectType, constraint, operation, process, etc. */
+					Event_DS event=new Event_DS(entryPU.getKey(), null, se_cre,cre, cre.isConsistent(), stepInst, null, time.getLastChangeTimeStamp(), 0, 0, 0);
+					this.pce.addAllExecuteEventLog(event);
+					//this.pce.identifyUndo(event);
+					if(se_cre.getSideEffectType()==SideEffect.Type.POSITIVE)
+					{/*For ranking we are only counting these changes w.r.t the constraint. As they are the ones
 					 * that are leading the rule towards the fulfillment.*/
-					updateCRE_matrix(se_cre, entryPU.getKey(),stepInst,time.getLastChangeTimeStamp());
-					if(cre.isConsistent())// change lead to cre fulfillment
-					{
-						this.pce.updateRepairTemplateScores(cre);
+						updateCRE_matrix(se_cre, entryPU.getKey(),stepInst,time.getLastChangeTimeStamp());
+						if(cre.isConsistent())// change lead to cre fulfillment
+						{
+							this.pce.updateRepairTemplateScores(cre);
+						}
 					}
 				}
-				else if(se_cre.getSideEffectType()==SideEffect.Type.NEGATIVE)
+				else if(this.rft.isIdentifyUndoEnabled()) //TODO: write test case for this
 				{
-					/*The change has lead the constraint away from fulfillment or have introduced more inconsistencies.*/
+					/*Storing the data of all changes along with  their details i.e. effectType, constraint, operation, process, etc. */
+					Event_DS event=new Event_DS(entryPU.getKey(), null, se_cre,cre, cre.isConsistent(), stepInst, null, time.getLastChangeTimeStamp(), 0, 0, 0);
+					this.pce.addAllExecuteEventLog(event);
+					this.pce.identifyUndo(event);
+					if(se_cre.getSideEffectType()==SideEffect.Type.POSITIVE)
+					{
+						updateCRE_matrix(se_cre, entryPU.getKey(),stepInst,time.getLastChangeTimeStamp());
+					}
 				}
-				else if(se_cre.getSideEffectType()==SideEffect.Type.NONE)
+				else if(this.rft.isRestComplexityEnabled())
 				{
-					/*The change has no effect neither fulfilling nor unfulfilling.*/
+					/*Storing the data of all changes along with  their details i.e. effectType, constraint, operation, process, etc. */
+					if(rn!=null)
+					{
+						//ConsistencyUtils.printRepairTreeWithRestrictions(rn);
+						RestrictionAnalysisDS restDS=new RestrictionAnalysisDS(entryPU.getKey(), time.getLastChangeTimeStamp());
+						this.pce.addRestrictionData(restDS, cre,rn);
+						//System.out.println("Done");
+					}
+				}
+				else
+				{
+					if(rn!=null)
+					{
+						ConsistencyUtils.printRepairTree(rn);
+					}
 				}
 			}
 
 		});	
+
 	}
 
 	public void updateCRE_matrix(SideEffect<ConsistencyRule> se_cre, PropertyUpdate clientop, Instance stepInst, OffsetDateTime dateTime)
@@ -929,12 +952,6 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 		 * if the repair node is not null that means the repair for the cre was suggested
 		 */
 		if (rn != null) {
-			/*
-			if(rule.contains("SSStoSRStrace"))
-			{
-				System.out.println(cre.ruleDefinition());
-				System.out.println("STOP");
-			}*/
 			ConsistencyUtils.printRepairTree(rn);
 			RepairTreeSorter rts=new RepairTreeSorter(this.pce.getRs(), scorer);
 			rts.updateTreeOnScores(rn,rule);
@@ -947,9 +964,6 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 				if (this.doesOpMatchRepair(ra, clientop, clientop.elementId())) 
 				{
 					EvaluationNode eval= ra.getEvalNode();
-					/*System.out.println("\n\n\n"+cre.consistencyRuleDefinition().toString());
-					System.out.println("\n\n\n"+ra.toString());
-					System.out.println("\n\n\n"+eval.toString()+"\t"+"\n");*/
 					Repair_template rt=new Repair_template();
 					rt=rt.toRepairTemplate(ra);
 					Event_DS event=new Event_DS(clientop, ra, se_cre,cre, cre.isConsistent(), stepInst, rt, dateTime, highestRank,ra.getRank(),ra.getScore());
@@ -967,93 +981,6 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 			}
 		}
 	}
-
-
-	/*public void checkClientOP(ConsistencyRule cre, PropertyUpdate clientop) {
-		int loc_cre = node_counter.getCRELocation(cre);
-		if (loc_cre != -1) // Means the CRE exists in the list.
-		{
-			// Check if the current op is the inverse of any previous ones.
-			Map<RepairAction, PropertyUpdate> cre_clientOP = node_counter.getClientOp(loc_cre);
-			cre_clientOP.entrySet().stream().forEach(entryC_OP -> {
-				PropertyUpdate prevOP = entryC_OP.getValue();
-				// code to check if the current operation is the inverse of any previous ones.
-				if (doesOperationsAreInverse(clientop, prevOP)) {
-					// the operations are inverse of each other against same CRE
-					cre_clientOP.remove(entryC_OP.getKey(), entryC_OP.getValue());
-				}
-			});
-		} // else CRE doesn't exist
-	}
-	 */
-
-	// Max Rank = Test Code
-	// Default & Freq
-	/*	scorer=new NoSort();
-	RepairTreeSorter rts=new RepairTreeSorter(this.pce.getRs(), scorer);
-	rts.updateTreeOnScores(rn,rule);
-	rts.sortTree(rn, 1);
-	highestRank=rts.getMaxRank(rn);
-	scorer=new SortOnRepairPercentage();
-	RepairTreeSorter rts1=new RepairTreeSorter(this.pce.getRs(), scorer);
-	rts1.updateTreeOnScores(rn,rule);
-	rts1.sortTree(rn, 1);
-	int highestRank1=rts1.getMaxRank(rn);
-	if(highestRank != highestRank1)
-	{
-		System.out.println("Check here "+ highestRank + " and " +highestRank1);
-		System.out.println("Default Ranking");
-		scorer=new NoSort();
-		rts.updateTreeOnScores(rn,rule);
-		rts.sortTree(rn, 1);
-		highestRank=rts.getMaxRank(rn);
-		System.out.println("Frequency Ranking");
-		scorer=new SortOnRepairPercentage();
-		rts1.updateTreeOnScores(rn,rule);
-		rts1.sortTree(rn, 1);
-		highestRank1=rts1.getMaxRank(rn);
-	}*/
-	// Default & Simplicity
-	/*scorer=new NoSort();
-	RepairTreeSorter rts=new RepairTreeSorter(this.pce.getRs(), scorer);
-	rts.updateTreeOnScores(rn,rule);
-	rts.printSortedRepairTree(rn, 1);
-	highestRank=rts.getMaxRank(rn);
-	scorer=new SortOnRestriction();
-	RepairTreeSorter rts1=new RepairTreeSorter(this.pce.getRs(), scorer);
-	rts1.updateTreeOnScores(rn,rule);
-	int highestRank1=rts1.getMaxRank(rn);
-	if(highestRank != highestRank1)
-	{
-		System.out.println("Check here "+ highestRank + " and " +highestRank1);
-		System.out.println("Default Ranking");
-		scorer=new NoSort();
-		rts.updateTreeOnScores(rn,rule);
-		rts.printSortedRepairTree(rn, 1);
-		highestRank=rts.getMaxRank(rn);
-		System.out.println("Simplicity Ranking");
-		scorer=new SortOnRestriction();
-		rts1.updateTreeOnScores(rn,rule);
-		rts1.printSortedRepairTree(rn, 1);
-		highestRank1=rts1.getMaxRank(rn);
-	}*/
-	// Max Rank =End Test
-
-	/*public boolean doesOperationsAreInverse(PropertyUpdate pu1, PropertyUpdate pu2) {
-		if (pu1.elementId() == pu2.elementId()) {
-			if (pu1.name().equals(pu2.name())) {
-				if (pu1 instanceof PropertyUpdateAdd && pu2 instanceof PropertyUpdateRemove)
-					return true;
-				else if (pu2 instanceof PropertyUpdateAdd && pu1 instanceof PropertyUpdateRemove)
-					return true;
-				return false;
-			}
-			return false;
-		}
-		return false;
-	}*/
-	// Code By AB
-	// End
 
 	private static RepairTreeFilter rtf = new QARepairTreeFilter();
 
@@ -1182,11 +1109,11 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 		this.scorer = scorer;
 	}
 
-	public ProcessChangeEvents getTd() {
+	public ProcessChangeEvents getPCE() {
 		return this.pce;
 	}
 
-	public void setTd(ProcessChangeEvents td) {
+	public void setPCE(ProcessChangeEvents td) {
 		this.pce = td;
 	}
 	public ITimeStampProvider getTime() {
@@ -1196,6 +1123,17 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 	public void setTime(ReplayTimeProvider time) {
 		this.time = time;
 	}
+
+	public RepairFeatureToggle getRft() {
+		return rft;
+	}
+
+	public void setRft(RepairFeatureToggle rft) {
+		this.rft = rft;
+	}
+
+
+
 
 
 

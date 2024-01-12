@@ -1273,7 +1273,7 @@ class RepairTests {
 	void testSelectWithAsSetRepair() {
 		StepDefinition s1 = StepDefinition.getInstance("S1", ws);
 		//s1.setCondition(Conditions.PRECONDITION, "self.in_story->size() > 0");
-		InstanceType typeStep = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, s1);
+		InstanceType typeStep = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, s1,null);
 		InstanceType gitType = TestArtifacts.getDemoGitIssueType(ws);
 		if (typeStep.getPropertyType("in_story") == null) {
 			typeStep.createPropertyType("in_story", Cardinality.SET, gitType);
@@ -1309,7 +1309,7 @@ class RepairTests {
 	@Test
 	void testStartsWithRepair() {
 		StepDefinition s1 = StepDefinition.getInstance("S1", ws);
-		InstanceType typeStep = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, s1);
+		InstanceType typeStep = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, s1,null);
 		InstanceType gitType = TestArtifacts.getDemoGitIssueType(ws);
 		if (typeStep.getPropertyType("in_story") == null) {
 			typeStep.createPropertyType("in_story", Cardinality.SET, gitType);
@@ -1367,7 +1367,7 @@ class RepairTests {
 	void testSelectWithoutAsSetRepair() {
 		StepDefinition s1 = StepDefinition.getInstance("S1", ws);
 		//s1.setCondition(Conditions.PRECONDITION, "self.in_story->size() > 0");
-		InstanceType typeStep = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, s1);
+		InstanceType typeStep = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, s1,null);
 		InstanceType gitType = TestArtifacts.getDemoGitIssueType(ws);
 		if (typeStep.getPropertyType("in_story") == null) {
 			typeStep.createPropertyType("in_story", Cardinality.SET, gitType);
@@ -1635,7 +1635,7 @@ class RepairTests {
 		.forEach(ra -> {
 			RestrictionNode rootNode =  ra.getRepairValueOption().getRestriction() != null ? ra.getRepairValueOption().getRestriction().getRootNode() : null;
 			String value = ra.getValue() != null ? " "+ra.getOperator().toString()+" "+ra.getValue().toString() : " NO VALUE";
-			String restriction = rootNode != null ? rootNode.printNodeTree(false,40) : value;					
+			String restriction = rootNode != null ? rootNode.printNodeTree(false,40) : value;						
 			String inst = ra.getElement() != null ? ra.getElement().toString() : "null";
 			StringBuffer sb = new StringBuffer();
 			switch(ra.getOperator()) {

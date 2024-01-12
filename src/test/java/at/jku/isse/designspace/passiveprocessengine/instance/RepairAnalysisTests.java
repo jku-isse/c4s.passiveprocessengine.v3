@@ -22,7 +22,7 @@ import at.jku.isse.designspace.core.model.PropertyType;
 import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
-import at.jku.isse.designspace.passiveprocessengine.TestUtils;
+import at.jku.isse.passiveprocessengine.TestUtils;
 import at.jku.isse.designspace.rule.arl.evaluator.EvaluationNode;
 import at.jku.isse.designspace.rule.arl.repair.RepairAction;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
@@ -39,6 +39,7 @@ import at.jku.isse.designspace.rule.model.ReservedNames;
 import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
@@ -66,6 +67,7 @@ import at.jku.isse.passiveprocessengine.monitoring.ITimeStampProvider;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
 import at.jku.isse.passiveprocessengine.monitoring.RepairAnalyzer;
+import at.jku.isse.passiveprocessengine.monitoring.RepairFeatureToggle;
 import at.jku.isse.passiveprocessengine.monitoring.ReplayTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.UsageMonitor;
 
@@ -95,7 +97,7 @@ public class RepairAnalysisTests {
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
 		eventDistrib.registerHandler(monitor);
 		ProcessInstanceChangeProcessor picp = new ProcessInstanceChangeProcessor(ws, eventDistrib);
-		repAnalyzer = new RepairAnalyzer(ws, rs,scorer,timeProvider, new UsageMonitor(timeProvider));
+		repAnalyzer = new RepairAnalyzer(ws, rs,scorer,timeProvider, new UsageMonitor(timeProvider),new RepairFeatureToggle());
 		WorkspaceListenerSequencer wsls = new WorkspaceListenerSequencer(ws);
 		wsls.registerListener(repAnalyzer);
 		wsls.registerListener(picp);
@@ -344,9 +346,9 @@ public class RepairAnalysisTests {
 				"self.in_jiraIn->size() = 1 " + "and self.in_jiraIn->forAll( issue | issue.state = 'Open') ");
 		sd1.setCondition(Conditions.POSTCONDITION,
 				"self.out_jiraOut->size() = 2 " + "and self.in_jiraIn->forAll( issue2 | issue2.state = 'Closed') ");
-		QAConstraintSpec qa2 = QAConstraintSpec.createInstance("sd1-qa1-state",
-				"self.out_jiraOut->size() > 0 and self.out_jiraOut->forAll( issue | issue.state = 'Closed')",
-				"All linked issues should be closed", 2, ws);
+		ConstraintSpec qa2 = ConstraintSpec.createInstance(Conditions.QA,
+				"sd1-qa1-state",
+				"self.out_jiraOut->size() > 0 and self.out_jiraOut->forAll( issue | issue.state = 'Closed')", "All linked issues should be closed", 2, ws);
 		sd1.addQAConstraint(qa2);
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);

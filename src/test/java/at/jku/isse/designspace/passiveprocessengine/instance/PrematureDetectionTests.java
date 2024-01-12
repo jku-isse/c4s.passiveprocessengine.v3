@@ -18,7 +18,7 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
-import at.jku.isse.designspace.passiveprocessengine.TestUtils;
+import at.jku.isse.passiveprocessengine.TestUtils;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairNodeScorer;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairStats;
@@ -30,6 +30,7 @@ import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.WrapperCache;
+import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
@@ -57,6 +58,7 @@ import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStepStats;
 import at.jku.isse.passiveprocessengine.monitoring.RepairAnalyzer;
+import at.jku.isse.passiveprocessengine.monitoring.RepairFeatureToggle;
 import at.jku.isse.passiveprocessengine.monitoring.ReplayTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.UsageMonitor;
 
@@ -85,7 +87,7 @@ class PrematureDetectionTests {
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
 		eventDistrib.registerHandler(monitor);
 		picp = new ProcessInstanceChangeProcessor(ws, eventDistrib);
-		repAnalyzer = new RepairAnalyzer(ws,rs,scorer,timeProvider, new UsageMonitor(timeProvider));
+		repAnalyzer = new RepairAnalyzer(ws,rs,scorer,timeProvider, new UsageMonitor(timeProvider),new RepairFeatureToggle());
 		WorkspaceListenerSequencer wsls = new WorkspaceListenerSequencer(ws);
 		wsls.registerListener(repAnalyzer);
 		wsls.registerListener(picp);
@@ -319,7 +321,7 @@ class PrematureDetectionTests {
 				+ "and self.in_jiraIn->forAll( issue | issue.state = 'Open') ");
 		sd1.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() = 2 "
 				+ "and self.in_jiraIn->forAll( issue2 | issue2.state = 'Closed') ");
-		QAConstraintSpec qa1 = QAConstraintSpec.createInstance("sd1-qa1-state", "self.out_jiraOut->size() > 0 and self.out_jiraOut->forAll( issue | issue.state = 'ReadyForReview' or issue.state = 'Released')", "All linked requirements should be ready for review", 2,ws);
+		ConstraintSpec qa1 = ConstraintSpec.createInstance(Conditions.QA, "sd1-qa1-state", "self.out_jiraOut->size() > 0 and self.out_jiraOut->forAll( issue | issue.state = 'ReadyForReview' or issue.state = 'Released')", "All linked requirements should be ready for review",2, ws);
 		sd1.addQAConstraint(qa1);
 		sd1.setInDND(dnd1);
 		sd1.setOutDND(dnd2);

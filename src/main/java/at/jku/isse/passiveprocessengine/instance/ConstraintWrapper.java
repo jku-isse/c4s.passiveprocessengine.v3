@@ -186,5 +186,6 @@ public class ConstraintWrapper extends ProcessInstanceScopedElement {
 		cw.setIsOverriden(false);
 		return cw;
 	}
+
 	
 }

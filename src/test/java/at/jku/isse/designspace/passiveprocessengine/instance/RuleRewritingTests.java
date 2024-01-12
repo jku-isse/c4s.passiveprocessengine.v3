@@ -49,7 +49,7 @@ public class RuleRewritingTests {
 		typeJira = TestArtifacts.getJiraInstanceType(workspace);
 		StepDefinition s1 = StepDefinition.getInstance("S1", workspace);
 		//s1.setCondition(Conditions.PRECONDITION, "self.in_story->size() > 0");
-		typeStep = ProcessStep.getOrCreateDesignSpaceInstanceType(workspace, s1);
+		typeStep = ProcessStep.getOrCreateDesignSpaceInstanceType(workspace, s1,null);
 		if (typeStep.getPropertyType("in_story") == null) {
 			typeStep.createPropertyType("in_story", Cardinality.LIST, typeJira);
 			typeStep.createPropertyType("out_story", Cardinality.LIST, typeJira);
@@ -66,7 +66,7 @@ public class RuleRewritingTests {
 		ArlEvaluator ae = new ArlEvaluator(typeStep, arl);
 		printSyntaxTree(ae.syntaxTree, "");
 		printOriginalSyntaxTree(ae.syntaxTree, "");
-		assert(stripForComparison(ae.syntaxTree.getOriginalARL()).equalsIgnoreCase(stripForComparison(arl)));
+		assert(stripForComparison(ae.syntaxTree.getOriginalARL(0, false)).equalsIgnoreCase(stripForComparison(arl)));
 	}
 	
 	@Test
@@ -89,7 +89,7 @@ public class RuleRewritingTests {
 		ArlEvaluator ae = new ArlEvaluator(typeStep, arl);
 		//printSyntaxTree(ae.syntaxTree, "");
 		printOriginalSyntaxTree(ae.syntaxTree, "");
-		String recovered = ae.syntaxTree.getOriginalARL();
+		String recovered = ae.syntaxTree.getOriginalARL(0, false);
 		ArlEvaluator ae2 = new ArlEvaluator(typeStep, recovered);
 		printSyntaxTree(ae2.syntaxTree, "");
 		assert(stripForComparison(recovered).equalsIgnoreCase(stripForComparison(arl)));
@@ -119,7 +119,7 @@ public class RuleRewritingTests {
 			.forEach(var -> ((VariableExpression)var).name = ((VariableExpression)var).name+"1");
 		//printSyntaxTree(ae.syntaxTree, "");
 		printOriginalSyntaxTree(ae.syntaxTree, "");
-		String recovered = ae.syntaxTree.getOriginalARL();
+		String recovered = ae.syntaxTree.getOriginalARL(0, false);
 		ArlEvaluator ae2 = new ArlEvaluator(typeStep, recovered);
 		printSyntaxTree(ae2.syntaxTree, "");
 		
@@ -168,7 +168,7 @@ public class RuleRewritingTests {
 																		+ "->exists(artId2 | not(artId2 = out2.name))))"								
 											;
 		ArlEvaluator ae = new ArlEvaluator(typeStep, arl);
-		String recovered = ae.syntaxTree.getOriginalARL();
+		String recovered = ae.syntaxTree.getOriginalARL(0, false);
 		System.out.println(recovered);
 		assert(stripForComparison(recovered).equalsIgnoreCase(stripForComparison(arl)));
 	}
@@ -184,7 +184,7 @@ public class RuleRewritingTests {
 	
 	private void printOriginalSyntaxTree(Expression ep, String indent) {
 		if (ep == null) return;
-		System.out.println(String.format("%s %s returns %s", indent, ep.getOriginalARL(),  ep.getResultType() != null ? ep.getResultType().toString() : "NULL"));
+		System.out.println(String.format("%s %s returns %s", indent, ep.getOriginalARL(0, false),  ep.getResultType() != null ? ep.getResultType().toString() : "NULL"));
 		final String newIndent = indent + "  ";
 		ep.getChildren().stream().forEach(child -> printOriginalSyntaxTree((Expression) child, newIndent));
 	}

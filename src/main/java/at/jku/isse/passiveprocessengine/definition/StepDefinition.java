@@ -373,7 +373,6 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 			});
 		return errors;
 	}
-	
 
 	
 	public List<ProcessDefinitionError> checkStepStructureValidity() {		

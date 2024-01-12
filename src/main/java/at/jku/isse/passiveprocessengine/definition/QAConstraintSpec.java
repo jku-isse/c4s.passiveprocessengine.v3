@@ -7,9 +7,10 @@ import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
+import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 
-public class QAConstraintSpec extends InstanceWrapper{
+public class QAConstraintSpec extends /*InstanceWrapper*/ ProcessDefinitionScopedElement{
 
 	
 	public static enum CoreProperties {qaConstraintSpec, humanReadableDescription, specOrderIndex};
@@ -48,7 +49,7 @@ public class QAConstraintSpec extends InstanceWrapper{
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
-				InstanceType typeStep = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER);
+				InstanceType typeStep = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessDefinitionScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
 				// constraintId maps to Instance name property
 				typeStep.createPropertyType(CoreProperties.qaConstraintSpec.toString(), Cardinality.SINGLE, Workspace.STRING);
 				typeStep.createPropertyType(CoreProperties.humanReadableDescription.toString(), Cardinality.SINGLE, Workspace.STRING);
