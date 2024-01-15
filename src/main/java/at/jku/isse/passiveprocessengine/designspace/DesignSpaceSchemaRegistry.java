@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import at.jku.isse.designspace.core.model.Id;
 import at.jku.isse.designspace.core.model.Workspace;
+import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
@@ -19,10 +20,11 @@ import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
+import at.jku.isse.passiveprocessengine.core.RuleDefinitionFactory;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import lombok.NonNull;
 
-public class DesignSpaceSchemaRegistry implements SchemaRegistry, InstanceRepository, DesignspaceAbstractionMapper {
+public class DesignSpaceSchemaRegistry implements SchemaRegistry, InstanceRepository, DesignspaceAbstractionMapper, RuleDefinitionFactory {
 
 	private Workspace ws;
 	private HashMap<Id, Instance> instanceWrappers = new HashMap<>();
@@ -170,7 +172,7 @@ public class DesignSpaceSchemaRegistry implements SchemaRegistry, InstanceReposi
 	@Override
 
 	public at.jku.isse.designspace.core.model.InstanceType mapProcessDomainInstanceTypeToDesignspaceInstanceType(
-			Instance processDomainInstanceType) {
+			@NonNull Instance processDomainInstanceType) {
 		if (processDomainInstanceType instanceof DesignspaceInstanceTypeWrapper) {
 			return ((DesignspaceInstanceTypeWrapper) processDomainInstanceType).getDelegate();					
 		} else if (processDomainInstanceType instanceof BuildInType) { 
@@ -187,6 +189,21 @@ public class DesignSpaceSchemaRegistry implements SchemaRegistry, InstanceReposi
 		} else {
 			throw new RuntimeException("Asked to get Designspace InstanceType from non Designspace wrapper with name: "+ processDomainInstanceType.getName());
 		}
+	}
+
+	@Override
+	public RuleDefinition createInstance(InstanceType type, String ruleName, String ruleExpression) {
+		at.jku.isse.designspace.core.model.InstanceType dsType = mapProcessDomainInstanceTypeToDesignspaceInstanceType(type);
+		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, dsType, ruleName, ruleExpression);
+		RuleDefinitionWrapper ruleDef = new RuleDefinitionWrapper(crt, this);
+		instanceTypeWrappers.put(crt.id(), ruleDef);
+		return ruleDef;
+	}
+
+	@Override
+	public void setPropertyRepairable(InstanceType type, String property, boolean isRepairable) {
+		at.jku.isse.designspace.core.model.InstanceType dsType = mapProcessDomainInstanceTypeToDesignspaceInstanceType(type);
+		ConsistencyUtils.setPropertyRepairable(dsType, property, isRepairable);
 	}
 
 }

@@ -2,6 +2,7 @@ package at.jku.isse.passiveprocessengine.definition.factories;
 
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
+import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
@@ -9,15 +10,10 @@ import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
-public class ConstraintSpecFactory {
-	InstanceRepository repository;
-	Context wrapperCache;
-	DomainTypesRegistry typesFactory;
-	
-	public ConstraintSpecFactory(InstanceRepository repository, Context wrapperCache, DomainTypesRegistry typesFactory) {
-		this.repository = repository;
-		this.wrapperCache = wrapperCache;
-		this.typesFactory = typesFactory;
+public class ConstraintSpecFactory extends DomainFactory{
+		
+	public ConstraintSpecFactory(Context context) {
+		super(context);
 	}
 	
 	public ConstraintSpec createInstance(Conditions condition, DTOs.Constraint constraintSpec) {
@@ -30,13 +26,13 @@ public class ConstraintSpecFactory {
 	}
 	
 	public ConstraintSpec createInstance(Conditions condition, String constraintId, String constraintSpec, String humanReadableDescription, int specOrderIndex, boolean isOverridable) {
-		Instance instance = repository.createInstance(constraintId, typesFactory.getType(ConstraintSpec.class));
+		Instance instance = getContext().getInstanceRepository().createInstance(constraintId, getContext().getSchemaRegistry().getType(ConstraintSpec.class));
 		instance.setSingleProperty(ConstraintSpecType.CoreProperties.constraintSpec.toString(),constraintSpec);
 		instance.setSingleProperty(ConstraintSpecType.CoreProperties.humanReadableDescription.toString(), humanReadableDescription == null ? "" : humanReadableDescription);
 		instance.setSingleProperty(ConstraintSpecType.CoreProperties.specOrderIndex.toString(), specOrderIndex);
 		instance.setSingleProperty(ConstraintSpecType.CoreProperties.isOverridable.toString(), isOverridable);
 		instance.setSingleProperty(ConstraintSpecType.CoreProperties.conditionsType.toString(), condition.toString());
-		return wrapperCache.getWrappedInstance(ConstraintSpec.class, instance);
+		return getContext().getWrappedInstance(ConstraintSpec.class, instance);
 	}
 
 }

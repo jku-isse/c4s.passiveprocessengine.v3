@@ -14,13 +14,13 @@ import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
 public class DecisionNodeInstanceFactory extends DomainFactory {
 
 	
-	public DecisionNodeInstanceFactory(InstanceRepository repository, Context context,
-			DomainTypesRegistry typesFactory) {
-		super(repository, context, typesFactory);		
+	public DecisionNodeInstanceFactory(Context context) {
+		super(context);		
 	}
 
 	public DecisionNodeInstance getInstance(DecisionNodeDefinition dnd) {				
-		Instance instance = getRepository().createInstance(dnd.getName()+"_"+UUID.randomUUID(), getTypesFactory().getType(DecisionNodeInstance.class));
+		Instance instance = getContext().getInstanceRepository().createInstance(dnd.getName()+"_"+UUID.randomUUID()
+			, getContext().getSchemaRegistry().getType(DecisionNodeInstance.class));
 		DecisionNodeInstance dni = getContext().getWrappedInstance(DecisionNodeInstance.class, instance);
 		//dni.init(dnd);
 		instance.setSingleProperty(DecisionNodeInstanceType.CoreProperties.dnd.toString(),dnd.getInstance());

@@ -33,11 +33,11 @@ public class DefinitionTransformer {
 	private final DTOs.Process rootProcDTO;		
 	private final DomainTypesRegistry typesFactory;
 	
-	public DefinitionTransformer(DTOs.Process procDTO, FactoryIndex factories, SchemaRegistry schemaRegistry, DomainTypesRegistry typesFactory) {
+	public DefinitionTransformer(DTOs.Process procDTO, FactoryIndex factories, SchemaRegistry schemaRegistry) {
 		this.rootProcDTO = procDTO;	
 		this.factories = factories;
 		this.schemaRegistry = schemaRegistry;
-		this.typesFactory = typesFactory;
+		this.typesFactory = schemaRegistry;
 	}
 	
 	public List<ProcessDefinitionError> getErrors() {
@@ -49,8 +49,9 @@ public class DefinitionTransformer {
 		
 		if (errors.isEmpty()) { //if there are type errors, we dont even try to create rules
 			boolean doGeneratePrematureRules = false;
-			if (Boolean.parseBoolean(rootProcDTO.getProcessConfig().getOrDefault(CONFIG_KEY_doGeneratePrematureRules, "false")))
+			if (Boolean.parseBoolean(rootProcDTO.getProcessConfig().getOrDefault(CONFIG_KEY_doGeneratePrematureRules, "false"))) {
 				doGeneratePrematureRules = true;
+			}
 			errors.addAll(factories.getProcessDefinitionFactory().initializeInstanceTypes(processDef,doGeneratePrematureRules));
 			
 			boolean doImmediatePropagate = !doGeneratePrematureRules;

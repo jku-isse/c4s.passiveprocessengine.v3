@@ -10,9 +10,8 @@ import at.jku.isse.passiveprocessengine.instance.ProcessException;
 
 public class ProcessConfigFactory extends DomainFactory {
 		
-	public ProcessConfigFactory(InstanceRepository repository, Context context,
-			DomainTypesRegistry typesFactory) {
-		super(repository, context, typesFactory);		
+	public ProcessConfigFactory(Context context) {
+		super(context);		
 	}
 
 	public Instance createConfigInstance(String name, InstanceType configSubType) {
@@ -21,7 +20,7 @@ public class ProcessConfigFactory extends DomainFactory {
 	}
 
 	public Instance createConfigInstance(String name, String subtypeName) throws ProcessException{
-		InstanceType subType =  getTypesFactory().getTypeByName(subtypeName);		
+		InstanceType subType =  getContext().getSchemaRegistry().getTypeByName(subtypeName);		
 		if (subType == null) {
 			throw new ProcessException("Configuration Subtyp "+subtypeName+" does not exist");
 		} else {

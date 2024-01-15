@@ -1,9 +1,11 @@
 package at.jku.isse.passiveprocessengine.designspace;
 
+import java.util.Collection;
 import java.util.Set;
 
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
+import lombok.NonNull;
 
 public class DesignspaceInstanceWrapper implements Instance {
 
@@ -45,21 +47,35 @@ public class DesignspaceInstanceWrapper implements Instance {
 	}
 
 	@Override
-	public void setSingleProperty(String property, Object value) {
-		// TODO Auto-generated method stub
-		
+	public void setSingleProperty(@NonNull String property, Object value) {
+		if (value instanceof DesignspaceInstanceWrapper) {
+			value = ((DesignspaceInstanceWrapper) value).getDelegate();
+		}
+		delegate.getPropertyAsSingle(property).set(value);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T getTypedProperty(String property, Class<T> clazz) {
-		// TODO Auto-generated method stub
-		return null;
+	public <T> T getTypedProperty(@NonNull String property, @NonNull Class<T> clazz) {
+		Object value = delegate.getProperty(property);
+		// if list/set/map create wrapper around to map ds instances to ppe instances
+		if (Set.class.isAssignableFrom(clazz)) {
+			
+		}
+		if (value == null) 
+			return null;
+		else 
+			return (T)value;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T getTypedProperty(String property, Class<T> clazz, T defaultValue) {
-		// TODO Auto-generated method stub
-		return null;
+	public <T> T getTypedProperty(@NonNull String property, @NonNull Class<T> clazz, T defaultValue) {
+		Object value = delegate.getProperty(property);
+		if (value == null) 
+			return defaultValue;
+		else 
+			return (T)value;
 	}
 
 	

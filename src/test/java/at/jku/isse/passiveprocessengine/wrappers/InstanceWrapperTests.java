@@ -1,38 +1,34 @@
 package at.jku.isse.passiveprocessengine.wrappers;
 
+import static org.junit.Assert.assertNotNull;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
+import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
+import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
+import at.jku.isse.passiveprocessengine.demo.TestDTOProcesses;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.*;
-import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
-import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType;
-import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
-import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeType;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 public class InstanceWrapperTests extends DefinitionWrapperTests {
-	
+	 
+	TestDTOProcesses procFactory;
 	
 	@BeforeEach
 	void setup() throws Exception {
 		super.setup();
-		registerAllInstanceBaseTypes();
+		TestArtifacts artifactFactory = new TestArtifacts(designspace, schemaReg);
+		procFactory = new TestDTOProcesses(artifactFactory);
 	}
 	
-	private void registerAllInstanceBaseTypes() {
-			ProcessInstanceScopeType scopeTypeProvider = new ProcessInstanceScopeType(schemaReg);
-			ConstraintWrapperType constraintWrapperType = new ConstraintWrapperType(schemaReg);
-			DecisionNodeInstanceType dniType = new DecisionNodeInstanceType(schemaReg);
-			AbstractProcessStepType stepType = new AbstractProcessStepType(schemaReg);
-			scopeTypeProvider.produceTypeProperties();
-			constraintWrapperType.produceTypeProperties();
-			dniType.produceTypeProperties();
-			stepType.produceTypeProperties();
-	}
+
 	
 	@Test
 	void testAllBaseInstanceTypeRegistration() {				
@@ -42,7 +38,14 @@ public class InstanceWrapperTests extends DefinitionWrapperTests {
 		assert(schemaReg.getType(ProcessStep.class) != null);	
 	}
 	
-	
+	@Test
+	void testObtainSimpleProcess() {
+		DTOs.Process procDTO = procFactory.getSimpleDTOSubprocess();
+		DefinitionTransformer transformer = new DefinitionTransformer(procDTO, configBuilder.getContext().getFactoryIndex(), schemaReg);
+		ProcessDefinition procDef = transformer.fromDTO(false);
+		assertNotNull(procDef);
+		assert(transformer.getErrors().isEmpty());
+	}
 	
 	
 

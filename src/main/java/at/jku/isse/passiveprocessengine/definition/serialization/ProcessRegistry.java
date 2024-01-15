@@ -144,7 +144,7 @@ public class ProcessRegistry {
 		} 
 		// no else as if in staging, we continue here in any case
 		log.debug("Storing new process: "+process.getCode());
-		DefinitionTransformer transformer = new DefinitionTransformer(process, context.getFactoryIndex(), context.getSchemaRegistry(), context.getSchemaRegistry());			
+		DefinitionTransformer transformer = new DefinitionTransformer(process, context.getFactoryIndex(), context.getSchemaRegistry());			
 		ProcessDefinition pd = transformer.fromDTO(isInStaging);
 		List<ProcessDefinitionError> errors = transformer.getErrors();
 

@@ -4,21 +4,17 @@ import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
+import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 
-public class StepDefinitionFactory {
-	InstanceRepository repository;
-	Context wrapperCache;
-	DomainTypesRegistry typesFactory;
+public class StepDefinitionFactory extends DomainFactory {
 	
-	public StepDefinitionFactory(InstanceRepository repository, Context wrapperCache, DomainTypesRegistry typesFactory) {
-		this.repository = repository;
-		this.wrapperCache = wrapperCache;
-		this.typesFactory = typesFactory;
+	public StepDefinitionFactory(Context context) {
+		super(context);
 	}
 	
 	public StepDefinition createInstance(String stepId) {
-		Instance instance = repository.createInstance(stepId, typesFactory.getType(StepDefinition.class));
-		return wrapperCache.getWrappedInstance(StepDefinition.class, instance);
+		Instance instance = getContext().getInstanceRepository().createInstance(stepId, getContext().getSchemaRegistry().getType(StepDefinition.class));
+		return getContext().getWrappedInstance(StepDefinition.class, instance);
 	}
 }

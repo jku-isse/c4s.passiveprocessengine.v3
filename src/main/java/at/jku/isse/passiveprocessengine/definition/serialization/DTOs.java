@@ -83,12 +83,12 @@ public class DTOs {
 	public static class Step extends Element {
 		String inDNDid;
 		String outDNDid;
-		Map<String,String> input = new HashMap<>();
-		Map<String,String> output = new HashMap<>();
-		Map<String,String> ioMapping = new HashMap<>();
-		Map<Conditions,List<Constraint>> conditions = new HashMap<>();
-		Set<Constraint> qaConstraints = new HashSet<>();
-		int specOrderIndex = 0;
+		final Map<String,String> input = new HashMap<>();
+		final Map<String,String> output = new HashMap<>();
+		final Map<String,String> ioMapping = new HashMap<>();
+		final Map<Conditions,List<Constraint>> conditions = new HashMap<>();
+		final Set<Constraint> qaConstraints = new HashSet<>();
+		@Builder.Default int specOrderIndex = 0;
 		String html_url;
 
 		protected void toPlantUML(StringBuffer sb) {
@@ -149,9 +149,9 @@ public class DTOs {
 	@Data
 	@SuperBuilder
 	public static class DecisionNode extends Element {
-		InFlowType inflowType = InFlowType.SEQ; //default value
-		Set<Mapping> mapping = new HashSet<>();
-		int depthIndex = -1;
+		@Builder.Default InFlowType inflowType = InFlowType.SEQ; //default value
+		final Set<Mapping> mapping = new HashSet<>();
+		@Builder.Default int depthIndex = -1;
 
 		protected void toPlantUMLDataflow(StringBuffer sb) {
 			mapping.forEach(m -> sb.append("\r\n \""+m.getFromStep()+"\" -down-> \""+m.getToStep()+"\" : \""+m.getToParam()+"\""));
@@ -172,11 +172,11 @@ public class DTOs {
 	@Data
 	@SuperBuilder
 	public static class Process extends Step {
-		List<Step> steps = new LinkedList<>();
-		List<DecisionNode> dns = new LinkedList<>();
-		Map<String, String> prematureStepConditions = new HashMap<>();
-		Map<String, String> processConfig = new HashMap<>();
-		Map<String, Set<PropertySchemaDTO>> configs = new HashMap<>();
+		final List<Step> steps = new LinkedList<>();
+		final List<DecisionNode> dns = new LinkedList<>();
+		final Map<String, String> prematureStepConditions = new HashMap<>();
+		final Map<String, String> processConfig = new HashMap<>();
+		final Map<String, Set<PropertySchemaDTO>> configs = new HashMap<>();
 
 		public Step getStepByCode(String code) {
 			return steps.stream().filter(step -> step.getCode().equals(code)).findAny().orElse(null);

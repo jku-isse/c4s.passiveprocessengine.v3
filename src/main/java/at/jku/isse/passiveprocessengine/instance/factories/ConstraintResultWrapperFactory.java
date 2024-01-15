@@ -16,13 +16,13 @@ import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType;
 
 public class ConstraintResultWrapperFactory extends DomainFactory {
 	
-	public ConstraintResultWrapperFactory(InstanceRepository repository, Context context,
-			DomainTypesRegistry typesFactory) {
-		super(repository, context, typesFactory);		
+	public ConstraintResultWrapperFactory(Context context) {
+		super(context);		
 	}
 
 	public ConstraintResultWrapper createInstance(ConstraintSpec qaSpec, ZonedDateTime lastChanged, ProcessStep owningStep, ProcessInstance proc) {
-		Instance inst = getRepository().createInstance(qaSpec.getName()+proc.getName()+"_"+UUID.randomUUID(), getTypesFactory().getType(ConstraintResultWrapper.class));
+		Instance inst = getContext().getInstanceRepository().createInstance(qaSpec.getName()+proc.getName()+"_"+UUID.randomUUID()
+			, getContext().getSchemaRegistry().getType(ConstraintResultWrapper.class));
 		ConstraintResultWrapper cw = getContext().getWrappedInstance(ConstraintResultWrapper.class, inst);
 		cw.getInstance().setSingleProperty(ConstraintWrapperType.CoreProperties.parentStep.toString(), owningStep.getInstance());
 		cw.setSpec(qaSpec);

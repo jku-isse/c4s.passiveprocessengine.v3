@@ -15,25 +15,26 @@ import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceTy
 
 public class ProcessInstanceFactory extends DomainFactory {
 						
-	public ProcessInstanceFactory(InstanceRepository repository, Context context,
-			DomainTypesRegistry typesFactory) {
-		super(repository, context, typesFactory);		
+	public ProcessInstanceFactory(Context context) {
+		super(context);		
 	}
 	
 	public ProcessInstance getInstance(ProcessDefinition processDef, String namePostfix) {
 		//TODO: not to create duplicate process instances somehow		
-		Instance instance = getRepository().createInstance(processDef.getName()+"_"+namePostfix, getTypesFactory().getTypeByName(SpecificProcessInstanceType.getProcessName(processDef)));
+		Instance instance = getContext().getInstanceRepository().createInstance(processDef.getName()+"_"+namePostfix
+				, getContext().getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(processDef)));
 		ProcessInstance process = getContext().getWrappedInstance(ProcessInstance.class, instance);
-		process.inject(factoryIndex.getProcessStepFactory(), factoryIndex.getDecisionNodeInstanceFactory());
+		process.inject(getContext().getFactoryIndex().getProcessStepFactory(), getContext().getFactoryIndex().getDecisionNodeInstanceFactory());
 		init(process, processDef, null, null);
 		return process;
 	}
 
 	public ProcessInstance getSubprocessInstance(ProcessDefinition subprocessDef, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, ProcessInstance scope) {
-		Instance instance = getRepository().createInstance(subprocessDef.getName()+"_"+UUID.randomUUID(), getTypesFactory().getTypeByName(SpecificProcessInstanceType.getProcessName(subprocessDef)));
+		Instance instance = getContext().getInstanceRepository().createInstance(subprocessDef.getName()+"_"+UUID.randomUUID()
+			, getContext().getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(subprocessDef)));
 		ProcessInstance process = getContext().getWrappedInstance(ProcessInstance.class, instance);
 		process.setProcess(scope);
-		process.inject(factoryIndex.getProcessStepFactory(), factoryIndex.getDecisionNodeInstanceFactory());
+		process.inject(getContext().getFactoryIndex().getProcessStepFactory(), getContext().getFactoryIndex().getDecisionNodeInstanceFactory());
 		init(process, subprocessDef, inDNI, outDNI);
 		return process;
 	}
@@ -42,8 +43,9 @@ public class ProcessInstanceFactory extends DomainFactory {
 		
 		// init first DNI, there should be only one. Needs to be checked earlier with definition creation
 		// we assume consistent, correct specification/definition here
-		process.getInstance().setSingleProperty(SpecificProcessInstanceType.CoreProperties.processDefinition.toString(), pdef.getInstance());
-		factoryIndex.getProcessStepFactory().init(process, pdef, inDNI, outDNI);		
+		process.getInstance().setSingleProperty(SpecificProcessInstanceType.CoreProperties.processDefinition.toString()
+				, pdef.getInstance());
+		getContext().getFactoryIndex().getProcessStepFactory().init(process, pdef, inDNI, outDNI);		
 		
 		if (process.isImmediateInstantiateAllStepsEnabled()) {
 			// instantiate all steps and thereby the DNIs

@@ -51,6 +51,9 @@ public class DesignspaceInstanceTypeWrapper implements InstanceType {
 
 	@Override
 	public void setSingleProperty(@NonNull String property, Object value) {
+		if (value instanceof DesignspaceInstanceWrapper) {
+			value = ((DesignspaceInstanceWrapper) value).getDelegate();
+		}
 		delegate.getPropertyAsSingle(property).set(value);
 	}
 

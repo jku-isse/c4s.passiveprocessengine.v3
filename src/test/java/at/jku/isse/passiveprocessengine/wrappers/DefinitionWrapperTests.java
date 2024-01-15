@@ -17,6 +17,7 @@ import at.jku.isse.designspace.core.model.Tool;
 import at.jku.isse.designspace.core.model.User;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
+import at.jku.isse.passiveprocessengine.ConfigurationBuilder;
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
@@ -24,39 +25,31 @@ import at.jku.isse.passiveprocessengine.core.InstanceType.CARDINALITIES;
 import at.jku.isse.passiveprocessengine.core.InstanceType.PropertyType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.designspace.DesignSpaceSchemaRegistry;
+import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
 import at.jku.isse.passiveprocessengine.definition.types.*;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.*;
 import at.jku.isse.passiveprocessengine.definition.factories.*;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.*;
+import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 public class DefinitionWrapperTests {
 	
+	protected DesignSpaceSchemaRegistry designspace;
 	protected SchemaRegistry schemaReg;	
+	protected ConfigurationBuilder configBuilder;
 	
 	@BeforeEach
 	void setup() throws Exception {
 		Workspace testWS = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, new User("Test"), new Tool("test", "v1.0"), false, false);					
-		schemaReg = new DesignSpaceSchemaRegistry(testWS);			
+		designspace = new DesignSpaceSchemaRegistry(testWS);
+		schemaReg = designspace;			
 		assert(schemaReg != null);		
-		registerAllDefinitionTypes();
+		configBuilder = new ConfigurationBuilder(designspace, designspace, new RuleServiceWrapper(), designspace);
 	}
 	
-	protected void registerAllDefinitionTypes() {
-		ProcessDefinitionScopeType scopeTypeProvider = new ProcessDefinitionScopeType(schemaReg);		
-		ConstraintSpecType specTypeProvider = new ConstraintSpecType(schemaReg);		
-		MappingDefinitionType mapTypeProvider = new MappingDefinitionType(schemaReg);		
-		DecisionNodeDefinitionType dndTypeProvider = new DecisionNodeDefinitionType(schemaReg);		
-		ProcessStepDefinitionType stepTypeProvider = new ProcessStepDefinitionType(schemaReg);		
-		ProcessDefinitionType processTypeProvider = new ProcessDefinitionType(schemaReg);
-		scopeTypeProvider.produceTypeProperties();
-		specTypeProvider.produceTypeProperties();
-		mapTypeProvider.produceTypeProperties();
-		dndTypeProvider.produceTypeProperties();
-		processTypeProvider.produceTypeProperties();
-		stepTypeProvider.produceTypeProperties();		
-	}
+
 	
 	
 	@Test
@@ -121,9 +114,6 @@ public class DefinitionWrapperTests {
 	
 	@Test
 	void testNonRegisteredType() {
-		InstanceType type = schemaReg.getType(ConstraintResultWrapper.class);
-		assertNull(type); // as we haven't registered it yet.
-		
 		InstanceType nonExistingType = schemaReg.getTypeByName("nonono");
 		assertNull(nonExistingType);
 	}
