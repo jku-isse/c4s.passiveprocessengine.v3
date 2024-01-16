@@ -179,7 +179,7 @@ public class ProcessDefinitionFactory extends DomainFactory {
 		return CRD_PREFIX+condition+specOrderIndex+"_"+stepType.getName();
 	}
 
-	public static String getQASpecId(ConstraintSpec spec, ProcessDefinition context) {
-		return CRD_QASPEC_PREFIX+spec.getConstraintId()+"_"+context.getName();
+	public static String getQASpecId(ConstraintSpec spec, ProcessDefinition processContext) {
+		return CRD_QASPEC_PREFIX+spec.getConstraintId()+"_"+processContext.getName();
 	}
 }

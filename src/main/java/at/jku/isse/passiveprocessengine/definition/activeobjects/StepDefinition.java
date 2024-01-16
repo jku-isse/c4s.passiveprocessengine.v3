@@ -316,21 +316,11 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		return (String) instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.description.toString(), String.class, "");
 	}
 
-	private void checkConstraintExists(InstanceType instType, ConstraintSpec spec, Conditions condition, List<ProcessDefinitionError> errors) {
-		String name = ProcessDefinitionFactory.getConstraintName(condition, spec.getOrderIndex(), instType);
-		RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
-		if (crt == null) {
-			log.error("Expected Rule for existing process not found: "+name);
-			errors.add(new ProcessDefinitionError(this, "Expected Constraint Not Found - Internal Data Corruption", name));
-		} else {
-			if (crt.hasRuleError())
-				errors.add(new ProcessDefinitionError(this, String.format("Condition % has an error", spec.getName()), crt.getRuleError()));
-		}
-	}
-
 	public List<ProcessDefinitionError> checkConstraintValidity(InstanceType processInstType) {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
-		InstanceType instType = this.instance.getInstanceType(); //ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstType);
+		InstanceType instType = this.context.getSchemaRegistry().getTypeByName(SpecificProcessStepType.getProcessStepName(this));
+		
+		//InstanceType instType = this.instance.getInstanceType(); //ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstType);
 
 		this.getActivationconditions().stream().forEach(spec -> checkConstraintExists(instType, spec, Conditions.ACTIVATION, errors));
 		this.getCancelconditions().stream().forEach(spec -> checkConstraintExists(instType, spec, Conditions.CANCELATION, errors));
@@ -371,12 +361,22 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		return errors;
 	}
 
-
+	private void checkConstraintExists(InstanceType instType, ConstraintSpec spec, Conditions condition, List<ProcessDefinitionError> errors) {
+		String name = ProcessDefinitionFactory.getConstraintName(condition, spec.getOrderIndex(), instType);
+		RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
+		if (crt == null) {
+			log.error("Expected Rule for existing process not found: "+name);
+			errors.add(new ProcessDefinitionError(this, "Expected Constraint Not Found - Internal Data Corruption", name));
+		} else {
+			if (crt.hasRuleError())
+				errors.add(new ProcessDefinitionError(this, String.format("Condition % has an error", spec.getName()), crt.getRuleError()));
+		}
+	}
 
 	public List<ProcessDefinitionError> checkStepStructureValidity() {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
 		if (getPostconditions().isEmpty() && !this.getName().startsWith(NOOPSTEP_PREFIX)) {
-			errors.add(new ProcessDefinitionError(this, "No Condition Defined", "Step needs exactly one post condition to signal when a step is considered finished."));
+			errors.add(new ProcessDefinitionError(this, "No Condition Defined", "Step needs at least one post-condition to signal when a step is considered finished."));
 		}
 		if (getExpectedInput().isEmpty() && !this.getName().startsWith(NOOPSTEP_PREFIX)) {
 			errors.add(new ProcessDefinitionError(this, "No Input Defined", "Step needs at least one input."));
