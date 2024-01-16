@@ -12,7 +12,11 @@ import at.jku.isse.passiveprocessengine.definition.factories.RuleAugmentation.St
 
 public class RuleServiceWrapper {
 
-	DesignspaceAbstractionMapper mapper;
+	final DesignspaceAbstractionMapper mapper;
+	
+	public RuleServiceWrapper(DesignspaceAbstractionMapper mapper) {
+		this.mapper = mapper;
+	}
 	
 	
 	public RepairNode repairTree(RuleResult ruleResult) {
@@ -20,7 +24,7 @@ public class RuleServiceWrapper {
 	}
 
 	public String rewriteConstraint(InstanceType ruleContext, String constraint, List<StepParameter> singleUsage, StepDefinition stepDef) throws Exception {
-		ConstraintRewriter rewriter = new ConstraintRewriter(mapper.mapProcessDomainInstanceTypeToDesignspaceInstanceType(ruleContext));
+		ConstraintRewriter rewriter = new ConstraintRewriter((at.jku.isse.designspace.core.model.InstanceType) mapper.mapProcessDomainInstanceTypeToDesignspaceInstanceType(ruleContext));
 		return rewriter.rewriteConstraint(constraint, singleUsage, stepDef);
 	}
 	

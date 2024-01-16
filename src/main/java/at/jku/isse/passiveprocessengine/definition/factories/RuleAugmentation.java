@@ -23,6 +23,8 @@ public class RuleAugmentation {
 
 	public static final String RESERVED_PROPERTY_STEP_AUGMENTATION_STATUS = "@stepAugmentationStatus";
 
+	private static final String INSTANCETYPE_PROPERTY_METADATA = "@propertyMetadata";
+	
 	private StepDefinition stepDef;
 	private InstanceType stepType;
 	
@@ -39,7 +41,7 @@ public class RuleAugmentation {
 	// This works for non-temporal constraints only
 	public List<ProcessDefinitionError> augmentAndCreateConditions()  {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
-		Map<String, String> propertyMetadata = stepType.getTypedProperty("INSTANCETYPE_PROPERTY_METADATA", Map.class);
+		Map<String, String> propertyMetadata = stepType.getTypedProperty(INSTANCETYPE_PROPERTY_METADATA, Map.class);
 		String augmentationStatus = propertyMetadata.get(RESERVED_PROPERTY_STEP_AUGMENTATION_STATUS);
 		if (augmentationStatus != null) {
 			log.debug("Skipping augmentation of already augmented step "+stepDef.getName());

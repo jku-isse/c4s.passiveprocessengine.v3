@@ -7,6 +7,7 @@ import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+import lombok.NonNull;
 
 public class SpecificProcessStepType extends TypeProviderBase {
 
@@ -21,10 +22,16 @@ public class SpecificProcessStepType extends TypeProviderBase {
 	public static final String PREFIX_IN = "in_";
 
 		
-	public SpecificProcessStepType(SchemaRegistry schemaRegistry, StepDefinition stepDef, InstanceType processType) {
+	public SpecificProcessStepType(SchemaRegistry schemaRegistry, StepDefinition stepDef, @NonNull InstanceType processType) {
 		super(schemaRegistry);
 		this.stepDef = stepDef;
 		this.processType = processType;
+	}
+	
+	public SpecificProcessStepType(SchemaRegistry schemaRegistry, StepDefinition stepDef) {
+		super(schemaRegistry);
+		this.stepDef = stepDef;	
+		this.processType = null;
 	}
 	
 	@Override

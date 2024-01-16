@@ -13,7 +13,6 @@ import at.jku.isse.designspace.core.model.Id;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
-import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.Instance;
@@ -126,9 +125,21 @@ public class DesignSpaceSchemaRegistry implements SchemaRegistry, InstanceReposi
 		else
 			return instanceTypeWrappers.computeIfAbsent(type.id(), k -> new DesignspaceInstanceTypeWrapper(type, this));
 	}
+	
+	public Instance getWrappedInstance(at.jku.isse.designspace.core.model.Element element) {
+		if (element == null)
+			return null;
+		else if (element instanceof at.jku.isse.designspace.core.model.Instance) {
+			return  getWrappedInstance(element);
+		} else 
+			return getWrappedType((at.jku.isse.designspace.core.model.InstanceType) element);	
+	}
 
 	public Instance getWrappedInstance(at.jku.isse.designspace.core.model.Instance instance) {
-		return instanceWrappers.computeIfAbsent(instance.id(), k -> new DesignspaceInstanceWrapper(instance, this));
+		if (instance == null)
+			return null;
+		else
+			return instanceWrappers.computeIfAbsent(instance.id(), k -> new DesignspaceInstanceWrapper(instance, this));
 	}
 	
 	@Override
@@ -160,11 +171,15 @@ public class DesignSpaceSchemaRegistry implements SchemaRegistry, InstanceReposi
 	
 	
 	@Override
-	public at.jku.isse.designspace.core.model.Instance mapProcessDomainInstanceToDesignspaceInstance(
+	public at.jku.isse.designspace.core.model.Element mapProcessDomainInstanceToDesignspaceInstance(
 			Instance processDomainInstance) {
 		if (processDomainInstance instanceof DesignspaceInstanceWrapper) {
 			return ((DesignspaceInstanceWrapper) processDomainInstance).getDelegate();
-		} else {
+		} else 
+		if (processDomainInstance instanceof DesignspaceInstanceTypeWrapper) {
+			return ((DesignspaceInstanceTypeWrapper) processDomainInstance).getDelegate();
+		} 	
+		else {
 			throw new RuntimeException("Asked to get Designspace Instance from non Designspace wrapper");
 		}		
 	}

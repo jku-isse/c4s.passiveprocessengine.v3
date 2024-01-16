@@ -1,10 +1,13 @@
 package at.jku.isse.passiveprocessengine.designspace;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import at.jku.isse.designspace.core.model.Cardinality;
+import at.jku.isse.designspace.core.model.SingleProperty;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
 import lombok.NonNull;
 
@@ -60,21 +63,45 @@ public class DesignspaceInstanceTypeWrapper implements InstanceType {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getTypedProperty(@NonNull String property, @NonNull Class<T> clazz) {
-		Object value = delegate.getPropertyAsValueOrNull(property);
-		if (value == null) 
+		Object prop = delegate.getProperty(property);
+		if (prop == null) // no such property
 			return null;
-		else 
-			return (T)value;
+		if (prop instanceof SingleProperty) {			
+			Object dsValue = ((SingleProperty) prop).get();
+			if (dsValue instanceof at.jku.isse.designspace.core.model.Instance) {
+				return (T) dsSchemaRegistry.getWrappedInstance((at.jku.isse.designspace.core.model.Instance) dsValue);
+			} else { 
+				return (T) dsValue;
+			}
+		} else {
+			PropertyType propType = getPropertyType(property);
+			if (propType.getInstanceType() == null || DesignspaceInstanceWrapper.isAtomicType(propType.getInstanceType())) {
+				return (T)prop; // no matter if single string, or list of strings, no mapping needed
+			} else
+				// if list/set/map create wrapper around to map ds instances to ppe instances
+				if (Set.class.isAssignableFrom(clazz)) {
+					return (T) new InstanceSetMapper((Set<at.jku.isse.designspace.core.model.Instance>) prop, dsSchemaRegistry);
+				} else
+				if (List.class.isAssignableFrom(clazz)) {
+					return (T) new InstanceListMapper((List<at.jku.isse.designspace.core.model.Instance>) prop, dsSchemaRegistry);
+				} else
+				if (Map.class.isAssignableFrom(clazz)) {
+						return (T) new InstanceMapMapper((Map<String,at.jku.isse.designspace.core.model.Element>) prop, dsSchemaRegistry);
+				}
+				else {
+					throw new RuntimeException(String.format("Unknown property type or target classe for property %s and target class %s ", property, clazz.getName() ));
+				}
+		}
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getTypedProperty(@NonNull String property, @NonNull Class<T> clazz, T defaultValue) {
-		Object value = delegate.getPropertyAsValueOrNull(property);
-		if (value == null) 
+		T value = getTypedProperty(property, clazz);
+		if (value == null)
 			return defaultValue;
-		else 
-			return (T)value;
+		else
+			return value; 
 	}
 	
 	

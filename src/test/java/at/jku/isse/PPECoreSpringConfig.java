@@ -9,7 +9,7 @@ import at.jku.isse.designspace.core.model.Tool;
 import at.jku.isse.designspace.core.model.User;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
-import at.jku.isse.designspace.jira.service.IJiraService;
+//import at.jku.isse.designspace.jira.service.IJiraService;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.monitoring.UsageMonitor;
 
@@ -23,10 +23,10 @@ public class PPECoreSpringConfig {
         }
 
     	       
-        @Bean
-        Workspace getWorkspace(IJiraService jira) {        	
-    		//return WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE,new User("test"), new Tool("test", "v1"), false, false);
-        	return WorkspaceService.PUBLIC_WORKSPACE;
-    	}
+//        @Bean
+//        Workspace getWorkspace(IJiraService jira) {        	
+//    		//return WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE,new User("test"), new Tool("test", "v1"), false, false);
+//        	return WorkspaceService.PUBLIC_WORKSPACE;
+//    	}
         
 }

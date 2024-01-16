@@ -46,7 +46,7 @@ public class DefinitionWrapperTests {
 		designspace = new DesignSpaceSchemaRegistry(testWS);
 		schemaReg = designspace;			
 		assert(schemaReg != null);		
-		configBuilder = new ConfigurationBuilder(designspace, designspace, new RuleServiceWrapper(), designspace);
+		configBuilder = new ConfigurationBuilder(designspace, designspace, new RuleServiceWrapper(designspace), designspace);
 	}
 	
 

@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 import at.jku.isse.passiveprocessengine.core.Instance;
 
-public class InstanceSetMapper{
+public class InstanceSetMapper implements Set<Instance>{
 	private final Set<at.jku.isse.designspace.core.model.Instance> delegate;
 	private final DesignSpaceSchemaRegistry registry;
 	
@@ -22,9 +22,6 @@ public class InstanceSetMapper{
 		this.registry = registry;
 	}
 	
-	public void forEach(Consumer<Instance> action) {
-		throw new RuntimeException("Not supported");
-	}
 
 	public int size() {
 		return delegate.size();
@@ -42,20 +39,24 @@ public class InstanceSetMapper{
 		}
 	}
 
-	public Iterator<at.jku.isse.designspace.core.model.Instance> iterator() {
-		return delegate.iterator();
+	public Iterator<Instance> iterator() {
+		throw new RuntimeException("Not supported");	
 	}
 
 	public Object[] toArray() {
-		return delegate.toArray();
+		throw new RuntimeException("Not supported");
+		//FIXME
+		//return delegate.toArray();
 	}
 
 	public <T> T[] toArray(T[] a) {
-		return delegate.toArray(a);
+		throw new RuntimeException("Not supported");
+		//FIXME
+		//return delegate.toArray(a);
 	}
 
 	public boolean add(Instance e) {
-		return delegate.add(registry.mapProcessDomainInstanceToDesignspaceInstance((Instance)e));
+		return delegate.add((at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((Instance)e));
 	}
 
 	public boolean remove(Object o) {
@@ -63,20 +64,28 @@ public class InstanceSetMapper{
 	}
 
 	public boolean containsAll(Collection<?> c) {
-		//return delegate.containsAll(c);
-		throw new RuntimeException("Not supported");
+		return delegate.containsAll(c.stream()
+				.filter(obj -> obj instanceof Instance)
+				.map(Instance.class::cast)
+				.map(inst -> registry.mapProcessDomainInstanceToDesignspaceInstance(inst)).collect(Collectors.toList()));	
 	}
 
 	public boolean addAll(Collection<? extends Instance> c) {
-		return delegate.addAll(c.stream().map(inst -> registry.mapProcessDomainInstanceToDesignspaceInstance(inst)).collect(Collectors.toList()));
+		return delegate.addAll(c.stream().map(inst -> (at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance(inst)).collect(Collectors.toList()));
 	}
 
-	public boolean retainAll(Collection<Instance> c) {
-		return delegate.retainAll(c.stream().map(inst -> registry.mapProcessDomainInstanceToDesignspaceInstance(inst)).collect(Collectors.toList()));
+	public boolean retainAll(Collection<?> c) {
+		return delegate.retainAll(c.stream()
+				.filter(obj -> obj instanceof Instance)
+				.map(Instance.class::cast)
+				.map(inst -> registry.mapProcessDomainInstanceToDesignspaceInstance(inst)).collect(Collectors.toList()));
 	}
 
-	public boolean removeAll(Collection<Instance> c) {
-		return delegate.removeAll(c.stream().map(inst -> registry.mapProcessDomainInstanceToDesignspaceInstance(inst)).collect(Collectors.toList()));
+	public boolean removeAll(Collection<?> c) {
+		return delegate.removeAll(c.stream()
+				.filter(obj -> obj instanceof Instance)
+				.map(Instance.class::cast)
+				.map(inst -> registry.mapProcessDomainInstanceToDesignspaceInstance(inst)).collect(Collectors.toList()));
 	}
 
 	public void clear() {
@@ -91,7 +100,7 @@ public class InstanceSetMapper{
 		return delegate.hashCode();
 	}
 
-	public Spliterator<at.jku.isse.designspace.core.model.Instance> spliterator() {
+	public Spliterator<Instance> spliterator() {
 		throw new RuntimeException("Not supported");
 		//return delegate.spliterator();
 	}
@@ -101,17 +110,17 @@ public class InstanceSetMapper{
 		//return delegate.toArray(generator);
 	}
 
-	public boolean removeIf(Predicate<? super at.jku.isse.designspace.core.model.Instance> filter) {
+	public boolean removeIf(Predicate<? super Instance> filter) {
 		throw new RuntimeException("Not supported");
 		//return delegate.removeIf(filter);
 	}
 
-	public Stream<at.jku.isse.designspace.core.model.Instance> stream() {
-		return delegate.stream();
+	public Stream<Instance> stream() {
+		return delegate.stream().map(dsInst -> registry.getWrappedInstance(dsInst));
 	}
 
-	public Stream<at.jku.isse.designspace.core.model.Instance> parallelStream() {
-		return delegate.parallelStream();
+	public Stream<Instance> parallelStream() {
+		return delegate.parallelStream().map(dsInst -> registry.getWrappedInstance(dsInst));
 	}
 
 	

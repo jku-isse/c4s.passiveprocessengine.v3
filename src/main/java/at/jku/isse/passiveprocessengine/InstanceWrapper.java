@@ -20,7 +20,7 @@ public abstract class InstanceWrapper implements NameIdentifiableElement{
 
 	@Override
 	public String getName() {
-		return instance.getId();
+		return instance.getName();
 	}
 
 	public void deleteCascading() {

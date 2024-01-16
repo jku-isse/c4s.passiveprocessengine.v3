@@ -59,6 +59,8 @@ public class ProcessDefinitionFactory extends DomainFactory {
 	 */
 	public List<ProcessDefinitionError> initializeInstanceTypes(ProcessDefinition processDef, boolean doGeneratePrematureDetectionConstraints) {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
+		SpecificProcessStepType processAsStepTypeProvider = new SpecificProcessStepType(getContext().getSchemaRegistry(), processDef);
+		processAsStepTypeProvider.produceTypeProperties();
 		SpecificProcessInstanceType typeProvider = new SpecificProcessInstanceType(getContext().getSchemaRegistry(), processDef);
 		typeProvider.produceTypeProperties();				
 		InstanceType processInstanceType = getContext().getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(processDef)); //) ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
@@ -139,13 +141,13 @@ public class ProcessDefinitionFactory extends DomainFactory {
 		if (processDef.getExpectedInput().isEmpty()) {
 			status.add(new ProcessDefinitionError(processDef, "No Input Defined", "Step needs at least one input."));
 		}
-		processDef.getExpectedInput().forEach((in, type) -> {
-			if (type == null)
-				status.add(new ProcessDefinitionError(processDef, "Unavailable Type", "Artifact type of input '"+in+"' could not be resolved"));
+		processDef.getExpectedInput().entrySet().stream().forEach(entry -> {
+			if (entry.getValue() == null)
+				status.add(new ProcessDefinitionError(processDef, "Unavailable Type", "Artifact type of input '"+entry.getKey()+"' could not be resolved"));
 		});
-		processDef.getExpectedOutput().forEach((out, type) -> {
-			if (type == null)
-				status.add(new ProcessDefinitionError(processDef, "Unavailable Type", "Artifact type of output '"+out+"' could not be resolved"));
+		processDef.getExpectedOutput().entrySet().stream().forEach(entry -> {
+			if (entry.getValue() == null)
+				status.add(new ProcessDefinitionError(processDef, "Unavailable Type", "Artifact type of output '"+entry.getKey()+"' could not be resolved"));
 		});
 
 		processDef.getStepDefinitions().stream()

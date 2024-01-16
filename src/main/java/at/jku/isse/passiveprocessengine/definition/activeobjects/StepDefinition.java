@@ -245,7 +245,8 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	public void setInDND(DecisionNodeDefinition inDND) {
 		// we assume for now, there is no need for rewiring, and we throw an exception if this should be the case
 		if (instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.inDND.toString(), Instance.class) != null) {
-			String msg = String.format("Rewiring in step %s of decision nodes not supported", this.getName());
+			DecisionNodeDefinition priorDND = context.getWrappedInstance(DecisionNodeDefinition.class, instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.inDND.toString(), Instance.class));			
+			String msg = String.format("InDND already set to %s, Rewiring inDND of step %s to dnd %s not supported", priorDND.getName(), this.getName(), inDND.getName());
 			log.error(msg);
 			throw new RuntimeException(msg);
 		}
@@ -339,10 +340,11 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		this.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
 				String name = ProcessDefinitionFactory.getDataMappingId(entry, this);
-				String propName = ProcessDefinitionFactory.CRD_DATAMAPPING_PREFIX+entry.getKey();
-				//InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstType);
-				PropertyType ioPropType = instType.getPropertyType(propName);
-				InstanceType ruleType = ioPropType.getInstanceType();
+				//Properties no longer used, just check for rules directly
+				//String propName = ProcessDefinitionFactory.CRD_DATAMAPPING_PREFIX+entry.getKey();
+				//PropertyType ioPropType = instType.getPropertyType(propName);
+				//InstanceType ruleType = ioPropType.getInstanceType();
+				RuleDefinition ruleType = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
 				if (ruleType == null) 	{
 					log.error("Expected Datamapping Rule for existing process not found: "+name);
 					//status.put(name, "Corrupt data - Expected Datamapping Rule not found");
@@ -379,15 +381,15 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		if (getExpectedInput().isEmpty() && !this.getName().startsWith(NOOPSTEP_PREFIX)) {
 			errors.add(new ProcessDefinitionError(this, "No Input Defined", "Step needs at least one input."));
 		}
-		getExpectedInput().forEach((in, type) -> {
-			if (type == null)
-				errors.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of input '"+in+"' could not be resolved"));
+		getExpectedInput().entrySet().stream().forEach(entry -> {
+			if (entry.getValue() == null)
+				errors.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of input '"+entry.getKey()+"' could not be resolved"));
 			});
-		getExpectedOutput().forEach((out, type) -> {
-			if (type == null)
-				errors.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of output '"+out+"' could not be resolved"));
+		getExpectedOutput().entrySet().stream().forEach(entry -> {
+			if (entry.getValue() == null)
+				errors.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of output '"+entry.getKey()+"' could not be resolved"));
 			});
-		getExpectedOutput().forEach((out, type) -> {
+		getExpectedOutput().keySet().stream().forEach(out -> {
 			if (!getInputToOutputMappingRules().containsKey(out))
 				errors.add(new ProcessDefinitionError(this, "No Mapping Defined", "Step output '"+out+"' has not datamapping from input defined"));
 			});
