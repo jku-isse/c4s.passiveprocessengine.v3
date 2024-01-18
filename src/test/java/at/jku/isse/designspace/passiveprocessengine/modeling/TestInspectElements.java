@@ -6,11 +6,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import at.jku.isse.designspace.core.model.Instance;
-import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.core.model.Workspace;
-import at.jku.isse.designspace.core.service.WorkspaceService;
-import at.jku.isse.designspace.rule.service.RuleService;
+import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.utils.ElementInspectionUtils;
 
@@ -18,7 +15,6 @@ import at.jku.isse.passiveprocessengine.utils.ElementInspectionUtils;
 @SpringBootTest
 class TestInspectElements {
 
-	static Workspace ws;
 	static InstanceType typeJira;
 	
 	@BeforeEach

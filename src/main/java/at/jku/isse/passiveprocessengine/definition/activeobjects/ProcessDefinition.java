@@ -159,7 +159,7 @@ public class ProcessDefinition extends StepDefinition{
 		return instance.getTypedProperty(ProcessDefinitionType.CoreProperties.isImmediateInstantiateAllSteps.toString(), Boolean.class, false);		
 	}
 
-	public void setImmediateInstantiateAllStepsEnabled(boolean isImmediateInstantiateAllStepsEnabled) {
+	public void isImmediateInstantiateAllStepsEnabled(boolean isImmediateInstantiateAllStepsEnabled) {
 		instance.setSingleProperty(ProcessDefinitionType.CoreProperties.isImmediateInstantiateAllSteps.toString(), isImmediateInstantiateAllStepsEnabled);
 	}
 

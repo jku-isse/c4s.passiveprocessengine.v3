@@ -1,6 +1,6 @@
-package at.jku.isse.passiveprocessengine.instance;
+package at.jku.isse.passiveprocessengine.instance.legacy;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +13,7 @@ import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.designspace.rule.checker.ArlRuleEvaluator;
+import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.MappingDefinition;
@@ -20,18 +21,18 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefiniti
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
+import at.jku.isse.passiveprocessengine.demo.TestProcesses;
+import at.jku.isse.passiveprocessengine.instance.InstanceTests;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
-import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
 import at.jku.isse.passiveprocessengine.instance.messages.WorkspaceListenerSequencer;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-class SingleStepTests {
+class SubSuperProcessTests {
 
 	static Workspace ws;
 	static InstanceType typeJira;
@@ -51,49 +52,65 @@ class SingleStepTests {
 	}
 	
 	@Test
-	void testStepCompletedAvailableCompleted() throws Exception{
+	void testParentStepPrematureCompletion() throws Exception{
 		Instance jiraA =  TestArtifacts.getJiraInstance(ws, "jiraA");
 		Instance jiraParentA =  TestArtifacts.getJiraInstance(ws, "jiraParentA");
 		TestArtifacts.addParentToJira(jiraA, jiraParentA);
 		TestArtifacts.setStateToJiraInstance(jiraA, TestArtifacts.JiraStates.Open);
 		ws.concludeTransaction();
-		ProcessDefinition procDef = getSingleStepProcessDefinitionWithOutput(ws);
-		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef, "process");
-		proc.addInput("jiraIn", jiraA);
+		ProcessDefinition procDef = getSimpleSuperProcessDefinition(ws);
+		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef, "Parentprocess");
+		proc.addInput("procJiraIn", jiraA);
 		ws.concludeTransaction();
 		InstanceTests.printFullProcessToLog(proc);
-		ProcessStep sd1 = proc.getProcessSteps().stream()
-				.filter(step -> step.getDefinition().getName().equals("sd1") ).findAny().get(); 
-		assert(sd1.getActualLifecycleState().equals(State.ACTIVE));
-		assert(sd1.getExpectedLifecycleState().equals(State.ACTIVE));
 		
+//		ws.debugInstanceTypes().stream().filter(type -> type instanceof ConsistencyRuleType).forEach(crt -> System.out.println(crt.name()+"::"+crt.toString()));
+//		
+		TestArtifacts.setStateToJiraInstance(jiraParentA, TestArtifacts.JiraStates.InProgress);
+		ws.concludeTransaction();
+		InstanceTests.printFullProcessToLog(proc);
 		
 		TestArtifacts.setStateToJiraInstance(jiraParentA, TestArtifacts.JiraStates.Closed);
 		ws.concludeTransaction();
-		InstanceTests.printFullProcessToLog(proc);		
-		assert(sd1.getActualLifecycleState().equals(State.COMPLETED));
-		assert(sd1.getExpectedLifecycleState().equals(State.COMPLETED));
+		InstanceTests.printFullProcessToLog(proc);
 		
-		TestArtifacts.setStateToJiraInstance(jiraA, TestArtifacts.JiraStates.Closed);
-		ws.concludeTransaction();
-		InstanceTests.printFullProcessToLog(proc);		
-		assert(sd1.getActualLifecycleState().equals(State.AVAILABLE));
-		assert(sd1.getExpectedLifecycleState().equals(State.COMPLETED));
-		
-		
-		TestArtifacts.setStateToJiraInstance(jiraA, TestArtifacts.JiraStates.Open);
-		ws.concludeTransaction();
-		InstanceTests.printFullProcessToLog(proc);		
-		assert(sd1.getActualLifecycleState().equals(State.COMPLETED));
-		assert(sd1.getExpectedLifecycleState().equals(State.COMPLETED));
 		
 	}
 
+	public static ProcessDefinition getSimpleSuperProcessDefinition(Workspace ws) throws ProcessException {
+		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
+		ProcessDefinition procDef = ProcessDefinition.getInstance("parentproc1", ws);
+		procDef.addExpectedInput("procJiraIn", typeJira);					
+		//procDef.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() > 0");
+		//no definition how many outputs, there is a possibility to provide output, but completion is upon subtask completion
+		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dndParentStart", ws);
+		DecisionNodeDefinition dnd2 = procDef.createDecisionNodeDefinition("dndParentEnd", ws);	
+		StepDefinition sd2 = getSingleStepProcessDefinitionWithOutput(ws);
+		// we need to wire up the step definiton:
+		sd2.setProcess(procDef);
+		procDef.addStepDefinition(sd2);
+		//inputs and output set in subprocess/step definition, pre and post cond set here
+		sd2.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() > 0 ");
+		sd2.setCondition(Conditions.POSTCONDITION, "self.in_jiraIn->size() >= 1 and self->isDefined()");		
+		sd2.setInDND(dnd1);
+		sd2.setOutDND(dnd2);
+		sd2.setSpecOrderIndex(1);
+		
+		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "procJiraIn", sd2.getName(), "jiraIn",  ws)); 
+		
+		procDef.setDepthIndexRecursive(1);
+		procDef.initializeInstanceTypes(false);
+		procDef.isImmediateInstantiateAllStepsEnabled(true); 
+		return procDef;
+	}
 	
 	public static ProcessDefinition getSingleStepProcessDefinitionWithOutput(Workspace ws) throws ProcessException {
 		InstanceType typeJira = TestArtifacts.getJiraInstanceType(ws);
 		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1", ws);
 		procDef.addExpectedInput("jiraIn", typeJira);				
+		//procDef.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() > 0 ");
+		//procDef.setCondition(Conditions.POSTCONDITION, "self.in_jiraIn->size() >= 1 and self->isDefined()");		
+		
 		
 		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1", ws);
 		DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2", ws);
@@ -116,7 +133,7 @@ class SingleStepTests {
 		sd1.setSpecOrderIndex(1);
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		procDef.initializeInstanceTypes(false);
-		procDef.setImmediateInstantiateAllStepsEnabled(true); 
+		procDef.isImmediateInstantiateAllStepsEnabled(true); 
 		return procDef;
 	}
 }

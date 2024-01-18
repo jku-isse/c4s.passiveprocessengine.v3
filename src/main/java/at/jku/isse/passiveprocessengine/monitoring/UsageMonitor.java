@@ -9,8 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
-import at.jku.isse.designspace.rule.model.ConsistencyRule;
-import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;

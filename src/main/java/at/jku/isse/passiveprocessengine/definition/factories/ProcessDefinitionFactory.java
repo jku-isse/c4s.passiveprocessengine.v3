@@ -89,7 +89,11 @@ public class ProcessDefinitionFactory extends DomainFactory {
 		//				List<String> augmentationErrors = new LinkedList<>();
 		errors.addAll(new RuleAugmentation(processDef, processInstanceType, getContext().getFactoryIndex().getRuleDefinitionFactory(), ruleService).augmentAndCreateConditions());
 		processDef.getStepDefinitions().stream().forEach(stepDef -> {
-			errors.addAll(new RuleAugmentation(stepDef, getContext().getSchemaRegistry().getTypeByName(SpecificProcessStepType.getProcessStepName(stepDef)), getContext().getFactoryIndex().getRuleDefinitionFactory(), ruleService).augmentAndCreateConditions());
+			errors.addAll(new RuleAugmentation(stepDef, 
+												getContext().getSchemaRegistry().getTypeByName(SpecificProcessStepType.getProcessStepName(stepDef)), 
+												getContext().getFactoryIndex().getRuleDefinitionFactory(), 
+												ruleService)
+								.augmentAndCreateConditions());
 		});
 		errors.addAll(checkConstraintValidity(processDef, processInstanceType));
 		if (errors.isEmpty() ) {
@@ -151,9 +155,10 @@ public class ProcessDefinitionFactory extends DomainFactory {
 		});
 
 		processDef.getStepDefinitions().stream()
-		.filter(sd -> !(sd instanceof ProcessDefinition))
-		.forEach(sd -> status.addAll( sd.checkStepStructureValidity()));
-		processDef.getDecisionNodeDefinitions().forEach(dnd -> status.addAll(dnd.checkDecisionNodeStructureValidity()));
+			.filter(sd -> !(sd instanceof ProcessDefinition))
+			.forEach(sd -> status.addAll( sd.checkStepStructureValidity()));
+		processDef.getDecisionNodeDefinitions().stream()
+			.forEach(dnd -> status.addAll(dnd.checkDecisionNodeStructureValidity()));
 		return status;
 	}
 

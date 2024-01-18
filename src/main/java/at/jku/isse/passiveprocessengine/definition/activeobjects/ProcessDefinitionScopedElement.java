@@ -33,6 +33,6 @@ public abstract class ProcessDefinitionScopedElement extends InstanceWrapper {
 
 	@Override
 	public String toString() {
-		return instance.getId();
+		return instance.getName();
 	}
 }

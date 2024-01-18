@@ -35,6 +35,10 @@ public class DesignSpaceSchemaRegistry implements SchemaRegistry, InstanceReposi
 		initBasicTypes();
 	}
 	
+	public Workspace getWorkspace() {
+		return ws;
+	}
+	
 	@Override
 	public InstanceType getType(Class<? extends InstanceWrapper> clazz) {
 		return types.get(clazz.getName());

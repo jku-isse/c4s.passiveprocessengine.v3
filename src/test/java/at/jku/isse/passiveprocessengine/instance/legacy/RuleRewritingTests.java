@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.instance;
+package at.jku.isse.passiveprocessengine.instance.legacy;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

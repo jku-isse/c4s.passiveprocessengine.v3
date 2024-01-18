@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.instance;
+package at.jku.isse.passiveprocessengine.instance.legacy;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +21,7 @@ import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionS
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts.JiraStates;
+import at.jku.isse.passiveprocessengine.instance.InstanceTests;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
@@ -34,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-class TemporalLateAddingConstraintTests {
+class TemporalConstraintInTimeAddingTests {
 
 	static Workspace ws;
 	static InstanceType typeJira;
@@ -58,18 +59,13 @@ class TemporalLateAddingConstraintTests {
 		typeJira = TestArtifacts.getJiraInstanceType(ws);
 	}
 	
-	/*
-	 * ALL THESE TEST ARE EXPECTED TO FAIL AS WE DONT CONSIDER THE HISTORY YET WHEN AN INSTANCE IS ADDED LATE TO THE RULE CONTEXT
-	 */
-	
-	
 	@Test
-	void testTemporalConstraintLateAdding2() throws Exception {
+	void testTemporalConstraintEarlyAdding() throws Exception {
 		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
 		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");		
 		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
 		TestArtifacts.addJiraToJira(jiraA, jiraB);
-				
+		TestArtifacts.addJiraToJira(jiraA, jiraC);	
 		
 		ProcessDefinition procDef = TestProcesses.getSimpleTemporalProcessDefinitionWithoutQA(ws);
 		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
@@ -83,10 +79,10 @@ class TemporalLateAddingConstraintTests {
 		// now we are enabled
 		assert(sd1.getActualLifecycleState() == State.ENABLED);
 		
-		// now lets add C		
+		// now lets progress toward fulfillment but
+		
+		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Released);
 		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.ReadyForReview);
-		ws.concludeTransaction();
-		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
 		ws.concludeTransaction();
 		InstanceTests.printFullProcessToLog(proc);
 		// now we are still enabled
@@ -94,66 +90,79 @@ class TemporalLateAddingConstraintTests {
 				
 		
 		// now lets complete step1:		
-		TestArtifacts.addJiraToJira(jiraA, jiraC);
-		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Released);		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
 		ws.concludeTransaction();
 		InstanceTests.printFullProcessToLog(proc);
 		assert(sd1.getActualLifecycleState() == State.COMPLETED);
 	}
-
+	
 	@Test
-	void testTemporalConstraintLateAdding1() throws Exception {
-		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+	void testTemporalConstraintDeviatingAndRepairingEarlyAdding() throws Exception {
+		//Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
 		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");		
 		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
-		TestArtifacts.addJiraToJira(jiraA, jiraB);
+		//TestArtifacts.addJiraToJira(jiraA, jiraB);
+		TestArtifacts.addJiraToJira(jiraA, jiraC);	
 		
 		ProcessDefinition procDef = TestProcesses.getSimpleTemporalProcessDefinitionWithoutQA(ws);
 		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
 		proc.addInput("jiraIn", jiraA);
-		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.ReadyForReview);
+		//TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.ReadyForReview);
+		
 		ws.concludeTransaction();
 		ProcessStep sd1 = proc.getProcessSteps().stream()
-				.filter(step -> step.getDefinition().getName().equals("step1") ).findAny().get(); 
-		InstanceTests.printFullProcessToLog(proc);
+				.filter(step -> step.getDefinition().getName().equals("step1") ).findAny().get(); 		
 		// now we are enabled
 		assert(sd1.getActualLifecycleState() == State.ENABLED);
 		
-		// now lets update jiraC		
-		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Closed);		
-		ws.concludeTransaction();
-		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		// now lets progress toward fulfillment but
+		
+		//TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Released);
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.ReadyForReview);
 		ws.concludeTransaction();
 		InstanceTests.printFullProcessToLog(proc);
 		// now we are still enabled
 		assert(sd1.getActualLifecycleState() == State.ENABLED);
 				
 		
-		// due to incorrect state transitions of jiraC we are still ENABLED		
-		// we directly detect jiraC currently as incorrect as we dont observe the ready for review state at all
-		TestArtifacts.addJiraToJira(jiraA, jiraC);
-		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Released);		
+		// now lets progress away from fulfillment
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Closed);
 		ws.concludeTransaction();
 		InstanceTests.printFullProcessToLog(proc);
 		assert(sd1.getActualLifecycleState() == State.ENABLED);
+				
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Open);
+		ws.concludeTransaction();
+		assert(sd1.getActualLifecycleState() == State.ENABLED);
+		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.ReadyForReview);
+		ws.concludeTransaction();
+		assert(sd1.getActualLifecycleState() == State.ENABLED);
+		
+		// now lets complete step1:		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		ws.concludeTransaction();
+		InstanceTests.printFullProcessToLog(proc);
+		assert(sd1.getActualLifecycleState() == State.COMPLETED);
 	}
 	
+
+	
 	@Test
-	void testTemporalConstraintComplexLateAdding1() throws Exception {
+	void testTemporalConstraintComplexEarlyAdding() throws Exception {
 		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
 		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");		
 		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
-		Instance jiraD =  TestArtifacts.getJiraInstance(ws, "jiraD");
-		Instance jiraE =  TestArtifacts.getJiraInstance(ws, "jiraE");
 		TestArtifacts.addJiraToJira(jiraA, jiraB);
+		TestArtifacts.addJiraToJira(jiraA, jiraC);	
+		Instance jiraD =  TestArtifacts.getJiraInstance(ws, "jiraD");
+		Instance jiraE =  TestArtifacts.getJiraInstance(ws, "jiraE");		
 		TestArtifacts.addJiraToJira(jiraD, jiraE);
 		
 		ProcessDefinition procDef = TestProcesses.getSimpleTemporalProcessDefinitionWithoutQA(ws);
 		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
 		proc.addInput("jiraIn", jiraA);
-		proc.addInput("jiraIn", jiraD);
 		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.ReadyForReview);
-		TestArtifacts.setStateToJiraInstance(jiraE, JiraStates.ReadyForReview);
 		
 		ws.concludeTransaction();
 		ProcessStep sd1 = proc.getProcessSteps().stream()
@@ -162,32 +171,76 @@ class TemporalLateAddingConstraintTests {
 		// now we are enabled
 		assert(sd1.getActualLifecycleState() == State.ENABLED);
 		
-		// now lets update jiraC		
-		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Closed);		
+		// now lets progress toward fulfillment but
+		TestArtifacts.setStateToJiraInstance(jiraE, JiraStates.ReadyForReview);
 		ws.concludeTransaction();
-		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		assert(sd1.getActualLifecycleState() == State.ENABLED);
+		
 		TestArtifacts.setStateToJiraInstance(jiraE, JiraStates.Released);
+		ws.concludeTransaction();
+		assert(sd1.getActualLifecycleState() == State.ENABLED);
+		
+		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Released);
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.ReadyForReview);
 		ws.concludeTransaction();
 		InstanceTests.printFullProcessToLog(proc);
 		// now we are still enabled
 		assert(sd1.getActualLifecycleState() == State.ENABLED);
 				
 		
-		// due to incorrect state transitions of jiraC we are still ENABLED		
-		TestArtifacts.addJiraToJira(jiraA, jiraC);
-		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Released);		
+		// now lets complete step1:		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
 		ws.concludeTransaction();
 		InstanceTests.printFullProcessToLog(proc);
-		assert(sd1.getActualLifecycleState() == State.ENABLED);
+		assert(sd1.getActualLifecycleState() == State.COMPLETED);
 	}
 	
 	
 	@Test
-	void testTemporalConstraintLateAddingSequenceAbsence() throws Exception {
+	void testTemporalConstraintEarlyAddingSequenceAbsence() throws Exception {
 		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
 		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");		
 		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		TestArtifacts.addJiraToJira(jiraA, jiraB);
+		TestArtifacts.addJiraToJira(jiraA, jiraC);	
 		
+		ProcessDefinition procDef = TestProcesses.getSimpleTemporalProcessDefinitionWithSequenceAbsence(ws);
+		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
+		proc.addInput("jiraIn", jiraA);
+		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.ReadyForReview);
+		
+		ws.concludeTransaction();
+		ProcessStep sd1 = proc.getProcessSteps().stream()
+				.filter(step -> step.getDefinition().getName().equals("step1") ).findAny().get(); 
+		InstanceTests.printFullProcessToLog(proc);
+		// now we are enabled
+		assert(sd1.getActualLifecycleState() == State.ENABLED);
+		
+		// now lets progress toward fulfillment but
+		
+		TestArtifacts.setStateToJiraInstance(jiraB, JiraStates.Released);
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.ReadyForReview);
+		ws.concludeTransaction();
+		InstanceTests.printFullProcessToLog(proc);
+		// now we are still enabled
+		assert(sd1.getActualLifecycleState() == State.ENABLED);
+				
+		
+		// now lets complete step1:		
+		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
+		ws.concludeTransaction();
+		InstanceTests.printFullProcessToLog(proc);
+		assert(sd1.getActualLifecycleState() == State.COMPLETED);
+	}
+	
+	
+	
+	@Test
+	void testTemporalConstraintEarlyAddingDeviatingFromSequenceAbsence() throws Exception {
+		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");
+		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");		
+		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");
+		TestArtifacts.addJiraToJira(jiraA, jiraB);	
 		TestArtifacts.addJiraToJira(jiraA, jiraC);	
 		
 		ProcessDefinition procDef = TestProcesses.getSimpleTemporalProcessDefinitionWithSequenceAbsence(ws);
@@ -217,8 +270,8 @@ class TemporalLateAddingConstraintTests {
 		ws.concludeTransaction();
 		assert(sd1.getActualLifecycleState() == State.ENABLED);
 		
-		// now lets add B, complete for C, but we should still be ENABLED as B violated the constraint
-		TestArtifacts.addJiraToJira(jiraA, jiraB);		
+		//complete for C, but we should still be ENABLED as B violated the constraint
+			
 		TestArtifacts.setStateToJiraInstance(jiraC, JiraStates.Released);
 		ws.concludeTransaction();
 		InstanceTests.printFullProcessToLog(proc);

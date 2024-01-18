@@ -46,11 +46,11 @@ public class SpecificProcessStepType extends TypeProviderBase {
 
 			stepDef.getExpectedInput().entrySet().stream()
 			.forEach(entry -> {
-				type.createSinglePropertyType(PREFIX_IN+entry.getKey(), entry.getValue());
+				type.createSetPropertyType(PREFIX_IN+entry.getKey(), entry.getValue());
 			});
 			stepDef.getExpectedOutput().entrySet().stream()
 			.forEach(entry -> {
-				type.createSinglePropertyType(PREFIX_OUT+entry.getKey(), entry.getValue());
+				type.createSetPropertyType(PREFIX_OUT+entry.getKey(), entry.getValue());
 			});
 			// DONE IN ProcessDefinitionschemaRegistry
 			//			stepDef.getInputToOutputMappingRules().entrySet().stream()

@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.instance;
+package at.jku.isse.passiveprocessengine.instance.legacy;
 
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
@@ -45,9 +45,9 @@ import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
 import at.jku.isse.passiveprocessengine.instance.messages.WorkspaceListenerSequencer;
 import at.jku.isse.passiveprocessengine.monitoring.CurrentSystemTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
-import at.jku.isse.passiveprocessengine.monitoring.RepairAnalyzer;
 import at.jku.isse.passiveprocessengine.monitoring.ReplayTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.UsageMonitor;
+import at.jku.isse.passiveprocessengine.repairanalysis.RepairAnalyzer;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest

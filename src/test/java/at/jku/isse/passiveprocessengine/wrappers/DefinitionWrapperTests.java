@@ -36,9 +36,9 @@ import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementT
 @SpringBootTest
 public class DefinitionWrapperTests {
 	
-	protected DesignSpaceSchemaRegistry designspace;
-	protected SchemaRegistry schemaReg;	
-	protected ConfigurationBuilder configBuilder;
+	public DesignSpaceSchemaRegistry designspace;
+	public SchemaRegistry schemaReg;	
+	public ConfigurationBuilder configBuilder;
 	
 	@BeforeEach
 	void setup() throws Exception {

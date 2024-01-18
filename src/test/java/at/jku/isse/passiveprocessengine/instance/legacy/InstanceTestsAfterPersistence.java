@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.instance;
+package at.jku.isse.passiveprocessengine.instance.legacy;
 
 import at.jku.isse.designspace.core.controlflow.ControlEventEngine;
 import at.jku.isse.designspace.core.model.Instance;

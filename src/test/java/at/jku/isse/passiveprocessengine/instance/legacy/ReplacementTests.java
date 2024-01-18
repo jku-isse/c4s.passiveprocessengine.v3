@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.definition;
+package at.jku.isse.passiveprocessengine.instance.legacy;
 
 import java.util.HashMap;
 import java.util.List;

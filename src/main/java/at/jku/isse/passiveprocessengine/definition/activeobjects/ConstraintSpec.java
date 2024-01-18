@@ -19,7 +19,7 @@ public class ConstraintSpec extends  ProcessDefinitionScopedElement{
 	}
 
 	public String getConstraintId() {
-		return instance.getId();
+		return instance.getName();
 	}
 
 	public String getConstraintSpec() {

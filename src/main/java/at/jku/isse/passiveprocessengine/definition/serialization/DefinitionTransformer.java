@@ -59,7 +59,7 @@ public class DefinitionTransformer {
 			boolean doImmediateInstantiateAllSteps = false;
 			if (Boolean.parseBoolean(rootProcDTO.getProcessConfig().getOrDefault(CONFIG_KEY_doImmediateInstantiateAllSteps, "true")))
 				doImmediateInstantiateAllSteps = true;
-			processDef.setImmediateInstantiateAllStepsEnabled(doImmediateInstantiateAllSteps);
+			processDef.isImmediateInstantiateAllStepsEnabled(doImmediateInstantiateAllSteps);
 		} else {
 			processDef.setIsWithoutBlockingErrors(false);
 		}
@@ -270,12 +270,13 @@ public class DefinitionTransformer {
 			DTOs.DecisionNode dn = DTOs.DecisionNode.builder()
 			.code(dnd.getName())
 			.inflowType(dnd.getInFlowType())
+			.depthIndex(dnd.getDepthIndex())			
 			.build();
 			dnd.getMappings().stream().forEach(md -> {
 				DTOs.Mapping mapping = new DTOs.Mapping(md.getFromStepType(), md.getFromParameter(), md.getToStepType(), md.getToParameter());
-				dn.getMapping().add(mapping);
+				dn.getMapping().add(mapping);				
 				//TODO: description
-			});
+			});						
 			proc.getDns().add(dn);
 		});
 		initDTOfromStep(proc, processDefinition);
@@ -284,6 +285,10 @@ public class DefinitionTransformer {
 
 	private static void initDTOfromStep(DTOs.Step step, StepDefinition pStep) {
 		step.setCode(pStep.getName());
+		step.setHtml_url(pStep.getHtml_url());
+		step.setDescription(pStep.getDescription());
+		step.setSpecOrderIndex(pStep.getSpecOrderIndex());			
+		
 		if (pStep.getInDND() != null)
 			step.setInDNDid(pStep.getInDND().getName());
 		if (pStep.getOutDND() != null)
@@ -295,7 +300,7 @@ public class DefinitionTransformer {
 			 .code(spec.getConstraintId())
 			 .description(spec.getHumanReadableDescription())
 			 .specOrderIndex(spec.getOrderIndex())
-			 .isOverridable(spec.isOverridable())
+			 .isOverridable(spec.isOverridable())			 			
 			 .build();
 			step.getQaConstraints().add(constraint );
 
@@ -341,8 +346,6 @@ public class DefinitionTransformer {
 					 .build();
 			step.getConditions().computeIfAbsent(Conditions.POSTCONDITION, k -> new ArrayList<>()).add(constraint);
 		});
-		step.setHtml_url(pStep.getHtml_url());
-		step.setDescription(pStep.getDescription());
 	}
 
 	private static String trimLegacyIOMappingRule(String ruleString) {

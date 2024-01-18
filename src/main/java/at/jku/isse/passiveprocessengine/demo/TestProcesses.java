@@ -58,7 +58,7 @@ public class TestProcesses {
 		dnd2.setDepthIndexRecursive(5);
 		if (doInitType)
 			procDef.initializeInstanceTypes(false);
-		procDef.setImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
+		procDef.isImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
 		return procDef;
 	}
 
@@ -95,7 +95,7 @@ public class TestProcesses {
 		dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd2.getName(), "jiraOut", procDef.getName(), "jiraOut",  ws)); //out of the second
 		dnd2.setDepthIndexRecursive(2);
 		procDef.initializeInstanceTypes(false);
-		procDef.setImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
+		procDef.isImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
 		return procDef;
 	}
 
@@ -165,7 +165,7 @@ public class TestProcesses {
 			dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 			dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd1.getName(), "jiraOut", sd2.getName(), "jiraIn",  ws));
 			procDef.initializeInstanceTypes(false);
-			procDef.setImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
+			procDef.isImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
 			return procDef;
 		}
 
@@ -202,7 +202,7 @@ public class TestProcesses {
 
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		procDef.initializeInstanceTypes(false);
-		procDef.setImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
+		procDef.isImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
 		return procDef;
 	}
 
@@ -231,7 +231,7 @@ public class TestProcesses {
 		sd1.setSpecOrderIndex(1);
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		procDef.initializeInstanceTypes(false);
-		procDef.setImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
+		procDef.isImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
 		return procDef;
 	}
 
@@ -264,7 +264,7 @@ public class TestProcesses {
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn2", sd1.getName(), "jiraIn2",  ws));
 		procDef.initializeInstanceTypes(false);
-		procDef.setImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
+		procDef.isImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
 		return procDef;
 	}
 
@@ -300,7 +300,7 @@ public class TestProcesses {
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn2", sd1.getName(), "jiraIn2",  ws));
 		procDef.initializeInstanceTypes(false);
-		procDef.setImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
+		procDef.isImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
 		return procDef;
 	}
 
@@ -335,7 +335,7 @@ public class TestProcesses {
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 
 		procDef.initializeInstanceTypes(false);
-		procDef.setImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
+		procDef.isImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
 		return procDef;
 	}
 
@@ -377,7 +377,7 @@ public class TestProcesses {
 		dnd2.setDepthIndexRecursive(5);
 
 		procDef.initializeInstanceTypes(false);
-		procDef.setImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
+		procDef.isImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
 		return procDef;
 	}
 
@@ -401,7 +401,7 @@ public class TestProcesses {
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		procDef.setDepthIndexRecursive(0);
 		procDef.initializeInstanceTypes(false);
-		procDef.setImmediateInstantiateAllStepsEnabled(true); // ensure new behavior
+		procDef.isImmediateInstantiateAllStepsEnabled(true); // ensure new behavior
 		return procDef;
 	}
 
@@ -431,7 +431,7 @@ public class TestProcesses {
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		procDef.setDepthIndexRecursive(0);
 		procDef.initializeInstanceTypes(false);
-		procDef.setImmediateInstantiateAllStepsEnabled(true); // ensure new behavior
+		procDef.isImmediateInstantiateAllStepsEnabled(true); // ensure new behavior
 		return procDef;
 	}
 
@@ -457,7 +457,7 @@ public class TestProcesses {
 		dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
 		procDef.setDepthIndexRecursive(0);
 		procDef.initializeInstanceTypes(false);
-		procDef.setImmediateInstantiateAllStepsEnabled(true); // ensure new behavior
+		procDef.isImmediateInstantiateAllStepsEnabled(true); // ensure new behavior
 		return procDef;
 	}
 

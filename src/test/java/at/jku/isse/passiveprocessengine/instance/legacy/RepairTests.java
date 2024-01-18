@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.instance;
+package at.jku.isse.passiveprocessengine.instance.legacy;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

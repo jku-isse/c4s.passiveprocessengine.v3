@@ -241,7 +241,7 @@ class InstanceTests {
 		TestArtifacts.addJiraToJira(jiraA, jiraC);	
 		
 		ProcessDefinition procDef = TestProcesses.getSimple2StepProcessDefinition(ws);
-		procDef.setImmediateInstantiateAllStepsEnabled(true);
+		procDef.isImmediateInstantiateAllStepsEnabled(true);
 		procDef.setImmediateDataPropagationEnabled(true);
 		
 		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);

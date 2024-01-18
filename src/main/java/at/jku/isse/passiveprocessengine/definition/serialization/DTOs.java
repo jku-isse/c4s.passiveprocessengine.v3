@@ -2,8 +2,8 @@ package at.jku.isse.passiveprocessengine.definition.serialization;
 
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +33,7 @@ public class DTOs {
 	public abstract static class Element implements Typed{
 		final String _type = this.getClass().getSimpleName();
 		private String code;
-		String description;
+		@Builder.Default String description = "";
 
 		@Override
 		public boolean equals(Object obj) {
@@ -50,6 +50,16 @@ public class DTOs {
 		}
 	}
 
+	public static class ConstraintBySpecOrderComparator implements Comparator<Constraint> {
+
+		@Override
+		public int compare(Constraint o1, Constraint o2) {
+			return Integer.compare(o1.getSpecOrderIndex(), o2.getSpecOrderIndex());
+		}				
+	}
+	
+	public static ConstraintBySpecOrderComparator constraintComparator = new ConstraintBySpecOrderComparator();
+	
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	@SuperBuilder
@@ -83,13 +93,13 @@ public class DTOs {
 	public static class Step extends Element {
 		String inDNDid;
 		String outDNDid;
-		final Map<String,String> input = new HashMap<>();
-		final Map<String,String> output = new HashMap<>();
-		final Map<String,String> ioMapping = new HashMap<>();
-		final Map<Conditions,List<Constraint>> conditions = new HashMap<>();
-		final Set<Constraint> qaConstraints = new HashSet<>();
+		final Map<String,String> input = new TreeMap<>();
+		final Map<String,String> output = new TreeMap<>();
+		final Map<String,String> ioMapping = new TreeMap<>();
+		final Map<Conditions,List<Constraint>> conditions = new TreeMap<>();
+		final Set<Constraint> qaConstraints = new TreeSet<>(constraintComparator);
 		@Builder.Default int specOrderIndex = 0;
-		String html_url;
+		@Builder.Default String html_url = "";
 
 		protected void toPlantUML(StringBuffer sb) {
 			String errorMsgs = output.entrySet().stream()
@@ -129,6 +139,13 @@ public class DTOs {
 		}
 	}
 
+	
+	public static Comparator<Mapping> mappingComparatorByAllFields = Comparator.comparing(Mapping::getFromStep)
+			.thenComparing(Mapping::getFromParam)
+			.thenComparing(Mapping::getToStep)
+			.thenComparing(Mapping::getToParam);
+	
+	
 	@ToString(doNotUseGetters = true)
 	@Data
 	public static class Mapping {
@@ -145,12 +162,22 @@ public class DTOs {
 		}
 	}
 
+	public static class DecisionNodeByNameComparator implements Comparator<DecisionNode> {
+
+		@Override
+		public int compare(DecisionNode o1, DecisionNode o2) {			
+			return o1.getCode().compareTo(o2.getCode());
+		}		
+	}
+	
+	public static DecisionNodeByNameComparator dnComparator = new DecisionNodeByNameComparator();
+	
 	@ToString(doNotUseGetters = true, callSuper = true)
 	@Data
 	@SuperBuilder
 	public static class DecisionNode extends Element {
 		@Builder.Default InFlowType inflowType = InFlowType.SEQ; //default value
-		final Set<Mapping> mapping = new HashSet<>();
+		final Set<Mapping> mapping = new TreeSet<>(mappingComparatorByAllFields);
 		@Builder.Default int depthIndex = -1;
 
 		protected void toPlantUMLDataflow(StringBuffer sb) {
@@ -173,10 +200,10 @@ public class DTOs {
 	@SuperBuilder
 	public static class Process extends Step {
 		final List<Step> steps = new LinkedList<>();
-		final List<DecisionNode> dns = new LinkedList<>();
-		final Map<String, String> prematureStepConditions = new HashMap<>();
-		final Map<String, String> processConfig = new HashMap<>();
-		final Map<String, Set<PropertySchemaDTO>> configs = new HashMap<>();
+		final Set<DecisionNode> dns = new TreeSet<>(dnComparator);
+		final Map<String, String> prematureStepConditions = new TreeMap<>();
+		final Map<String, String> processConfig = new TreeMap<>();
+		final Map<String, Set<PropertySchemaDTO>> configs = new TreeMap<>();
 
 		public Step getStepByCode(String code) {
 			return steps.stream().filter(step -> step.getCode().equals(code)).findAny().orElse(null);
@@ -244,7 +271,7 @@ public class DTOs {
 			if (nextStepOutDNs.size() == 1) { // implies the scope closing DN as otherwise there need to be multiple opening subscope ones
 				return nextStepOutDNs.iterator().next();
 			} else {
-				Set<DecisionNode> sameDepthNodes = new HashSet<>();
+				Set<DecisionNode> sameDepthNodes = new TreeSet<>(dnComparator);
 				while (sameDepthNodes.size() != 1) {
 					sameDepthNodes = nextStepOutDNs.stream().filter(nextDN -> nextDN.getDepthIndex() == dn.getDepthIndex()).collect(Collectors.toSet());
 					assert(sameDepthNodes.size() <= 1); //closing next nodes can only be on same level or deeper (i.e., larger values)

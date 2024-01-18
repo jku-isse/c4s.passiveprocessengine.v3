@@ -4,4 +4,6 @@ public interface RuleResult extends Instance {
 
 	Boolean isConsistent();
 
+	Instance getContextInstance();
+
 }

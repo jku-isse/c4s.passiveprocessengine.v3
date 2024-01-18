@@ -14,13 +14,13 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-import at.jku.isse.designspace.core.model.Element;
-import at.jku.isse.designspace.core.model.Id;
-import at.jku.isse.designspace.core.model.Instance;
-import at.jku.isse.designspace.core.model.Workspace;
-import at.jku.isse.designspace.core.model.WorkspaceListener;
-import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.passiveprocessengine.Context;
+import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PropertyChange;
+import at.jku.isse.passiveprocessengine.core.PropertyChange.Update;
+import at.jku.isse.passiveprocessengine.core.RuleResult;
+import at.jku.isse.passiveprocessengine.definition.factories.ProcessDefinitionFactory;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
@@ -37,107 +37,70 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-//@Service
-public class ProcessInstanceChangeProcessor implements WorkspaceListener {
+public class ProcessInstanceChangeProcessor {
 
-	private AtomicLong latestTransaction = new AtomicLong(0);
-	Workspace ws;
-	EventDistributor distributor = null;
-	//Map<Id, String> instanceIndex = Collections.synchronizedMap(new HashMap<>());
+	final EventDistributor distributor;
+	final Context context;
+	final InstanceType stepType;
+	
 	//we queue commands and remove some that are undone when lazy fetching of artifacts results in different outcome
 	protected Map<String, Commands.ProcessScopedCmd> cmdQueue = Collections.synchronizedMap(new HashMap<>());
 
 	private EventStats stats = new EventStats();
 
-	public ProcessInstanceChangeProcessor(Workspace ws, EventDistributor distributor) {
-		this.ws = ws;
+	public ProcessInstanceChangeProcessor(Context context, EventDistributor distributor) {		
 		this.distributor = distributor;
+		this.context = context;
+		stepType = context.getSchemaRegistry().getType(ProcessStep.class);
+		assert(stepType != null);
 	}
 
 	public EventStats getEventStatistics() {
 		return stats;
 	}
 
-	private boolean isOfStepType(Id id) {
-		if (id == null) return false;
-		Element el = ws.findElement(id);
-		if (el instanceof Instance) {
-			return el.getInstanceType().isKindOf(ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
-		}
-		return false;
-		//String type = instanceIndex.getOrDefault(id, "NOTFOUND");
-		//return (type.startsWith(ProcessStep.designspaceTypeId) || type.startsWith(ProcessInstance.designspaceTypeId));
+	private boolean isOfStepType(Instance instance) {
+		if (instance == null) 
+			return false;
+		else
+			return instance.getInstanceType().isOfTypeOrAnySubtype(stepType);		
 	}
 
-	private boolean isOfCRDType(Id id) {
-		if (id == null) return false;
-		Element el = ws.findElement(id);
-		return (el instanceof ConsistencyRule && el.getInstanceType().name().startsWith("crd_"));
-		//return instanceIndex.getOrDefault(id, "NOTFOUND").startsWith("crd"); //FIXME better approach than naming
+	private boolean isOfCRDType(Instance instance) {
+		if (instance == null) 
+			return false;
+		else
+			return (instance instanceof RuleResult && instance.getInstanceType().getName().startsWith(ProcessDefinitionFactory.CRD_PREFIX));
+		//FIXME better approach than naming
 	}
 
-//	private void processElementCreate(ElementCreate op, Element element) {
-//		if (element.getInstanceType() == null)
-//			return;
-//		// check if new type, if so update typeIndex
-//		if (element.getInstanceType().id().value() == 2l) {
-//			// new type
-//			//typeIndex.put(element.id(), element.getPropertyAsSingle("name").value.toString());
-//		} else if (element.getInstanceType().id().value() == 3l) {
-//			// ignore creation of a property
-//			return;
-//		} else {
-//			// new instance
-//			Id typeId = element.getInstanceType().id();
-//			 ws.debugInstanceTypes().stream()
-//			 	.filter(type -> !type.isDeleted)
-//			 	.filter(type -> type.id().equals(typeId))
-//			 	.forEach(type -> instanceIndex.put(element.id(), type.name()));
-//		}
-//	}
 
-	private Optional<ProcessScopedCmd> processPropertyUpdateAdd(PropertyUpdateAdd op, Element element) {
-		// check if this is about an instance
-		//if (!instanceIndex.containsKey(op.elementId()))
-		//	return Optional.empty();;
-		// now lets check if this is about a step,
-		//if (isOfStepType(element.id())) {
-
-				if(!op.name().contains("/@")
-					&& (op.name().startsWith("in_")
-					      || op.name().startsWith("out_"))
-					&& isOfStepType(element.id()) ) {
-					ProcessStep step = Context.getWrappedInstance(ProcessStep.class, (Instance)element);
-					Id addedId = (Id) op.value();
-					Element added = ws.findElement(addedId);
-					log.debug(String.format("%s %s now also contains %s", element.name(),
-																op.name(),
-																added != null ? added.name() : "NULL"
-																));
-					stats.incrementIoAddEventCount();
-					return Optional.ofNullable(step.prepareIOAddEvent(op));
-				}
-		//}
+	private Optional<ProcessScopedCmd> processPropertyUpdateAdd(PropertyChange.Add op) {		
+		Instance element = op.getInstance();
+		if(!op.getName().contains("/@")
+				&& (op.getName().startsWith("in_") || op.getName().startsWith("out_"))
+				&& isOfStepType(op.getInstance()) ) {
+			ProcessStep step = context.getWrappedInstance(ProcessStep.class, element);	
+			Instance added = (Instance) op.getValue();
+			log.debug(String.format("%s %s now also contains %s", step.getName(),
+					op.getName(),																
+					added != null ? added.getName() : "NULL"
+					));
+			stats.incrementIoAddEventCount();
+			return Optional.ofNullable(step.prepareIOAddEvent(op));
+		}		
 		return Optional.empty();
 	}
 
-	private Optional<ProcessScopedCmd> processPropertyUpdateRemove(PropertyUpdateRemove op, Element element) {
-		// check if this is about an instance
-		//if (!instanceIndex.containsKey(op.elementId()))
-		//	return Optional.empty();;
-		// now lets check if this is about a step, and if so about input
-	//	if (isOfStepType(element.id())) {
-	//		if (op.name().startsWith("in_")) {
-//				Id remId = (Id) op.value(); // IS NOT SET, returns NULL if remove is called via index
-	//			Element rem = ws.findElement(remId);
-			if(!op.name().contains("/@")  // ignore special properties  (e.g., usage in consistency rules, etc)
-				&& (op.name().startsWith("in_")
-				      || op.name().startsWith("out_"))
-				&& isOfStepType(element.id()) ) {
-				ProcessStep step = Context.getWrappedInstance(ProcessStep.class, (Instance)element);
-				log.info(String.format("%s %s removed %s", element.name(),
-																op.name(),
-																op.indexOrKey()
+	private Optional<ProcessScopedCmd> processPropertyUpdateRemove(PropertyChange.Remove op) {
+		Instance element = op.getInstance();
+			if(!op.getName().contains("/@")  // ignore special properties  (e.g., usage in consistency rules, etc)
+				&& (op.getName().startsWith("in_") || op.getName().startsWith("out_"))
+				&& isOfStepType(element) ) {
+				ProcessStep step = context.getWrappedInstance(ProcessStep.class, element);
+				log.info(String.format("%s %s removed something", step.getName(),
+																op.getName()
+															//	,op.indexOrKey()
 																));
 				stats.incrementIoRemoveEventCount();
 				return Optional.ofNullable(step.prepareIORemoveEvent(op));
@@ -146,59 +109,41 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 		return Optional.empty();
 	}
 
-	private Optional<ProcessScopedCmd> processPropertyUpdateSet(PropertyUpdateSet op, Element element) {
-		if (isOfStepType(element.id())) {
-			log.info(String.format("Step %s updated %s to %s", element.name(),
-					op.name(),
-					op.value().toString()
+	private Optional<ProcessScopedCmd> processPropertyUpdateSet(PropertyChange.Set op) {
+		Instance element = op.getInstance();
+		if (isOfStepType(element)) {
+			log.info(String.format("Step %s updated %s to %s", element.getName(),
+					op.getName(),
+					op.getValue().toString()
 					));
-		} else if (isOfCRDType(element.id()) && op.name().equals("result")) {
-			// FIXME: we also have to check if a rule no longer has any error, only then can we process it properly
-			ConsistencyRule cr = (ConsistencyRule)element;
-			Instance context = cr.contextInstance();
-			if (isOfStepType(context.id())) { // rule belonging to a step,
-				ProcessStep step = Context.getWrappedInstance(ProcessStep.class, context);
+		} else if (isOfCRDType(element) && op.getName().equals("result")) {
+			RuleResult cr = (RuleResult)element;
+			Instance ruleContext = cr.getContextInstance();
+			if (isOfStepType(ruleContext)) { // rule belonging to a step,
+				ProcessStep step = context.getWrappedInstance(ProcessStep.class, ruleContext);
 				stats.incrementRuleUpdateEventCount();
 				ProcessScopedCmd effect = step.prepareRuleEvaluationChange(cr, op);
-//				log.debug(String.format("CRD of type %s for step %s updated %s to %s", element.name(), context.name(),
-//						op.name(),
-//						op.value().toString()
-//						));
 				return Optional.ofNullable(effect);
 			}
 		}
 		return Optional.empty();
 	}
 
-	@Override
-	public void handleUpdated(Collection<Operation> operations) {
-		handleUpdates(operations);
-	}
 
-	protected Set<ProcessInstance> handleUpdates(Collection<Operation> operations) {
+	public Set<ProcessInstance> handleUpdates(Collection<Update> operations) {
 		@SuppressWarnings("unchecked")
 
 		List<ProcessScopedCmd> queuedEffects = (List<ProcessScopedCmd>) operations.stream()
-		 .map(operation -> {
-//			checkTransactionId(operation.getConclusionId());
- 			Element element = ws.findElement(operation.elementId());
-				if (operation instanceof PropertyUpdateAdd) {
-					 return processPropertyUpdateAdd((PropertyUpdateAdd) operation, element);
+		 .map(operation -> { 			
+				if (operation instanceof PropertyChange.Add) {
+					 return processPropertyUpdateAdd((PropertyChange.Add) operation);
 				} else
-					if (operation instanceof PropertyUpdateRemove) {
-						 return processPropertyUpdateRemove((PropertyUpdateRemove) operation, element);
+					if (operation instanceof PropertyChange.Remove) {
+						 return processPropertyUpdateRemove((PropertyChange.Remove) operation);
 					} else
-						if (operation instanceof PropertyUpdateSet) {
-							return processPropertyUpdateSet((PropertyUpdateSet) operation, element);
-						}// else
-			//				if (operation instanceof PropertyCreate) {
-								// no logging
-			//				} //else
-//			log.debug(String.format("Element %s %s <%s> changed: %s",
-//					element.id(),
-//					element.name(),
-//					element.getInstanceType() != null ? element.getInstanceType().id() : "NoInstanceType",
-//							operation.getClass().getSimpleName()));
+						if (operation instanceof PropertyChange.Set) {
+							return processPropertyUpdateSet((PropertyChange.Set) operation);
+						}
 			return Optional.empty();
 		})
 		.filter(Optional::isPresent)
@@ -300,7 +245,7 @@ public class ProcessInstanceChangeProcessor implements WorkspaceListener {
 			cmdQueue.clear();
 			if (distributor  != null)
 				distributor.handleEvents(cmdEvents); //do something with the change events from command based effects, if needed, e.g., for LTE-based checking
-			ws.concludeTransaction();
+			context.getInstanceRepository().concludeTransaction();
 			return procs;
 		} else
 			return Collections.emptySet();
