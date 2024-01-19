@@ -138,14 +138,14 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 					|| this.getActualLifecycleState().equals(State.COMPLETED) )) {
 			//(if so, then do something about this)			
 			Instance added = op.getInstance();
-			log.info(String.format("Step %s received unexpected late input %s %s", this.getName(), op.getName(), added.getName()  ));
+			log.info(String.format("Step %s received late input %s %s", this.getName(), op.getName(), added.getName()  ));
 			// Note that the adding has already happened, thus there is nothing to report back, this is only for checking whether we need to do something else as well.
 		}
 		else if (op.getName().startsWith(SpecificProcessStepType.PREFIX_OUT)) { // if out added, establish if this is late output, then propagate further
 				//&& ( this.getActualLifecycleState().equals(State.COMPLETED) || isImmediateDataPropagationEnabled() ) ){
 			if (this.getActualLifecycleState().equals(State.COMPLETED)) {
 				Instance added = op.getInstance();
-				log.info(String.format("Step %s received unexpected late output %s %s, queuing for propagation to successors", this.getName(), op.getName(), added.getName()  ));
+				log.info(String.format("Step %s received late output %s %s, queuing for propagation to successors", this.getName(), op.getName(), added.getName()  ));
 			}
 				// we should not just propagate, as the newly added output could be violating completion or qa constraints and we should not propagate the artifact just yet. -->
 			// return a potential propagation cause Command, that is later checked again, whether it is still valid.
@@ -191,7 +191,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).get(id));
 		cw.setCrIfEmpty(cr);
 		//cw.setEvalResult(fulfilled);
-		cw.setLastChanged(getProcess().getCurrentTimestamp());
+		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		List<Events.ProcessChangedEvent> qaChanges = new LinkedList<>();
 		qaChanges.add(new Events.QAConstraintFulfillmentChanged(this.getProcess(), this, cw));
 		boolean newQaState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.qaState.toString()); // are all QA checks now fulfilled?
@@ -517,7 +517,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		String id = cr.getName();
 		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.postconditions.toString(), Map.class).get(id));
 		cw.setCrIfEmpty(cr);
-		cw.setLastChanged(getProcess().getCurrentTimestamp());
+		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.postconditions.toString());
 		List<Events.ProcessChangedEvent> events =  setPostConditionsFulfilled(newState);
 		if (events.isEmpty())
@@ -552,7 +552,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		String id = cr.getName();
 		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.preconditions.toString(), Map.class).get(id));
 		cw.setCrIfEmpty(cr);
-		cw.setLastChanged(getProcess().getCurrentTimestamp());
+		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.preconditions.toString());
 		List<Events.ProcessChangedEvent> events =  setPreConditionsFulfilled(newState);
 		if (events.isEmpty())
@@ -590,7 +590,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		String id = cr.getName();
 		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.cancelconditions.toString(), Map.class).get(id));
 		cw.setCrIfEmpty(cr);
-		cw.setLastChanged(getProcess().getCurrentTimestamp());
+		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.cancelconditions.toString());
 		List<Events.ProcessChangedEvent> events =  setCancelConditionsFulfilled(newState);
 		if (events.isEmpty())
@@ -620,7 +620,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		String id = cr.getName();
 		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.activationconditions.toString(), Map.class).get(id));
 		cw.setCrIfEmpty(cr);
-		cw.setLastChanged(getProcess().getCurrentTimestamp());
+		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.activationconditions.toString());
 		List<Events.ProcessChangedEvent> events =  setActivationConditionsFulfilled(newState);
 		if (events.isEmpty())

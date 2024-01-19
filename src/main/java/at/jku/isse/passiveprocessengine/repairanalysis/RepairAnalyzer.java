@@ -63,7 +63,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RepairAnalyzer implements RuleEvaluationListener {
 
-	//Workspace ws;
 	// which rules have now a changed result (either now fulfilled, or now
 	// unfulfilled)
 	Map<ConsistencyRule, Boolean> changedRuleResult = new HashMap<>();
@@ -92,7 +91,7 @@ public class RepairAnalyzer implements RuleEvaluationListener {
 	final DesignSpaceSchemaRegistry designspace;
 	final Context context;
 
-	public RepairAnalyzer(Workspace ws, RepairStats rs, RepairNodeScorer scorer, ITimeStampProvider timeprovider, UsageMonitor monitor, DesignSpaceSchemaRegistry designspace, Context context) {
+	public RepairAnalyzer(RepairStats rs, RepairNodeScorer scorer, ITimeStampProvider timeprovider, UsageMonitor monitor, DesignSpaceSchemaRegistry designspace, Context context) {
 	
 		this.pce=new ProcessChangeEvents(rs);
 		this.scorer = scorer;
@@ -318,10 +317,11 @@ public class RepairAnalyzer implements RuleEvaluationListener {
 
 				effects.get(Type.POSITIVE).stream()
 						.filter(se -> se instanceof ContextualizedPositiveSideEffect<?>)
-						.forEach(se -> monitor.repairActionExecuted(se.getInconsistency(),
+						.forEach(se -> 	monitor.repairActionExecuted(designspace.getWrappedRuleResult(se.getInconsistency()),
 															context.getWrappedInstance(ProcessStep.class, designspace.getWrappedInstance(se.getInconsistency().contextInstance())),
 															Repair_template.toRepairTemplate(((ContextualizedPositiveSideEffect<ConsistencyRule>) se).getMatchingRepair()).asString(),
-															-1));
+															-1)
+						);
 			}
 		});
 	}
@@ -599,9 +599,9 @@ public class RepairAnalyzer implements RuleEvaluationListener {
 		return this.scorer;
 	}
 
-	public void setRepairNodeScorer(RepairNodeScorer scorer) {
-		this.scorer = scorer;
-	}
+//	public void setRepairNodeScorer(RepairNodeScorer scorer) {
+//		this.scorer = scorer;
+//	}
 
 	public ProcessChangeEvents getTd() {
 		return this.pce;
@@ -614,9 +614,9 @@ public class RepairAnalyzer implements RuleEvaluationListener {
 		return time;
 	}
 
-	public void setTime(ReplayTimeProvider time) {
-		this.time = time;
-	}
+//	public void setTime(ReplayTimeProvider time) {
+//		this.time = time;
+//	}
 
 
 

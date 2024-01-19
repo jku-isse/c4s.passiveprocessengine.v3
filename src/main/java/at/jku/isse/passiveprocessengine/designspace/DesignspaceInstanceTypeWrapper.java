@@ -147,4 +147,8 @@ public class DesignspaceInstanceTypeWrapper implements InstanceType {
 		return delegate.getAllSubTypes().stream().map(subtype -> dsSchemaRegistry.getWrappedType(subtype)).collect(Collectors.toSet());
 	}
 
+	@Override
+	public String toString() {
+		return getDelegate().toString();
+	}
 }

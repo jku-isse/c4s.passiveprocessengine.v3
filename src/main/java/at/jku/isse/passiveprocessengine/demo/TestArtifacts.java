@@ -12,7 +12,7 @@ import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 public class TestArtifacts {
 
 	public static final String DEMOISSUETYPE = "DemoIssue";
-	public static enum CoreProperties { requirementIDs, state, requirements, bugs, parent, html_url, upstream, downstream }
+	public static enum CoreProperties { state, requirements, bugs, parent, html_url, upstream, downstream }
 	public static enum JiraStates { Open, InProgress, Closed, ReadyForReview, Released}
 
 	InstanceRepository repository;
@@ -20,7 +20,7 @@ public class TestArtifacts {
 	
 	public TestArtifacts(InstanceRepository repository, SchemaRegistry schemaRegistry) {
 		this.repository = repository;
-		this.schemaRegistry = schemaRegistry;
+		this.schemaRegistry = schemaRegistry;		
 	}
 	
 	public InstanceType getJiraInstanceType() {
@@ -28,8 +28,7 @@ public class TestArtifacts {
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
-				InstanceType typeJira = schemaRegistry.createNewInstanceType(DEMOISSUETYPE);
-				typeJira.createSetPropertyType(CoreProperties.requirementIDs.toString(), BuildInType.STRING);
+				InstanceType typeJira = schemaRegistry.createNewInstanceType(DEMOISSUETYPE);				
 				typeJira.createSinglePropertyType(CoreProperties.state.toString(), BuildInType.STRING);
 				typeJira.createSetPropertyType(CoreProperties.requirements.toString(), typeJira);
 				typeJira.createSetPropertyType(CoreProperties.bugs.toString(),  typeJira);
@@ -42,28 +41,28 @@ public class TestArtifacts {
 			}
 	}
 
-	public Instance getJiraInstance(String name, String... reqIds) {
+	public Instance getJiraInstance(String name, Instance... reqs) {
 		Instance jira = repository.createInstance(name, getJiraInstanceType());
 		jira.setSingleProperty(CoreProperties.html_url.toString(),"http://localhost:7171/home");
 		setStateToJiraInstance(jira, JiraStates.Open);
-		for(String id : reqIds) {
-			jira.getTypedProperty(TestArtifacts.CoreProperties.requirementIDs.toString(), Set.class).add(id);
+		for(Instance inst : reqs) {
+			jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).add(inst);
 		}
 		return jira;
 	}
 
-	public void addReqIdsToJira(Instance jira, String... reqIds) {
-		for(String id : reqIds) {
-			jira.getTypedProperty(TestArtifacts.CoreProperties.requirementIDs.toString(), Set.class).add(id);
+	public void addReqsToJira(Instance jira, Instance... reqs) {
+		for(Instance inst : reqs) {
+			jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).add(inst);
 		}
 	}
 
-	public void addJiraToJira(Instance jira, Instance jiraToAdd) {
-		jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).add(jiraToAdd);
+	public void addJiraToRequirements(Instance issue, Instance reqToAdd) {
+		issue.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).add(reqToAdd);
 	}
-
-	public void removeJiraFromJira(Instance jira, Instance jiraToRemove) {
-		jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).remove(jiraToRemove);
+	
+	public void removeJiraFromReqs(Instance jira, Instance reqToRemove) {
+		jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).remove(reqToRemove);
 	}
 
 	public void setStateToJiraInstance(Instance inst, JiraStates state) {

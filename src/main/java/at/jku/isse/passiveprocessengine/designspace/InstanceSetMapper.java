@@ -60,7 +60,7 @@ public class InstanceSetMapper implements Set<Instance>{
 	}
 
 	public boolean remove(Object o) {
-		return delegate.remove(o);
+		return delegate.remove((at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((Instance)o));
 	}
 
 	public boolean containsAll(Collection<?> c) {

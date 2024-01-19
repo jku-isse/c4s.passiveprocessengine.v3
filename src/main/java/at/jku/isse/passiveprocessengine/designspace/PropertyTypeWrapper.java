@@ -31,7 +31,11 @@ public class PropertyTypeWrapper implements PropertyType {
 
 	@Override
 	public boolean isAssignable(Object object) {
-		return delegate.isAssignable(object);
+		// map from process domain object to designspace domain object
+		if (object instanceof DesignspaceInstanceWrapper) {
+			return delegate.isAssignable(((DesignspaceInstanceWrapper) object).getDelegate());
+		} else
+			return delegate.isAssignable(object);
 	}
 
 }

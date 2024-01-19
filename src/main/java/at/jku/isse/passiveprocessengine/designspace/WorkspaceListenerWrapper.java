@@ -6,8 +6,11 @@ import java.util.stream.Collectors;
 
 import at.jku.isse.designspace.core.events.Operation;
 import at.jku.isse.designspace.core.model.Element;
+import at.jku.isse.designspace.core.model.Id;
 import at.jku.isse.designspace.core.model.Instance;
+import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.WorkspaceListener;
+import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.passiveprocessengine.core.PropertyChange;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import lombok.NonNull;
@@ -23,6 +26,11 @@ public class WorkspaceListenerWrapper implements WorkspaceListener{
 	public WorkspaceListenerWrapper(DesignSpaceSchemaRegistry designspace, @NonNull ProcessInstanceChangeProcessor eventSink) {
 		this.designspace = designspace;
 		this.eventSink = eventSink;		
+		
+	}
+	
+	public void registerWithWorkspace() {
+		designspace.getWorkspace().workspaceListeners.add(this);
 	}
 	
 	@Override
@@ -36,20 +44,20 @@ public class WorkspaceListenerWrapper implements WorkspaceListener{
 					if (el instanceof Instance) {
 						Object value = pUpdate.value();					
 						if (pUpdate instanceof PropertyUpdateAdd) {										
-							if (value instanceof Instance) {							
-								return new PropertyChange.Add(pUpdate.name(), designspace.getWrappedInstance((Instance)el),  designspace.getWrappedInstance((Instance) value));
+							if (value instanceof Id) {										
+								return new PropertyChange.Add(pUpdate.name(), designspace.getWrappedInstance((Instance)el),  mapToMostSpecializedWrapper((Id)value) );
 							} else {
 								return new PropertyChange.Add(pUpdate.name(), designspace.getWrappedInstance(el), value);
 							}
 						} else if (pUpdate instanceof PropertyUpdateRemove) {
-							if (value instanceof Instance) {							
-								return new PropertyChange.Remove(pUpdate.name(), designspace.getWrappedInstance((Instance)el),  designspace.getWrappedInstance((Instance) value));
+							if (value instanceof Id) {							
+								return new PropertyChange.Remove(pUpdate.name(), designspace.getWrappedInstance((Instance)el),  mapToMostSpecializedWrapper((Id)value));
 							} else {
 								return new PropertyChange.Remove(pUpdate.name(), designspace.getWrappedInstance(el), value);
 							}
 						} else {
-							if (value instanceof Instance) {							
-								return new PropertyChange.Set(pUpdate.name(), designspace.getWrappedInstance((Instance)el),  designspace.getWrappedInstance((Instance) value));
+							if (value instanceof Id) {							
+								return new PropertyChange.Set(pUpdate.name(), designspace.getWrappedInstance((Instance)el),  mapToMostSpecializedWrapper((Id)value));
 							} else {
 								return new PropertyChange.Set(pUpdate.name(), designspace.getWrappedInstance(el), value);
 							}
@@ -61,5 +69,17 @@ public class WorkspaceListenerWrapper implements WorkspaceListener{
 				.collect(Collectors.toSet())
 		);				
 	}
-
+	
+	private Object mapToMostSpecializedWrapper(Id id) {
+		Element el = designspace.getWorkspace().findElement(id);
+		if (el instanceof ConsistencyRule )
+			return designspace.getWrappedRuleResult( (ConsistencyRule)el);			
+		else if (el instanceof Instance) 
+			return designspace.getWrappedInstance( (Instance)el);
+		else if (el instanceof InstanceType)
+			return designspace.getWrappedType( (InstanceType)el);
+		else
+			return null;
+	}
+	
 }

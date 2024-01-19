@@ -37,7 +37,7 @@ public class InstanceListMapper implements List<Instance>{
 	}
 
 	public boolean contains(Object o) {
-		return delegate.contains(o);
+		return delegate.contains((at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((Instance)o));
 	}
 
 	public Iterator<Instance> iterator() {
@@ -61,7 +61,7 @@ public class InstanceListMapper implements List<Instance>{
 	}
 
 	public boolean remove(Object o) {
-		return delegate.remove(o);
+		return delegate.remove((at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((Instance)o));
 	}
 
 	public boolean containsAll(Collection<?> c) {
@@ -147,11 +147,11 @@ public class InstanceListMapper implements List<Instance>{
 	}
 
 	public int indexOf(Object o) {
-		return delegate.indexOf(o);
+		return delegate.indexOf((at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((Instance)o));
 	}
 
 	public int lastIndexOf(Object o) {
-		return delegate.lastIndexOf(o);
+		return delegate.lastIndexOf((at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((Instance)o));
 	}
 
 	public ListIterator<Instance> listIterator() {

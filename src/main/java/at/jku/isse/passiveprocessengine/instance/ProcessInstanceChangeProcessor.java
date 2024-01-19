@@ -70,7 +70,7 @@ public class ProcessInstanceChangeProcessor {
 		if (instance == null) 
 			return false;
 		else
-			return (instance instanceof RuleResult && instance.getInstanceType().getName().startsWith(ProcessDefinitionFactory.CRD_PREFIX));
+			return (instance.getName().startsWith(ProcessDefinitionFactory.CRD_PREFIX) && instance instanceof RuleResult);
 		//FIXME better approach than naming
 	}
 
@@ -112,11 +112,13 @@ public class ProcessInstanceChangeProcessor {
 	private Optional<ProcessScopedCmd> processPropertyUpdateSet(PropertyChange.Set op) {
 		Instance element = op.getInstance();
 		if (isOfStepType(element)) {
-			log.info(String.format("Step %s updated %s to %s", element.getName(),
+			if (!op.getName().startsWith("@")) {
+				log.info(String.format("Step %s updated %s to %s", element.getName(),
 					op.getName(),
-					op.getValue().toString()
+					String.valueOf(op.getValue())
 					));
-		} else if (isOfCRDType(element) && op.getName().equals("result")) {
+			}
+		} else if (op.getName().equals("result") && isOfCRDType(element)) {
 			RuleResult cr = (RuleResult)element;
 			Instance ruleContext = cr.getContextInstance();
 			if (isOfStepType(ruleContext)) { // rule belonging to a step,

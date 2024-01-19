@@ -99,75 +99,7 @@ public class TestProcesses {
 		return procDef;
 	}
 
-	public ProcessDefinition getSimple2StepProcessDefinition( ) throws ProcessException {
-			InstanceType typeJira = artifactFactory.getJiraInstanceType();
-			ProcessDefinition procDef = ProcessDefinition.getInstance("proc1" );
-			procDef.addExpectedInput("jiraIn", typeJira);
-			procDef.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
-			procDef.addExpectedOutput("jiraOut", typeJira);
-			procDef.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() > 0");
-	//		ws.debugInstanceTypes().stream().forEach(it -> System.out.println(it));
-			DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1" );
-			//dnd1.setInflowType(InFlowType.AND);
-			DecisionNodeDefinition dnd2 =  procDef.createDecisionNodeDefinition("dnd2" );
-			//dnd2.setInflowType(InFlowType.AND);
-			DecisionNodeDefinition dnd3 =  procDef.createDecisionNodeDefinition("dnd3" );
-
-			StepDefinition sd1 = procDef.createStepDefinition("sd1" );
-			sd1.addExpectedInput("jiraIn", typeJira);
-			sd1.addExpectedOutput("jiraOut", typeJira);
-			//sd1.addInputToOutputMappingRule("jiraIn2jiraOut", "self.in_jiraIn->forAll(elem | result->includes(elem) = self.out_jiraOut->excludes(elem))-> size() = 0"); // i.e., the symetricDifference is empty, i.e., the same elements need to be in both lists
-			//sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", "self.in_jiraIn->size() = self.out_jiraOut-> size()"); // i.e., the symetricDifference is empty, i.e., the same elements need to be in both lists
-			//->asList()->first().asType('JiraArtifact')
-			sd1.addInputToOutputMappingRule("jiraOut",
-				"self.in_jiraIn"
-					+ "->asList()"
-					+ "->first()"
-					+ "->asType(<"+typeJira.getQualifiedName()+">)"
-							+ ".requirements");
-//								+ "->forAll(id | self.out_jiraOut->exists(art  | art.name = id))"
-//				+ " and "
-//					+ "self.out_jiraOut"
-//					+ "->forAll(out | self.in_jiraIn"
-//										+ "->asList()"
-//										+ "->first()"
-//										+ "->asType(<"+typeJira.getQualifiedName()+">)"
-//												+ ".requirementIDs"
-//												+ "->exists(artId | artId = out.name))"); // for every id in requirements there is an instance with that name, and vice versa
-//
-			//sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", "self.in_jiraIn->asList()->first()->asType(<"+typeJira.getQualifiedName()+">).requirementIDs->forAll(id | self.out_jiraOut->exists(art  | art.name = id))"); // for every id in requirements there is an instance with that name
-			//sd1.addInputToOutputMappingRule("jiraIn2jiraOutTest", "self.in_jiraIn->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and "
-			//		+ " self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // for every id in requirements there is an instance with that name
-
-			sd1.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
-			sd1.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() = self.in_jiraIn->asList()->first()->asType(<"+typeJira.getQualifiedName()+">).requirements->size()");
-			ConstraintSpec qa1 = ConstraintSpec.createInstance(Conditions.QA, "sd1-qa1-state", "self.out_jiraOut->forAll( issue | issue.state = 'Open')", "All issue states must be 'Open'",1 );
-			sd1.addQAConstraint(qa1);
-			ConstraintSpec qa2 = ConstraintSpec.createInstance(Conditions.QA, "sd1-qa2-state", "self.out_jiraOut->forAll( issue | issue.state <> 'InProgress')", "None of the issue states must be 'InProgress'",2 );
-			sd1.addQAConstraint(qa2);
-			sd1.setInDND(dnd1);
-			sd1.setOutDND(dnd2);
-			sd1.setSpecOrderIndex(1);
-
-			StepDefinition sd2 = procDef.createStepDefinition("sd2" );
-			sd2.addExpectedInput("jiraIn", typeJira);
-			sd2.addExpectedOutput("jiraOut", typeJira);
-			sd2.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() >= 1");
-			sd2.setCondition(Conditions.POSTCONDITION, "self.out_jiraOut->size() >= 0");
-			sd2.addInputToOutputMappingRule("jiraOut", "self.in_jiraIn");//->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and "
-							//+ " self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
-			ConstraintSpec qa3 = ConstraintSpec.createInstance(Conditions.QA, "sd2-qa3-state", "self.in_jiraIn->forAll( issue | issue.state = 'Closed')", "All in issue states must be 'Closed'",3 );
-			sd2.addQAConstraint(qa3);
-			sd2.setInDND(dnd2);
-			sd2.setOutDND(dnd3);
-			sd2.setSpecOrderIndex(2);
-
-			dnd1.addDataMappingDefinition(MappingDefinition.getInstance(procDef.getName(), "jiraIn", sd1.getName(), "jiraIn",  ws));
-			dnd2.addDataMappingDefinition(MappingDefinition.getInstance(sd1.getName(), "jiraOut", sd2.getName(), "jiraIn",  ws));
-			procDef.initializeInstanceTypes(false);
-			procDef.isImmediateInstantiateAllStepsEnabled(false); //ensure old behavior
-			return procDef;
-		}
+	
 
 	public ProcessDefinition getComplexSingleStepProcessDefinition( ) throws ProcessException {
 		InstanceType typeJira = artifactFactory.getJiraInstanceType();

@@ -41,6 +41,7 @@ public class DefinitionWrapperTests {
 	public ConfigurationBuilder configBuilder;
 	
 	@BeforeEach
+	protected
 	void setup() throws Exception {
 		Workspace testWS = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, new User("Test"), new Tool("test", "v1.0"), false, false);					
 		designspace = new DesignSpaceSchemaRegistry(testWS);

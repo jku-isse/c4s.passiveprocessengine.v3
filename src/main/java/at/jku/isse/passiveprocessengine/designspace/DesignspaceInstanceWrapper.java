@@ -109,5 +109,8 @@ public class DesignspaceInstanceWrapper implements Instance {
 				|| type.equals(BuildInType.INTEGER);
 	}
 	
-
+	@Override
+	public String toString() {
+		return getDelegate().toString();
+	}
 }

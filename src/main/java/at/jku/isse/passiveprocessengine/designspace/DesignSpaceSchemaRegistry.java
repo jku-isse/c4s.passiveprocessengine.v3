@@ -12,7 +12,9 @@ import java.util.stream.Collectors;
 import at.jku.isse.designspace.core.model.Id;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
+import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
+import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.Instance;
@@ -20,6 +22,7 @@ import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.core.RuleDefinitionFactory;
+import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import lombok.NonNull;
 
@@ -134,7 +137,7 @@ public class DesignSpaceSchemaRegistry implements SchemaRegistry, InstanceReposi
 		if (element == null)
 			return null;
 		else if (element instanceof at.jku.isse.designspace.core.model.Instance) {
-			return  getWrappedInstance(element);
+			return  getWrappedInstance((at.jku.isse.designspace.core.model.Instance)element);
 		} else 
 			return getWrappedType((at.jku.isse.designspace.core.model.InstanceType) element);	
 	}
@@ -142,9 +145,26 @@ public class DesignSpaceSchemaRegistry implements SchemaRegistry, InstanceReposi
 	public Instance getWrappedInstance(at.jku.isse.designspace.core.model.Instance instance) {
 		if (instance == null)
 			return null;
-		else
+		else {
 			return instanceWrappers.computeIfAbsent(instance.id(), k -> new DesignspaceInstanceWrapper(instance, this));
+		}
 	}
+		
+	
+	public RuleResult getWrappedRuleResult(ConsistencyRule instance) {
+		if (instance == null)
+			return null;
+		else {
+			Instance wrapper = instanceWrappers.computeIfAbsent(instance.id(), k -> new DesignspaceRuleResultWrapper(instance, this)); 
+			if (!(wrapper instanceof RuleResult)) { // need to rewrapp
+				wrapper = new DesignspaceRuleResultWrapper(instance, this);
+				instanceWrappers.put(instance.id(), wrapper);
+			}
+			return (RuleResult)wrapper;
+		}
+	
+	}
+	
 	
 	@Override
 	public Instance createInstance(String id, InstanceType type) {
