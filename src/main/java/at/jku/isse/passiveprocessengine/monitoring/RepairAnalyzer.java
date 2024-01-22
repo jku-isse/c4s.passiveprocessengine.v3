@@ -992,8 +992,10 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 			if (ra.getElement() == null)
 				return false;
 			Instance artifact = (Instance) ra.getElement();
-			if (!artifact.hasProperty("html_url") || artifact.getPropertyAsValue("html_url") == null)
+			if(artifact.hasProperty("html_url") && artifact.getPropertyAsValue("html_url")==null)
 				return false;
+			/*if (!artifact.hasProperty("html_url") || artifact.getPropertyAsValue("html_url") == null)
+				return false;*/
 			else
 				return ra.getProperty() != null && !ra.getProperty().startsWith("out_") // no change to input or output
 				&& !ra.getProperty().startsWith("in_")/* && !ra.getProperty().equalsIgnoreCase("name")*/; // typically
