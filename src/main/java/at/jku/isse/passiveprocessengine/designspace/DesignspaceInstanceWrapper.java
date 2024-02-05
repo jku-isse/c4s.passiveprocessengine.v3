@@ -39,6 +39,11 @@ public class DesignspaceInstanceWrapper implements Instance {
 	public InstanceType getInstanceType() {
 		return dsSchemaRegistry.getWrappedType(delegate.getInstanceType());
 	}
+	
+	@Override
+	public void setInstanceType(InstanceType childType) {
+		this.delegate.setInstanceType(dsSchemaRegistry.mapProcessDomainInstanceTypeToDesignspaceInstanceType(childType));
+	}
 
 	@Override
 	public void markAsDeleted() {
@@ -113,4 +118,6 @@ public class DesignspaceInstanceWrapper implements Instance {
 	public String toString() {
 		return getDelegate().toString();
 	}
+
+
 }

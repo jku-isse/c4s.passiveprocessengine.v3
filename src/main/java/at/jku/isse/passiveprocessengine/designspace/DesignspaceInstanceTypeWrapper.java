@@ -43,6 +43,11 @@ public class DesignspaceInstanceTypeWrapper implements InstanceType {
 	}
 
 	@Override
+	public void setInstanceType(InstanceType childType) {
+		// noop, cannot override instancetype of an InstanceType (i.e., meta type cannot be overridden)
+	}
+	
+	@Override
 	public void markAsDeleted() {
 		delegate.delete();
 	}

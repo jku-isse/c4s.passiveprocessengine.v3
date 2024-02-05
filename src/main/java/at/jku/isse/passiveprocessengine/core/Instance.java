@@ -11,5 +11,6 @@ public interface Instance {
 	void setSingleProperty(String property, Object value);
 	<T> T getTypedProperty(String property, Class<T> clazz);
 	<T> T getTypedProperty(String property, Class<T> clazz, T defaultValue);
+	void setInstanceType(InstanceType childType);
 
 }

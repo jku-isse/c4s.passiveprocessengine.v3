@@ -69,6 +69,11 @@ public abstract class BuildInType implements InstanceType {
 	}
 	
 	@Override
+	public void setInstanceType(InstanceType childType) {
+		// noop (cannot override the instancetype of a build in type
+	}
+	
+	@Override
 	public Set<InstanceType> getAllSubtypesRecursively() {
 		return Collections.emptySet();
 	}
@@ -83,6 +88,8 @@ public abstract class BuildInType implements InstanceType {
 		public String getId() {
 			return "STRING";
 		}
+
+
 	};
 	
 	public static InstanceType INTEGER = new BuildInType() {
