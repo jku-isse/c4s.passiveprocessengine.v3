@@ -6,7 +6,7 @@
 
 	<groupId>at.jku.isse.designspace.passiveprocessengine</groupId>
 	<artifactId>c4s.passiveprocessengine.v3</artifactId>
-	<version>0.7.0-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 
 	<distributionManagement>
 		<repository>
@@ -17,7 +17,7 @@
 
 	<properties>
 		<lombok.version>1.18.30</lombok.version>
-		<java.version>11</java.version>
+		<java.version>20</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
@@ -51,12 +51,12 @@
 		<dependency>
 			<groupId>at.jku.isse.designspace</groupId>
 			<artifactId>core</artifactId>
-			<version>4.4.1-SNAPSHOT</version>
+			<version>5.0</version>
 		</dependency>
 		<dependency>
 			<groupId>at.jku.isse.designspace</groupId>
-			<artifactId>rule</artifactId>
-			<version>4.5.1-SNAPSHOT</version>
+			<artifactId>service-rule</artifactId>
+			<version>5.0</version>
 		</dependency> 
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -66,7 +66,7 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
-			<version>2.2.3.RELEASE</version>
+			<version>3.2.2</version>
 			<scope>test</scope>
 		</dependency>
 		<!-- <dependency> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-autoconfigure</artifactId> 
