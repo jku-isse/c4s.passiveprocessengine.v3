@@ -1,21 +1,18 @@
-package at.jku.isse.passiveprocessengine.monitoring;
+package at.jku.isse.passiveprocessengine.repairanalysis;
 
-import at.jku.isse.designspace.core.events.PropertyUpdate;
-import at.jku.isse.designspace.core.events.PropertyUpdateAdd;
-import at.jku.isse.designspace.core.events.PropertyUpdateRemove;
-import at.jku.isse.designspace.core.events.PropertyUpdateSet;
 import at.jku.isse.designspace.core.model.Instance;
+import at.jku.isse.designspace.core.operations.PropertyValueOperation;
 import at.jku.isse.designspace.rule.arl.repair.RepairAction;
 import at.jku.isse.designspace.rule.arl.repair.UnknownRepairValue;
 
 public class RepairMatcher {
 
 	@SuppressWarnings("rawtypes")
-	public static boolean doesOpMatchRepair(RepairAction ra, PropertyUpdate op, Id subject) {
+	public static boolean doesOpMatchRepair(RepairAction ra, PropertyValueOperation op, Long subject) {
 		String propRep = ra.getProperty();
 		String propChange = op.name();
 		Instance rInst = (Instance) ra.getElement();
-		if ((propRep == null) || !propRep.equals(propChange) || !subject.equals(rInst.id())) // if this repair is not about the same subject
+		if ((propRep == null) || !propRep.equals(propChange) || !subject.equals(rInst.getId())) // if this repair is not about the same subject
 			return false;
 		switch (ra.getOperator()) {
 		case ADD:

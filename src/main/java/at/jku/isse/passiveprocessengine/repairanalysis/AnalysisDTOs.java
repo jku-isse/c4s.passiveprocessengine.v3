@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import at.jku.isse.designspace.core.events.PropertyUpdate;
+import at.jku.isse.designspace.core.operations.PropertyValueOperation;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -29,9 +29,9 @@ public class AnalysisDTOs {
 		private final ConsistencyRuleType posRule;
 		@EqualsAndHashCode.Include
 		private final ConsistencyRuleType negRule;
-		private List<PropertyUpdate> changes = new LinkedList<>();
+		private List<PropertyValueOperation> changes = new LinkedList<>();
 
-		public Conflict add(PropertyUpdate op) {
+		public Conflict add(PropertyValueOperation op) {
 			changes.add(op);
 			return this;
 		}
