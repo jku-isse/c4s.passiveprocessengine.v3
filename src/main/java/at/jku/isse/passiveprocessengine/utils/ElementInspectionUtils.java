@@ -1,26 +1,6 @@
 package at.jku.isse.passiveprocessengine.utils;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import at.jku.isse.designspace.rule.arl.repair.AbstractRepairAction;
-import at.jku.isse.designspace.rule.arl.repair.RepairNode;
-import at.jku.isse.designspace.rule.arl.repair.RestrictionNode;
-import at.jku.isse.designspace.rule.arl.repair.UnknownRepairValue;
-import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
-import at.jku.isse.designspace.rule.model.Rule;
-import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.core.Instance;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
-import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.instance.ProcessException;
-import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
-import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
 
 
 public class ElementInspectionUtils {

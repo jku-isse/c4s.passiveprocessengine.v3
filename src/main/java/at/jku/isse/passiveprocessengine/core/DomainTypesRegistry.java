@@ -1,7 +1,6 @@
 package at.jku.isse.passiveprocessengine.core;
 
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
-import lombok.NonNull;
 
 public interface DomainTypesRegistry {
 

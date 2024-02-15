@@ -15,7 +15,6 @@ import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
-import lombok.extern.slf4j.Slf4j;
 
 public class ProcessDefinition extends StepDefinition{
 

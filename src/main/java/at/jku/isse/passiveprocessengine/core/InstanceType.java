@@ -2,8 +2,6 @@ package at.jku.isse.passiveprocessengine.core;
 
 import java.util.Set;
 
-import lombok.Data;
-
 public interface InstanceType extends Instance {
 
 	// Defining a type

@@ -1,8 +1,8 @@
 package at.jku.isse.passiveprocessengine.instance.activeobjects;
 
+import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.core.Instance;
-import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeType;
 

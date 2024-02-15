@@ -1,33 +1,23 @@
 package at.jku.isse.passiveprocessengine.instance.legacy;
 
+import static at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer.stripForComparison;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import at.jku.isse.designspace.core.model.Instance;
+import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.designspace.rule.arl.expressions.Expression;
 import at.jku.isse.designspace.rule.arl.expressions.VariableExpression;
 import at.jku.isse.designspace.rule.checker.ArlEvaluator;
-import at.jku.isse.designspace.rule.checker.ArlRuleEvaluator;
-import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
-import at.jku.isse.designspace.rule.model.ConsistencyRule;
-import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
-import at.jku.isse.designspace.rule.service.RuleService;
-import at.jku.isse.designspace.core.model.Cardinality;
-import at.jku.isse.designspace.core.model.Instance;
-import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.core.model.PropertyType;
-import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
-import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
-
-import static at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer.stripForComparison;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest

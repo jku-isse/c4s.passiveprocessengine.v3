@@ -3,7 +3,6 @@ package at.jku.isse.passiveprocessengine.definition.activeobjects;
 import java.util.Comparator;
 
 import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;

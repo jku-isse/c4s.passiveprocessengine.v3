@@ -1,12 +1,5 @@
 package at.jku.isse.passiveprocessengine.utils;
 
-import java.util.Collection;
-import java.util.stream.Collectors;
-
-import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
-
-
 public class RuleUtils {
 
 	

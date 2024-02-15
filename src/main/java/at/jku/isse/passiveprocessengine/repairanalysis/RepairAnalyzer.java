@@ -1,7 +1,8 @@
 package at.jku.isse.passiveprocessengine.repairanalysis;
 
+import static org.assertj.core.api.Assertions.entry;
+
 import java.time.OffsetDateTime;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,15 +17,8 @@ import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import at.jku.isse.designspace.core.events.Operation;
 import at.jku.isse.designspace.core.events.PropertyUpdate;
-import at.jku.isse.designspace.core.events.PropertyUpdateAdd;
-import at.jku.isse.designspace.core.events.PropertyUpdateRemove;
-import at.jku.isse.designspace.core.events.PropertyUpdateSet;
-import at.jku.isse.designspace.core.model.Id;
 import at.jku.isse.designspace.core.model.Instance;
-import at.jku.isse.designspace.core.model.Workspace;
-import at.jku.isse.designspace.core.model.WorkspaceListener;
 import at.jku.isse.designspace.rule.arl.evaluator.RuleEvaluationIterationMetadata;
 import at.jku.isse.designspace.rule.arl.evaluator.RuleEvaluationListener;
 import at.jku.isse.designspace.rule.arl.exception.RepairException;
@@ -34,7 +28,6 @@ import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.arl.repair.RepairTreeFilter;
 import at.jku.isse.designspace.rule.arl.repair.SideEffect;
 import at.jku.isse.designspace.rule.arl.repair.SideEffect.Type;
-import at.jku.isse.designspace.rule.arl.repair.UnknownRepairValue;
 import at.jku.isse.designspace.rule.arl.repair.order.Event_DS;
 import at.jku.isse.designspace.rule.arl.repair.order.ProcessChangeEvents;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairNodeScorer;
@@ -50,14 +43,10 @@ import at.jku.isse.passiveprocessengine.designspace.DesignSpaceSchemaRegistry;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.monitoring.ITimeStampProvider;
 import at.jku.isse.passiveprocessengine.monitoring.RepairMatcher;
-import at.jku.isse.passiveprocessengine.monitoring.ReplayTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.UsageMonitor;
 import at.jku.isse.passiveprocessengine.repairanalysis.AnalysisDTOs.Conflict;
 import at.jku.isse.passiveprocessengine.repairanalysis.AnalysisDTOs.SerializableConflict;
 import at.jku.isse.passiveprocessengine.repairanalysis.AnalysisDTOs.StatsOutput;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

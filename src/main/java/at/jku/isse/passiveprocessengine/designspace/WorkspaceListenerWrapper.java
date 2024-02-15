@@ -4,19 +4,17 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import at.jku.isse.designspace.core.events.Operation;
+import at.jku.isse.designspace.core.events.PropertyUpdate;
+import at.jku.isse.designspace.core.events.PropertyUpdateAdd;
+import at.jku.isse.designspace.core.events.PropertyUpdateRemove;
+import at.jku.isse.designspace.core.foundation.WorkspaceListener;
 import at.jku.isse.designspace.core.model.Element;
-import at.jku.isse.designspace.core.model.Id;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.core.model.WorkspaceListener;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.passiveprocessengine.core.PropertyChange;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import lombok.NonNull;
-import at.jku.isse.designspace.core.events.PropertyUpdate;
-import at.jku.isse.designspace.core.events.PropertyUpdateAdd;
-import at.jku.isse.designspace.core.events.PropertyUpdateRemove;
 
 public class WorkspaceListenerWrapper implements WorkspaceListener{
 

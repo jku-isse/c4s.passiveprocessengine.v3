@@ -1,7 +1,5 @@
 package at.jku.isse.passiveprocessengine.instance.legacy;
 
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
-
 import java.util.Iterator;
 import java.util.Set;
 
@@ -20,7 +18,6 @@ import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairNodeScorer;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairStats;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairTreeSorter;
-import at.jku.isse.designspace.rule.arl.repair.order.SortOnRepairPercentage;
 import at.jku.isse.designspace.rule.arl.repair.order.SortOnRestriction;
 import at.jku.isse.designspace.rule.checker.ArlRuleEvaluator;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
@@ -35,8 +32,8 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefiniti
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
-import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts.JiraStates;
+import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;

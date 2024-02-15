@@ -1,24 +1,6 @@
 package at.jku.isse.passiveprocessengine;
 
-import static org.junit.Assert.assertTrue;
-
-import java.util.Collection;
-import java.util.stream.Collectors;
-
-import at.jku.isse.designspace.core.model.Instance;
-import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
-import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
-import at.jku.isse.designspace.rule.model.Rule;
-import at.jku.isse.designspace.rule.service.RuleService;
-import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
-import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
-import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 
 public class TestUtils {
 

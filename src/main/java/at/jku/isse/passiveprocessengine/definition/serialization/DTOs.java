@@ -2,13 +2,13 @@ package at.jku.isse.passiveprocessengine.definition.serialization;
 
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 

@@ -1,26 +1,28 @@
 package at.jku.isse;
 
-import at.jku.isse.designspace.core.events.Event;
-import at.jku.isse.designspace.endpoints.grpc.service.GrpcUtils;
-import at.jku.isse.designspace.rule.arl.repair.changepropagation.ParallelGraphGenerator;
-import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.util.Properties;
+import java.util.Set;
+
+import javax.annotation.PreDestroy;
+
+import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
-
-import at.jku.isse.designspace.core.model.*;
-import at.jku.isse.designspace.core.service.ServiceRegistry;
-import at.jku.isse.designspace.core.service.WorkspaceService;
-
-import org.springframework.boot.Banner;
 import org.springframework.core.env.Environment;
 
-
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.util.*;
-import javax.annotation.PreDestroy;
+import at.jku.isse.designspace.core.model.Folder;
+import at.jku.isse.designspace.core.model.Instance;
+import at.jku.isse.designspace.core.model.InstanceType;
+import at.jku.isse.designspace.core.model.User;
+import at.jku.isse.designspace.core.model.Workspace;
+import at.jku.isse.designspace.core.service.WorkspaceService;
+import at.jku.isse.designspace.endpoints.grpc.service.GrpcUtils;
+import at.jku.isse.designspace.rule.arl.repair.changepropagation.ParallelGraphGenerator;
+import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 
 @SpringBootApplication
 public class PPECoreDesignSpace  implements ApplicationListener<ApplicationReadyEvent> {

@@ -1,12 +1,10 @@
 package at.jku.isse.passiveprocessengine.wrappers;
 
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
 
 import java.util.List;
 import java.util.Set;
 
-import org.junit.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,18 +17,23 @@ import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.passiveprocessengine.ConfigurationBuilder;
 import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.core.InstanceType.CARDINALITIES;
 import at.jku.isse.passiveprocessengine.core.InstanceType.PropertyType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.MappingDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
+import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
+import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionType;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionScopeType;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
 import at.jku.isse.passiveprocessengine.designspace.DesignSpaceSchemaRegistry;
 import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
-import at.jku.isse.passiveprocessengine.definition.types.*;
-import at.jku.isse.passiveprocessengine.definition.activeobjects.*;
-import at.jku.isse.passiveprocessengine.definition.factories.*;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.*;
-import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest

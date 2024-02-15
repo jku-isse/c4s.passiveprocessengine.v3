@@ -1,10 +1,8 @@
 package at.jku.isse.passiveprocessengine.definition.factories;
 
 import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
-import at.jku.isse.passiveprocessengine.core.Instance;
-import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
+import at.jku.isse.passiveprocessengine.core.Instance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 
 public class StepDefinitionFactory extends DomainFactory {

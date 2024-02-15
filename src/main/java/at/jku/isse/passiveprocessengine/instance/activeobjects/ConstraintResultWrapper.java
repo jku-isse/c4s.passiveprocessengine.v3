@@ -1,8 +1,6 @@
 package at.jku.isse.passiveprocessengine.instance.activeobjects;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
-import java.util.UUID;
 
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.Instance;

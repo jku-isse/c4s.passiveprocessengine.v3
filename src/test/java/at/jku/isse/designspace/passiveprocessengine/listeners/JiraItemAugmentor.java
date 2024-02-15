@@ -1,16 +1,14 @@
 package at.jku.isse.designspace.passiveprocessengine.listeners;
 
 import java.util.Collection;
-import java.util.List;
+
 import at.jku.isse.designspace.core.events.ElementCreate;
-import at.jku.isse.designspace.core.events.Operation;
 import at.jku.isse.designspace.core.events.PropertyUpdateSet;
-import at.jku.isse.designspace.core.model.Cardinality;
+import at.jku.isse.designspace.core.foundation.WorkspaceListener;
 import at.jku.isse.designspace.core.model.Instance;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.ReservedNames;
 import at.jku.isse.designspace.core.model.Workspace;
-import at.jku.isse.designspace.core.model.WorkspaceListener;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 

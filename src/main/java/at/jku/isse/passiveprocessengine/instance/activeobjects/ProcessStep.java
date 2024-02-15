@@ -6,23 +6,18 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.github.oxo42.stateless4j.StateMachine;
 
-import at.jku.isse.designspace.core.events.PropertyUpdate;
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.Instance;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
 import at.jku.isse.passiveprocessengine.core.PropertyChange;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.factories.ProcessDefinitionFactory;
-import at.jku.isse.passiveprocessengine.definition.factories.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
@@ -36,9 +31,8 @@ import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
-import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeType;
-import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
