@@ -2,7 +2,7 @@ package at.jku.isse.passiveprocessengine.core;
 
 public interface RuleDefinitionFactory {
 
-	public RuleDefinition createInstance(InstanceType type, String ruleName, String ruleExpression);
+	public RuleDefinition createInstance(PPEInstanceType type, String ruleName, String ruleExpression);
 	
-	public void setPropertyRepairable(InstanceType type, String property, boolean isRepairable);
+	public void setPropertyRepairable(PPEInstanceType type, String property, boolean isRepairable);
 }

@@ -3,7 +3,7 @@ package at.jku.isse.passiveprocessengine.definition.types;
 import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.MappingDefinition;
@@ -14,16 +14,16 @@ public class MappingDefinitionType  implements TypeProvider {
 	public static enum CoreProperties {fromStepType, fromParameter, toStepType, toParameter, flowDir};
 	private SchemaRegistry schemaRegistry;
 	public static final String typeId = MappingDefinitionType.class.getSimpleName();
-	private final InstanceType type;
+	private final PPEInstanceType type;
 	
 	public MappingDefinitionType(SchemaRegistry schemaRegistry) {
 		this.schemaRegistry = schemaRegistry;
-		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerType(MappingDefinition.class, thisType.get());
 			this.type = thisType.get();
 		} else {
-			InstanceType type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getType(ProcessDefinitionScopedElement.class));
+			PPEInstanceType type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getType(ProcessDefinitionScopedElement.class));
 			schemaRegistry.registerType(MappingDefinition.class, type);
 			this.type = type;
 		}

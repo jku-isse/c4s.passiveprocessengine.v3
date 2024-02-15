@@ -5,13 +5,13 @@ import java.util.Set;
 
 public interface InstanceRepository {
 
-	public Instance createInstance(String id, InstanceType type) ;
+	public PPEInstance createInstance(String id, PPEInstanceType type) ;
 	
 	public void concludeTransaction() ;
 	
-	public Optional<Instance> findInstanceyById(String id) ;
+	public Optional<PPEInstance> findInstanceyById(String id) ;
 	
-	public Set<Instance> getAllInstancesOfTypeOrSubtype(InstanceType type) ;
+	public Set<PPEInstance> getAllInstancesOfTypeOrSubtype(PPEInstanceType type) ;
 	
 //	/**
 //	 * @return SchemaRegistry responsible for managing all data types available in this repository

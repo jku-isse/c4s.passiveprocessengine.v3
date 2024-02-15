@@ -4,9 +4,9 @@ import java.util.Optional;
 import java.util.Set;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 
 public class TestArtifacts {
@@ -23,12 +23,12 @@ public class TestArtifacts {
 		this.schemaRegistry = schemaRegistry;		
 	}
 	
-	public InstanceType getJiraInstanceType() {
-		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(DEMOISSUETYPE);
+	public PPEInstanceType getJiraInstanceType() {
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(DEMOISSUETYPE);
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
-				InstanceType typeJira = schemaRegistry.createNewInstanceType(DEMOISSUETYPE);				
+				PPEInstanceType typeJira = schemaRegistry.createNewInstanceType(DEMOISSUETYPE);				
 				typeJira.createSinglePropertyType(CoreProperties.state.toString(), BuildInType.STRING);
 				typeJira.createSetPropertyType(CoreProperties.requirements.toString(), typeJira);
 				typeJira.createSetPropertyType(CoreProperties.bugs.toString(),  typeJira);
@@ -41,69 +41,69 @@ public class TestArtifacts {
 			}
 	}
 
-	public Instance getJiraInstance(String name, Instance... reqs) {
-		Instance jira = repository.createInstance(name, getJiraInstanceType());
+	public PPEInstance getJiraInstance(String name, PPEInstance... reqs) {
+		PPEInstance jira = repository.createInstance(name, getJiraInstanceType());
 		jira.setSingleProperty(CoreProperties.html_url.toString(),"http://localhost:7171/home");
 		setStateToJiraInstance(jira, JiraStates.Open);
-		for(Instance inst : reqs) {
+		for(PPEInstance inst : reqs) {
 			jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).add(inst);
 		}
 		return jira;
 	}
 
-	public void addReqsToJira(Instance jira, Instance... reqs) {
-		for(Instance inst : reqs) {
+	public void addReqsToJira(PPEInstance jira, PPEInstance... reqs) {
+		for(PPEInstance inst : reqs) {
 			jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).add(inst);
 		}
 	}
 
-	public void addJiraToRequirements(Instance issue, Instance reqToAdd) {
+	public void addJiraToRequirements(PPEInstance issue, PPEInstance reqToAdd) {
 		issue.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).add(reqToAdd);
 	}
 	
-	public void removeJiraFromReqs(Instance jira, Instance reqToRemove) {
+	public void removeJiraFromReqs(PPEInstance jira, PPEInstance reqToRemove) {
 		jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).remove(reqToRemove);
 	}
 
-	public void setStateToJiraInstance(Instance inst, JiraStates state) {
+	public void setStateToJiraInstance(PPEInstance inst, JiraStates state) {
 		inst.setSingleProperty(CoreProperties.state.toString(), state.toString());
 	}
 
-	public void addJiraToJiraBug(Instance jira, Instance bugToAdd) {
+	public void addJiraToJiraBug(PPEInstance jira, PPEInstance bugToAdd) {
 		jira.getTypedProperty(TestArtifacts.CoreProperties.bugs.toString(), Set.class).add(bugToAdd);
 	}
 
-	public void removeJiraFromJiraBug(Instance jira, Instance bugToRemove) {
+	public void removeJiraFromJiraBug(PPEInstance jira, PPEInstance bugToRemove) {
 		jira.getTypedProperty(TestArtifacts.CoreProperties.bugs.toString(), Set.class).remove(bugToRemove);
 	}
 
-	public void addParentToJira(Instance inst, Instance parent) {
+	public void addParentToJira(PPEInstance inst, PPEInstance parent) {
 		inst.setSingleProperty(CoreProperties.parent.toString(),parent);
 	}
 
-	public void addUpstream(Instance inst, Instance toAdd) {
+	public void addUpstream(PPEInstance inst, PPEInstance toAdd) {
 		inst.getTypedProperty(TestArtifacts.CoreProperties.upstream.toString(), Set.class).add(toAdd);
 	}
 
-	public void addDownstream(Instance inst, Instance toAdd) {
+	public void addDownstream(PPEInstance inst, PPEInstance toAdd) {
 		inst.getTypedProperty(TestArtifacts.CoreProperties.downstream.toString(), Set.class).add(toAdd);
 	}
 
-	public void removeUpstream(Instance inst, Instance toRemove) {
+	public void removeUpstream(PPEInstance inst, PPEInstance toRemove) {
 		inst.getTypedProperty(TestArtifacts.CoreProperties.upstream.toString(), Set.class).remove(toRemove);
 	}
 
-	public void removeDownstream(Instance inst, Instance toRemove) {
+	public void removeDownstream(PPEInstance inst, PPEInstance toRemove) {
 		inst.getTypedProperty(TestArtifacts.CoreProperties.downstream.toString(), Set.class).remove(toRemove);
 	}
 
-	public static JiraStates getState(Instance inst) {
+	public static JiraStates getState(PPEInstance inst) {
 		String state= (String) inst.getTypedProperty(CoreProperties.state.toString(), String.class, JiraStates.Open.toString());
 		return JiraStates.valueOf(state);
 	}
 
-	public InstanceType getDemoGitIssueType() {
-		InstanceType typeGitDemo = schemaRegistry.createNewInstanceType("git_issue");
+	public PPEInstanceType getDemoGitIssueType() {
+		PPEInstanceType typeGitDemo = schemaRegistry.createNewInstanceType("git_issue");
 		typeGitDemo.createSetPropertyType("linkedIssues", typeGitDemo);
 		typeGitDemo.createSetPropertyType("labels", BuildInType.STRING);
 		typeGitDemo.createSinglePropertyType("state", BuildInType.STRING);
@@ -111,11 +111,11 @@ public class TestArtifacts {
 		return typeGitDemo;
 	}
 
-	public InstanceType getTestAzureIssueType() {
-		InstanceType typeAzureTest = schemaRegistry.createNewInstanceType("azure_workitem");
-		InstanceType typeAzureStateTest = schemaRegistry.createNewInstanceType("azure_workitemstate");
-		InstanceType typeAzureTypeTest = schemaRegistry.createNewInstanceType("azure_workitemtype");
-		InstanceType typeAzureLinkTypeTest = schemaRegistry.createNewInstanceType("workitem_link");
+	public PPEInstanceType getTestAzureIssueType() {
+		PPEInstanceType typeAzureTest = schemaRegistry.createNewInstanceType("azure_workitem");
+		PPEInstanceType typeAzureStateTest = schemaRegistry.createNewInstanceType("azure_workitemstate");
+		PPEInstanceType typeAzureTypeTest = schemaRegistry.createNewInstanceType("azure_workitemtype");
+		PPEInstanceType typeAzureLinkTypeTest = schemaRegistry.createNewInstanceType("workitem_link");
 
 		typeAzureTest.createSetPropertyType("relatedItems", typeAzureLinkTypeTest);
 		typeAzureTest.createSinglePropertyType("state", typeAzureStateTest);

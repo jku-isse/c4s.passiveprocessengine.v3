@@ -4,13 +4,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import at.jku.isse.designspace.core.model.InstanceType;
+import at.jku.isse.designspace.core.model.PropertyType;
 import at.jku.isse.designspace.core.model.SingleProperty;
 import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.Instance;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import lombok.NonNull;
 
-public class DesignspaceInstanceWrapper implements Instance {
+public class DesignspaceInstanceWrapper implements PPEInstance {
 
 	final at.jku.isse.designspace.core.model.Instance delegate;
 	final DesignSpaceSchemaRegistry dsSchemaRegistry;
@@ -26,22 +28,22 @@ public class DesignspaceInstanceWrapper implements Instance {
 	
 	@Override
 	public String getId() {
-		return delegate.id().toString();
+		return ""+delegate.getId();
 	}
 
 	@Override
 	public String getName() {
-		return delegate.name();
+		return delegate.getName();
 	}
 
 	@Override
-	public InstanceType getInstanceType() {
+	public PPEInstanceType getInstanceType() {
 		return dsSchemaRegistry.getWrappedType(delegate.getInstanceType());
 	}
 	
 	@Override
-	public void setInstanceType(InstanceType childType) {
-		this.delegate.setInstanceType(dsSchemaRegistry.mapProcessDomainInstanceTypeToDesignspaceInstanceType(childType));
+	public void setInstanceType(PPEInstanceType childType) {
+		this.delegate.set(InstanceType.INSTANCE_OF, dsSchemaRegistry.mapProcessDomainInstanceTypeToDesignspaceInstanceType(childType));
 	}
 
 	@Override
@@ -59,13 +61,13 @@ public class DesignspaceInstanceWrapper implements Instance {
 		if (value instanceof DesignspaceInstanceWrapper) {
 			value = ((DesignspaceInstanceWrapper) value).getDelegate();
 		}
-		delegate.getPropertyAsSingle(property).set(value);
+		delegate.set(resolveProperty(property), value);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getTypedProperty(@NonNull String property, @NonNull Class<T> clazz) {
-		Object prop = delegate.getProperty(property);
+		Object prop = delegate.getProperty(resolveProperty(property));
 		if (prop == null) // no such property
 			return null;
 		if (prop instanceof SingleProperty) {			
@@ -105,7 +107,11 @@ public class DesignspaceInstanceWrapper implements Instance {
 			return value; 
 	}
 
-	public static boolean isAtomicType(InstanceType type) {
+	private PropertyType resolveProperty(String propertyName) {
+		return this.delegate.getInstanceType().getPropertyType(propertyName);
+	}
+	
+	public static boolean isAtomicType(PPEInstanceType type) {
 		return type.equals(BuildInType.BOOLEAN)
 				|| type.equals(BuildInType.STRING)
 				|| type.equals(BuildInType.FLOAT)

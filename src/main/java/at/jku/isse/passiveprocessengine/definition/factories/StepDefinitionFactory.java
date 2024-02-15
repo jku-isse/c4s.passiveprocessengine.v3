@@ -2,7 +2,7 @@ package at.jku.isse.passiveprocessengine.definition.factories;
 
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
-import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 
 public class StepDefinitionFactory extends DomainFactory {
@@ -12,7 +12,7 @@ public class StepDefinitionFactory extends DomainFactory {
 	}
 	
 	public StepDefinition createInstance(String stepId) {
-		Instance instance = getContext().getInstanceRepository().createInstance(stepId, getContext().getSchemaRegistry().getType(StepDefinition.class));
+		PPEInstance instance = getContext().getInstanceRepository().createInstance(stepId, getContext().getSchemaRegistry().getType(StepDefinition.class));
 		return getContext().getWrappedInstance(StepDefinition.class, instance);
 	}
 }

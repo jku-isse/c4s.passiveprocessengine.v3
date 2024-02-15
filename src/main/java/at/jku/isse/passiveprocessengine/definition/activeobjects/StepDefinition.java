@@ -10,8 +10,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.core.Instance;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.definition.IStepDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
@@ -26,21 +26,21 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 	public static final String NOOPSTEP_PREFIX = "NoOpStep";
 
-	public StepDefinition(Instance instance, Context context) {
+	public StepDefinition(PPEInstance instance, Context context) {
 		super(instance, context);
 	}
 
 	@Override
-	public Map<String, InstanceType> getExpectedInput() {
+	public Map<String, PPEInstanceType> getExpectedInput() {
 		@SuppressWarnings("unchecked")
-		Map<String, InstanceType> inMap = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.expectedInput.toString(), Map.class);
+		Map<String, PPEInstanceType> inMap = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.expectedInput.toString(), Map.class);
 		if (inMap != null) {
 			return inMap;
 		} else return Collections.emptyMap();
 	}
 
 	@SuppressWarnings("unchecked")
-	public void addExpectedInput(String paramName, InstanceType type) {
+	public void addExpectedInput(String paramName, PPEInstanceType type) {
 		assert(paramName != null);
 		assert(type != null);
 		instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.expectedInput.toString(), Map.class).put(paramName, type);
@@ -48,7 +48,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Map<String, InstanceType> getExpectedOutput() {
+	public Map<String, PPEInstanceType> getExpectedOutput() {
 		Map outMap = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.expectedOutput.toString(), Map.class);
 		if (outMap != null) {
 			return outMap;
@@ -56,7 +56,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	}
 
 	@SuppressWarnings("unchecked")
-	public void addExpectedOutput(String paramName, InstanceType type) {
+	public void addExpectedOutput(String paramName, PPEInstanceType type) {
 		assert(paramName != null);
 		assert(type != null);
 		instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.expectedOutput.toString(), Map.class).put(paramName, type);
@@ -84,7 +84,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		}
 		if (propSet != null ) {
 			return propSet.stream()
-					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (PPEInstance) inst))
 					.filter(Objects::nonNull)
 					.map(spec -> ((ConstraintSpec) spec).getConstraintSpec())
 					.findAny();
@@ -97,7 +97,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		Set<?> qaSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.preconditions.toString(), Set.class);
 		if (qaSet != null) {
 			return qaSet.stream()
-					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (PPEInstance) inst))
 					.map(obj -> (ConstraintSpec)obj)
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
@@ -108,7 +108,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		Set<?> qaSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.postconditions.toString(), Set.class);
 		if (qaSet != null) {
 			return qaSet.stream()
-					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (PPEInstance) inst))
 					.map(obj -> (ConstraintSpec)obj)
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
@@ -119,7 +119,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		Set<?> qaSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.cancelconditions.toString(), Set.class);
 		if (qaSet != null) {
 			return qaSet.stream()
-					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (PPEInstance) inst))
 					.map(obj -> (ConstraintSpec)obj)
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
@@ -130,7 +130,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		Set<?> qaSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.activationconditions.toString(), Set.class);
 		if (qaSet != null) {
 			return qaSet.stream()
-					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (PPEInstance) inst))
 					.map(obj -> (ConstraintSpec)obj)
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
@@ -185,7 +185,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		Set<?> qaSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.qaConstraints.toString(), Set.class);
 		if (qaSet != null ) {
 			return  qaSet.stream()
-					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (Instance) inst))
+					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (PPEInstance) inst))
 					.map(obj -> (ConstraintSpec)obj)
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
@@ -210,7 +210,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 	public void setOutDND(DecisionNodeDefinition outDND) {
 		// we assume for now, there is no need for rewiring, and we throw an exception if this should be the case
-		if (instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.outDND.toString(), Instance.class) != null) {
+		if (instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.outDND.toString(), PPEInstance.class) != null) {
 			String msg = String.format("Rewiring in step %s of decision nodes not supported", this.getName());
 			log.error(msg);
 			throw new RuntimeException(msg);
@@ -242,8 +242,8 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 	public void setInDND(DecisionNodeDefinition inDND) {
 		// we assume for now, there is no need for rewiring, and we throw an exception if this should be the case
-		if (instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.inDND.toString(), Instance.class) != null) {
-			DecisionNodeDefinition priorDND = context.getWrappedInstance(DecisionNodeDefinition.class, instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.inDND.toString(), Instance.class));			
+		if (instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.inDND.toString(), PPEInstance.class) != null) {
+			DecisionNodeDefinition priorDND = context.getWrappedInstance(DecisionNodeDefinition.class, instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.inDND.toString(), PPEInstance.class));			
 			String msg = String.format("InDND already set to %s, Rewiring inDND of step %s to dnd %s not supported", priorDND.getName(), this.getName(), inDND.getName());
 			log.error(msg);
 			throw new RuntimeException(msg);
@@ -314,9 +314,9 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		return (String) instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.description.toString(), String.class, "");
 	}
 
-	public List<ProcessDefinitionError> checkConstraintValidity(InstanceType processInstType) {
+	public List<ProcessDefinitionError> checkConstraintValidity(PPEInstanceType processInstType) {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
-		InstanceType instType = this.context.getSchemaRegistry().getTypeByName(SpecificProcessStepType.getProcessStepName(this));
+		PPEInstanceType instType = this.context.getSchemaRegistry().getTypeByName(SpecificProcessStepType.getProcessStepName(this));
 		
 		//InstanceType instType = this.instance.getInstanceType(); //ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstType);
 
@@ -359,7 +359,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		return errors;
 	}
 
-	private void checkConstraintExists(InstanceType instType, ConstraintSpec spec, Conditions condition, List<ProcessDefinitionError> errors) {
+	private void checkConstraintExists(PPEInstanceType instType, ConstraintSpec spec, Conditions condition, List<ProcessDefinitionError> errors) {
 		String name = ProcessDefinitionFactory.getConstraintName(condition, spec.getOrderIndex(), instType);
 		RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
 		if (crt == null) {
@@ -395,7 +395,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		return errors;
 	}
 
-	private void deleteRuleIfExists(InstanceType instType, ConstraintSpec spec, Conditions condition ) {
+	private void deleteRuleIfExists(PPEInstanceType instType, ConstraintSpec spec, Conditions condition ) {
 		String name = ProcessDefinitionFactory.getConstraintName(condition, spec.getOrderIndex(), instType);
 		RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
 		if (crt != null) 
@@ -405,7 +405,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	@Override
 	public void deleteCascading() {
 
-		InstanceType instType = this.instance.getInstanceType();//ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, null); // for deletion its ok to not provide the process instance type
+		PPEInstanceType instType = this.instance.getInstanceType();//ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, null); // for deletion its ok to not provide the process instance type
 
 		this.getActivationconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.ACTIVATION));
 		this.getCancelconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.CANCELATION));

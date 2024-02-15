@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.core.RuleDefinitionFactory;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
@@ -26,12 +26,12 @@ public class RuleAugmentation {
 	private static final String INSTANCETYPE_PROPERTY_METADATA = "@propertyMetadata";
 	
 	private StepDefinition stepDef;
-	private InstanceType stepType;
+	private PPEInstanceType stepType;
 	
 	private RuleDefinitionFactory ruleFactory;
 	private RuleServiceWrapper ruleService;
 
-	public RuleAugmentation(StepDefinition sd, InstanceType stepType, RuleDefinitionFactory ruleFactory, RuleServiceWrapper ruleService) {		
+	public RuleAugmentation(StepDefinition sd, PPEInstanceType stepType, RuleDefinitionFactory ruleFactory, RuleServiceWrapper ruleService) {		
 		this.stepDef = sd;
 		this.stepType = stepType;
 		this.ruleFactory = ruleFactory;

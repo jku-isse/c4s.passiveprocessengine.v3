@@ -3,7 +3,7 @@ package at.jku.isse.passiveprocessengine.instance.activeobjects;
 import java.time.ZonedDateTime;
 
 import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
@@ -15,7 +15,7 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 
 	private volatile ZonedDateTime lastChanged;
 
-	public ConstraintResultWrapper(Instance instance, Context context) {
+	public ConstraintResultWrapper(PPEInstance instance, Context context) {
 		super(instance, context);
 
 	}
@@ -63,7 +63,7 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 	}
 
 	public ConstraintSpec getConstraintSpec() {
-		Instance qainst = instance.getTypedProperty(ConstraintWrapperType.CoreProperties.qaSpec.toString(), Instance.class);
+		PPEInstance qainst = instance.getTypedProperty(ConstraintWrapperType.CoreProperties.qaSpec.toString(), PPEInstance.class);
 		return context.getWrappedInstance(ConstraintSpec.class, qainst);
 	}
 
@@ -73,7 +73,7 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 	}
 
 	public ProcessStep getParentStep() {
-		Instance step = instance.getTypedProperty(ConstraintWrapperType.CoreProperties.parentStep.toString(), Instance.class);
+		PPEInstance step = instance.getTypedProperty(ConstraintWrapperType.CoreProperties.parentStep.toString(), PPEInstance.class);
 		if (step != null)
 			return context.getWrappedInstance(ProcessStep.class, step);
 		else

@@ -9,8 +9,8 @@ import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
-import at.jku.isse.passiveprocessengine.core.Instance;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
@@ -18,7 +18,7 @@ import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceTy
 
 public class ProcessDefinition extends StepDefinition{
 
-	public ProcessDefinition(Instance instance, Context context) {
+	public ProcessDefinition(PPEInstance instance, Context context) {
 		super(instance, context);
 	}
 
@@ -26,7 +26,7 @@ public class ProcessDefinition extends StepDefinition{
 		List<?> stepList = instance.getTypedProperty(ProcessDefinitionType.CoreProperties.stepDefinitions.toString(), List.class);
 		if (stepList != null) {
 			return stepList.stream()
-					.map(inst -> context.getWrappedInstance(getMostSpecializedClass((Instance)inst), (Instance) inst))
+					.map(inst -> context.getWrappedInstance(getMostSpecializedClass((PPEInstance)inst), (PPEInstance) inst))
 					.filter(StepDefinition.class::isInstance)
 					.map(StepDefinition.class::cast)
 					.collect(Collectors.toList());
@@ -43,7 +43,7 @@ public class ProcessDefinition extends StepDefinition{
 		Set<?> dnSet = instance.getTypedProperty(ProcessDefinitionType.CoreProperties.decisionNodeDefinitions.toString(), Set.class);
 		if (dnSet != null) {
 			return dnSet.stream()
-					.map(inst -> context.getWrappedInstance(DecisionNodeDefinition.class, (Instance) inst))
+					.map(inst -> context.getWrappedInstance(DecisionNodeDefinition.class, (PPEInstance) inst))
 					.map(obj ->(DecisionNodeDefinition)obj)
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
@@ -106,7 +106,7 @@ public class ProcessDefinition extends StepDefinition{
 	public void deleteCascading() {
 		getDecisionNodeDefinitions().forEach(dnd -> dnd.deleteCascading());
 		getStepDefinitions().forEach(sd -> sd.deleteCascading());
-		InstanceType thisType = this.getInstance().getInstanceType(); //.getOrCreateDesignSpaceInstanceType(ws, this);
+		PPEInstanceType thisType = this.getInstance().getInstanceType(); //.getOrCreateDesignSpaceInstanceType(ws, this);
 		this.getPrematureTriggers().entrySet().stream()
 		.forEach(entry -> {
 			String name = SpecificProcessInstanceType.generatePrematureRuleName(entry.getKey(), this);
@@ -118,7 +118,7 @@ public class ProcessDefinition extends StepDefinition{
 		this.getExpectedInput().entrySet().stream()
 		.filter(entry -> entry.getValue().isOfTypeOrAnySubtype(context.getSchemaRegistry().getTypeByName(ProcessConfigBaseElementType.typeId)))
 		.forEach(configEntry -> {
-			InstanceType procConfig = configEntry.getValue().getInstanceType(); // context.getConfigFactory().getOrCreateProcessSpecificSubtype(configEntry.getKey(), this);
+			PPEInstanceType procConfig = configEntry.getValue().getInstanceType(); // context.getConfigFactory().getOrCreateProcessSpecificSubtype(configEntry.getKey(), this);
 			procConfig.markAsDeleted();
 		});
 		super.deleteCascading();
@@ -128,7 +128,7 @@ public class ProcessDefinition extends StepDefinition{
 	
 	
 
-	protected static Class<? extends InstanceWrapper> getMostSpecializedClass(Instance inst) {
+	protected static Class<? extends InstanceWrapper> getMostSpecializedClass(PPEInstance inst) {
 		// we have the problem, that the WrapperCache will only return a type we ask for (which might be a general type) rather than the most specialized one, hence we need to obtain that type here
 		// we assume that this is used only in here within, and thus that inst is only ProcessDefinition or StepDefinition
 		if (inst.getInstanceType().getId().startsWith(ProcessDefinitionType.typeId)) // its a process

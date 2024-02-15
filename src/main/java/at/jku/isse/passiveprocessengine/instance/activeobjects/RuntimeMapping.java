@@ -1,6 +1,6 @@
 package at.jku.isse.passiveprocessengine.instance.activeobjects;
 
-import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
 
 public class RuntimeMapping {
 
@@ -14,13 +14,13 @@ public class RuntimeMapping {
 
 	ProcessStep fromStep;
 	String fromParam;
-	Instance art;
+	PPEInstance art;
 	ProcessStep toStep;
 	String toParam;
 	FlowDir dir = FlowDir.outToIn;
 	//Status status = Status.TO_BE_CHECKED;
 
-	public RuntimeMapping(ProcessStep fromStep, String fromParam, Instance art, ProcessStep toStep, String toParam) {
+	public RuntimeMapping(ProcessStep fromStep, String fromParam, PPEInstance art, ProcessStep toStep, String toParam) {
 		super();
 		this.fromStep = fromStep;
 		this.fromParam = fromParam;
@@ -29,7 +29,7 @@ public class RuntimeMapping {
 		this.toParam = toParam;
 	}
 
-	public RuntimeMapping(ProcessStep fromStep, String fromParam, Instance art, ProcessStep toStep, String toParam, FlowDir direction) {
+	public RuntimeMapping(ProcessStep fromStep, String fromParam, PPEInstance art, ProcessStep toStep, String toParam, FlowDir direction) {
 		super();
 		this.fromStep = fromStep;
 		this.fromParam = fromParam;
@@ -57,11 +57,11 @@ public class RuntimeMapping {
 		this.fromParam = fromParam;
 	}
 
-	public Instance getArtifact() {
+	public PPEInstance getArtifact() {
 		return art;
 	}
 
-	public void setArtifact(Instance art) {
+	public void setArtifact(PPEInstance art) {
 		this.art = art;
 	}
 
@@ -97,7 +97,7 @@ public class RuntimeMapping {
 //		this.status = status;
 //	}
 
-	public RuntimeMapping fluentSetArtifact(Instance art) {
+	public RuntimeMapping fluentSetArtifact(PPEInstance art) {
 		this.setArtifact(art);
 		return this;
 	}

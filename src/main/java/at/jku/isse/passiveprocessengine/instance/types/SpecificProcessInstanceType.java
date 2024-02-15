@@ -4,8 +4,8 @@ import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.Instance;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
@@ -31,7 +31,7 @@ public class SpecificProcessInstanceType extends TypeProviderBase {
 	@Override
 	public void produceTypeProperties() {
 		String processName = getProcessName(procDef);
-		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(processName);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(processName);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerTypeByName(thisType.get());	
 			this.type = thisType.get();
@@ -48,7 +48,7 @@ public class SpecificProcessInstanceType extends TypeProviderBase {
 
 	}			
 			
-	public static Class<? extends InstanceWrapper> getMostSpecializedClass(Instance inst) {
+	public static Class<? extends InstanceWrapper> getMostSpecializedClass(PPEInstance inst) {
 		// we have the problem, that the WrapperCache will only return a type we ask for (which might be a general type) rather than the most specialized one, hence we need to obtain that type here
 		// we assume that this is used only in here within, and thus that inst is only ProcessDefinition or StepDefinition
 		if (inst.getInstanceType().getName().startsWith(typeId.toString())) // its a process

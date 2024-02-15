@@ -3,7 +3,7 @@ package at.jku.isse.passiveprocessengine.demo;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Constraint;
@@ -21,7 +21,7 @@ public class TestDTOProcesses {
 	public static final String DND_SUB_END = "dndSubEnd";
 	public static final String DND_SUB_START = "dndSubStart";
 	final TestArtifacts artifactFactory;
-	final InstanceType typeJira;
+	final PPEInstanceType typeJira;
 	final String jiraFQN;
 	
 	private static final AtomicInteger conditionCounter = new AtomicInteger(0);

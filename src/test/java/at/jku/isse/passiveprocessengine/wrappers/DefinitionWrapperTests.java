@@ -17,9 +17,9 @@ import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.passiveprocessengine.ConfigurationBuilder;
 import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
-import at.jku.isse.passiveprocessengine.core.InstanceType.CARDINALITIES;
-import at.jku.isse.passiveprocessengine.core.InstanceType.PropertyType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType.CARDINALITIES;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType.PPEPropertyType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
@@ -63,9 +63,9 @@ public class DefinitionWrapperTests {
 	
 	@Test
 	void testSuperType() {
-		InstanceType scopeType = schemaReg.getType(ProcessDefinitionScopedElement.class);
-		InstanceType specType = schemaReg.getType(ConstraintSpec.class);
-		Set<InstanceType> subtypes = scopeType.getAllSubtypesRecursively();
+		PPEInstanceType scopeType = schemaReg.getType(ProcessDefinitionScopedElement.class);
+		PPEInstanceType specType = schemaReg.getType(ConstraintSpec.class);
+		Set<PPEInstanceType> subtypes = scopeType.getAllSubtypesRecursively();
 		assert(subtypes != null);
 		assert(subtypes.contains(specType));
 		assert(specType.isOfTypeOrAnySubtype(scopeType));
@@ -88,18 +88,18 @@ public class DefinitionWrapperTests {
 	
 	@Test
 	void testSingleTypePropertyGeneration() {				
-		InstanceType type = schemaReg.getType(ConstraintSpec.class);
-		PropertyType propType = type.getPropertyType(ConstraintSpecType.CoreProperties.isOverridable.toString());
+		PPEInstanceType type = schemaReg.getType(ConstraintSpec.class);
+		PPEPropertyType propType = type.getPropertyType(ConstraintSpecType.CoreProperties.isOverridable.toString());
 		assert(propType != null);
 		assert(propType.getCardinality().equals(CARDINALITIES.SINGLE));
 		assert(propType.getInstanceType().equals(BuildInType.BOOLEAN));
 		
-		PropertyType propType2 = type.getPropertyType(ConstraintSpecType.CoreProperties.humanReadableDescription.toString());
+		PPEPropertyType propType2 = type.getPropertyType(ConstraintSpecType.CoreProperties.humanReadableDescription.toString());
 		assert(propType2 != null);
 		assert(propType2.getCardinality().equals(CARDINALITIES.SINGLE));
 		assert(propType2.getInstanceType().equals(BuildInType.STRING));
 		
-		PropertyType propType3 = type.getPropertyType(ConstraintSpecType.CoreProperties.ruleType.toString());
+		PPEPropertyType propType3 = type.getPropertyType(ConstraintSpecType.CoreProperties.ruleType.toString());
 		assert(propType3 != null);
 		assert(propType3.getCardinality().equals(CARDINALITIES.SINGLE));
 		assert(propType3.getInstanceType().equals(BuildInType.RULE));	
@@ -107,9 +107,9 @@ public class DefinitionWrapperTests {
 	
 	@Test
 	void testDataMappingTypePropertyGeneration() {
-		InstanceType type = schemaReg.getType(MappingDefinition.class);
+		PPEInstanceType type = schemaReg.getType(MappingDefinition.class);
 		List.of(MappingDefinitionType.CoreProperties.values()).stream().forEach(prop -> {
-			PropertyType propType = type.getPropertyType(prop.toString());
+			PPEPropertyType propType = type.getPropertyType(prop.toString());
 			assert(propType != null);
 			assert(propType.getCardinality().equals(CARDINALITIES.SINGLE));
 			assert(propType.getInstanceType().equals(BuildInType.STRING));
@@ -118,42 +118,42 @@ public class DefinitionWrapperTests {
 	
 	@Test
 	void testNonRegisteredType() {
-		InstanceType nonExistingType = schemaReg.getTypeByName("nonono");
+		PPEInstanceType nonExistingType = schemaReg.getTypeByName("nonono");
 		assertNull(nonExistingType);
 	}
 	
 	@Test
 	void testMapListSetPropertyGeneration() {
 			
-		InstanceType type = schemaReg.getType(DecisionNodeDefinition.class);
-		InstanceType mappingType = schemaReg.getType(MappingDefinition.class);
-		InstanceType dndType = schemaReg.getType(DecisionNodeDefinition.class);
-		InstanceType stepType = schemaReg.getType(StepDefinition.class);
-		InstanceType processType = schemaReg.getType(ProcessDefinition.class);
+		PPEInstanceType type = schemaReg.getType(DecisionNodeDefinition.class);
+		PPEInstanceType mappingType = schemaReg.getType(MappingDefinition.class);
+		PPEInstanceType dndType = schemaReg.getType(DecisionNodeDefinition.class);
+		PPEInstanceType stepType = schemaReg.getType(StepDefinition.class);
+		PPEInstanceType processType = schemaReg.getType(ProcessDefinition.class);
 		
-		PropertyType propType = type.getPropertyType(DecisionNodeDefinitionType.CoreProperties.dataMappingDefinitions.toString());
+		PPEPropertyType propType = type.getPropertyType(DecisionNodeDefinitionType.CoreProperties.dataMappingDefinitions.toString());
 		assert(propType != null);
 		assert(propType.getCardinality().equals(CARDINALITIES.SET));
 		assert(propType.getInstanceType().equals(mappingType));
 				
-		PropertyType inType = type.getPropertyType(DecisionNodeDefinitionType.CoreProperties.inSteps.toString());
+		PPEPropertyType inType = type.getPropertyType(DecisionNodeDefinitionType.CoreProperties.inSteps.toString());
 		assert(inType != null);
 		assert(inType.getCardinality().equals(CARDINALITIES.SET));
 		assert(inType.getInstanceType().equals(stepType));
 		
-		PropertyType procType = type.getPropertyType(ProcessDefinitionScopeType.CoreProperties.process.toString());
+		PPEPropertyType procType = type.getPropertyType(ProcessDefinitionScopeType.CoreProperties.process.toString());
 		assert(procType != null);
 		assert(procType.getCardinality().equals(CARDINALITIES.SINGLE));
-		InstanceType procInstanceType = procType.getInstanceType(); 
+		PPEInstanceType procInstanceType = procType.getInstanceType(); 
 		assert(procInstanceType.equals(processType));
 		
 		
-		PropertyType dndPropType = processType.getPropertyType(ProcessDefinitionType.CoreProperties.stepDefinitions.toString());
+		PPEPropertyType dndPropType = processType.getPropertyType(ProcessDefinitionType.CoreProperties.stepDefinitions.toString());
 		assert(dndPropType != null);
 		assert(dndPropType.getCardinality().equals(CARDINALITIES.LIST));
 		assert(dndPropType.getInstanceType().equals(stepType));
 		
-		PropertyType premPropType = processType.getPropertyType(ProcessDefinitionType.CoreProperties.prematureTriggers.toString());
+		PPEPropertyType premPropType = processType.getPropertyType(ProcessDefinitionType.CoreProperties.prematureTriggers.toString());
 		assert(premPropType != null);
 		assert(premPropType.getCardinality().equals(CARDINALITIES.MAP));
 		assert(premPropType.getInstanceType().equals(BuildInType.STRING));

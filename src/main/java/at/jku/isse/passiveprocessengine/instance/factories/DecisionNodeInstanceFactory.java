@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
-import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
@@ -17,7 +17,7 @@ public class DecisionNodeInstanceFactory extends DomainFactory {
 	}
 
 	public DecisionNodeInstance getInstance(DecisionNodeDefinition dnd) {				
-		Instance instance = getContext().getInstanceRepository().createInstance(dnd.getName()+"_"+UUID.randomUUID()
+		PPEInstance instance = getContext().getInstanceRepository().createInstance(dnd.getName()+"_"+UUID.randomUUID()
 			, getContext().getSchemaRegistry().getType(DecisionNodeInstance.class));
 		DecisionNodeInstance dni = getContext().getWrappedInstance(DecisionNodeInstance.class, instance);
 		//dni.init(dnd);

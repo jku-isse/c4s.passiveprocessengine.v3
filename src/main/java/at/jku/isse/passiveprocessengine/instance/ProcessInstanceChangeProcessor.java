@@ -14,8 +14,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.core.Instance;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.PropertyChange;
 import at.jku.isse.passiveprocessengine.core.PropertyChange.Update;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
@@ -40,7 +40,7 @@ public class ProcessInstanceChangeProcessor {
 
 	final EventDistributor distributor;
 	final Context context;
-	final InstanceType stepType;
+	final PPEInstanceType stepType;
 	
 	//we queue commands and remove some that are undone when lazy fetching of artifacts results in different outcome
 	protected Map<String, Commands.ProcessScopedCmd> cmdQueue = Collections.synchronizedMap(new HashMap<>());
@@ -58,14 +58,14 @@ public class ProcessInstanceChangeProcessor {
 		return stats;
 	}
 
-	private boolean isOfStepType(Instance instance) {
+	private boolean isOfStepType(PPEInstance instance) {
 		if (instance == null) 
 			return false;
 		else
 			return instance.getInstanceType().isOfTypeOrAnySubtype(stepType);		
 	}
 
-	private boolean isOfCRDType(Instance instance) {
+	private boolean isOfCRDType(PPEInstance instance) {
 		if (instance == null) 
 			return false;
 		else
@@ -75,12 +75,12 @@ public class ProcessInstanceChangeProcessor {
 
 
 	private Optional<ProcessScopedCmd> processPropertyUpdateAdd(PropertyChange.Add op) {		
-		Instance element = op.getInstance();
+		PPEInstance element = op.getInstance();
 		if(!op.getName().contains("/@")
 				&& (op.getName().startsWith("in_") || op.getName().startsWith("out_"))
 				&& isOfStepType(op.getInstance()) ) {
 			ProcessStep step = context.getWrappedInstance(ProcessStep.class, element);	
-			Instance added = (Instance) op.getValue();
+			PPEInstance added = (PPEInstance) op.getValue();
 			log.debug(String.format("%s %s now also contains %s", step.getName(),
 					op.getName(),																
 					added != null ? added.getName() : "NULL"
@@ -92,7 +92,7 @@ public class ProcessInstanceChangeProcessor {
 	}
 
 	private Optional<ProcessScopedCmd> processPropertyUpdateRemove(PropertyChange.Remove op) {
-		Instance element = op.getInstance();
+		PPEInstance element = op.getInstance();
 			if(!op.getName().contains("/@")  // ignore special properties  (e.g., usage in consistency rules, etc)
 				&& (op.getName().startsWith("in_") || op.getName().startsWith("out_"))
 				&& isOfStepType(element) ) {
@@ -109,7 +109,7 @@ public class ProcessInstanceChangeProcessor {
 	}
 
 	private Optional<ProcessScopedCmd> processPropertyUpdateSet(PropertyChange.Set op) {
-		Instance element = op.getInstance();
+		PPEInstance element = op.getInstance();
 		if (isOfStepType(element)) {
 			if (!op.getName().startsWith("@")) {
 				log.info(String.format("Step %s updated %s to %s", element.getName(),
@@ -119,7 +119,7 @@ public class ProcessInstanceChangeProcessor {
 			}
 		} else if (op.getName().equals("result") && isOfCRDType(element)) {
 			RuleResult cr = (RuleResult)element;
-			Instance ruleContext = cr.getContextInstance();
+			PPEInstance ruleContext = cr.getContextInstance();
 			if (isOfStepType(ruleContext)) { // rule belonging to a step,
 				ProcessStep step = context.getWrappedInstance(ProcessStep.class, ruleContext);
 				stats.incrementRuleUpdateEventCount();

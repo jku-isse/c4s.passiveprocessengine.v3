@@ -9,107 +9,125 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import at.jku.isse.designspace.core.foundation.Id;
+import at.jku.isse.designspace.core.model.Folder;
+import at.jku.isse.designspace.core.model.Instance;
+import at.jku.isse.designspace.core.model.InstanceType;
+import at.jku.isse.designspace.core.model.LanguageWorkspace;
+import at.jku.isse.designspace.core.model.MetaInstanceType;
+import at.jku.isse.designspace.core.model.ProjectWorkspace;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.core.RuleDefinitionFactory;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
+import lombok.Getter;
 import lombok.NonNull;
 
 public class DesignSpaceSchemaRegistry implements SchemaRegistry, InstanceRepository, DesignspaceAbstractionMapper, RuleDefinitionFactory {
 
-	private Workspace ws;
-	private HashMap<Id, Instance> instanceWrappers = new HashMap<>();
-	private HashMap<Id, InstanceType> instanceTypeWrappers = new HashMap<>();
-	private Map<String, InstanceType> types = new HashMap<>();
+	@Getter
+	private final LanguageWorkspace languageWS;
+	@Getter
+	private final ProjectWorkspace projectWS;
+	private HashMap<Long, PPEInstance> instanceWrappers = new HashMap<>();
+	private HashMap<Long, PPEInstanceType> instanceTypeWrappers = new HashMap<>();
+	private Map<String, PPEInstanceType> types = new HashMap<>();
+	private final Folder instancesFolder;
+	private final Folder typesFolder;
 	
-	public DesignSpaceSchemaRegistry(Workspace ws) {
-		this.ws = ws;
+	public DesignSpaceSchemaRegistry(LanguageWorkspace languageWS, ProjectWorkspace projectWS) {
+		super();
+		this.languageWS = languageWS;
+		this.projectWS = projectWS;		
+		instancesFolder = Folder.create("ProcessInstancesFolder", projectWS.getFolder());
+		typesFolder = Folder.create("ProcessTypesFolder", languageWS.getFolder());
 		initBasicTypes();
 	}
-	
-	public Workspace getWorkspace() {
-		return ws;
-	}
-	
+		
 	@Override
-	public InstanceType getType(Class<? extends InstanceWrapper> clazz) {
+	public PPEInstanceType getType(Class<? extends InstanceWrapper> clazz) {
 		return types.get(clazz.getName());
 	}
 	
 	@Override
-	public void registerType(Class<? extends InstanceWrapper> clazz, InstanceType type) {
+	public void registerType(Class<? extends InstanceWrapper> clazz, PPEInstanceType type) {
 		types.put(clazz.getName(), type);
 	}
 	
 	@Override
-	public void registerTypeByName(@NonNull InstanceType type) {
+	public void registerTypeByName(@NonNull PPEInstanceType type) {
 		types.put(type.getName(), type);
 	}
 	
 	@Override
-	public InstanceType getTypeByName(String typeName) {
+	public PPEInstanceType getTypeByName(String typeName) {
 		return types.get(typeName);
 	}
 	
 
 	
 	private void initBasicTypes() {		
-		instanceTypeWrappers.put(Workspace.STRING.id(), BuildInType.STRING);				
-		instanceTypeWrappers.put(Workspace.BOOLEAN.id(), BuildInType.BOOLEAN);
-		instanceTypeWrappers.put(Workspace.INTEGER.id(),BuildInType.INTEGER);
-		instanceTypeWrappers.put(Workspace.REAL.id(), BuildInType.FLOAT);
-		instanceTypeWrappers.put(Workspace.DATE.id(), BuildInType.DATE);
-		instanceTypeWrappers.put(ConsistencyRuleType.CONSISTENCY_RULE_TYPE.id(), BuildInType.RULE);
-		instanceTypeWrappers.put(ws.META_INSTANCE_TYPE.id(), BuildInType.METATYPE);
+		instanceTypeWrappers.put(InstanceType.STRING.getId(), BuildInType.STRING);				
+		instanceTypeWrappers.put(InstanceType.BOOLEAN.getId(), BuildInType.BOOLEAN);
+		instanceTypeWrappers.put(InstanceType.INTEGER.getId(),BuildInType.INTEGER);
+		instanceTypeWrappers.put(InstanceType.REAL.getId(), BuildInType.FLOAT);
+		instanceTypeWrappers.put(InstanceType.DATE.getId(), BuildInType.DATE);
+		instanceTypeWrappers.put(ConsistencyRuleType.META_CONSISTENCY_RULE_TYPE.getId(), BuildInType.RULE);
+		instanceTypeWrappers.put(MetaInstanceType.ROOT.getId(), BuildInType.METATYPE);
 	}
 	
 	@Override
-	public Optional<InstanceType> findNonDeletedInstanceTypeById(String fqnTypeId) {
-		//TODO: for now just in types folder
-		return Optional.ofNullable( getWrappedType(ws.TYPES_FOLDER.instanceTypeWithName(fqnTypeId)));
+	public Optional<PPEInstanceType> findNonDeletedInstanceTypeById(String fqnTypeId) {
+		return typesFolder.getInstanceTypes(languageWS).stream()
+				.filter(dsType -> dsType.getName().equals(fqnTypeId))
+				.filter(dsType -> !dsType.isDeleted())
+				.map(dsType -> getWrappedType(dsType))
+				.findAny();
 	}
 
 	@Override
-	public Set<InstanceType> findAllInstanceTypesById(String fqnTypeId) {
-		//TODO: parse fqn 
-		return ws.TYPES_FOLDER.instanceTypes().stream()
-			.filter(dsType -> dsType.name().equals(fqnTypeId))
+	public Set<PPEInstanceType> findAllInstanceTypesById(String fqnTypeId) {		
+		return typesFolder.getInstanceTypes(languageWS).stream()
+			.filter(dsType -> dsType.getName().equals(fqnTypeId))
 			.map(dsType -> getWrappedType(dsType))
 			.collect(Collectors.toSet());		
 	}
 
 	@Override
-	public InstanceType createNewInstanceType(String fqnTypeId, InstanceType... superTypes) {
+	public PPEInstanceType createNewInstanceType(String fqnTypeId, PPEInstanceType... superTypes) {
 		List<at.jku.isse.designspace.core.model.InstanceType> dsSuperTypes = new ArrayList<>();
-		for (InstanceType type : superTypes) {
+		for (PPEInstanceType type : superTypes) {
 			dsSuperTypes.add(mapProcessDomainInstanceTypeToDesignspaceInstanceType(type));
 		}		  		
-		//TODO select specific folder based on fqn		
-		return getWrappedType(ws.createInstanceType(fqnTypeId, ws.TYPES_FOLDER, dsSuperTypes.toArray(at.jku.isse.designspace.core.model.InstanceType[]::new) ));
+		if (dsSuperTypes.isEmpty()) {		
+			return getWrappedType(InstanceType.create(languageWS, fqnTypeId, typesFolder));
+		} else {
+			return getWrappedType(InstanceType.create(languageWS, fqnTypeId, dsSuperTypes.get(0), typesFolder));
+		}
 	}
 
 	@Override
-	public RuleDefinition getRuleByNameAndContext(String ruleName, InstanceType context) {
+	public RuleDefinition getRuleByNameAndContext(String ruleName, PPEInstanceType context) {
 		at.jku.isse.designspace.core.model.InstanceType dsContext = mapProcessDomainInstanceTypeToDesignspaceInstanceType(context);
-		Collection<at.jku.isse.designspace.core.model.InstanceType> ruleDefinitions = ws.its(ConsistencyRuleType.CONSISTENCY_RULE_TYPE).subTypes();
-		if(ruleDefinitions.isEmpty() || (ruleDefinitions.stream().filter(inst -> !inst.isDeleted).count() == 0))
+		Collection<at.jku.isse.designspace.core.model.InstanceType> ruleDefinitions = ConsistencyRuleType.ROOT_CONSISTENCY_RULE_TYPE.getSubTypes();
+		if(ruleDefinitions.isEmpty() || (ruleDefinitions.stream().filter(inst -> !inst.isDeleted()).count() == 0))
 			return null;
 		for(ConsistencyRuleType crd: ruleDefinitions.stream()
-				.filter(inst -> !inst.isDeleted)
+				.filter(inst -> !inst.isDeleted())
 				.filter(ConsistencyRuleType.class::isInstance)
 				.map(ConsistencyRuleType.class::cast)
 				.collect(Collectors.toSet()) ){
-			if (crd.name().equalsIgnoreCase(ruleName) && crd.contextInstanceType().equals(dsContext) ) {
-				return (RuleDefinition) instanceTypeWrappers.computeIfAbsent(crd.id(), k -> new RuleDefinitionWrapper(crd, this));
+			if (crd.getName().equalsIgnoreCase(ruleName) && crd.getContextInstanceType().equals(dsContext) ) {
+				return (RuleDefinition) instanceTypeWrappers.computeIfAbsent(crd.getId(), k -> new RuleDefinitionWrapper(crd, this));
 			}
 		}
 		return null;
@@ -117,21 +135,21 @@ public class DesignSpaceSchemaRegistry implements SchemaRegistry, InstanceReposi
 	
 
 	@Override
-	public Set<InstanceType> getAllNonDeletedInstanceTypes() {
-		return ws.debugInstanceTypes().stream()
-			.filter(type -> !type.isDeleted)
+	public Set<PPEInstanceType> getAllNonDeletedInstanceTypes() {
+		return typesFolder.getInstanceTypes(languageWS).stream()
+			.filter(type -> !type.isDeleted())
 			.map(type -> getWrappedType(type))
 			.collect(Collectors.toSet());
 	}
 	
-	public InstanceType getWrappedType(at.jku.isse.designspace.core.model.InstanceType type) {
+	public PPEInstanceType getWrappedType(at.jku.isse.designspace.core.model.InstanceType type) {
 		if (type == null) 
 			return null;
 		else
-			return instanceTypeWrappers.computeIfAbsent(type.id(), k -> new DesignspaceInstanceTypeWrapper(type, this));
+			return instanceTypeWrappers.computeIfAbsent(type.getId(), k -> new DesignspaceInstanceTypeWrapper(type, this));
 	}
 	
-	public Instance getWrappedInstance(at.jku.isse.designspace.core.model.Element element) {
+	public PPEInstance getWrappedInstance(at.jku.isse.designspace.core.model.Element element) {
 		if (element == null)
 			return null;
 		else if (element instanceof at.jku.isse.designspace.core.model.Instance) {
@@ -140,11 +158,11 @@ public class DesignSpaceSchemaRegistry implements SchemaRegistry, InstanceReposi
 			return getWrappedType((at.jku.isse.designspace.core.model.InstanceType) element);	
 	}
 
-	public Instance getWrappedInstance(at.jku.isse.designspace.core.model.Instance instance) {
+	public PPEInstance getWrappedInstance(at.jku.isse.designspace.core.model.Instance instance) {
 		if (instance == null)
 			return null;
 		else {
-			return instanceWrappers.computeIfAbsent(instance.id(), k -> new DesignspaceInstanceWrapper(instance, this));
+			return instanceWrappers.computeIfAbsent(instance.getId(), k -> new DesignspaceInstanceWrapper(instance, this));
 		}
 	}
 		
@@ -153,10 +171,10 @@ public class DesignSpaceSchemaRegistry implements SchemaRegistry, InstanceReposi
 		if (instance == null)
 			return null;
 		else {
-			Instance wrapper = instanceWrappers.computeIfAbsent(instance.id(), k -> new DesignspaceRuleResultWrapper(instance, this)); 
+			PPEInstance wrapper = instanceWrappers.computeIfAbsent(instance.getId(), k -> new DesignspaceRuleResultWrapper(instance, this)); 
 			if (!(wrapper instanceof RuleResult)) { // need to rewrapp
 				wrapper = new DesignspaceRuleResultWrapper(instance, this);
-				instanceWrappers.put(instance.id(), wrapper);
+				instanceWrappers.put(instance.getId(), wrapper);
 			}
 			return (RuleResult)wrapper;
 		}
@@ -165,36 +183,36 @@ public class DesignSpaceSchemaRegistry implements SchemaRegistry, InstanceReposi
 	
 	
 	@Override
-	public Instance createInstance(String id, InstanceType type) {
+	public PPEInstance createInstance(String id, PPEInstanceType type) {
 		at.jku.isse.designspace.core.model.InstanceType dsType = mapProcessDomainInstanceTypeToDesignspaceInstanceType(type);
-		return getWrappedInstance(ws.createInstance(dsType, id));		
+		return getWrappedInstance(Instance.create(projectWS, dsType, id, instancesFolder));		
 	}
 
 	@Override
 	public void concludeTransaction() {
-		ws.concludeTransaction();
+		languageWS.commit("");
+		projectWS.commit("");
 	}
 
 	@Override
-	public Optional<Instance> findInstanceyById(String id) {
-		at.jku.isse.designspace.core.model.Instance inst = ws.debugInstanceFindByName(id);
-		if (inst == null) {
-			return Optional.of(getWrappedInstance(inst));
-		} else
-			return Optional.empty();
+	public Optional<PPEInstance> findInstanceyById(String id) {		
+		return instancesFolder.getInstances(projectWS).stream()
+			.filter(inst -> inst.getName().equals(id))
+			.map(inst -> getWrappedInstance(inst))
+			.findAny();	
 	}
 
 	@Override
-	public Set<Instance> getAllInstancesOfTypeOrSubtype(InstanceType type) {
+	public Set<PPEInstance> getAllInstancesOfTypeOrSubtype(PPEInstanceType type) {
 		at.jku.isse.designspace.core.model.InstanceType dsType = mapProcessDomainInstanceTypeToDesignspaceInstanceType(type);
-		return dsType.instancesIncludingSubtypes().stream().map(dsInstance -> getWrappedInstance(dsInstance)).collect(Collectors.toSet());		
+		return dsType.getAllInstantiations(projectWS).stream().map(dsInstance -> getWrappedInstance(dsInstance)).collect(Collectors.toSet());		
 	}
 
 	
 	
 	@Override
 	public at.jku.isse.designspace.core.model.Element mapProcessDomainInstanceToDesignspaceInstance(
-			Instance processDomainInstance) {
+			PPEInstance processDomainInstance) {
 		if (processDomainInstance instanceof DesignspaceInstanceWrapper) {
 			return ((DesignspaceInstanceWrapper) processDomainInstance).getDelegate();
 		} else 
@@ -209,17 +227,17 @@ public class DesignSpaceSchemaRegistry implements SchemaRegistry, InstanceReposi
 	@Override
 
 	public at.jku.isse.designspace.core.model.InstanceType mapProcessDomainInstanceTypeToDesignspaceInstanceType(
-			@NonNull Instance processDomainInstanceType) {
+			@NonNull PPEInstance processDomainInstanceType) {
 		if (processDomainInstanceType instanceof DesignspaceInstanceTypeWrapper) {
 			return ((DesignspaceInstanceTypeWrapper) processDomainInstanceType).getDelegate();					
 		} else if (processDomainInstanceType instanceof BuildInType) { 
-			if (processDomainInstanceType.equals(BuildInType.STRING)) return Workspace.STRING;
-			if (processDomainInstanceType.equals(BuildInType.BOOLEAN)) return Workspace.BOOLEAN;
-			if (processDomainInstanceType.equals(BuildInType.INTEGER)) return Workspace.INTEGER;
-			if (processDomainInstanceType.equals(BuildInType.FLOAT)) return Workspace.REAL;
-			if (processDomainInstanceType.equals(BuildInType.DATE)) return Workspace.DATE;
-			if (processDomainInstanceType.equals(BuildInType.RULE)) return ws.its(ConsistencyRuleType.CONSISTENCY_RULE_TYPE) ;
-			if (processDomainInstanceType.equals(BuildInType.METATYPE)) return ws.its(ws.META_INSTANCE_TYPE);
+			if (processDomainInstanceType.equals(BuildInType.STRING)) return InstanceType.STRING;
+			if (processDomainInstanceType.equals(BuildInType.BOOLEAN)) return InstanceType.BOOLEAN;
+			if (processDomainInstanceType.equals(BuildInType.INTEGER)) return InstanceType.INTEGER;
+			if (processDomainInstanceType.equals(BuildInType.FLOAT)) return InstanceType.REAL;
+			if (processDomainInstanceType.equals(BuildInType.DATE)) return InstanceType.DATE;
+			if (processDomainInstanceType.equals(BuildInType.RULE)) return ConsistencyRuleType.ROOT_CONSISTENCY_RULE_TYPE ;
+			if (processDomainInstanceType.equals(BuildInType.METATYPE)) return MetaInstanceType.ROOT;
 			else {
 				throw new RuntimeException("Asked to get Designspace InstanceType from unsupported BuildInType ");
 			}
@@ -229,16 +247,16 @@ public class DesignSpaceSchemaRegistry implements SchemaRegistry, InstanceReposi
 	}
 
 	@Override
-	public RuleDefinition createInstance(InstanceType type, String ruleName, String ruleExpression) {
+	public RuleDefinition createInstance(PPEInstanceType type, String ruleName, String ruleExpression) {
 		at.jku.isse.designspace.core.model.InstanceType dsType = mapProcessDomainInstanceTypeToDesignspaceInstanceType(type);
-		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, dsType, ruleName, ruleExpression);
+		ConsistencyRuleType crt = ConsistencyRuleType.create(languageWS, dsType, ruleName, ruleExpression);
 		RuleDefinitionWrapper ruleDef = new RuleDefinitionWrapper(crt, this);
-		instanceTypeWrappers.put(crt.id(), ruleDef);
+		instanceTypeWrappers.put(crt.getId(), ruleDef);
 		return ruleDef;
 	}
 
 	@Override
-	public void setPropertyRepairable(InstanceType type, String property, boolean isRepairable) {
+	public void setPropertyRepairable(PPEInstanceType type, String property, boolean isRepairable) {
 		at.jku.isse.designspace.core.model.InstanceType dsType = mapProcessDomainInstanceTypeToDesignspaceInstanceType(type);
 		ConsistencyUtils.setPropertyRepairable(dsType, property, isRepairable);
 	}

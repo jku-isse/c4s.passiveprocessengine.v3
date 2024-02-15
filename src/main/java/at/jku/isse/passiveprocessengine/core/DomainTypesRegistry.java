@@ -4,12 +4,12 @@ import at.jku.isse.passiveprocessengine.InstanceWrapper;
 
 public interface DomainTypesRegistry {
 
-	InstanceType getType(Class<? extends InstanceWrapper> clazz);
+	PPEInstanceType getType(Class<? extends InstanceWrapper> clazz);
 
-	void registerType(Class<? extends InstanceWrapper> clazz, InstanceType type);
+	void registerType(Class<? extends InstanceWrapper> clazz, PPEInstanceType type);
 
-	void registerTypeByName(InstanceType type);
+	void registerTypeByName(PPEInstanceType type);
 
-	InstanceType getTypeByName(String typeName);
+	PPEInstanceType getTypeByName(String typeName);
 
 }

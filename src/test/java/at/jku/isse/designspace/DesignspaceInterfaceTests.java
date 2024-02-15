@@ -7,9 +7,9 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.Instance;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
-import at.jku.isse.passiveprocessengine.core.InstanceType.CARDINALITIES;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType.CARDINALITIES;
 
 
 class DesignspaceInterfaceTests extends Designspace4Setup {
@@ -28,7 +28,7 @@ class DesignspaceInterfaceTests extends Designspace4Setup {
 	@Test
 	void testBasicSchema() {
 		createBaseType();
-		InstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
+		PPEInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
 		assert(baseType != null);
 		assert(baseType.getPropertyType(LIST_PROP).getCardinality().equals(CARDINALITIES.LIST));
 		assert(baseType.getPropertyType(LIST_PROP).getInstanceType().getName().equals(TEST_BASE_TYPE));
@@ -47,9 +47,9 @@ class DesignspaceInterfaceTests extends Designspace4Setup {
 	void testSubclassSchema() {
 		createBaseType();
 		createChildType();
-		InstanceType childType = schemaRegistry.getTypeByName(TEST_CHILD_TYPE);
+		PPEInstanceType childType = schemaRegistry.getTypeByName(TEST_CHILD_TYPE);
 		assert(childType != null);
-		InstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
+		PPEInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
 		assert(baseType != null);
 		assert(childType.getPropertyType(PARENT_PROP).getInstanceType().equals(baseType));
 		assert(childType.getPropertyType(PARENT_PROP).getCardinality().equals(CARDINALITIES.SINGLE));
@@ -60,10 +60,10 @@ class DesignspaceInterfaceTests extends Designspace4Setup {
 	@Test
 	void testInstanceCreation() {
 		createBaseType();
-		InstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
-		Instance inst1 = instanceRepository.createInstance("Inst1", baseType);
-		Instance inst2 = instanceRepository.createInstance("Inst2", baseType);
-		Instance inst3 = instanceRepository.createInstance("Inst3", baseType);
+		PPEInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
+		PPEInstance inst1 = instanceRepository.createInstance("Inst1", baseType);
+		PPEInstance inst2 = instanceRepository.createInstance("Inst2", baseType);
+		PPEInstance inst3 = instanceRepository.createInstance("Inst3", baseType);
 		inst1.setSingleProperty(SINGLE_PROP, ENTRY1);
 		inst1.getTypedProperty(LIST_PROP, List.class).add(inst2);
 		inst1.getTypedProperty(SET_PROP, Set.class).add(Boolean.TRUE);
@@ -79,16 +79,16 @@ class DesignspaceInterfaceTests extends Designspace4Setup {
 	void testInstanceSubclassing() {
 		createBaseType();
 		createChildType();
-		InstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
-		Instance inst1 = instanceRepository.createInstance("Inst1", baseType);
-		Instance inst2 = instanceRepository.createInstance("Inst2", baseType);
-		Instance inst3 = instanceRepository.createInstance("Inst3", baseType);
+		PPEInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
+		PPEInstance inst1 = instanceRepository.createInstance("Inst1", baseType);
+		PPEInstance inst2 = instanceRepository.createInstance("Inst2", baseType);
+		PPEInstance inst3 = instanceRepository.createInstance("Inst3", baseType);
 		inst1.setSingleProperty(SINGLE_PROP, ENTRY1);
 		inst1.getTypedProperty(LIST_PROP, List.class).add(inst2);
 		inst1.getTypedProperty(SET_PROP, Set.class).add(Boolean.TRUE);
 		inst1.getTypedProperty(MAP_PROP, Map.class).put(ENTRY1, 3);
 		
-		InstanceType childType = schemaRegistry.getTypeByName(TEST_CHILD_TYPE);
+		PPEInstanceType childType = schemaRegistry.getTypeByName(TEST_CHILD_TYPE);
 		assert(childType != null);
 		inst2.setInstanceType(childType);
 		inst3.setInstanceType(childType);
@@ -96,12 +96,12 @@ class DesignspaceInterfaceTests extends Designspace4Setup {
 		
 		inst2.setSingleProperty(PARENT_PROP, inst3);
 		
-		Instance parent = (Instance) inst1.getTypedProperty(LIST_PROP, List.class).get(0);
-		assert(parent.getTypedProperty(PARENT_PROP, Instance.class).equals(inst3));
+		PPEInstance parent = (PPEInstance) inst1.getTypedProperty(LIST_PROP, List.class).get(0);
+		assert(parent.getTypedProperty(PARENT_PROP, PPEInstance.class).equals(inst3));
 	}
 	
 	protected void createBaseType() {
-		InstanceType testType = schemaRegistry.createNewInstanceType(TEST_BASE_TYPE);
+		PPEInstanceType testType = schemaRegistry.createNewInstanceType(TEST_BASE_TYPE);
 		testType.createSinglePropertyType(SINGLE_PROP, BuildInType.STRING);
 		testType.createListPropertyType(LIST_PROP, testType);
 		testType.createSetPropertyType(SET_PROP, BuildInType.BOOLEAN);
@@ -111,7 +111,7 @@ class DesignspaceInterfaceTests extends Designspace4Setup {
 	
 	protected void createChildType() {
 		
-		InstanceType childType = schemaRegistry.createNewInstanceType(TEST_CHILD_TYPE, schemaRegistry.getTypeByName(TEST_BASE_TYPE));
+		PPEInstanceType childType = schemaRegistry.createNewInstanceType(TEST_CHILD_TYPE, schemaRegistry.getTypeByName(TEST_BASE_TYPE));
 		childType.createSinglePropertyType(PARENT_PROP, schemaRegistry.getTypeByName(TEST_BASE_TYPE));
 		schemaRegistry.registerTypeByName(childType);
 	}

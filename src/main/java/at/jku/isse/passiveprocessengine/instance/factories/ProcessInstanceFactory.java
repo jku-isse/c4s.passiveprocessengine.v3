@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
-import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
@@ -19,7 +19,7 @@ public class ProcessInstanceFactory extends DomainFactory {
 	
 	public ProcessInstance getInstance(ProcessDefinition processDef, String namePostfix) {
 		//TODO: not to create duplicate process instances somehow		
-		Instance instance = getContext().getInstanceRepository().createInstance(processDef.getName()+"_"+namePostfix
+		PPEInstance instance = getContext().getInstanceRepository().createInstance(processDef.getName()+"_"+namePostfix
 				, getContext().getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(processDef)));
 		ProcessInstance process = getContext().getWrappedInstance(ProcessInstance.class, instance);
 		process.inject(getContext().getFactoryIndex().getProcessStepFactory(), getContext().getFactoryIndex().getDecisionNodeInstanceFactory());
@@ -28,7 +28,7 @@ public class ProcessInstanceFactory extends DomainFactory {
 	}
 
 	public ProcessInstance getSubprocessInstance(ProcessDefinition subprocessDef, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, ProcessInstance scope) {
-		Instance instance = getContext().getInstanceRepository().createInstance(subprocessDef.getName()+"_"+UUID.randomUUID()
+		PPEInstance instance = getContext().getInstanceRepository().createInstance(subprocessDef.getName()+"_"+UUID.randomUUID()
 			, getContext().getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(subprocessDef)));
 		ProcessInstance process = getContext().getWrappedInstance(ProcessInstance.class, instance);
 		process.setProcess(scope);

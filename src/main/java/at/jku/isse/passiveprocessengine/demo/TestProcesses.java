@@ -2,7 +2,7 @@ package at.jku.isse.passiveprocessengine.demo;
 
 import java.util.ArrayList;
 
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
@@ -25,7 +25,7 @@ public class TestProcesses {
 	// process with two parallel subtasks, each taking the same jira issue as input, both completing when that issue is set to closed
 	// no qa constraints applied, datamapping only for one subtask, subproc complete when both subtasks are complete (AND cond)
 	public ProcessDefinition getSimpleSubprocessDefinition(boolean doInitType) throws ProcessException {
-		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		PPEInstanceType typeJira = artifactFactory.getJiraInstanceType();
 		ProcessDefinition procDef = ProcessDefinition.getInstance("subproc1");
 		procDef.addExpectedInput("jiraIn", typeJira);
 		procDef.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
@@ -64,7 +64,7 @@ public class TestProcesses {
 
 	// simple process, two AND branches, on of the subbranches is a subprocess, no QA, simple datamapping, all using same completion condition of step set to closed
 	public ProcessDefinition getSimpleSuperProcessDefinition( ) throws ProcessException {
-		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		PPEInstanceType typeJira = artifactFactory.getJiraInstanceType();
 		ProcessDefinition procDef = ProcessDefinition.getInstance("parentproc1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
 		procDef.setCondition(Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
@@ -102,7 +102,7 @@ public class TestProcesses {
 	
 
 	public ProcessDefinition getComplexSingleStepProcessDefinition( ) throws ProcessException {
-		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		PPEInstanceType typeJira = artifactFactory.getJiraInstanceType();
 		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
 		procDef.addExpectedOutput("jiraOut", typeJira);
@@ -139,7 +139,7 @@ public class TestProcesses {
 	}
 
 	public ProcessDefinition get2StepProcessDefinitionWithSymmetricDiffMapping( ) throws ProcessException {
-		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		PPEInstanceType typeJira = artifactFactory.getJiraInstanceType();
 		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
 		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("dnd1" );
@@ -168,7 +168,7 @@ public class TestProcesses {
 	}
 
 	public ProcessDefinition get2StepProcessDefinitionWithUnionMapping( ) throws ProcessException {
-		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		PPEInstanceType typeJira = artifactFactory.getJiraInstanceType();
 		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
 		procDef.addExpectedInput("jiraIn2", typeJira);
@@ -201,7 +201,7 @@ public class TestProcesses {
 	}
 
 	public ProcessDefinition get2StepProcessDefinitionWithExistsCheck( ) throws ProcessException {
-		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		PPEInstanceType typeJira = artifactFactory.getJiraInstanceType();
 		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
 		procDef.addExpectedInput("jiraIn2", typeJira);
@@ -237,7 +237,7 @@ public class TestProcesses {
 	}
 
 	public ProcessDefinition getSingleStepProcessDefinitionWithOutput( ) throws ProcessException {
-		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		PPEInstanceType typeJira = artifactFactory.getJiraInstanceType();
 		ProcessDefinition procDef = ProcessDefinition.getInstance("proc1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
 
@@ -272,7 +272,7 @@ public class TestProcesses {
 	}
 
 	public ProcessDefinition getSimpleXORDefinition( ) throws ProcessException {
-		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		PPEInstanceType typeJira = artifactFactory.getJiraInstanceType();
 		ProcessDefinition procDef = ProcessDefinition.getInstance("xorproc1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
 		procDef.addExpectedOutput("jiraOut", typeJira);
@@ -314,7 +314,7 @@ public class TestProcesses {
 	}
 
 	public ProcessDefinition getSimpleTemporalProcessDefinitionWithoutQA( ) throws ProcessException {
-		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		PPEInstanceType typeJira = artifactFactory.getJiraInstanceType();
 		ProcessDefinition procDef = ProcessDefinition.getInstance("temporal1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
 		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("start1" );
@@ -338,7 +338,7 @@ public class TestProcesses {
 	}
 
 	public ProcessDefinition getSimpleTemporalProcessDefinitionWithQA( ) throws ProcessException {
-		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		PPEInstanceType typeJira = artifactFactory.getJiraInstanceType();
 		ProcessDefinition procDef = ProcessDefinition.getInstance("temporal1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
 		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("start1" );
@@ -369,7 +369,7 @@ public class TestProcesses {
 
 	// not ( eventually(a, next( eventually(a))))
 	public ProcessDefinition getSimpleTemporalProcessDefinitionWithSequenceAbsence( ) throws ProcessException {
-		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		PPEInstanceType typeJira = artifactFactory.getJiraInstanceType();
 		ProcessDefinition procDef = ProcessDefinition.getInstance("temporal1" );
 		procDef.addExpectedInput("jiraIn", typeJira);
 		DecisionNodeDefinition dnd1 = procDef.createDecisionNodeDefinition("start1" );
@@ -394,7 +394,7 @@ public class TestProcesses {
 	}
 
 	public DTOs.Process getSimpleDTOSubprocess( ) {
-		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		PPEInstanceType typeJira = artifactFactory.getJiraInstanceType();
 		DTOs.Process procD = new DTOs.Process();
 		procD.setCode("TestSerializeProc1");
 		procD.setDescription("Test for Serialization");
@@ -439,7 +439,7 @@ public class TestProcesses {
 	}
 
 	public DTOs.Process getSimpleSuperDTOProcessDefinition( ) {
-		InstanceType typeJira = artifactFactory.getJiraInstanceType();
+		PPEInstanceType typeJira = artifactFactory.getJiraInstanceType();
 		DTOs.Process procD = new DTOs.Process();
 		procD.setCode("TestSerializeParentProc1");
 		procD.setDescription("Test for Serialization");

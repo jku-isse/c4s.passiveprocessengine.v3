@@ -2,7 +2,7 @@ package at.jku.isse.passiveprocessengine.instance.types;
 
 import java.util.Optional;
 
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
@@ -16,13 +16,13 @@ public class SpecificProcessStepType extends TypeProviderBase {
 	processedPreCondFulfilled, processedPostCondFulfilled, processedCancelCondFulfilled, processedActivationCondFulfilled, isWorkExpected}
 
 	private final StepDefinition stepDef;
-	private final InstanceType processType;
+	private final PPEInstanceType processType;
 
 	public static final String PREFIX_OUT = "out_";
 	public static final String PREFIX_IN = "in_";
 
 		
-	public SpecificProcessStepType(SchemaRegistry schemaRegistry, StepDefinition stepDef, @NonNull InstanceType processType) {
+	public SpecificProcessStepType(SchemaRegistry schemaRegistry, StepDefinition stepDef, @NonNull PPEInstanceType processType) {
 		super(schemaRegistry);
 		this.stepDef = stepDef;
 		this.processType = processType;
@@ -37,11 +37,11 @@ public class SpecificProcessStepType extends TypeProviderBase {
 	@Override
 	public void produceTypeProperties() {
 		String stepName = SpecificProcessStepType.getProcessStepName(stepDef);
-		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(stepName);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(stepName);
 		if (thisType.isPresent())
 			schemaRegistry.registerTypeByName(thisType.get());	
 		else {
-			InstanceType type = schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getType(ProcessStep.class));
+			PPEInstanceType type = schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getType(ProcessStep.class));
 			schemaRegistry.registerTypeByName(type);		
 
 			stepDef.getExpectedInput().entrySet().stream()

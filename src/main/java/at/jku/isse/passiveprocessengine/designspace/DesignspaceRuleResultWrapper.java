@@ -1,7 +1,7 @@
 package at.jku.isse.passiveprocessengine.designspace;
 
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
-import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
 
 public class DesignspaceRuleResultWrapper extends DesignspaceInstanceWrapper implements RuleResult {
@@ -18,7 +18,7 @@ public class DesignspaceRuleResultWrapper extends DesignspaceInstanceWrapper imp
 	}
 
 	@Override
-	public Instance getContextInstance() {
+	public PPEInstance getContextInstance() {
 		return dsSchemaRegistry.getWrappedInstance(((ConsistencyRule)delegate).contextInstance());		
 	}
 

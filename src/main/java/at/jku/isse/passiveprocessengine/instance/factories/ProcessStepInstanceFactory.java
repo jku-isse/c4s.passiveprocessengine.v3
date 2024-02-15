@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
-import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
@@ -34,7 +34,7 @@ public class ProcessStepInstanceFactory extends DomainFactory {
 			return getContext().getFactoryIndex().getProcessInstanceFactory().getSubprocessInstance((ProcessDefinition) stepDef, inDNI, outDNI, scope);
 		} else {
 			String specificStepType = SpecificProcessStepType.getProcessStepName(stepDef);
-			Instance instance = getContext().getInstanceRepository().createInstance( stepDef.getName()+"_"+UUID.randomUUID()
+			PPEInstance instance = getContext().getInstanceRepository().createInstance( stepDef.getName()+"_"+UUID.randomUUID()
 				, getContext().getSchemaRegistry().getTypeByName(specificStepType));
 			ProcessStep step = getContext().getWrappedInstance(ProcessStep.class, instance);
 			step.setProcess(scope);
@@ -46,7 +46,7 @@ public class ProcessStepInstanceFactory extends DomainFactory {
 	
 	@SuppressWarnings("unchecked")
 	protected void init(ProcessStep step, StepDefinition sd, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI) {
-		Instance instance = step.getInstance();
+		PPEInstance instance = step.getInstance();
 		if (step.getName().startsWith(StepDefinition.NOOPSTEP_PREFIX)) { // assumes/expects no pre/post cond and no qa
 			instance.setSingleProperty(AbstractProcessStepType.CoreProperties.processedPreCondFulfilled.toString(),true);
 			instance.setSingleProperty(AbstractProcessStepType.CoreProperties.processedPostCondFulfilled.toString(),true);

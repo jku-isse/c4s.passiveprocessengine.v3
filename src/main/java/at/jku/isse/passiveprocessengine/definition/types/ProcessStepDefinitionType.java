@@ -3,7 +3,7 @@ package at.jku.isse.passiveprocessengine.definition.types;
 import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
@@ -20,16 +20,16 @@ public class ProcessStepDefinitionType implements TypeProvider {
 	hierarchyDepth}
 	public static final String typeId = StepDefinition.class.getSimpleName();
 	private SchemaRegistry schemaRegistry;
-	private final InstanceType type;
+	private final PPEInstanceType type;
 
 	public ProcessStepDefinitionType(SchemaRegistry schemaRegistry) {
 		this.schemaRegistry = schemaRegistry;
-		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerType(StepDefinition.class, thisType.get());
 			this.type = thisType.get();
 		} else {
-			InstanceType type = schemaRegistry.createNewInstanceType(typeId,  schemaRegistry.getType(ProcessDefinitionScopedElement.class));
+			PPEInstanceType type = schemaRegistry.createNewInstanceType(typeId,  schemaRegistry.getType(ProcessDefinitionScopedElement.class));
 			schemaRegistry.registerType(StepDefinition.class, type);
 			this.type = type;
 		}

@@ -7,7 +7,7 @@ import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
@@ -121,7 +121,7 @@ public class DefinitionTransformer {
 			// then add the properties if they dont exist yet
 			configProvider.produceTypeProperties();
 			
-			InstanceType procConfig = typesFactory.getTypeByName(configProvider.getSubtypeName()); 
+			PPEInstanceType procConfig = typesFactory.getTypeByName(configProvider.getSubtypeName()); 
 					//factories.getProcessConfigFactory().getOrCreateProcessSpecificSubtype(configName, processDefinition);
 			
 			//factories.getProcessConfigFactory().augmentConfig(entry.getValue(), procConfig);
@@ -229,11 +229,11 @@ public class DefinitionTransformer {
 		step.setDescription(stepDTO.getDescription());
 	}
 
-	private InstanceType resolveInstanceType(String type, ProcessDefinitionScopedElement el, String param) {
+	private PPEInstanceType resolveInstanceType(String type, ProcessDefinitionScopedElement el, String param) {
 		// search in types folder and below for type
 		// InstanceType iType = // this returns also deleted types ws.debugInstanceTypeFindByName(type);
 		//InstanceType iType = searchInFolderAndBelow(type, ws.TYPES_FOLDER); // we no longer search in folders, we expect exact name
-		Optional<InstanceType> iType = schemaRegistry.findNonDeletedInstanceTypeById(type);
+		Optional<PPEInstanceType> iType = schemaRegistry.findNonDeletedInstanceTypeById(type);
 		if (iType.isEmpty()) {
 			errors.add(new ProcessDefinitionError(el, "Unknown Instance Type", "Input/Output definition "+param+" uses unknown instance type: "+type ));
 			//throw new ProcessException("Process Description uses unknown instance type: "+type);

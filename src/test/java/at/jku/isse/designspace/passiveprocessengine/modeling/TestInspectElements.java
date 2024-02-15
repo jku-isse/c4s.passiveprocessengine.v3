@@ -7,8 +7,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import at.jku.isse.designspace.rule.service.RuleService;
-import at.jku.isse.passiveprocessengine.core.Instance;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.utils.ElementInspectionUtils;
 
@@ -16,7 +16,7 @@ import at.jku.isse.passiveprocessengine.utils.ElementInspectionUtils;
 @SpringBootTest
 class TestInspectElements {
 
-	static InstanceType typeJira;
+	static PPEInstanceType typeJira;
 	
 	@BeforeEach
 	void setup() throws Exception {
@@ -35,9 +35,9 @@ class TestInspectElements {
 	
 	@Test
 	void testInstance() {
-		Instance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");				
-		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
-		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");//, "jiraB", "jiraC");
+		PPEInstance jiraB =  TestArtifacts.getJiraInstance(ws, "jiraB");				
+		PPEInstance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
+		PPEInstance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");//, "jiraB", "jiraC");
 		TestArtifacts.addJiraToJira(jiraA, jiraB);
 		TestArtifacts.addJiraToJira(jiraA, jiraD);
 		StringBuffer instBuf = new StringBuffer();	

@@ -3,7 +3,7 @@ package at.jku.isse.passiveprocessengine.definition.types;
 import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
@@ -16,11 +16,11 @@ public class DecisionNodeDefinitionType implements TypeProvider {
 	public static enum CoreProperties {inFlowType, dataMappingDefinitions, inSteps, outSteps, hierarchyDepth, closingDN}
 	public static final String typeId = DecisionNodeDefinition.class.getSimpleName();
 	private SchemaRegistry schemaRegistry;
-	private final InstanceType type;
+	private final PPEInstanceType type;
 
 	public DecisionNodeDefinitionType(SchemaRegistry schemaRegistry) {
 		this.schemaRegistry = schemaRegistry;
-		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerType(DecisionNodeDefinition.class, thisType.get());
 			this.type = thisType.get();

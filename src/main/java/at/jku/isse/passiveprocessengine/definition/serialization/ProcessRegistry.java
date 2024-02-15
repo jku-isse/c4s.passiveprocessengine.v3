@@ -13,8 +13,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.core.Instance;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
@@ -30,8 +30,8 @@ public class ProcessRegistry {
 	private final Context context;
 
 
-	protected InstanceType processDefinitionType;
-	protected InstanceType processInstanceType;
+	protected PPEInstanceType processDefinitionType;
+	protected PPEInstanceType processInstanceType;
 
 	protected Set<DTOs.Process> tempStorePD = new HashSet<>();
 	protected boolean isInit = false;
@@ -104,7 +104,7 @@ public class ProcessRegistry {
 		DefinitionTransformer.replaceStepNamesInMappings(process, tempCode, originalCode);
 		process.setCode(originalCode);
 		Optional<ProcessDefinition> prevPD = getProcessDefinition(process.getCode(), true);
-		Map<String, Map<String, Set<Instance>>> prevProcInput = new HashMap<>() ;
+		Map<String, Map<String, Set<PPEInstance>>> prevProcInput = new HashMap<>() ;
 		if (prevPD.isPresent()) {
 			log.debug("Removing existing process definition and instances thereof: "+process.getCode());
 			prevProcInput = removeAllProcessInstancesOfProcessDefinition(prevPD.get());
@@ -153,13 +153,13 @@ public class ProcessRegistry {
 	 * @param pDef 
 	 * @return the map of inputs of all prior existing process instances by key of prior process id
 	 */
-	public Map<String, Map<String, Set<Instance>>> removeAllProcessInstancesOfProcessDefinition(ProcessDefinition pDef) {
+	public Map<String, Map<String, Set<PPEInstance>>> removeAllProcessInstancesOfProcessDefinition(ProcessDefinition pDef) {
 		// to be called before removing the process definition,
 		// get the process definition instance type, get all instances thereof, then use the wrapper cache to obtain the process instance
-		Map<String, Map<String, Set<Instance>>> prevProcInput = new HashMap<>();
+		Map<String, Map<String, Set<PPEInstance>>> prevProcInput = new HashMap<>();
 
 		// we actually dont need to find the process definition type, but the specific process instance type declaration
-		InstanceType specProcDefType = context.getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(pDef)); 
+		PPEInstanceType specProcDefType = context.getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(pDef)); 
 		context.getInstanceRepository().getAllInstancesOfTypeOrSubtype(specProcDefType).stream()
 		.filter(inst -> !inst.isMarkedAsDeleted())
 		.map(inst -> context.getWrappedInstance(ProcessInstance.class, inst))
@@ -167,7 +167,7 @@ public class ProcessRegistry {
 		.map(ProcessInstance.class::cast)
 		.forEach(procInst -> {
 			processInstances.remove(procInst.getName());
-			Map<String, Set<Instance>> inputSet = new HashMap<>();
+			Map<String, Set<PPEInstance>> inputSet = new HashMap<>();
 			procInst.getDefinition().getExpectedInput().keySet().stream()
 			.forEach(input -> inputSet.put(input, procInst.getInput(input)));
 			prevProcInput.put(procInst.getName(), inputSet);
@@ -197,7 +197,7 @@ public class ProcessRegistry {
 				.collect(Collectors.toSet());
 	}
 
-	public SimpleEntry<ProcessInstance, List<ProcessInstanceError>> instantiateProcess(ProcessDefinition processDef, Map<String, Set<Instance>> input) {
+	public SimpleEntry<ProcessInstance, List<ProcessInstanceError>> instantiateProcess(ProcessDefinition processDef, Map<String, Set<PPEInstance>> input) {
 		// check if all inputs available:
 		List<ProcessInstanceError> errors = new LinkedList<>();
 		String namePostfix = generateProcessNamePostfix(input);
@@ -264,7 +264,7 @@ public class ProcessRegistry {
 //		return subTypes;
 //	}
 
-	public static String generateProcessNamePostfix(Map<String, Set<Instance>> procInput) {
+	public static String generateProcessNamePostfix(Map<String, Set<PPEInstance>> procInput) {
 		return procInput.entrySet().stream()
 				.flatMap(entry -> entry.getValue().stream())
 				.map(inst -> inst.getName()).collect(Collectors.joining(",", "[", "]"));

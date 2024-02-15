@@ -3,7 +3,7 @@ package at.jku.isse.passiveprocessengine.definition.types;
 import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
@@ -15,16 +15,16 @@ public class ConstraintSpecType implements TypeProvider {
 
 	private SchemaRegistry schemaRegistry;
 	public static final String typeId = ConstraintSpecType.class.getSimpleName();
-	private final InstanceType type;
+	private final PPEInstanceType type;
 	
 	public ConstraintSpecType(SchemaRegistry schemaRegistry) {
 		this.schemaRegistry = schemaRegistry;
-		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerType(ConstraintSpec.class, thisType.get());
 			this.type = thisType.get();
 		} else {
-			InstanceType type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getType(ProcessDefinitionScopedElement.class));
+			PPEInstanceType type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getType(ProcessDefinitionScopedElement.class));
 			schemaRegistry.registerType(ConstraintSpec.class, type);
 			this.type = type;
 		}

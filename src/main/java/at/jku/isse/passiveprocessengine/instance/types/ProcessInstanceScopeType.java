@@ -3,7 +3,7 @@ package at.jku.isse.passiveprocessengine.instance.types;
 import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
@@ -16,7 +16,7 @@ public class ProcessInstanceScopeType extends TypeProviderBase {
 
 	public ProcessInstanceScopeType(SchemaRegistry schemaRegistry) {
 		super(schemaRegistry);
-		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerType(ProcessInstanceScopedElement.class, thisType.get());
 			this.type = thisType.get();
@@ -32,7 +32,7 @@ public class ProcessInstanceScopeType extends TypeProviderBase {
 		//type.createPropertyType(CoreProperties.process.toString(), Cardinality.SINGLE, typeStep); needs to be add in individual subclasses in order to be able to refine it					
 	}
 	
-	public static void addGenericProcessProperty(InstanceType instType, DomainTypesRegistry schemaRegistry) {
+	public static void addGenericProcessProperty(PPEInstanceType instType, DomainTypesRegistry schemaRegistry) {
 		if (instType.getPropertyType(ProcessInstanceScopeType.CoreProperties.process.toString()) == null) {
 			instType.createSinglePropertyType(ProcessInstanceScopeType.CoreProperties.process.toString(), schemaRegistry.getType(ProcessStep.class));
 		}

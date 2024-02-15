@@ -3,7 +3,7 @@ package at.jku.isse.passiveprocessengine.instance.types;
 import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
@@ -21,7 +21,7 @@ public class AbstractProcessStepType extends TypeProviderBase {
 
 	public AbstractProcessStepType(SchemaRegistry schemaRegistry) {
 		super(schemaRegistry);
-		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerType(ProcessStep.class, thisType.get());
 			this.type = thisType.get();

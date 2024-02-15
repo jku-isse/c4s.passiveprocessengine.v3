@@ -14,9 +14,9 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
 
-public class InstanceListMapper implements List<Instance>{
+public class InstanceListMapper implements List<PPEInstance>{
 	private final List<at.jku.isse.designspace.core.model.Instance> delegate;
 	private final DesignSpaceSchemaRegistry registry;
 	
@@ -35,10 +35,10 @@ public class InstanceListMapper implements List<Instance>{
 	}
 
 	public boolean contains(Object o) {
-		return delegate.contains((at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((Instance)o));
+		return delegate.contains((at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((PPEInstance)o));
 	}
 
-	public Iterator<Instance> iterator() {
+	public Iterator<PPEInstance> iterator() {
 		throw new RuntimeException("Not supported");
 	}
 
@@ -54,28 +54,28 @@ public class InstanceListMapper implements List<Instance>{
 		//return delegate.toArray(a);
 	}
 
-	public boolean add(Instance e) {		
+	public boolean add(PPEInstance e) {		
 		return delegate.add((at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance(e));
 	}
 
 	public boolean remove(Object o) {
-		return delegate.remove((at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((Instance)o));
+		return delegate.remove((at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((PPEInstance)o));
 	}
 
 	public boolean containsAll(Collection<?> c) {
 		return delegate.containsAll(c);
 	}
 
-	public boolean addAll(Collection<? extends Instance> c) {
+	public boolean addAll(Collection<? extends PPEInstance> c) {
 		return delegate.addAll(c.stream()
 				.map(inst -> (at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance(inst))
 				.collect(Collectors.toList()));		
 	}
 
-	public boolean addAll(int index, Collection<? extends Instance> c) {
+	public boolean addAll(int index, Collection<? extends PPEInstance> c) {
 		if (c.isEmpty()) return false;
 		else {
-			List<Instance> list = new ArrayList<>(c);
+			List<PPEInstance> list = new ArrayList<>(c);
 			Collections.reverse(list);
 			list.stream().forEach(element -> add(index, element));
 			return false;			
@@ -84,19 +84,19 @@ public class InstanceListMapper implements List<Instance>{
 
 	public boolean removeAll(Collection<?> c) {
 		return delegate.removeAll(c.stream()
-				.filter(obj -> obj instanceof Instance)
-				.map(Instance.class::cast)
+				.filter(obj -> obj instanceof PPEInstance)
+				.map(PPEInstance.class::cast)
 				.map(inst -> registry.mapProcessDomainInstanceToDesignspaceInstance(inst)).collect(Collectors.toList()));	
 	}
 
 	public boolean retainAll(Collection<?> c) {
 		return delegate.retainAll(c.stream()
-				.filter(obj -> obj instanceof Instance)
-				.map(Instance.class::cast)
+				.filter(obj -> obj instanceof PPEInstance)
+				.map(PPEInstance.class::cast)
 				.map(inst -> registry.mapProcessDomainInstanceToDesignspaceInstance(inst)).collect(Collectors.toList()));	
 	}
 
-	public void replaceAll(UnaryOperator<Instance> operator) {
+	public void replaceAll(UnaryOperator<PPEInstance> operator) {
 		throw new RuntimeException("Not supported");
 		//delegate.replaceAll(operator);
 	}
@@ -106,7 +106,7 @@ public class InstanceListMapper implements List<Instance>{
 		//return delegate.toArray(generator);
 	}
 
-	public void sort(Comparator<? super Instance> c) {
+	public void sort(Comparator<? super PPEInstance> c) {
 		throw new RuntimeException("Not supported");
 		//delegate.sort(c);
 	}
@@ -123,61 +123,61 @@ public class InstanceListMapper implements List<Instance>{
 		return delegate.hashCode();
 	}
 
-	public Instance get(int index) {
+	public PPEInstance get(int index) {
 		return registry.getWrappedInstance(delegate.get(index));
 	}
 
-	public Instance set(int index, Instance element) {
-		return registry.getWrappedInstance(delegate.set(index, (at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((Instance)element)));
+	public PPEInstance set(int index, PPEInstance element) {
+		return registry.getWrappedInstance(delegate.set(index, (at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((PPEInstance)element)));
 	}
 
-	public void add(int index, Instance element) {
-		delegate.add(index, (at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((Instance)element));
+	public void add(int index, PPEInstance element) {
+		delegate.add(index, (at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((PPEInstance)element));
 	}
 
-	public boolean removeIf(Predicate<? super Instance> filter) {
+	public boolean removeIf(Predicate<? super PPEInstance> filter) {
 		throw new RuntimeException("Not supported");
 		//return delegate.removeIf(filter);
 	}
 
-	public Instance remove(int index) {
+	public PPEInstance remove(int index) {
 		return registry.getWrappedInstance(delegate.remove(index));
 	}
 
 	public int indexOf(Object o) {
-		return delegate.indexOf((at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((Instance)o));
+		return delegate.indexOf((at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((PPEInstance)o));
 	}
 
 	public int lastIndexOf(Object o) {
-		return delegate.lastIndexOf((at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((Instance)o));
+		return delegate.lastIndexOf((at.jku.isse.designspace.core.model.Instance)registry.mapProcessDomainInstanceToDesignspaceInstance((PPEInstance)o));
 	}
 
-	public ListIterator<Instance> listIterator() {
+	public ListIterator<PPEInstance> listIterator() {
 		throw new RuntimeException("Not supported");
 		//return delegate.listIterator();
 	}
 
-	public ListIterator<Instance> listIterator(int index) {
+	public ListIterator<PPEInstance> listIterator(int index) {
 		throw new RuntimeException("Not supported");
 		//return delegate.listIterator(index);
 	}
 
-	public List<Instance> subList(int fromIndex, int toIndex) {
+	public List<PPEInstance> subList(int fromIndex, int toIndex) {
 		return delegate.subList(fromIndex, toIndex).stream()
 				.map(dsInst -> registry.getWrappedInstance(dsInst))
 				.collect(Collectors.toList());
 	}
 
-	public Spliterator<Instance> spliterator() {
+	public Spliterator<PPEInstance> spliterator() {
 		throw new RuntimeException("Not supported");
 		//return delegate.spliterator();
 	}
 
-	public Stream<Instance> stream() {
+	public Stream<PPEInstance> stream() {
 		return delegate.stream().map(dsInst -> registry.getWrappedInstance(dsInst));
 	}
 
-	public Stream<Instance> parallelStream() {
+	public Stream<PPEInstance> parallelStream() {
 		return delegate.parallelStream().map(dsInst -> registry.getWrappedInstance(dsInst));
 	}
 

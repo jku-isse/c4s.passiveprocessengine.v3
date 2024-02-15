@@ -1,20 +1,20 @@
 package at.jku.isse.passiveprocessengine;
 
-import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.NameIdentifiableElement;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 
 public abstract class InstanceWrapper implements NameIdentifiableElement{
 
-	protected transient Instance instance;
+	protected transient PPEInstance instance;
 	protected transient Context context;
 	
-	public InstanceWrapper(Instance instance, Context context) {
+	public InstanceWrapper(PPEInstance instance, Context context) {
 		this.instance = instance;
 		this.context = context;
 	}
 
-	public Instance getInstance() {
+	public PPEInstance getInstance() {
 		return instance;
 	}
 

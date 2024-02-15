@@ -1,32 +1,33 @@
 package at.jku.isse.passiveprocessengine.designspace;
 
-import at.jku.isse.passiveprocessengine.core.InstanceType;
-import at.jku.isse.passiveprocessengine.core.InstanceType.CARDINALITIES;
-import at.jku.isse.passiveprocessengine.core.InstanceType.PropertyType;
+import at.jku.isse.designspace.core.model.PropertyType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType.CARDINALITIES;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType.PPEPropertyType;
 
-public class PropertyTypeWrapper implements PropertyType {
+public class PropertyTypeWrapper implements PPEPropertyType {
 
-	final at.jku.isse.designspace.core.model.PropertyType delegate;
+	final PropertyType delegate;
 	final DesignSpaceSchemaRegistry dsWrapper;
 	
-	public PropertyTypeWrapper(at.jku.isse.designspace.core.model.PropertyType delegate, DesignSpaceSchemaRegistry dsWrapper) {
+	public PropertyTypeWrapper(PropertyType delegate, DesignSpaceSchemaRegistry dsWrapper) {
 		this.delegate = delegate;
 		this.dsWrapper = dsWrapper;
 	}
 	
 	@Override
 	public String getName() {
-		return delegate.name();
+		return delegate.getName();
 	}
 
 	@Override
 	public CARDINALITIES getCardinality() {
-		return CARDINALITIES.valueOf(delegate.cardinality().toString());
+		return CARDINALITIES.valueOf(delegate.getCardinality().toString());
 	}
 
 	@Override
-	public InstanceType getInstanceType() {
-		return dsWrapper.getWrappedType(delegate.referencedInstanceType());		
+	public PPEInstanceType getInstanceType() {
+		return dsWrapper.getWrappedType(delegate.getReferencedInstanceType());		
 	}
 
 	@Override

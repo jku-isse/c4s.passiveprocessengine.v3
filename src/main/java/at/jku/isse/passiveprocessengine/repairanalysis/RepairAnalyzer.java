@@ -431,7 +431,7 @@ public class RepairAnalyzer implements RuleEvaluationListener {
 			{
 				/*Storing the data of all changes along with  their details i.e. effectType, constraint, operation, process, etc. */
 				ConsistencyRule cre = se_cre.getInconsistency();
-				Instance stepInst = cre.contextInstance();
+				PPEInstance stepInst = cre.contextInstance();
 				String rule=cre.getProperty("name").getValue().toString();
 				Event_DS event=new Event_DS(entryPU.getKey(), null, se_cre,cre, cre.isConsistent(), stepInst, null, time.getLastChangeTimeStamp(), 0, 0, 0);
 				this.pce.addAllExecuteEventLog(event);

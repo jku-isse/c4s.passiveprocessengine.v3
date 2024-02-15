@@ -16,7 +16,7 @@ public class RuleDefinitionWrapper extends DesignspaceInstanceTypeWrapper implem
 
 	@Override
 	public String getRuleError() {
-		return ((ConsistencyRuleType)delegate).ruleError();
+		return ((ConsistencyRuleType)delegate).getRuleError();
 	}
 	
 	

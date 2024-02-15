@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
-import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
@@ -19,7 +19,7 @@ public class ConstraintResultWrapperFactory extends DomainFactory {
 	}
 
 	public ConstraintResultWrapper createInstance(ConstraintSpec qaSpec, ZonedDateTime lastChanged, ProcessStep owningStep, ProcessInstance proc) {
-		Instance inst = getContext().getInstanceRepository().createInstance(qaSpec.getName()+proc.getName()+"_"+UUID.randomUUID()
+		PPEInstance inst = getContext().getInstanceRepository().createInstance(qaSpec.getName()+proc.getName()+"_"+UUID.randomUUID()
 			, getContext().getSchemaRegistry().getType(ConstraintResultWrapper.class));
 		ConstraintResultWrapper cw = getContext().getWrappedInstance(ConstraintResultWrapper.class, inst);
 		cw.getInstance().setSingleProperty(ConstraintWrapperType.CoreProperties.parentStep.toString(), owningStep.getInstance());

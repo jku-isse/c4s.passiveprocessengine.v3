@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import at.jku.isse.passiveprocessengine.core.FactoryIndex;
-import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
@@ -34,7 +34,7 @@ public class Context {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T extends InstanceWrapper> T getWrappedInstance(Class<? extends InstanceWrapper> clazz, Instance instance) {
+	public <T extends InstanceWrapper> T getWrappedInstance(Class<? extends InstanceWrapper> clazz, PPEInstance instance) {
 		//assert(instance != null);
 		if (instance == null) {
 			log.debug("WrapperCache was invoked with null instance");
@@ -55,7 +55,7 @@ public class Context {
 			// otherwise we take the constructor of that class that takes an Instance object as parameter
 			// and create it, passing it the instance object
 			// assumption: every managed class implements such an constructor, (otherwise will fail fast here anyway)
-			T t = (T) clazz.getConstructor(Instance.class, Context.class).newInstance(instance, this);
+			T t = (T) clazz.getConstructor(PPEInstance.class, Context.class).newInstance(instance, this);
 			//t.ws = instance.workspace;
 			cache.put(instance.getId(), t);
 			return t;

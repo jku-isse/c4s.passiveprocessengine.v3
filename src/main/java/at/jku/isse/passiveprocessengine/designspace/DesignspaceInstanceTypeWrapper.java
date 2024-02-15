@@ -6,11 +6,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import at.jku.isse.designspace.core.foundation.Cardinality;
+import at.jku.isse.designspace.core.model.PropertyType;
 import at.jku.isse.designspace.core.model.SingleProperty;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import lombok.NonNull;
 
-public class DesignspaceInstanceTypeWrapper implements InstanceType {
+public class DesignspaceInstanceTypeWrapper implements PPEInstanceType {
 
 	final at.jku.isse.designspace.core.model.InstanceType delegate;
 	final DesignSpaceSchemaRegistry dsSchemaRegistry;
@@ -27,22 +29,21 @@ public class DesignspaceInstanceTypeWrapper implements InstanceType {
 	
 	@Override
 	public String getId() {
-		return delegate.id().toString();
+		return ""+delegate.getId();
 	}
 
 	@Override
 	public String getName() {
-		//TODO make this fqn for instance types
-		return delegate.name();
+		return delegate.getName();
 	}
 
 	@Override
-	public InstanceType getInstanceType() {
+	public PPEInstanceType getInstanceType() {
 		return dsSchemaRegistry.getWrappedType(delegate.getInstanceType());
 	}
 
 	@Override
-	public void setInstanceType(InstanceType childType) {
+	public void setInstanceType(PPEInstanceType childType) {
 		// noop, cannot override instancetype of an InstanceType (i.e., meta type cannot be overridden)
 	}
 	
@@ -61,13 +62,14 @@ public class DesignspaceInstanceTypeWrapper implements InstanceType {
 		if (value instanceof DesignspaceInstanceWrapper) {
 			value = ((DesignspaceInstanceWrapper) value).getDelegate();
 		}
-		delegate.getPropertyAsSingle(property).set(value);
+		delegate.set(resolveProperty(property), value);
 	}
-
+	
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getTypedProperty(@NonNull String property, @NonNull Class<T> clazz) {
-		Object prop = delegate.getProperty(property);
+		Object prop = delegate.getProperty(resolveProperty(property));
 		if (prop == null) // no such property
 			return null;
 		if (prop instanceof SingleProperty) {			
@@ -78,7 +80,7 @@ public class DesignspaceInstanceTypeWrapper implements InstanceType {
 				return (T) dsValue;
 			}
 		} else {
-			PropertyType propType = getPropertyType(property);
+			PPEPropertyType propType = getPropertyType(property);
 			if (propType.getInstanceType() == null || DesignspaceInstanceWrapper.isAtomicType(propType.getInstanceType())) {
 				return (T)prop; // no matter if single string, or list of strings, no mapping needed
 			} else
@@ -108,30 +110,32 @@ public class DesignspaceInstanceTypeWrapper implements InstanceType {
 			return value; 
 	}
 	
-	
+	private PropertyType resolveProperty(String propertyName) {
+		return this.delegate.getInstanceType().getPropertyType(propertyName);
+	}
 
 	@Override
-	public void createListPropertyType(@NonNull String name, @NonNull InstanceType complexType) {
+	public void createListPropertyType(@NonNull String name, @NonNull PPEInstanceType complexType) {
 		delegate.createPropertyType(name, Cardinality.LIST, dsSchemaRegistry.mapProcessDomainInstanceTypeToDesignspaceInstanceType(complexType));
 	}
 
 	@Override
-	public void createSetPropertyType(@NonNull String name, @NonNull InstanceType complexType) {
+	public void createSetPropertyType(@NonNull String name, @NonNull PPEInstanceType complexType) {
 		delegate.createPropertyType(name, Cardinality.SET, dsSchemaRegistry.mapProcessDomainInstanceTypeToDesignspaceInstanceType(complexType));		
 	}
 
 	@Override
-	public void createMapPropertyType(@NonNull String name, @NonNull InstanceType keyType, @NonNull InstanceType valueType) {
+	public void createMapPropertyType(@NonNull String name, @NonNull PPEInstanceType keyType, @NonNull PPEInstanceType valueType) {
 		delegate.createPropertyType(name, Cardinality.MAP, dsSchemaRegistry.mapProcessDomainInstanceTypeToDesignspaceInstanceType(valueType));
 	}
 
 	@Override
-	public void createSinglePropertyType(@NonNull String name, @NonNull InstanceType type) {		
+	public void createSinglePropertyType(@NonNull String name, @NonNull PPEInstanceType type) {		
 		delegate.createPropertyType(name, Cardinality.SINGLE, dsSchemaRegistry.mapProcessDomainInstanceTypeToDesignspaceInstanceType(type));		
 	}
 
 	@Override
-	public PropertyType getPropertyType(String propertyName) {
+	public PPEPropertyType getPropertyType(String propertyName) {
 		@SuppressWarnings("rawtypes")
 		at.jku.isse.designspace.core.model.PropertyType propType = delegate.getPropertyType(propertyName);
 		if (propType != null) {
@@ -142,12 +146,12 @@ public class DesignspaceInstanceTypeWrapper implements InstanceType {
 	}
 
 	@Override
-	public boolean isOfTypeOrAnySubtype(InstanceType instanceToCompareTo) {
+	public boolean isOfTypeOrAnySubtype(PPEInstanceType instanceToCompareTo) {
 		return delegate.isKindOf(dsSchemaRegistry.mapProcessDomainInstanceTypeToDesignspaceInstanceType(instanceToCompareTo));		
 	}
 
 	@Override
-	public Set<InstanceType> getAllSubtypesRecursively() {
+	public Set<PPEInstanceType> getAllSubtypesRecursively() {
 		return delegate.getAllSubTypes().stream().map(subtype -> dsSchemaRegistry.getWrappedType(subtype)).collect(Collectors.toSet());
 	}
 

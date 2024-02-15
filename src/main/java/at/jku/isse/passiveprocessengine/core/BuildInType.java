@@ -3,10 +3,10 @@ package at.jku.isse.passiveprocessengine.core;
 import java.util.Collections;
 import java.util.Set;
 
-public abstract class BuildInType implements InstanceType {
+public abstract class BuildInType implements PPEInstanceType {
 
 	@Override
-	public InstanceType getInstanceType() {
+	public PPEInstanceType getInstanceType() {
 		return null;
 	}
 
@@ -38,43 +38,43 @@ public abstract class BuildInType implements InstanceType {
 	}
 
 	@Override
-	public void createListPropertyType(String name, InstanceType complexType) {
+	public void createListPropertyType(String name, PPEInstanceType complexType) {
 		// no op
 	}
 
 	@Override
-	public void createSetPropertyType(String name, InstanceType complexType) {
+	public void createSetPropertyType(String name, PPEInstanceType complexType) {
 		// no op
 	}
 	
 	@Override
-	public void createMapPropertyType(String name, InstanceType keyType, InstanceType valueType) {
+	public void createMapPropertyType(String name, PPEInstanceType keyType, PPEInstanceType valueType) {
 		// no op
 	}
 	
 	@Override
-	public void createSinglePropertyType(String name, InstanceType complexType) {
+	public void createSinglePropertyType(String name, PPEInstanceType complexType) {
 		// no op
 	}
 	
 	@Override
-	public boolean isOfTypeOrAnySubtype(InstanceType instanceToCompareTo) {		
+	public boolean isOfTypeOrAnySubtype(PPEInstanceType instanceToCompareTo) {		
 		return false;
 	}
 	
 	@Override
-	public PropertyType getPropertyType(String propertyName) {
+	public PPEPropertyType getPropertyType(String propertyName) {
 		// no op
 		return null;
 	}
 	
 	@Override
-	public void setInstanceType(InstanceType childType) {
+	public void setInstanceType(PPEInstanceType childType) {
 		// noop (cannot override the instancetype of a build in type
 	}
 	
 	@Override
-	public Set<InstanceType> getAllSubtypesRecursively() {
+	public Set<PPEInstanceType> getAllSubtypesRecursively() {
 		return Collections.emptySet();
 	}
 
@@ -83,7 +83,7 @@ public abstract class BuildInType implements InstanceType {
 		return getId();
 	}
 
-	public static InstanceType STRING = new BuildInType() {
+	public static PPEInstanceType STRING = new BuildInType() {
 		@Override
 		public String getId() {
 			return "STRING";
@@ -92,42 +92,42 @@ public abstract class BuildInType implements InstanceType {
 
 	};
 	
-	public static InstanceType INTEGER = new BuildInType() {
+	public static PPEInstanceType INTEGER = new BuildInType() {
 		@Override
 		public String getId() {
 			return "INTEGER";
 		}
 	};
 	
-	public static InstanceType BOOLEAN = new BuildInType() {
+	public static PPEInstanceType BOOLEAN = new BuildInType() {
 		@Override
 		public String getId() {
 			return "BOOLEAN";
 		}
 	};
 	
-	public static InstanceType FLOAT = new BuildInType() {
+	public static PPEInstanceType FLOAT = new BuildInType() {
 		@Override
 		public String getId() {
 			return "FLOAT";
 		}
 	};
 	
-	public static InstanceType DATE = new BuildInType() {
+	public static PPEInstanceType DATE = new BuildInType() {
 		@Override
 		public String getId() {
 			return "DATE";
 		}
 	};
 	
-	public static InstanceType RULE = new BuildInType() {
+	public static PPEInstanceType RULE = new BuildInType() {
 		@Override
 		public String getId() {
 			return "RULE";
 		}
 	};
 	
-	public static InstanceType METATYPE = new BuildInType() {
+	public static PPEInstanceType METATYPE = new BuildInType() {
 		@Override
 		public String getId() {
 			return "METATYPE";

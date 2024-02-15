@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
@@ -27,13 +27,13 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	private boolean isInternalPropagationDone = false;
 	private InterStepDataMapper mapper = null;
 
-	public DecisionNodeInstance(Instance instance, Context context) {
+	public DecisionNodeInstance(PPEInstance instance, Context context) {
 		super(instance, context);
 	}
 
 	@Override
 	public DecisionNodeDefinition getDefinition() {
-		return  context.getWrappedInstance(DecisionNodeDefinition.class, instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.dnd.toString(), Instance.class));
+		return  context.getWrappedInstance(DecisionNodeDefinition.class, instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.dnd.toString(), PPEInstance.class));
 	}
 
 	private void setInflowFulfilled(boolean isFulfilled) {
@@ -62,7 +62,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getOutSteps() {
 		return (Set<ProcessStep>) instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.outSteps.toString(), Set.class).stream()
-			.map(inst -> context.getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((Instance) inst), (Instance)inst))
+			.map(inst -> context.getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((PPEInstance) inst), (PPEInstance)inst))
 			.collect(Collectors.toSet());
 	}
 
@@ -74,7 +74,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getInSteps() {
 		return (Set<ProcessStep>) instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.inSteps.toString(), Set.class).stream()
-			.map(inst -> context.getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((Instance) inst), (Instance)inst))
+			.map(inst -> context.getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((PPEInstance) inst), (PPEInstance)inst))
 			.collect(Collectors.toSet());
 	}
 
@@ -368,7 +368,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		if (this.getOutSteps().isEmpty())
 			return null;
 		else {
-			Instance dnd = instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.closingDN.toString(), Instance.class);
+			PPEInstance dnd = instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.closingDN.toString(), PPEInstance.class);
 			if (dnd != null)
 				return context.getWrappedInstance(DecisionNodeInstance.class, dnd);
 			else {

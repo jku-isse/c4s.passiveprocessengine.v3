@@ -2,13 +2,13 @@ package at.jku.isse.passiveprocessengine.definition.activeobjects;
 
 import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.InstanceWrapper;
-import at.jku.isse.passiveprocessengine.core.Instance;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionType;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 
 public class MappingDefinition extends InstanceWrapper{
 
-	public MappingDefinition(Instance instance, Context wrapperCache) {
+	public MappingDefinition(PPEInstance instance, Context wrapperCache) {
 		super(instance, wrapperCache);
 	}
 

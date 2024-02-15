@@ -6,8 +6,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import at.jku.isse.passiveprocessengine.core.Instance;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstance;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
@@ -35,7 +35,7 @@ class InstanceTests extends DefinitionWrapperTests {
 	TestDTOProcesses procFactory;	
 	TestArtifacts artifactFactory;
 		
-	InstanceType typeJira;
+	PPEInstanceType typeJira;
 	ProcessInstanceChangeProcessor picp;
 	ProcessQAStatsMonitor monitor;
 	
@@ -60,7 +60,7 @@ class InstanceTests extends DefinitionWrapperTests {
 		
 	}
 	
-	private ProcessInstance instantiateDefaultProcess(DTOs.Process procDTO, Instance... inputs) {
+	private ProcessInstance instantiateDefaultProcess(DTOs.Process procDTO, PPEInstance... inputs) {
 		procDTO.calculateDecisionNodeDepthIndex(1);
 		DefinitionTransformer transformer = new DefinitionTransformer(procDTO, configBuilder.getContext().getFactoryIndex(), schemaReg);
 		ProcessDefinition procDef = transformer.fromDTO(false);
@@ -69,7 +69,7 @@ class InstanceTests extends DefinitionWrapperTests {
 		assert(transformer.getErrors().isEmpty());
 		ProcessInstance procInstance = configBuilder.getContext().getFactoryIndex().getProcessInstanceFactory().getInstance(procDef, "TEST");
 		assert(procInstance != null);
-		for (Instance input : inputs) {
+		for (PPEInstance input : inputs) {
 			IOResponse resp = procInstance.addInput(TestDTOProcesses.JIRA_IN, input);
 			assert(resp.getError() == null);
 		}
@@ -78,9 +78,9 @@ class InstanceTests extends DefinitionWrapperTests {
 
 	@Test
 	void testComplexDataMapping() throws ProcessException {
-		Instance jiraB =  artifactFactory.getJiraInstance("jiraB");
-		Instance jiraC = artifactFactory.getJiraInstance("jiraC");		
-		Instance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
+		PPEInstance jiraB =  artifactFactory.getJiraInstance("jiraB");
+		PPEInstance jiraC = artifactFactory.getJiraInstance("jiraC");		
+		PPEInstance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
 						
 		ProcessInstance proc =  instantiateDefaultProcess(procFactory.getSimple2StepProcessDefinition(), jiraA);		
 		designspace.getWorkspace().concludeTransaction();
@@ -92,9 +92,9 @@ class InstanceTests extends DefinitionWrapperTests {
 	
 	@Test
 	void testComplexDataMappingUpdateToProperty() throws ProcessException {
-		Instance jiraB =  artifactFactory.getJiraInstance("jiraB");
-		Instance jiraC = artifactFactory.getJiraInstance("jiraC");
-		Instance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
+		PPEInstance jiraB =  artifactFactory.getJiraInstance("jiraB");
+		PPEInstance jiraC = artifactFactory.getJiraInstance("jiraC");
+		PPEInstance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
 		
 		ProcessInstance proc =  instantiateDefaultProcess(procFactory.getSimple2StepProcessDefinition(), jiraA);		
 		designspace.getWorkspace().concludeTransaction();
@@ -136,10 +136,10 @@ class InstanceTests extends DefinitionWrapperTests {
 	
 	@Test
 	void testComplexDataMappingRemoveInput() throws ProcessException {
-		Instance jiraB =  artifactFactory.getJiraInstance("jiraB");
-		Instance jiraC = artifactFactory.getJiraInstance("jiraC");
-		Instance jiraD = artifactFactory.getJiraInstance("jiraD");
-		Instance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
+		PPEInstance jiraB =  artifactFactory.getJiraInstance("jiraB");
+		PPEInstance jiraC = artifactFactory.getJiraInstance("jiraC");
+		PPEInstance jiraD = artifactFactory.getJiraInstance("jiraD");
+		PPEInstance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
 		
 		ProcessInstance proc =  instantiateDefaultProcess(procFactory.getSimple2StepProcessDefinition(), jiraA);		
 		designspace.getWorkspace().concludeTransaction();
@@ -182,9 +182,9 @@ class InstanceTests extends DefinitionWrapperTests {
 
 	@Test
 	void testProcessComplete() throws ProcessException {
-		Instance jiraB =  artifactFactory.getJiraInstance("jiraB");
-		Instance jiraC = artifactFactory.getJiraInstance("jiraC");		
-		Instance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
+		PPEInstance jiraB =  artifactFactory.getJiraInstance("jiraB");
+		PPEInstance jiraC = artifactFactory.getJiraInstance("jiraC");		
+		PPEInstance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
 		
 		ProcessInstance proc =  instantiateDefaultProcess(procFactory.getSimple2StepProcessDefinition(), jiraA);		
 		designspace.getWorkspace().concludeTransaction();

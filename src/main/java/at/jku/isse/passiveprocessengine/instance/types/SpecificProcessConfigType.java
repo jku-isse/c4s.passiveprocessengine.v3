@@ -7,8 +7,8 @@ import java.util.Set;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
-import at.jku.isse.passiveprocessengine.core.InstanceType;
-import at.jku.isse.passiveprocessengine.core.InstanceType.CARDINALITIES;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.core.PPEInstanceType.CARDINALITIES;
 import at.jku.isse.passiveprocessengine.core.RuleDefinitionFactory;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
@@ -35,7 +35,7 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 	@Override
 	public void produceTypeProperties() {
 		String subtypeName = getSubtypeName();
-		Optional<InstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(subtypeName);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(subtypeName);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerTypeByName(thisType.get());
 			this.type = thisType.get();
@@ -62,7 +62,7 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 		Object defaultValue; // not supported yet
 		boolean isRepairable = true; // not supported yet
 
-		public InstanceType getInstanceType(SchemaRegistry schemaRegistry) {
+		public PPEInstanceType getInstanceType(SchemaRegistry schemaRegistry) {
 			switch (instanceType) {
 				case("STRING"): return BuildInType.STRING;
 				case("BOOLEAN"): return BuildInType.BOOLEAN;
@@ -87,8 +87,8 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 			return (getInstanceType(schemaRegistry) != null && getCardinality() != null);
 		}
 
-		public boolean addPropertyToType(InstanceType processConfig, DomainTypesRegistry factory, SchemaRegistry schemaRegistry, RuleDefinitionFactory ruleFactory) {
-			InstanceType baseType = factory.getTypeByName(ProcessConfigBaseElementType.typeId);
+		public boolean addPropertyToType(PPEInstanceType processConfig, DomainTypesRegistry factory, SchemaRegistry schemaRegistry, RuleDefinitionFactory ruleFactory) {
+			PPEInstanceType baseType = factory.getTypeByName(ProcessConfigBaseElementType.typeId);
 			
 			if (processConfig != null
 					&& factory != null
