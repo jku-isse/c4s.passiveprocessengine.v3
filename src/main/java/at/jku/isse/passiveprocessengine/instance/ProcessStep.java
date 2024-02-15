@@ -532,7 +532,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		String id = cr.name();		
 		ConstraintWrapper cw = WrapperCache.getWrappedInstance(ConstraintWrapper.class, (Instance) instance.getPropertyAsMap(CoreProperties.postconditions.toString()).get(id));
 		cw.setCrIfEmpty(cr);		
-		cw.setLastChanged(getProcess().getCurrentTimestamp());			
+		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());			
 		boolean newState = areConstraintsFulfilled(CoreProperties.postconditions.toString()); 
 		List<Events.ProcessChangedEvent> events =  setPostConditionsFulfilled(newState);
 		if (events.isEmpty())
