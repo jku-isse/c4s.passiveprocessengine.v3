@@ -971,7 +971,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		sd.getQAConstraints().stream()
 		.forEach(spec -> { 
 			String qid = getQASpecId(spec, pd);			
-			ConstraintWrapper cw = ConstraintWrapper.getInstance(ws, spec, getProcess().getCurrentTimestamp(), this, getParentProcessOrThisIfProcessElseNull());
+			ConstraintWrapper cw = ConstraintWrapper.getInstance(ws, spec, ZonedDateTime.now(), this, getParentProcessOrThisIfProcessElseNull());
 			instance.getPropertyAsMap(CoreProperties.qaState.toString()).put(qid, cw.getInstance());
 		});
 		// init of multi constraint wrappers:
