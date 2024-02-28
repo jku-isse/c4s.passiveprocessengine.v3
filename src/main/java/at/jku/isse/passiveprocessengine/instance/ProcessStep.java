@@ -367,6 +367,19 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			Property<?> prop = instance.getProperty(PREFIX_IN+inParam);
 			if (prop.propertyType.isAssignable(artifact)) {
 				instance.getPropertyAsSet(PREFIX_IN+inParam).remove(artifact);
+				// Redefine authorized users
+				ProcessInstance process = getParentProcessOrThisIfProcessElseNull();
+				process.instance.getAuthorizedUsers().clear();
+				// Add parent process input authorized users
+				Set<String> mainInputNames = process.getDefinition().getExpectedInput().keySet();
+				mainInputNames.forEach(inputName-> process.getInput(inputName).forEach(input->process.instance.addAuthorizedUsers(input.getAuthorizedUsers())));
+				// Add authorized users based on the process steps
+				process.getProcessSteps().forEach(ps->{
+					Set<String> inputNames = ps.getDefinition().getExpectedInput().keySet();
+					Set<String> outputNames = ps.getDefinition().getExpectedOutput().keySet();
+					inputNames.forEach(inputName-> ps.getInput(inputName).forEach(input->process.instance.addAuthorizedUsers(input.getAuthorizedUsers())));
+					outputNames.forEach(inputName-> ps.getOutput(inputName).forEach(output->process.instance.addAuthorizedUsers(output.getAuthorizedUsers())));
+				});
 				return IOResponse.okResponse();
 			} else {
 				String msg = String.format("Cannot remove input %s to %s with nonmatching artifact type %s of id % %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name());
@@ -398,6 +411,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			Property<?> prop = instance.getProperty(PREFIX_IN+inParam);
 			if (prop.propertyType.isAssignable(artifact)) {
 				instance.getPropertyAsSet(PREFIX_IN+inParam).add(artifact);
+				// Add the input authorized users to the process authorized users
+				this.getParentProcessOrThisIfProcessElseNull().instance.addAuthorizedUsers(artifact.getAuthorizedUsers());
 				return IOResponse.okResponse();
 			} else {
 				String msg = String.format("Cannot add input %s to %s with nonmatching artifact type %s of id %s %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name());
@@ -409,6 +424,12 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			log.warn(msg);
 			return IOResponse.errorResponse(msg);
 		}
+	}
+	
+	// Get all inputs to a process step
+	public List<List> getAllInputs() {
+		return instance.getPropertyNames().stream().filter(propertyName -> propertyName.matches(PREFIX_IN+"_[a-zA-Z]+"))
+		.map(propertyName->(instance.getPropertyAsList(propertyName).get())).collect(Collectors.toList());
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -428,6 +449,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			Property<?> prop = instance.getProperty(PREFIX_OUT+param);
 			if (prop.propertyType.isAssignable(artifact)) {
 				instance.getPropertyAsSet(PREFIX_OUT+param).add(artifact);
+				getParentProcessOrThisIfProcessElseNull().instance.addAuthorizedUsers(artifact.getAuthorizedUsers());
 				return IOResponse.okResponse();
 			} else {
 				String msg = String.format("Cannot add outnput %s to %s with nonmatching artifact type %s of id % %s", param, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.name());
@@ -443,6 +465,19 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	
 	protected void removeOutput(String param, Instance art) {
 		instance.getPropertyAsSet(PREFIX_OUT+param).remove(art);
+		// Redefine authorized users
+		ProcessInstance process = getParentProcessOrThisIfProcessElseNull();
+		process.instance.getAuthorizedUsers().clear();
+		// Add parent process input authorized users
+		Set<String> mainInputNames = process.getDefinition().getExpectedInput().keySet();
+		mainInputNames.forEach(inputName-> process.getInput(inputName).forEach(input->process.instance.addAuthorizedUsers(input.getAuthorizedUsers())));
+		// Add authorized users based on the process steps
+		process.getProcessSteps().forEach(ps->{
+			Set<String> inputNames = ps.getDefinition().getExpectedInput().keySet();
+			Set<String> outputNames = ps.getDefinition().getExpectedOutput().keySet();
+			inputNames.forEach(inputName-> ps.getInput(inputName).forEach(input->process.instance.addAuthorizedUsers(input.getAuthorizedUsers())));
+			outputNames.forEach(inputName-> ps.getOutput(inputName).forEach(output->process.instance.addAuthorizedUsers(output.getAuthorizedUsers())));
+		});
 	}
 	
 	public DecisionNodeInstance getInDNI() {

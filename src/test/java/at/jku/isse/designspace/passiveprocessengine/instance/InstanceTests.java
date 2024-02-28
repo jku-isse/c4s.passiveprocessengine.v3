@@ -2,7 +2,9 @@ package at.jku.isse.designspace.passiveprocessengine.instance;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.Ignore;
@@ -173,6 +175,23 @@ class InstanceTests {
 		Instance jiraC = TestArtifacts.getJiraInstance(ws, "jiraC");
 		Instance jiraD = TestArtifacts.getJiraInstance(ws, "jiraD");
 		Instance jiraA = TestArtifacts.getJiraInstance(ws, "jiraA");//, "jiraB", "jiraC");
+		
+		HashSet<String> usersA = new HashSet<String>();
+		usersA.add("userA");
+		jiraA.addAuthorizedUsers(usersA);
+		
+		HashSet<String> usersB = new HashSet<String>();
+		usersB.add("userB");
+		jiraB.addAuthorizedUsers(usersB);
+
+		HashSet<String> usersC = new HashSet<String>();
+		usersC.add("userC");
+		jiraC.addAuthorizedUsers(usersC);
+		
+		HashSet<String> usersD = new HashSet<String>();
+		usersD.add("userD");
+		jiraD.addAuthorizedUsers(usersD);
+		
 		TestArtifacts.addJiraToJira(jiraA, jiraB);
 		TestArtifacts.addJiraToJira(jiraA, jiraC);	
 		
@@ -180,7 +199,13 @@ class InstanceTests {
 		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
 		proc.addInput("jiraIn", jiraA);
 		ws.concludeTransaction();
-		System.out.println(proc);
+		// Check correct authorized users after add
+		// joined user set of jiraA and jiraB
+		Set<String> joinedUserSet = new HashSet<String>(jiraA.getAuthorizedUsers().getValue());
+		joinedUserSet.addAll(jiraB.getAuthorizedUsers().getValue());
+		joinedUserSet.addAll(jiraC.getAuthorizedUsers().getValue());
+		assert(proc.getInstance().getAuthorizedUsers().getValue().equals(joinedUserSet));
+
 		proc.getProcessSteps().stream().forEach(step -> System.out.println(step));
 		assert(proc.getExpectedLifecycleState().equals(State.ACTIVE)); 
 		
@@ -193,6 +218,12 @@ class InstanceTests {
 				.filter(step -> step.getDefinition().getName().equals("sd1") )
 				.allMatch(step -> step.getOutput("jiraOut").size() == 2));
 		ws.concludeTransaction();
+		
+		// Check correct authorized users after remove
+		joinedUserSet = new HashSet<String>(jiraD.getAuthorizedUsers().getValue());
+		joinedUserSet.addAll(jiraB.getAuthorizedUsers().getValue());
+		joinedUserSet.addAll(jiraC.getAuthorizedUsers().getValue());
+		assert(proc.getInstance().getAuthorizedUsers().getValue().equals(joinedUserSet));
 		
 		assert(proc.getProcessSteps().stream()
 			.filter(step -> step.getDefinition().getName().equals("sd1") )

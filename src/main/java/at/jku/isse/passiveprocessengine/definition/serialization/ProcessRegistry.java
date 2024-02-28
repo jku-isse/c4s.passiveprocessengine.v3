@@ -240,6 +240,7 @@ public class ProcessRegistry {
 					.collect(Collectors.toList()));
 		}
 		if (errors.isEmpty()) {
+			setProcessAuthorizedUsers(pInst,input);
 			pInstances.put(pInst.getName(), pInst);
 			ws.concludeTransaction();
 			return new SimpleEntry<>(pInst, errors);
@@ -248,6 +249,13 @@ public class ProcessRegistry {
 			ws.concludeTransaction();
 			return new SimpleEntry<>(pInst, errors);
 		}		
+	}
+	
+	/**
+    * Method that sets authorized users to a process intance based on the inputs
+    */
+	private void setProcessAuthorizedUsers(ProcessInstance pi , Map<String, Set<Instance>> input) {
+		input.values().forEach(instanceSet->instanceSet.forEach(instance->pi.getInstance().addAuthorizedUsers(instance.getAuthorizedUsers())));
 	}
 	
 	public ProcessInstance getProcess(String id) {
