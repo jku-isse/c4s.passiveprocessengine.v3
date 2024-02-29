@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>at.jku.isse.designspace.passiveprocessengine</groupId>
 	<artifactId>c4s.passiveprocessengine.v3</artifactId>
-	<version>0.6.1-SNAPSHOT</version>
+	<version>0.6.1-oauth</version>
 
 	<distributionManagement>
 		<repository>
@@ -53,7 +53,7 @@
 		<dependency>
 			<groupId>at.jku.isse.designspace</groupId>
 			<artifactId>core</artifactId>
-			<version>4.4.0-SNAPSHOT</version>
+			<version>4.4.0-oauth</version>
 		</dependency>
 		<dependency>
 			<groupId>at.jku.isse.designspace</groupId>
