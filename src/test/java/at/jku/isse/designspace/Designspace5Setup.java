@@ -2,13 +2,16 @@ package at.jku.isse.designspace;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import at.jku.isse.designspace.core.model.Tool;
-import at.jku.isse.designspace.core.model.User;
-import at.jku.isse.designspace.core.model.Workspace;
-import at.jku.isse.designspace.core.service.WorkspaceService;
+import at.jku.isse.PPECoreSpringConfig;
+import at.jku.isse.designspace.core.foundation.ServiceRegistry;
+import at.jku.isse.designspace.core.model.LanguageWorkspace;
+import at.jku.isse.designspace.core.model.ProjectWorkspace;
+import at.jku.isse.designspace.rule.checker.ArlRuleEvaluator;
+import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.designspace.DesignSpaceSchemaRegistry;
@@ -16,9 +19,11 @@ import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-class Designspace4Setup {
+class Designspace5Setup {
 
-
+	ProjectWorkspace projectWS;
+	LanguageWorkspace languageWS;
+	
 	private DesignSpaceSchemaRegistry designspace;
 	public InstanceRepository instanceRepository;
 	public SchemaRegistry schemaRegistry;
@@ -27,12 +32,17 @@ class Designspace4Setup {
 	@BeforeEach
 	protected
 	void setup() throws Exception {
-		Workspace testWS = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, new User("Test"), new Tool("test", "v1.0"), false, false);					
-		designspace = new DesignSpaceSchemaRegistry(testWS);
+		languageWS = PPECoreSpringConfig.getLanguageWorkspace();
+		projectWS = PPECoreSpringConfig.getProjectWorkspace();
+		RuleService ruleService = new RuleService(projectWS);
+	    ServiceRegistry.registerService(ruleService);
+	    RuleService.setEvaluator(new ArlRuleEvaluator());		
+		designspace = new DesignSpaceSchemaRegistry(languageWS, projectWS);
 		assert(designspace != null);
 		schemaRegistry = designspace;	
 		instanceRepository = designspace;
 		ruleServiceWrapper = new RuleServiceWrapper(designspace);
+		PPECoreSpringConfig.reset();
 	}
 
 }

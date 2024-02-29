@@ -15,6 +15,7 @@ import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairNodeScorer;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairStats;
 import at.jku.isse.designspace.rule.arl.repair.order.SortOnRepairPercentage;
+import at.jku.isse.designspace.rule.arl.repair.repairanalysis.RepairAnalyzer;
 import at.jku.isse.designspace.rule.checker.ArlRuleEvaluator;
 import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.TestUtils;
@@ -39,7 +40,6 @@ import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStepStats;
 import at.jku.isse.passiveprocessengine.monitoring.ReplayTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.UsageMonitor;
-import at.jku.isse.passiveprocessengine.repairanalysis.RepairAnalyzer;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest

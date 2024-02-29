@@ -83,7 +83,7 @@ class InstanceTests extends DefinitionWrapperTests {
 		PPEInstance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
 						
 		ProcessInstance proc =  instantiateDefaultProcess(procFactory.getSimple2StepProcessDefinition(), jiraA);		
-		designspace.getWorkspace().concludeTransaction();
+		designspace.concludeTransaction();
 		proc.printProcessToConsole(" ");
 		assert(proc.getProcessSteps().stream()
 				.filter(step -> step.getDefinition().getName().equals(TestDTOProcesses.SD1) )
@@ -97,7 +97,7 @@ class InstanceTests extends DefinitionWrapperTests {
 		PPEInstance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
 		
 		ProcessInstance proc =  instantiateDefaultProcess(procFactory.getSimple2StepProcessDefinition(), jiraA);		
-		designspace.getWorkspace().concludeTransaction();
+		designspace.concludeTransaction();
 		proc.printProcessToConsole(" ");
 		
 		assert(proc.getProcessSteps().stream()
@@ -110,11 +110,11 @@ class InstanceTests extends DefinitionWrapperTests {
 		artifactFactory.removeJiraFromReqs(jiraA, jiraC);		
 		artifactFactory.setStateToJiraInstance(jiraB, JiraStates.Closed);
 		// we close, thus keep SD1 in active state, thus no output propagation yet, 
-		designspace.getWorkspace().concludeTransaction();
+		designspace.concludeTransaction();
 		
 		artifactFactory.setStateToJiraInstance(jiraB, JiraStates.Open);
 		//now that we open again the jira issue, we fulfill SD1, and the output should be mapped, removing jiraC from SD2 input, and subsequently also from its output
-		designspace.getWorkspace().concludeTransaction();
+		designspace.concludeTransaction();
 		
 		proc.printProcessToConsole(" ");		
 		assert(proc.getProcessSteps().stream()
@@ -142,7 +142,7 @@ class InstanceTests extends DefinitionWrapperTests {
 		PPEInstance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
 		
 		ProcessInstance proc =  instantiateDefaultProcess(procFactory.getSimple2StepProcessDefinition(), jiraA);		
-		designspace.getWorkspace().concludeTransaction();
+		designspace.concludeTransaction();
 		proc.printProcessToConsole(" ");			
 		assert(proc.getExpectedLifecycleState().equals(State.ACTIVE)); 
 		
@@ -154,13 +154,13 @@ class InstanceTests extends DefinitionWrapperTests {
 		assert(proc.getProcessSteps().stream()
 				.filter(step -> step.getDefinition().getName().equals(TestDTOProcesses.SD1) )
 				.allMatch(step -> step.getOutput("jiraOut").size() == 2));				
-		designspace.getWorkspace().concludeTransaction();
+		designspace.concludeTransaction();
 		assert(proc.getProcessSteps().stream()
 			.filter(step -> step.getDefinition().getName().equals(TestDTOProcesses.SD1) )
 			.allMatch(step -> step.getOutput("jiraOut").size() == 0));		
 		
 		artifactFactory.addJiraToRequirements(jiraD, jiraB);		
-		designspace.getWorkspace().concludeTransaction();
+		designspace.concludeTransaction();
 		proc.printProcessToConsole(" ");					
 		assert(proc.getActualLifecycleState().equals(State.ACTIVE));
 		assert(proc.getProcessSteps().stream()
@@ -169,7 +169,7 @@ class InstanceTests extends DefinitionWrapperTests {
 		
 		artifactFactory.removeJiraFromReqs(jiraD, jiraB);
 		artifactFactory.addJiraToRequirements(jiraD, jiraC);		
-		designspace.getWorkspace().concludeTransaction();		
+		designspace.concludeTransaction();		
 		proc.printProcessToConsole(" ");
 				assert(proc.getProcessSteps().stream()
 				.filter(step -> step.getDefinition().getName().equals(TestDTOProcesses.SD1) )
@@ -187,13 +187,13 @@ class InstanceTests extends DefinitionWrapperTests {
 		PPEInstance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
 		
 		ProcessInstance proc =  instantiateDefaultProcess(procFactory.getSimple2StepProcessDefinition(), jiraA);		
-		designspace.getWorkspace().concludeTransaction();
+		designspace.concludeTransaction();
 		proc.printProcessToConsole(" ");			
 		assert(proc.getExpectedLifecycleState().equals(State.ACTIVE)); 
 			
 		artifactFactory.setStateToJiraInstance(jiraB, JiraStates.Closed);
 		artifactFactory.setStateToJiraInstance(jiraC, JiraStates.Closed);
-		designspace.getWorkspace().concludeTransaction();
+		designspace.concludeTransaction();
 		
 		proc.printProcessToConsole(" ");
 		assert(proc.getProcessSteps().stream()
@@ -208,12 +208,12 @@ class InstanceTests extends DefinitionWrapperTests {
 //		ProcessDefinition procDef = TestProcesses.getSimpleSubprocessDefinition(ws, true);
 //		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
 //		proc.addInput("jiraIn", jiraE);
-//		designspace.getWorkspace().concludeTransaction();
+//		designspace.concludeTransaction();
 //		printFullProcessToLog(proc);
 //		assert(proc.getExpectedLifecycleState().equals(State.ACTIVE));
 //		
 //		artifactFactory.setStateToJiraInstance(jiraE, JiraStates.Closed);
-//		designspace.getWorkspace().concludeTransaction();
+//		designspace.concludeTransaction();
 //		
 //		printFullProcessToLog(proc);
 //		assert(proc.getExpectedLifecycleState().equals(State.COMPLETED));
@@ -228,9 +228,9 @@ class InstanceTests extends DefinitionWrapperTests {
 //		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef, "SimpleParentprocess");
 //
 //		proc.addInput("jiraIn", jiraF);
-//		designspace.getWorkspace().concludeTransaction();
+//		designspace.concludeTransaction();
 //		artifactFactory.setStateToJiraInstance(jiraF, JiraStates.Closed);
-//		designspace.getWorkspace().concludeTransaction();
+//		designspace.concludeTransaction();
 //		
 //		printFullProcessToLog(proc); 
 //		assert(proc.getExpectedLifecycleState().equals(State.COMPLETED));
@@ -251,7 +251,7 @@ class InstanceTests extends DefinitionWrapperTests {
 //		ProcessDefinition procDef = TestProcesses.get2StepProcessDefinitionWithSymmetricDiffMapping(ws);
 //		ProcessInstance proc = ProcessInstance.getInstance(ws, procDef);
 //		proc.addInput("jiraIn", jiraA);
-//		designspace.getWorkspace().concludeTransaction();
+//		designspace.concludeTransaction();
 //	//	assertAllConstraintsAreValid(proc);
 //	//	printFullProcessToLog(proc);
 //		assert(proc.getProcessSteps().stream()
@@ -261,7 +261,7 @@ class InstanceTests extends DefinitionWrapperTests {
 //		
 //		artifactFactory.removeJiraFromJira(jiraA,  jiraB);
 //		artifactFactory.addJiraToJira(jiraA,  jiraD);
-//		designspace.getWorkspace().concludeTransaction();
+//		designspace.concludeTransaction();
 //		printFullProcessToLog(proc);
 //		assert(proc.getProcessSteps().stream()
 //				.filter(step -> step.getDefinition().getName().equals("sd1") )
@@ -283,7 +283,7 @@ class InstanceTests extends DefinitionWrapperTests {
 //		proc.addInput("jiraIn", jiraA);
 //		proc.addInput("jiraIn2", jiraD);
 //		
-//		designspace.getWorkspace().concludeTransaction();
+//		designspace.concludeTransaction();
 //		printFullProcessToLog(proc);
 //		assert(proc.getProcessSteps().stream()
 //				.filter(step -> step.getDefinition().getName().equals("sd1") )
@@ -291,7 +291,7 @@ class InstanceTests extends DefinitionWrapperTests {
 //
 //		
 //		artifactFactory.removeJiraFromJira(jiraA,  jiraB);
-//		designspace.getWorkspace().concludeTransaction();
+//		designspace.concludeTransaction();
 //		printFullProcessToLog(proc);
 //		assert(proc.getProcessSteps().stream()
 //				.filter(step -> step.getDefinition().getName().equals("sd1") )
@@ -317,7 +317,7 @@ class InstanceTests extends DefinitionWrapperTests {
 //		proc.addInput("jiraIn", jiraA);
 //		proc.addInput("jiraIn2", jiraD);
 //		
-//		designspace.getWorkspace().concludeTransaction();
+//		designspace.concludeTransaction();
 //		printFullProcessToLog(proc);
 //		assert(proc.getProcessSteps().stream()
 //				.filter(step -> step.getDefinition().getName().equals("sd1") )
@@ -330,13 +330,13 @@ class InstanceTests extends DefinitionWrapperTests {
 //		assert(repairTree != null);
 //		
 //		artifactFactory.setStateToJiraInstance(jiraC, JiraStates.Closed);
-//		designspace.getWorkspace().concludeTransaction();
+//		designspace.concludeTransaction();
 //		printFullProcessToLog(proc);
 //		assert(proc.getProcessSteps().stream()
 //				.filter(step -> step.getDefinition().getName().equals("sd1") )
 //				.allMatch(step -> step.getActualLifecycleState().equals(State.COMPLETED) ));
 ////		artifactFactory.removeJiraFromJira(jiraA,  jiraB);
-////		designspace.getWorkspace().concludeTransaction();
+////		designspace.concludeTransaction();
 ////		printFullProcessToLog(proc);
 ////		assert(proc.getProcessSteps().stream()
 ////				.filter(step -> step.getDefinition().getName().equals("sd1") )

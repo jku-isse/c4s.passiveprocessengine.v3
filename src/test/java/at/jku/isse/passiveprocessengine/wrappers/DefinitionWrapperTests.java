@@ -8,13 +8,13 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import at.jku.isse.designspace.core.model.Tool;
-import at.jku.isse.designspace.core.model.User;
-import at.jku.isse.designspace.core.model.Workspace;
-import at.jku.isse.designspace.core.service.WorkspaceService;
+import at.jku.isse.PPECoreSpringConfig;
+import at.jku.isse.designspace.core.model.LanguageWorkspace;
+import at.jku.isse.designspace.core.model.ProjectWorkspace;
 import at.jku.isse.passiveprocessengine.ConfigurationBuilder;
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
@@ -38,6 +38,9 @@ import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 public class DefinitionWrapperTests {
+		
+	ProjectWorkspace projectWS;	
+	LanguageWorkspace languageWS;
 	
 	public DesignSpaceSchemaRegistry designspace;
 	public SchemaRegistry schemaReg;	
@@ -46,11 +49,13 @@ public class DefinitionWrapperTests {
 	@BeforeEach
 	protected
 	void setup() throws Exception {
-		Workspace testWS = WorkspaceService.createWorkspace("test", WorkspaceService.PUBLIC_WORKSPACE, new User("Test"), new Tool("test", "v1.0"), false, false);					
-		designspace = new DesignSpaceSchemaRegistry(testWS);
+		languageWS = PPECoreSpringConfig.getLanguageWorkspace();
+		projectWS = PPECoreSpringConfig.getProjectWorkspace();
+		designspace = new DesignSpaceSchemaRegistry(languageWS, projectWS);
 		schemaReg = designspace;			
 		assert(schemaReg != null);		
 		configBuilder = new ConfigurationBuilder(designspace, designspace, new RuleServiceWrapper(designspace), designspace);
+		PPECoreSpringConfig.reset();
 	}
 	
 

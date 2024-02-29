@@ -12,7 +12,7 @@ import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType.CARDINALITIES;
 
 
-class DesignspaceInterfaceTests extends Designspace4Setup {
+class DesignspaceInterfaceTests extends Designspace5Setup {
 
 	
 	
