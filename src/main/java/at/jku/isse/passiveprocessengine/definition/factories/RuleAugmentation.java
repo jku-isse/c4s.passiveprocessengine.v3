@@ -13,6 +13,7 @@ import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
+import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.Data;
@@ -29,13 +30,13 @@ public class RuleAugmentation {
 	private PPEInstanceType stepType;
 	
 	private RuleDefinitionFactory ruleFactory;
-	private RuleServiceWrapper ruleService;
+	private RewriterFactory ruleRewriter;
 
-	public RuleAugmentation(StepDefinition sd, PPEInstanceType stepType, RuleDefinitionFactory ruleFactory, RuleServiceWrapper ruleService) {		
+	public RuleAugmentation(StepDefinition sd, PPEInstanceType stepType, RuleDefinitionFactory ruleFactory, RewriterFactory ruleRewriter) {		
 		this.stepDef = sd;
 		this.stepType = stepType;
 		this.ruleFactory = ruleFactory;
-		this.ruleService = ruleService;
+		this.ruleRewriter = ruleRewriter;
 	}
 
 	// This works for non-temporal constraints only
@@ -56,7 +57,7 @@ public class RuleAugmentation {
 				String arl = spec.getConstraintSpec();
 				try {
 					List<StepParameter> singleUsage = extractStepParameterUsageFromConstraint(stepDef, arl);
-					arl = ruleService.rewriteConstraint(stepType, arl, singleUsage, stepDef);
+					arl = ruleRewriter.rewriteConstraint(stepType, arl, singleUsage, stepDef);
 					log.debug(String.format("Augmented constraint %s for %s to %s", specId, stepDef.getName(), arl));
 				} catch(Exception e) {
 					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
@@ -73,7 +74,7 @@ public class RuleAugmentation {
 				String arl = spec.getConstraintSpec();
 				try {
 					List<StepParameter> singleUsage = extractStepParameterUsageFromConstraint(stepDef, arl);
-					arl = ruleService.rewriteConstraint(stepType, arl, singleUsage, stepDef);
+					arl = ruleRewriter.rewriteConstraint(stepType, arl, singleUsage, stepDef);
 					log.debug(String.format("Augmented constraint %s for %s to %s", specId, stepDef.getName(), arl));
 				} catch(Exception e) {
 					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
@@ -89,7 +90,7 @@ public class RuleAugmentation {
 				String arl = spec.getConstraintSpec();
 				try {
 					List<StepParameter> singleUsage = extractStepParameterUsageFromConstraint(stepDef, arl);
-					arl = ruleService.rewriteConstraint(stepType, arl, singleUsage, stepDef);
+					arl = ruleRewriter.rewriteConstraint(stepType, arl, singleUsage, stepDef);
 					log.debug(String.format("Augmented constraint %s for %s to %s", specId, stepDef.getName(), arl));
 				} catch(Exception e) {
 					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
@@ -105,7 +106,7 @@ public class RuleAugmentation {
 				String arl = spec.getConstraintSpec();
 				try {
 					List<StepParameter> singleUsage = extractStepParameterUsageFromConstraint(stepDef, arl);
-					arl = ruleService.rewriteConstraint(stepType, arl, singleUsage, stepDef);
+					arl = ruleRewriter.rewriteConstraint(stepType, arl, singleUsage, stepDef);
 					log.debug(String.format("Augmented constraint %s for %s to %s", specId, stepDef.getName(), arl));
 				} catch(Exception e) {
 					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
@@ -124,7 +125,7 @@ public class RuleAugmentation {
 					String arl = spec.getConstraintSpec();
 					try {
 						List<StepParameter> singleUsage = extractStepParameterUsageFromConstraint(stepDef, arl);
-						arl = ruleService.rewriteConstraint(stepType, arl, singleUsage, stepDef);
+						arl = ruleRewriter.rewriteConstraint(stepType, arl, singleUsage, stepDef);
 						log.debug(String.format("Augmented QA for %s to %s", stepDef.getName(), arl));
 					} catch(Exception e) {
 						errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting QA Constraint %s : %s", spec.getConstraintId(), arl), e.getMessage()));

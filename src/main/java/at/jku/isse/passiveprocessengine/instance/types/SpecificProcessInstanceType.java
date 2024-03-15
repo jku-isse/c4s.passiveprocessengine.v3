@@ -2,7 +2,7 @@ package at.jku.isse.passiveprocessengine.instance.types;
 
 import java.util.Optional;
 
-import at.jku.isse.passiveprocessengine.InstanceWrapper;
+import at.jku.isse.passiveprocessengine.core.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;

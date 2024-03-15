@@ -2,7 +2,7 @@ package at.jku.isse.passiveprocessengine.definition.activeobjects;
 
 import java.util.Comparator;
 
-import at.jku.isse.passiveprocessengine.Context;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
@@ -13,7 +13,7 @@ public class ConstraintSpec extends  ProcessDefinitionScopedElement{
 
 
 
-	public ConstraintSpec(PPEInstance instance, Context context) {
+	public ConstraintSpec(PPEInstance instance, ProcessContext context) {
 		super(instance, context);
 	}
 
@@ -42,7 +42,7 @@ public class ConstraintSpec extends  ProcessDefinitionScopedElement{
 	}
 
 	@Override
-	public void deleteCascading(ProcessConfigBaseElementType configFactory) {
+	public void deleteCascading() {
 		instance.markAsDeleted();
 	}
 	

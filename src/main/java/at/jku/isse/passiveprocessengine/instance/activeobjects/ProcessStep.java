@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 import com.github.oxo42.stateless4j.StateMachine;
 
-import at.jku.isse.passiveprocessengine.Context;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PropertyChange;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
@@ -41,7 +41,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	private transient StateMachine<StepLifecycle.State, StepLifecycle.Trigger> actualSM;
 	private transient StateMachine<StepLifecycle.State, StepLifecycle.Trigger> expectedSM;
 
-	public ProcessStep(PPEInstance instance, Context context) {
+	public ProcessStep(PPEInstance instance, ProcessContext context) {
 		super(instance, context);
 		initState();
 	}
@@ -91,10 +91,10 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				if (!Boolean.valueOf(op.getValue().toString())) { // an unfulfilled datamapping rules
 				// now we need to "repair" this, i.e., set the output accordingly
 					log.debug(String.format("Datamapping %s queued for repair", crt.getName()));
-					return new IOMappingConsistencyCmd(this, cr, true, context.getIoMapper());
+					return new IOMappingConsistencyCmd(this, cr, true, getProcessContext().getIoMapper());
 				} else {
 					log.debug(String.format("Datamapping %s now consistent", crt.getName()));
-					return new IOMappingConsistencyCmd(this, cr, false, context.getIoMapper());
+					return new IOMappingConsistencyCmd(this, cr, false, getProcessContext().getIoMapper());
 				}
 			} else if (crt.getName().startsWith(ProcessDefinitionFactory.CRD_QASPEC_PREFIX) ) { // a qa constraint
 				log.debug(String.format("QA Constraint %s now %s ", crt.getName(), op.getValue() != null ? op.getValue().toString() : "NULL"));

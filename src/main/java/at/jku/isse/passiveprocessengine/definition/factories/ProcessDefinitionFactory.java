@@ -4,8 +4,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
@@ -29,7 +29,7 @@ public class ProcessDefinitionFactory extends DomainFactory {
 
 	final RuleServiceWrapper ruleService;
 
-	public ProcessDefinitionFactory(Context context, RuleServiceWrapper ruleService) {
+	public ProcessDefinitionFactory(ProcessContext context, RuleServiceWrapper ruleService) {
 		super(context);
 		this.ruleService = ruleService;
 	}

@@ -20,7 +20,7 @@ import lombok.Data;
 
 public class ConstraintRewriter {
 	
-	InstanceType ruleContext;
+	private final InstanceType ruleContext;
 	private static final AtomicInteger varCount = new AtomicInteger(0);
 	
 	public ConstraintRewriter(InstanceType ruleContext) {

@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import at.jku.isse.passiveprocessengine.Context;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProcessRegistry {
 
-	private final Context context;
+	private final ProcessContext context;
 
 
 	protected PPEInstanceType processDefinitionType;
@@ -42,7 +42,7 @@ public class ProcessRegistry {
 
 	public static final String STAGINGPOSTFIX = "_STAGING";
 
-	public ProcessRegistry(Context context) {
+	public ProcessRegistry(ProcessContext context) {
 		this.context = context;
 	}
 

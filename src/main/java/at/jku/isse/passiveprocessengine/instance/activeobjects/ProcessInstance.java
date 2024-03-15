@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import at.jku.isse.passiveprocessengine.Context;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PropertyChange;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
@@ -38,7 +38,7 @@ public class ProcessInstance extends ProcessStep {
 	private ProcessStepInstanceFactory stepFactory;
 	private DecisionNodeInstanceFactory decisionNodeFactory;
 
-	public ProcessInstance(PPEInstance instance, Context context) {
+	public ProcessInstance(PPEInstance instance, ProcessContext context) {
 		super(instance, context);
 		setCreatedAt(getCurrentTimestamp());
 	}
@@ -259,7 +259,7 @@ public class ProcessInstance extends ProcessStep {
 		Set<?> stepList = instance.getTypedProperty(SpecificProcessInstanceType.CoreProperties.stepInstances.toString(), Set.class);
 		if (stepList != null) {
 			return (Set<ProcessStep>) stepList.stream()
-					.map(inst -> context.getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((PPEInstance) inst), (PPEInstance) inst))
+					.map(inst -> getProcessContext().getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((PPEInstance) inst), (PPEInstance) inst))
 					.map(obj -> (ProcessStep)obj)
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();

@@ -1,6 +1,5 @@
 package at.jku.isse.passiveprocessengine.core;
 
-import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.definition.factories.ConstraintSpecFactory;
 import at.jku.isse.passiveprocessengine.definition.factories.DecisionNodeDefinitionFactory;
 import at.jku.isse.passiveprocessengine.definition.factories.MappingDefinitionFactory;
@@ -35,7 +34,7 @@ public class FactoryIndex {
 	 * @return FactoryIndex with new set of factory instances, 
 	 * if possible, ensure to build only once, to reuse Factories (multiple instances of same factory are ok, but not efficient)
 	 */
-	public static FactoryIndex build(Context context, RuleServiceWrapper ruleService, RuleDefinitionFactory ruleDefinitionFactory) {
+	public static FactoryIndex build(ProcessContext context, RuleServiceWrapper ruleService, RuleDefinitionFactory ruleDefinitionFactory) {
 		FactoryIndex index = new FactoryIndex(
 				new ConstraintResultWrapperFactory(context),
 				new DecisionNodeInstanceFactory(context),
@@ -55,7 +54,7 @@ public class FactoryIndex {
 	@Data
 	public static abstract class DomainFactory {
 		
-		final Context context;			
+		final ProcessContext context;			
 
 	}
 }

@@ -22,6 +22,7 @@ import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts.JiraStates;
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.instance.InstanceTests;
+import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeListener;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
@@ -40,7 +41,7 @@ class TemporalConstraintInTimeRepairTests {
 
 	static Workspace ws;
 	static InstanceType typeJira;
-	ProcessInstanceChangeProcessor picp;
+	ProcessInstanceChangeListener picp;
 	static JsonDefinitionSerializer json = new JsonDefinitionSerializer();
 	static ProcessQAStatsMonitor monitor;
 	

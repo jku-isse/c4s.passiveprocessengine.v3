@@ -26,6 +26,7 @@ import at.jku.isse.passiveprocessengine.definition.serialization.ProcessRegistry
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
+import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeListener;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
@@ -42,7 +43,7 @@ class ReplacementTests {
 
 	static Workspace ws;
 	static InstanceType typeJira;
-	ProcessInstanceChangeProcessor picp;
+	ProcessInstanceChangeListener picp;
 	static JsonDefinitionSerializer json = new JsonDefinitionSerializer();
 	static ProcessQAStatsMonitor monitor;
 	static ProcessRegistry procReg = new ProcessRegistry();

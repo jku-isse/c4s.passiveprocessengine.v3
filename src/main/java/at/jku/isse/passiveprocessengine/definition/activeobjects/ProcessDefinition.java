@@ -7,8 +7,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.InstanceWrapper;
+import at.jku.isse.passiveprocessengine.core.InstanceWrapper;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
@@ -18,7 +18,7 @@ import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceTy
 
 public class ProcessDefinition extends StepDefinition{
 
-	public ProcessDefinition(PPEInstance instance, Context context) {
+	public ProcessDefinition(PPEInstance instance, ProcessContext context) {
 		super(instance, context);
 	}
 
@@ -140,7 +140,7 @@ public class ProcessDefinition extends StepDefinition{
 
 
 	public StepDefinition createAndAddStepDefinition(String stepId) {
-		StepDefinition sd = context.getFactoryIndex().getStepDefinitionFactory().createInstance(stepId);
+		StepDefinition sd = getProcessContext().getFactoryIndex().getStepDefinitionFactory().createInstance(stepId);
 				//StepDefinition.getInstance(stepId, ws); // any other initialization there
 		sd.setProcess(this);
 		this.addStepDefinition(sd);
@@ -148,7 +148,7 @@ public class ProcessDefinition extends StepDefinition{
 	}
 
 	public DecisionNodeDefinition createDecisionNodeDefinition(String dndId) {
-		DecisionNodeDefinition dnd =  context.getFactoryIndex().getDecisionNodeDefinitionFactory().createInstance(dndId); // any other initialization there
+		DecisionNodeDefinition dnd =  getProcessContext().getFactoryIndex().getDecisionNodeDefinitionFactory().createInstance(dndId); // any other initialization there
 		dnd.setProcess(this);
 		this.addDecisionNodeDefinition(dnd);
 		return dnd;

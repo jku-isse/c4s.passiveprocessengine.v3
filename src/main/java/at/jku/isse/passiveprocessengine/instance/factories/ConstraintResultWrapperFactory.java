@@ -3,8 +3,8 @@ package at.jku.isse.passiveprocessengine.instance.factories;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
-import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
@@ -14,7 +14,7 @@ import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType;
 
 public class ConstraintResultWrapperFactory extends DomainFactory {
 	
-	public ConstraintResultWrapperFactory(Context context) {
+	public ConstraintResultWrapperFactory(ProcessContext context) {
 		super(context);		
 	}
 

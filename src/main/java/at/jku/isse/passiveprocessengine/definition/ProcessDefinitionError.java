@@ -9,18 +9,6 @@ public class ProcessDefinitionError {
 	final String errorType;
 	final String errorMsg;
 
-
-//	public static class RuleCentricProcessDefinitionError extends ProcessDefinitionError {
-//		transient RuleEvaluation ruleEvaluation;
-//
-//		public RuleCentricProcessDefinitionError(ProcessDefinitionScopedElement errorScope,
-//				RuleEvaluation ruleEvaluation) {
-//			super(errorScope, "Consistency Rule Violation: "+ruleEvaluation.getRuleDefinition().getName(), "Violated");
-//			this.ruleEvaluation = ruleEvaluation;
-//		}
-//	}
-
-
 	@Override
 	public String toString() {
 		String proc = errorScope.getProcess() != null ? "in Process '"+errorScope.getProcess().getName()+"'": "";

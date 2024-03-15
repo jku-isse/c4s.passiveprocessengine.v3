@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import at.jku.isse.passiveprocessengine.Context;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
@@ -26,7 +26,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 	public static final String NOOPSTEP_PREFIX = "NoOpStep";
 
-	public StepDefinition(PPEInstance instance, Context context) {
+	public StepDefinition(PPEInstance instance, ProcessContext context) {
 		super(instance, context);
 	}
 
@@ -139,7 +139,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	@SuppressWarnings("unchecked")
 	@Deprecated(forRemoval = true)
 	public void setCondition(Conditions condition, String ruleAsString) {
-		ConstraintSpec constraint = context.getFactoryIndex().getConstraintFactory().createInstance(condition, condition+"0", ruleAsString, ruleAsString, 0, false);
+		ConstraintSpec constraint = getProcessContext().getFactoryIndex().getConstraintFactory().createInstance(condition, condition+"0", ruleAsString, ruleAsString, 0, false);
 		switch(condition) {
 		case ACTIVATION:
 			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.activationconditions.toString(), Set.class).add(constraint.getInstance());

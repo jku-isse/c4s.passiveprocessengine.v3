@@ -2,7 +2,7 @@ package at.jku.isse.passiveprocessengine.instance.activeobjects;
 
 import java.time.ZonedDateTime;
 
-import at.jku.isse.passiveprocessengine.Context;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
@@ -15,7 +15,7 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 
 	private volatile ZonedDateTime lastChanged;
 
-	public ConstraintResultWrapper(PPEInstance instance, Context context) {
+	public ConstraintResultWrapper(PPEInstance instance, ProcessContext context) {
 		super(instance, context);
 
 	}

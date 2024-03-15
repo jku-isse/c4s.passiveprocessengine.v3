@@ -1,14 +1,14 @@
 package at.jku.isse.passiveprocessengine.definition.activeobjects;
 
-import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.InstanceWrapper;
+import at.jku.isse.passiveprocessengine.core.InstanceWrapper;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionType;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 
 public class MappingDefinition extends InstanceWrapper{
 
-	public MappingDefinition(PPEInstance instance, Context wrapperCache) {
+	public MappingDefinition(PPEInstance instance, ProcessContext wrapperCache) {
 		super(instance, wrapperCache);
 	}
 
@@ -45,8 +45,8 @@ public class MappingDefinition extends InstanceWrapper{
 	}
 
 	@Override
-	public void deleteCascading(ProcessConfigBaseElementType configFactory) {
-		super.deleteCascading(configFactory);
+	public void deleteCascading() {
+		super.deleteCascading();
 	}
 
 	@Override

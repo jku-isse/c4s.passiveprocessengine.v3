@@ -13,7 +13,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import at.jku.isse.passiveprocessengine.Context;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
+import at.jku.isse.passiveprocessengine.core.ProcessInstanceChangeListener;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.PropertyChange;
@@ -36,10 +37,10 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ProcessInstanceChangeProcessor {
+public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeListener {
 
 	final EventDistributor distributor;
-	final Context context;
+	final ProcessContext context;
 	final PPEInstanceType stepType;
 	
 	//we queue commands and remove some that are undone when lazy fetching of artifacts results in different outcome
@@ -47,7 +48,7 @@ public class ProcessInstanceChangeProcessor {
 
 	private EventStats stats = new EventStats();
 
-	public ProcessInstanceChangeProcessor(Context context, EventDistributor distributor) {		
+	public ProcessInstanceChangeProcessor(ProcessContext context, EventDistributor distributor) {		
 		this.distributor = distributor;
 		this.context = context;
 		stepType = context.getSchemaRegistry().getType(ProcessStep.class);
@@ -131,7 +132,8 @@ public class ProcessInstanceChangeProcessor {
 	}
 
 
-	public Set<ProcessInstance> handleUpdates(Collection<Update> operations) {
+	@Override
+	public void handleUpdates(Collection<Update> operations) {
 		@SuppressWarnings("unchecked")
 
 		List<ProcessScopedCmd> queuedEffects = (List<ProcessScopedCmd>) operations.stream()

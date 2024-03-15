@@ -36,7 +36,7 @@ class InstanceTests extends DefinitionWrapperTests {
 	TestArtifacts artifactFactory;
 		
 	PPEInstanceType typeJira;
-	ProcessInstanceChangeProcessor picp;
+	ProcessInstanceChangeListener picp;
 	ProcessQAStatsMonitor monitor;
 	
 	
@@ -51,7 +51,7 @@ class InstanceTests extends DefinitionWrapperTests {
 		EventDistributor eventDistrib = new EventDistributor();
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
 		eventDistrib.registerHandler(monitor);
-		ProcessInstanceChangeProcessor picp = new ProcessInstanceChangeProcessor(configBuilder.getContext(), eventDistrib);
+		ProcessInstanceChangeListener picp = new ProcessInstanceChangeProcessor(configBuilder.getContext(), eventDistrib);
 		WorkspaceListenerWrapper picpWrapper = new WorkspaceListenerWrapper(designspace, picp);
 		picpWrapper.registerWithWorkspace();
 	//	WorkspaceListenerSequencer wsls = new WorkspaceListenerSequencer(ws);

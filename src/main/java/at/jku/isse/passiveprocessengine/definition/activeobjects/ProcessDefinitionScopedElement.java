@@ -1,13 +1,13 @@
 package at.jku.isse.passiveprocessengine.definition.activeobjects;
 
-import at.jku.isse.passiveprocessengine.Context;
-import at.jku.isse.passiveprocessengine.InstanceWrapper;
+import at.jku.isse.passiveprocessengine.core.InstanceWrapper;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionScopeType;
 
 public abstract class ProcessDefinitionScopedElement extends InstanceWrapper {
 
-	public ProcessDefinitionScopedElement(PPEInstance instance, Context context) {
+	public ProcessDefinitionScopedElement(PPEInstance instance, ProcessContext context) {
 		super(instance, context);
 	}
 
@@ -28,6 +28,10 @@ public abstract class ProcessDefinitionScopedElement extends InstanceWrapper {
 		if (pi != null)
 			return context.getWrappedInstance(ProcessDefinition.class, pi);
 		else return null;
+	}
+	
+	protected ProcessContext getProcessContext() {
+		return (ProcessContext) context;
 	}
 
 	@Override

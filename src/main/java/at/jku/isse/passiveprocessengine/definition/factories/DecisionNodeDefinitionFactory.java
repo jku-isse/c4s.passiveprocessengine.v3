@@ -1,7 +1,7 @@
 package at.jku.isse.passiveprocessengine.definition.factories;
 
-import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
@@ -9,7 +9,7 @@ import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionT
 
 public class DecisionNodeDefinitionFactory extends DomainFactory {
 	
-	public DecisionNodeDefinitionFactory(Context context) {
+	public DecisionNodeDefinitionFactory(ProcessContext context) {
 		super(context);
 	}
 

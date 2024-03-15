@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import at.jku.isse.passiveprocessengine.Context;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
@@ -15,7 +15,7 @@ import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementT
 
 public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 
-	public DecisionNodeDefinition(PPEInstance instance, Context context) {
+	public DecisionNodeDefinition(PPEInstance instance, ProcessContext context) {
 		super(instance, context);
 	}
 
@@ -119,10 +119,10 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 	}
 
 	@Override
-	public void deleteCascading(ProcessConfigBaseElementType configFactory) {
-		this.getMappings().forEach(md -> md.deleteCascading(configFactory));
+	public void deleteCascading() {
+		this.getMappings().forEach(md -> md.deleteCascading());
 		// no instanceType for DNI to delete, all processes use the same one.
-		super.deleteCascading(configFactory);
+		super.deleteCascading();
 	}
 
 	public List<ProcessDefinitionError> checkDecisionNodeStructureValidity() {

@@ -1,14 +1,14 @@
 package at.jku.isse.passiveprocessengine.instance.factories;
 
-import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 
 public class ProcessConfigFactory extends DomainFactory {
 		
-	public ProcessConfigFactory(Context context) {
+	public ProcessConfigFactory(ProcessContext context) {
 		super(context);		
 	}
 

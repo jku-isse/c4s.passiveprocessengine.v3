@@ -21,11 +21,12 @@ import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.designspace.rule.service.RuleService;
-import at.jku.isse.passiveprocessengine.Context;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
+import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeListener;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
@@ -45,7 +46,7 @@ class InstanceTestsAfterPersistence {
 
 	static Workspace ws;
 	static InstanceType typeJira;
-	ProcessInstanceChangeProcessor picp;
+	ProcessInstanceChangeListener picp;
 	static JsonDefinitionSerializer json = new JsonDefinitionSerializer();
 	static ProcessQAStatsMonitor monitor;
 
@@ -71,7 +72,7 @@ class InstanceTestsAfterPersistence {
 	private ProcessInstance findProcessInstanceByName(String processDefinitionName, String namePostFix) {
 		for (Instance instance : ws.debugInstances()) {
 			if (instance.name().equals(processDefinitionName + "_" + namePostFix)) {
-				return Context.getWrappedInstance(ProcessInstance.class, instance);
+				return ProcessContext.getWrappedInstance(ProcessInstance.class, instance);
 			}
 		}
 		return null;
@@ -236,7 +237,7 @@ class InstanceTestsAfterPersistence {
 			td.getDefinition().getQAConstraints().stream().forEach(entry -> {
 				//InstanceType type = td.getInstance().getProperty(ProcessStep.getQASpecId(entry, ProcessStep.getOrCreateDesignSpaceInstanceType(ws, td.getDefinition()))).propertyType().referencedInstanceType();
 				String id = ProcessStep.getQASpecId(entry, pd);
-				ConstraintResultWrapper cw = Context.getWrappedInstance(ConstraintResultWrapper.class, (Instance) td.getInstance().getPropertyAsMap(AbstractProcessStepType.CoreProperties.qaState.toString()).get(id));
+				ConstraintResultWrapper cw = ProcessContext.getWrappedInstance(ConstraintResultWrapper.class, (Instance) td.getInstance().getPropertyAsMap(AbstractProcessStepType.CoreProperties.qaState.toString()).get(id));
 				ConsistencyRuleType crt = (ConsistencyRuleType)cw.getRuleResult().getInstanceType();
 				assertTrue(ConsistencyUtils.crdValid(crt));
 				String eval = (String) crt.ruleEvaluations().get().stream()

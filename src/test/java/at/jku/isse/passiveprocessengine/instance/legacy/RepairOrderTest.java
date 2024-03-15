@@ -36,6 +36,7 @@ import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts.JiraStates;
 import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
+import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeListener;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
@@ -68,7 +69,7 @@ public class RepairOrderTest {
 		EventDistributor eventDistrib = new EventDistributor();
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
 		eventDistrib.registerHandler(monitor);
-		ProcessInstanceChangeProcessor picp = new ProcessInstanceChangeProcessor(ws, eventDistrib);
+		ProcessInstanceChangeListener picp = new ProcessInstanceChangeProcessor(ws, eventDistrib);
 		repAnalyzer = new RepairAnalyzer(ws, rs,scorer,timeProvider, new UsageMonitor(timeProvider));
 		WorkspaceListenerSequencer wsls = new WorkspaceListenerSequencer(ws);
 		wsls.registerListener(repAnalyzer);

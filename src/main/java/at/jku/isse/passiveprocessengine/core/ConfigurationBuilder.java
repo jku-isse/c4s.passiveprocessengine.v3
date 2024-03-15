@@ -1,9 +1,5 @@
-package at.jku.isse.passiveprocessengine;
+package at.jku.isse.passiveprocessengine.core;
 
-import at.jku.isse.passiveprocessengine.core.FactoryIndex;
-import at.jku.isse.passiveprocessengine.core.InstanceRepository;
-import at.jku.isse.passiveprocessengine.core.RuleDefinitionFactory;
-import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
 import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
 import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionType;
@@ -25,7 +21,7 @@ public class ConfigurationBuilder {
 	final InstanceRepository instanceRepository;
 	final SchemaRegistry schemaRegistry;
 	
-	protected Context context;
+	protected ProcessContext context;
 	protected InputToOutputMapper ioMapper;
 	
 	public ConfigurationBuilder(SchemaRegistry schemaRegistry
@@ -74,7 +70,7 @@ public class ConfigurationBuilder {
 	}
 	
 	private void initContext(RuleServiceWrapper ruleService, RuleDefinitionFactory ruleFactory) {
-		context = new Context(instanceRepository, schemaRegistry, ioMapper);
+		context = new ProcessContext(instanceRepository, schemaRegistry, ioMapper);
 		context.inject(FactoryIndex.build(context, ruleService, ruleFactory));
 	}
 	

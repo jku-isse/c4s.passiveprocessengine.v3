@@ -2,8 +2,8 @@ package at.jku.isse.passiveprocessengine.instance.factories;
 
 import java.util.UUID;
 
-import at.jku.isse.passiveprocessengine.Context;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
@@ -13,7 +13,7 @@ import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceTy
 
 public class ProcessInstanceFactory extends DomainFactory {
 						
-	public ProcessInstanceFactory(Context context) {
+	public ProcessInstanceFactory(ProcessContext context) {
 		super(context);		
 	}
 	

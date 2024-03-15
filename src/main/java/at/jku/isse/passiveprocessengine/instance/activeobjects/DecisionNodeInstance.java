@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import at.jku.isse.passiveprocessengine.Context;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
@@ -27,7 +27,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	private boolean isInternalPropagationDone = false;
 	private InterStepDataMapper mapper = null;
 
-	public DecisionNodeInstance(PPEInstance instance, Context context) {
+	public DecisionNodeInstance(PPEInstance instance, ProcessContext context) {
 		super(instance, context);
 	}
 
@@ -62,7 +62,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getOutSteps() {
 		return (Set<ProcessStep>) instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.outSteps.toString(), Set.class).stream()
-			.map(inst -> context.getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((PPEInstance) inst), (PPEInstance)inst))
+			.map(inst -> getProcessContext().getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((PPEInstance) inst), (PPEInstance)inst))
 			.collect(Collectors.toSet());
 	}
 
@@ -74,7 +74,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getInSteps() {
 		return (Set<ProcessStep>) instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.inSteps.toString(), Set.class).stream()
-			.map(inst -> context.getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((PPEInstance) inst), (PPEInstance)inst))
+			.map(inst -> getProcessContext().getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((PPEInstance) inst), (PPEInstance)inst))
 			.collect(Collectors.toSet());
 	}
 
