@@ -1,16 +1,5 @@
 package at.jku.isse.designspace.passiveprocessengine.definition.serialization;
 
-import at.jku.isse.designspace.core.model.Workspace;
-import at.jku.isse.designspace.core.service.WorkspaceService;
-import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
-import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
-import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
-import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
-import at.jku.isse.passiveprocessengine.demo.TestProcesses;
-import at.jku.isse.passiveprocessengine.instance.ProcessException;
-import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
-
 import java.util.ArrayList;
 
 import org.junit.Ignore;
@@ -20,6 +9,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import at.jku.isse.designspace.core.model.Workspace;
+import at.jku.isse.designspace.core.service.WorkspaceService;
+import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
+import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
+import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
+import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
+import at.jku.isse.passiveprocessengine.demo.TestProcesses;
+import at.jku.isse.passiveprocessengine.instance.ProcessException;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest

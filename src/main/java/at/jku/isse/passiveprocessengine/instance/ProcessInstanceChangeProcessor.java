@@ -14,9 +14,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-import at.jku.isse.designspace.core.events.ElementCreate;
 import at.jku.isse.designspace.core.events.Operation;
-import at.jku.isse.designspace.core.events.PropertyCreate;
 import at.jku.isse.designspace.core.events.PropertyUpdateAdd;
 import at.jku.isse.designspace.core.events.PropertyUpdateRemove;
 import at.jku.isse.designspace.core.events.PropertyUpdateSet;

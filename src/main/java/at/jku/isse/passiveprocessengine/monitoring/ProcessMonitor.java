@@ -9,14 +9,13 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import at.jku.isse.passiveprocessengine.instance.messages.IProcessEventHandler;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.ConstraintOverrideEvent;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.QAConstraintFulfillmentChanged;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.QAFulfillmentChanged;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.StepStateTransitionEvent;
-import at.jku.isse.passiveprocessengine.monitoring.UsageMonitor.LogProperties;
+import at.jku.isse.passiveprocessengine.instance.messages.IProcessEventHandler;
 import net.logstash.logback.argument.StructuredArgument;
 
 public class ProcessMonitor implements IProcessEventHandler{

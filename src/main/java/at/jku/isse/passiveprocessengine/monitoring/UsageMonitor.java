@@ -1,5 +1,10 @@
 package at.jku.isse.passiveprocessengine.monitoring;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
+import java.util.LinkedList;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,14 +14,7 @@ import at.jku.isse.designspace.rule.service.RuleService;
 import at.jku.isse.passiveprocessengine.instance.ConstraintWrapper;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
-import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
 import net.logstash.logback.argument.StructuredArgument;
-
-import static net.logstash.logback.argument.StructuredArguments.kv;
-
-import java.time.format.DateTimeFormatter;
-import java.util.LinkedList;
-import java.util.List;
 
 public class UsageMonitor {
 

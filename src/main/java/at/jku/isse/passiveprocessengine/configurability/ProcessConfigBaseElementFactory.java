@@ -4,9 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
-
 import at.jku.isse.designspace.core.model.Cardinality;
 import at.jku.isse.designspace.core.model.Folder;
 import at.jku.isse.designspace.core.model.Instance;

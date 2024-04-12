@@ -16,7 +16,6 @@ import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElement
 import at.jku.isse.passiveprocessengine.definition.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 public class DTOs {

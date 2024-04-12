@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>at.jku.isse.designspace.passiveprocessengine</groupId>
 	<artifactId>c4s.passiveprocessengine.v3</artifactId>
-	<version>0.6.1-SNAPSHOT</version>
+	<version>0.6.2-SNAPSHOT</version>
 
 	<distributionManagement>
 		<repository>
@@ -16,7 +16,7 @@
 
 	<properties>
 		<lombok.version>1.18.30</lombok.version>
-		<java.version>11</java.version>
+		<java.version>20</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
@@ -45,36 +45,16 @@
 	</repositories>
 
 	<dependencies>
-<!-- 		<dependency>
-			<groupId>JKU.ISSE</groupId>
-			<artifactId>c4s.artifact.api</artifactId>
-			<version>4.1.12-SNAPSHOT</version>
-		</dependency> -->
 		<dependency>
 			<groupId>at.jku.isse.designspace</groupId>
 			<artifactId>core</artifactId>
-			<version>4.4.0-SNAPSHOT</version>
+			<version>4.5.0</version>
 		</dependency>
 		<dependency>
 			<groupId>at.jku.isse.designspace</groupId>
 			<artifactId>rule</artifactId>
-			<version>4.5.1-SNAPSHOT</version>
+			<version>4.6.0</version>
 		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<version>2.2.3.RELEASE</version>
-			<scope>test</scope>
-		</dependency>
-		<!-- <dependency> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-autoconfigure</artifactId> 
-			<version>2.2.3.RELEASE</version> <scope>compile</scope> </dependency> <dependency> 
-			<groupId>org.springframework.boot</groupId> <artifactId>spring-boot-starter-logging</artifactId> 
-			<version>2.2.3.RELEASE</version> </dependency> -->
-
-		<!-- Spring RestController <dependency> <groupId>org.springframework.boot</groupId> 
-			<artifactId>spring-boot-starter-web</artifactId> <version>2.2.3.RELEASE</version> 
-			</dependency> -->
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
@@ -93,11 +73,11 @@
 			<version>2.6.0</version>
 		</dependency>
 		<!-- Inject -->
-		<dependency>
+<!--		<dependency>
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
 			<version>4.2.3</version>
-		</dependency>
+		</dependency>-->
 		<!-- JSON -->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
@@ -111,19 +91,35 @@
 		</dependency>
 
 		<!-- Test suite -->
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-engine</artifactId>
-			<version>5.4.2</version>
-			<scope>test</scope>
+				<dependency>
+    		<groupId>org.springframework.boot</groupId>
+    		<artifactId>spring-boot-starter-test</artifactId>
+    		<version>3.2.4</version>
+    		<scope>test</scope>
 		</dependency>
-		<dependency>
+		
+<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-engine -->
+<dependency>
+    <groupId>org.junit.jupiter</groupId>
+    <artifactId>junit-jupiter-engine</artifactId>
+    <version>5.10.2</version>
+    <scope>test</scope>
+</dependency>
+<!-- https://mvnrepository.com/artifact/org.junit.platform/junit-platform-runner -->
+<dependency>
+    <groupId>org.junit.platform</groupId>
+    <artifactId>junit-platform-runner</artifactId>
+    <version>1.10.2</version>
+    <scope>test</scope>
+</dependency>
+
+<!--		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
 			<version>5.4.2</version>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
+		</dependency>-->
+<!--		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-params</artifactId>
 			<version>5.4.2</version>
@@ -134,7 +130,7 @@
 			<artifactId>artifact-connector.jira</artifactId>
 			<version>1.7.0</version>
 			<scope>test</scope>
-		</dependency>
+		</dependency>-->
 	</dependencies>
 
 	<build>
@@ -143,8 +139,8 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<source>11</source>
-					<target>11</target>
+					<source>20</source>
+					<target>20</target>
 				</configuration>
 			</plugin>
 		</plugins>

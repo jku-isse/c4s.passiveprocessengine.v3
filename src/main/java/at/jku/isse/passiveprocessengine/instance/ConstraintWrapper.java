@@ -15,7 +15,6 @@ import at.jku.isse.passiveprocessengine.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
-import at.jku.isse.passiveprocessengine.instance.ProcessStep.CoreProperties;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

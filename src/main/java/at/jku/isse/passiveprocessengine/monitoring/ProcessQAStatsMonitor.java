@@ -7,8 +7,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.inject.Inject;
-
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.gson.Gson;
@@ -37,7 +35,6 @@ public class ProcessQAStatsMonitor implements IProcessEventHandler {
 	
 	public ProcessQAStatsMonitor() {}
 	
-	@Inject
 	public ProcessQAStatsMonitor(ITimeStampProvider tsProvider) {
 		this.timeStampProvider = tsProvider;
 	}

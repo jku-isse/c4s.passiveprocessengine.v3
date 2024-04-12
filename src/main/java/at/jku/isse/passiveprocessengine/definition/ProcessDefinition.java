@@ -1,10 +1,7 @@
 package at.jku.isse.passiveprocessengine.definition;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -25,10 +22,7 @@ import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator;
 import at.jku.isse.passiveprocessengine.analysis.RuleAugmentation;
 import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.DecisionNode;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Step;
 import at.jku.isse.passiveprocessengine.instance.DecisionNodeInstance;
-import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import lombok.extern.slf4j.Slf4j;

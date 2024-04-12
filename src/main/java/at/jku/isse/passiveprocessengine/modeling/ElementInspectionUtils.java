@@ -16,7 +16,6 @@ import at.jku.isse.designspace.rule.arl.repair.AbstractRepairAction;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.arl.repair.RestrictionNode;
 import at.jku.isse.designspace.rule.arl.repair.UnknownRepairValue;
-import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.Rule;
 import at.jku.isse.passiveprocessengine.WrapperCache;
