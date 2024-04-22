@@ -17,12 +17,14 @@ import at.jku.isse.designspace.core.model.SetProperty;
 import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
+import at.jku.isse.designspace.rule.arl.repair.order.NoSort;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairNodeScorer;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairStats;
 import at.jku.isse.designspace.rule.arl.repair.order.RepairTreeSorter;
 import at.jku.isse.designspace.rule.arl.repair.order.SortOnRepairPercentage;
 import at.jku.isse.designspace.rule.arl.repair.order.SortOnRestriction;
 import at.jku.isse.designspace.rule.checker.ArlRuleEvaluator;
+import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.designspace.rule.model.ReservedNames;
@@ -96,6 +98,7 @@ public class RepairOrderTest {
 		ws.concludeTransaction();
 		repAnalyzer.printImpact();
 		repAnalyzer.getImpact().clear();
+		this.helperFunction();
 	}
 	// The test checks if at the end the program it calculates the correct
 	//select and unselect count of the nodes. Test Passed
@@ -275,9 +278,12 @@ public class RepairOrderTest {
 				{
 				RepairNode rn = RuleService.repairTree(cre);
 				if (rn != null) {
+					ConsistencyUtils.printRepairTree(rn);
+				//	scorer=new alphaBeticalSort();
 					RepairTreeSorter rts = new RepairTreeSorter(this.rs,scorer);
 				//	rts.printSortedRepairTree(rn, 1);
-					scorer=new SortOnRestriction();
+					
+					rts.updateTreeOnScores(rn, cre.getProperty("name").getValue().toString());
 				//	rts.printSortedRepairTree(rn, 1);
 				}
 				}

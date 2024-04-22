@@ -13,11 +13,12 @@ import at.jku.isse.passiveprocessengine.WrapperCache;
 import at.jku.isse.passiveprocessengine.configurability.ProcessConfigBaseElementFactory;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import lombok.NonNull;
 
 public class ConstraintSpec extends /*InstanceWrapper*/ ProcessDefinitionScopedElement{
 
 	
-	public static enum CoreProperties {constraintSpec, humanReadableDescription, specOrderIndex, isOverridable, ruleType, conditionsType};
+	public static enum CoreProperties {constraintSpec, augmentedSpec, humanReadableDescription, specOrderIndex, isOverridable, ruleType, conditionsType};
 	public static final String designspaceTypeId = ConstraintSpec.class.getSimpleName();
 	
 	public ConstraintSpec(Instance instance) {
@@ -30,6 +31,19 @@ public class ConstraintSpec extends /*InstanceWrapper*/ ProcessDefinitionScopedE
 
 	public String getConstraintSpec() {
 		return (String) instance.getPropertyAsValue(CoreProperties.constraintSpec.toString());
+	}
+	
+	public String getAugmentedConstraintSpec() {
+		String aug =  (String) instance.getPropertyAsValue(CoreProperties.augmentedSpec.toString());
+		if (aug == null)
+			return getConstraintSpec();
+		else
+			return aug;
+	}
+	
+	public void setAugmentedConstraintSpec(@NonNull String arl) {
+		instance.getPropertyAsSingle(CoreProperties.augmentedSpec.toString()).set(arl);
+		
 	}
 
 	public String getHumanReadableDescription() {
@@ -61,6 +75,7 @@ public class ConstraintSpec extends /*InstanceWrapper*/ ProcessDefinitionScopedE
 				InstanceType specType = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessDefinitionScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
 				// constraintId maps to Instance name property
 				specType.createPropertyType(CoreProperties.constraintSpec.toString(), Cardinality.SINGLE, Workspace.STRING);
+				specType.createPropertyType(CoreProperties.augmentedSpec.toString(), Cardinality.SINGLE, Workspace.STRING);			
 				specType.createPropertyType(CoreProperties.humanReadableDescription.toString(), Cardinality.SINGLE, Workspace.STRING);
 				specType.createPropertyType((CoreProperties.specOrderIndex.toString()), Cardinality.SINGLE, Workspace.INTEGER);
 				specType.createPropertyType((CoreProperties.isOverridable.toString()), Cardinality.SINGLE, Workspace.BOOLEAN);

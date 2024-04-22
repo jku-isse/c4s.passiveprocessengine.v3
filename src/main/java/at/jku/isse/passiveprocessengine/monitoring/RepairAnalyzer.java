@@ -165,6 +165,9 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 				RepairNode rn = RuleService.repairTree(cre);
 				// Print the tree
 				rtf.filterRepairTree(rn);
+				/*RepairTreeSorter rts=new RepairTreeSorter(this.pce.getRs(), scorer);
+				rts.updateTreeOnScores(rn,cre.getProperty("name").getValue().toString());
+				rts.sortTree(rn, 1);*/
 				repairForRule.put(cre, rn);
 				Set<RepairAction> ras = rn.getRepairActions();
 				// we also calculate statistics on how many repairs for this type of rule we
@@ -892,7 +895,13 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 				Instance stepInst = cre.contextInstance();
 				String rule=cre.getProperty("name").getValue().toString();
 				RepairNode rn = repairForRule.get(cre);
-				if(this.rft.isSortEnabled()) // sorting is enabled
+				if(this.rft.isRestrictionFrequency())
+				{
+					Event_DS event=new Event_DS(entryPU.getKey(), null, se_cre,cre, cre.isConsistent(), stepInst, null, time.getLastChangeTimeStamp(), 0, 0, -1);
+					this.pce.addAllExecuteEventLog(event);
+					updateCRE_matrix(se_cre, entryPU.getKey(),stepInst,time.getLastChangeTimeStamp());
+				}
+				else if(this.rft.isSortEnabled()) // sorting is enabled
 				{/*Storing the data of all changes along with  their details i.e. effectType, constraint, operation, process, etc. */
 					Event_DS event=new Event_DS(entryPU.getKey(), null, se_cre,cre, cre.isConsistent(), stepInst, null, time.getLastChangeTimeStamp(), 0, 0, 0);
 					this.pce.addAllExecuteEventLog(event);
@@ -920,7 +929,6 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 				}
 				else if(this.rft.isRestComplexityEnabled())
 				{
-					/*Storing the data of all changes along with  their details i.e. effectType, constraint, operation, process, etc. */
 					if(rn!=null)
 					{
 						//ConsistencyUtils.printRepairTreeWithRestrictions(rn);
@@ -968,7 +976,7 @@ public class RepairAnalyzer implements WorkspaceListener, RuleEvaluationListener
 					rt=rt.toRepairTemplate(ra);
 					Event_DS event=new Event_DS(clientop, ra, se_cre,cre, cre.isConsistent(), stepInst, rt, dateTime, highestRank,ra.getRank(),ra.getScore());
 					this.pce.addCRE_CurrentEventList(event);
-					this.pce.updateExecutedEventLog(se_cre,clientop,stepInst,dateTime,rt,ra);
+					this.pce.updateExecutedEventLog(se_cre,clientop,stepInst,dateTime,rt,ra,ra.getScore());
 				}
 				else // Storing the repairs suggested but not selected by the developer.
 				{

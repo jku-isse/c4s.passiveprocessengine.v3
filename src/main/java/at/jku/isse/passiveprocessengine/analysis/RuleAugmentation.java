@@ -71,6 +71,7 @@ public class RuleAugmentation {
 				try {  
 					arl = rewriteConstraint(arl);
 					log.debug(String.format("Augmented constraint %s for %s to %s", specId, sd.getName(), arl));
+					spec.setAugmentedConstraintSpec(arl);
 				} catch(Exception e) {
 					errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
 				}
