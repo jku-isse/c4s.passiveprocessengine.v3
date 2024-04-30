@@ -62,7 +62,7 @@ public class RepairOrderTest {
 	static RepairStats rs = new RepairStats();
 	static RepairNodeScorer scorer=new SortOnRestriction();
 	static ReplayTimeProvider timeProvider=new ReplayTimeProvider();
-	static RepairFeatureToggle rtf=new RepairFeatureToggle(true,false,false);
+	static RepairFeatureToggle rtf=new RepairFeatureToggle(true,false,false, false);
 	@BeforeEach
 	void setup() throws Exception {
 		RuleService.setEvaluator(new ArlRuleEvaluator());

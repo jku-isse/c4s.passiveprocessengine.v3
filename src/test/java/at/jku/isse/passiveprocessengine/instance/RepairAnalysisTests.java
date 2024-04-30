@@ -83,7 +83,7 @@ public class RepairAnalysisTests {
 	static RepairStats rs = new RepairStats();
 	static RepairNodeScorer scorer=new SortOnRestriction();
 	static ITimeStampProvider timeProvider=new CurrentSystemTimeProvider();
-	static RepairFeatureToggle rtf=new RepairFeatureToggle(true,false,false);
+	static RepairFeatureToggle rtf=new RepairFeatureToggle(true,false,false, false);
 
 	@BeforeEach
 	void setup() throws Exception {

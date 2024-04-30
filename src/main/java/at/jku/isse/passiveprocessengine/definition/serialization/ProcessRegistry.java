@@ -24,7 +24,7 @@ import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceError;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
-import at.jku.isse.passiveprocessengine.process.overriding.processOverridingAnalysis;
+import at.jku.isse.passiveprocessengine.process.overriding.ProcessOverridingAnalysis;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -46,10 +46,12 @@ public class ProcessRegistry {
 	public static final String CONFIG_KEY_doImmediateInstantiateAllSteps = "doImmediateInstantiateAllSteps";
 	
 	public static final String STAGINGPOSTFIX = "_STAGING";
-	processOverridingAnalysis poa=new processOverridingAnalysis();
+	
+	ProcessOverridingAnalysis poa=new ProcessOverridingAnalysis();
+	protected List<String> override_warnings;
 	
 	public ProcessRegistry() {
-		
+		override_warnings=new LinkedList<>();
 	}
 	
 	//Added Code
@@ -57,8 +59,19 @@ public class ProcessRegistry {
 	{
 		return this.ws;
 	}
+	public List<String> getOverride_warnings() {
+		return override_warnings;
+	}
+
+	public void setOverride_warnings(List<String> override_warnings) {
+		this.override_warnings = override_warnings;
+	}
 	//End
 	
+	
+
+	
+
 	public void inject(Workspace ws, ProcessConfigBaseElementFactory configFactory) {
 		this.ws=ws;
 		this.configFactory = configFactory;
@@ -171,7 +184,8 @@ public class ProcessRegistry {
 					doImmediateInstantiateAllSteps = true;
 				pd.setImmediateInstantiateAllStepsEnabled(doImmediateInstantiateAllSteps);
 				// here now we have the process deployed and now we can analyze it for our identification step
-				//errors=poa.beginAnalysis(pd,errors,ws);
+				override_warnings.clear();
+				override_warnings=poa.beginAnalysis(pd,override_warnings,ws);
 			} else {
 				pd.setIsWithoutBlockingErrors(false);
 			}

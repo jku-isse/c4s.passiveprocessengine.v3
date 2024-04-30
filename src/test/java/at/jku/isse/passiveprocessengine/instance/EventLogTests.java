@@ -77,7 +77,7 @@ class EventLogTests {
 	static RepairStats rs=new RepairStats();
 	static RepairNodeScorer scorer=new SortOnRepairPercentage();
 	static ReplayTimeProvider timeProvider=new ReplayTimeProvider();
-	static RepairFeatureToggle rtf=new RepairFeatureToggle(false,false,false);
+	static RepairFeatureToggle rtf=new RepairFeatureToggle(false,false,false, false);
 	
 	@BeforeEach
 	void setup() throws Exception {
