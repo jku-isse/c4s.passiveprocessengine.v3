@@ -14,6 +14,7 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
+import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
@@ -27,9 +28,9 @@ public class ProcessDefinitionFactory extends DomainFactory {
 	public static final String CRD_DATAMAPPING_PREFIX = "crd_datamapping_";
 	public static final String CRD_QASPEC_PREFIX = "crd_qaspec_";
 
-	final RuleServiceWrapper ruleService;
+	final RewriterFactory ruleService;
 
-	public ProcessDefinitionFactory(ProcessContext context, RuleServiceWrapper ruleService) {
+	public ProcessDefinitionFactory(ProcessContext context, RewriterFactory ruleService) {
 		super(context);
 		this.ruleService = ruleService;
 	}

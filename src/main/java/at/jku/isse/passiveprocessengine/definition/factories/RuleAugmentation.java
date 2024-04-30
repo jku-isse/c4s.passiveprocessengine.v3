@@ -14,7 +14,6 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
-import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

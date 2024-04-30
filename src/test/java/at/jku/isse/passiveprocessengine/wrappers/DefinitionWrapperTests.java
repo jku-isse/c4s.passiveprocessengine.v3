@@ -5,14 +5,14 @@ import static org.junit.Assert.assertNull;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import at.jku.isse.PPECoreSpringConfig;
+import at.jku.isse.BaseSpringConfig;
 import at.jku.isse.designspace.core.model.LanguageWorkspace;
 import at.jku.isse.designspace.core.model.ProjectWorkspace;
 import at.jku.isse.passiveprocessengine.core.BuildInType;
@@ -33,15 +33,15 @@ import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionType;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionScopeType;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
 import at.jku.isse.passiveprocessengine.designspace.DesignSpaceSchemaRegistry;
+import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 public class DefinitionWrapperTests {
-		
+	
 	ProjectWorkspace projectWS;	
 	LanguageWorkspace languageWS;
-	
 	public DesignSpaceSchemaRegistry designspace;
 	public SchemaRegistry schemaReg;	
 	public ConfigurationBuilder configBuilder;
@@ -49,17 +49,19 @@ public class DefinitionWrapperTests {
 	@BeforeEach
 	protected
 	void setup() throws Exception {
-		languageWS = PPECoreSpringConfig.getLanguageWorkspace();
-		projectWS = PPECoreSpringConfig.getProjectWorkspace();
-		designspace = new DesignSpaceSchemaRegistry(languageWS, projectWS);
+		languageWS = BaseSpringConfig.getLanguageWorkspace();
+		projectWS = BaseSpringConfig.getProjectWorkspace();
+		designspace = BaseSpringConfig.getSchemaRegistry(languageWS, projectWS);
 		schemaReg = designspace;			
 		assert(schemaReg != null);		
-		configBuilder = new ConfigurationBuilder(designspace, designspace, new RuleServiceWrapper(designspace), designspace);
-		PPECoreSpringConfig.reset();
+		configBuilder = new ConfigurationBuilder(designspace, designspace, new RuleServiceWrapper(designspace), new RewriterFactory(designspace), designspace);		
+	}		
+	
+	@AfterEach
+	protected
+	void teardown() {
+		BaseSpringConfig.reset();
 	}
-	
-
-	
 	
 	@Test
 	void testBasicDefinitionTypeRegistration() {

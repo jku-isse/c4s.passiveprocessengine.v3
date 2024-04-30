@@ -35,7 +35,7 @@ public class InputToOutputMapper {
 			return Collections.emptyList(); // nothing to do
 		}
 
-		RepairNode repairTree = ruleService.repairTree(ruleResult);
+		RepairNode repairTree = ruleService.getRepairTree(ruleResult);
 		rtf.filterRepairTree(repairTree);
 		//DONE: if there are (only) concrete repair actions (which should be the case with symmetric difference)
 

@@ -134,6 +134,10 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 
 	@Override
 	public void handleUpdates(Collection<Update> operations) {
+		processProcessUpdates(operations);
+	}
+
+	protected Set<ProcessInstance> processProcessUpdates(Collection<Update> operations) {
 		@SuppressWarnings("unchecked")
 
 		List<ProcessScopedCmd> queuedEffects = (List<ProcessScopedCmd>) operations.stream()
@@ -156,7 +160,7 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 		prepareQueueExecution(queuedEffects); // here we can subclass and manage commands, lazy loading etc
 		return executeCommands(); // here we execute, or in subclass, when we are still lazy loading, skip execution until later
 	}
-
+	
 	protected void prepareQueueExecution(List<ProcessScopedCmd> mostRecentQueuedEffects) {
 		mostRecentQueuedEffects.forEach(cmd -> {
 			cmdQueue.put(cmd.getId(), cmd);

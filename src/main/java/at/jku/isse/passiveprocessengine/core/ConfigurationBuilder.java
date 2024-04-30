@@ -6,6 +6,7 @@ import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionType;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionScopeType;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessStepDefinitionType;
+import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
 import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
@@ -27,12 +28,13 @@ public class ConfigurationBuilder {
 	public ConfigurationBuilder(SchemaRegistry schemaRegistry
 			, InstanceRepository instanceRepository
 			, RuleServiceWrapper ruleService
+			, RewriterFactory rewriterFactory
 			, RuleDefinitionFactory ruleFactory) {
 		this.instanceRepository = instanceRepository;
 		this.schemaRegistry = schemaRegistry;
 		initSchemaRegistry();
 		ioMapper = new InputToOutputMapper(ruleService);
-		initContext(ruleService, ruleFactory);
+		initContext(rewriterFactory, ruleFactory);
 	}
 	
 	private void initSchemaRegistry() {
@@ -69,9 +71,9 @@ public class ConfigurationBuilder {
 		configTypeProvider.produceTypeProperties();
 	}
 	
-	private void initContext(RuleServiceWrapper ruleService, RuleDefinitionFactory ruleFactory) {
+	private void initContext(RewriterFactory rewriterFactory, RuleDefinitionFactory ruleFactory) {
 		context = new ProcessContext(instanceRepository, schemaRegistry, ioMapper);
-		context.inject(FactoryIndex.build(context, ruleService, ruleFactory));
+		context.inject(FactoryIndex.build(context, rewriterFactory, ruleFactory));
 	}
 	
 }

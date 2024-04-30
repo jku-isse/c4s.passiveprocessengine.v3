@@ -5,17 +5,20 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType.CARDINALITIES;
 
-
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
 class DesignspaceInterfaceTests extends Designspace5Setup {
 
-	
-	
+
 	private static final String ENTRY1 = "Entry1";
 	private static final String TEST_BASE_TYPE = "TestBaseType";
 	private static final String MAP_PROP = "MapProp";

@@ -5,7 +5,7 @@ import at.jku.isse.passiveprocessengine.definition.factories.DecisionNodeDefinit
 import at.jku.isse.passiveprocessengine.definition.factories.MappingDefinitionFactory;
 import at.jku.isse.passiveprocessengine.definition.factories.ProcessDefinitionFactory;
 import at.jku.isse.passiveprocessengine.definition.factories.StepDefinitionFactory;
-import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
+import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.instance.factories.ConstraintResultWrapperFactory;
 import at.jku.isse.passiveprocessengine.instance.factories.DecisionNodeInstanceFactory;
 import at.jku.isse.passiveprocessengine.instance.factories.ProcessInstanceFactory;
@@ -34,7 +34,7 @@ public class FactoryIndex {
 	 * @return FactoryIndex with new set of factory instances, 
 	 * if possible, ensure to build only once, to reuse Factories (multiple instances of same factory are ok, but not efficient)
 	 */
-	public static FactoryIndex build(ProcessContext context, RuleServiceWrapper ruleService, RuleDefinitionFactory ruleDefinitionFactory) {
+	public static FactoryIndex build(ProcessContext context, RewriterFactory ruleRewriterFactory, RuleDefinitionFactory ruleDefinitionFactory) {
 		FactoryIndex index = new FactoryIndex(
 				new ConstraintResultWrapperFactory(context),
 				new DecisionNodeInstanceFactory(context),
@@ -44,7 +44,7 @@ public class FactoryIndex {
 				new ConstraintSpecFactory(context),
 				new DecisionNodeDefinitionFactory(context),
 				new MappingDefinitionFactory(context),
-				new ProcessDefinitionFactory(context, ruleService),
+				new ProcessDefinitionFactory(context, ruleRewriterFactory),
 				new StepDefinitionFactory(context),
 				ruleDefinitionFactory
 				);

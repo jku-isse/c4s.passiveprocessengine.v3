@@ -8,6 +8,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.core.ProcessInstanceChangeListener;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;

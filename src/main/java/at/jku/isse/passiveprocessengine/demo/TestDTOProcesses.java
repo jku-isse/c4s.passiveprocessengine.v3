@@ -29,7 +29,8 @@ public class TestDTOProcesses {
 	public TestDTOProcesses(TestArtifacts artifactFactory) {
 		this.artifactFactory = artifactFactory;
 		typeJira = artifactFactory.getJiraInstanceType();
-		jiraFQN = "root/types/"+typeJira.getName();
+		//jiraFQN = "root/types/"+typeJira.getName();
+		jiraFQN = typeJira.getName();
 	}
 
 	protected DTOs.Process buildDefaultProcessSkeleton(String processName) {

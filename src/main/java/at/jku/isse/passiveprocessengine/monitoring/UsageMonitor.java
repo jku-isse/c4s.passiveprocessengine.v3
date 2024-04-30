@@ -77,7 +77,7 @@ public class UsageMonitor {
 	public void constraintedViewed(ConstraintResultWrapper cw, String userId) { //if not fulfilled, implies that repairtree was loaded
 		int repairCount = 0;
 		if (!cw.getEvalResult() && cw.getRuleResult() != null) {
-			RepairNode repairTree = ruleService.repairTree(cw.getRuleResult());
+			RepairNode repairTree = ruleService.getRepairTree(cw.getRuleResult());
 			repairCount = repairTree.getRepairActions().size();
 			// TODO: obtain also maxRank?
 		}
