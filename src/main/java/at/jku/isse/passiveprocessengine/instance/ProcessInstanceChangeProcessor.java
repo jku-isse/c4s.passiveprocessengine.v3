@@ -31,6 +31,7 @@ import at.jku.isse.passiveprocessengine.instance.messages.Commands.OutputChanged
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.PrematureStepTriggerCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.QAConstraintChangedCmd;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import lombok.Data;
@@ -121,8 +122,8 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 		} else if (op.getName().equals("result") && isOfCRDType(element)) {
 			RuleResult cr = (RuleResult)element;
 			PPEInstance ruleContext = cr.getContextInstance();
-			if (isOfStepType(ruleContext)) { // rule belonging to a step,
-				ProcessStep step = context.getWrappedInstance(ProcessStep.class, ruleContext);
+			if (isOfStepType(ruleContext)) { // rule belonging to a step, or TODO: process!				
+				ProcessStep step = getAsStepOrClass(ruleContext);
 				stats.incrementRuleUpdateEventCount();
 				ProcessScopedCmd effect = step.prepareRuleEvaluationChange(cr, op);
 				return Optional.ofNullable(effect);
@@ -131,6 +132,12 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 		return Optional.empty();
 	}
 
+	private ProcessStep getAsStepOrClass(PPEInstance instance) {
+		if (instance.getInstanceType().hasPropertyType(SpecificProcessInstanceType.CoreProperties.processDefinition.toString())) 
+			return context.getWrappedInstance(ProcessInstance.class, instance);
+		else
+			return context.getWrappedInstance(ProcessStep.class, instance);
+	}
 
 	@Override
 	public void handleUpdates(Collection<Update> operations) {

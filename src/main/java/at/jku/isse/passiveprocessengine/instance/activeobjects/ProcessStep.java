@@ -476,7 +476,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 
 	protected ProcessInstance getParentProcessOrThisIfProcessElseNull() {
-		return this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
+		if (this.getProcess() != null) { 
+			return this.getProcess(); } 
+		else { 
+			return (ProcessInstance)this; //ugly hack if this is a process without parent		
+		}
 	}
 
 	public List<Events.ProcessChangedEvent> processConditionsChanged(ConstraintResultWrapper cw) {

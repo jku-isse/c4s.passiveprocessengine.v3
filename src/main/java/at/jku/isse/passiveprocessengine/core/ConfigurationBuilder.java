@@ -7,7 +7,6 @@ import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionScopeT
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessStepDefinitionType;
 import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
-import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
 import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
 import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType;
@@ -27,7 +26,7 @@ public class ConfigurationBuilder {
 	
 	public ConfigurationBuilder(SchemaRegistry schemaRegistry
 			, InstanceRepository instanceRepository
-			, RuleServiceWrapper ruleService
+			, RepairTreeProvider ruleService
 			, RewriterFactory rewriterFactory
 			, RuleDefinitionFactory ruleFactory) {
 		this.instanceRepository = instanceRepository;

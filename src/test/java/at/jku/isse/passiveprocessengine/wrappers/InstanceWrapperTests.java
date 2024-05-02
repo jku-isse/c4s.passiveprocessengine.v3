@@ -16,8 +16,7 @@ import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 public class InstanceWrapperTests extends DefinitionWrapperTests {
 	 
 	@BeforeEach
-	protected
-	void setup() throws Exception {
+	public void setup() throws Exception {
 		super.setup();	
 	}	
 	

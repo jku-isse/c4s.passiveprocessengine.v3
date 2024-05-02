@@ -28,7 +28,7 @@ public class ConstraintRewriter {
 	}
 	
 	
-	public String rewriteConstraint(String constraint, List<StepParameter> singleUsage, StepDefinition stepDef) throws Exception {
+	public String rewriteConstraint(String constraint, List<StepParameter> singleUsage, StepDefinition stepDef) throws Exception {		
 		// we recreate the constraint to ensure we have all the types in iterators available
 		ArlEvaluator ae = new ArlEvaluator(ruleContext, constraint);
 		constraint = ae.syntaxTree.getOriginalARL(0, false);

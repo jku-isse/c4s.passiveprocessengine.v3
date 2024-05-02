@@ -6,7 +6,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.web.bind.annotation.*;
 
-import at.jku.isse.designspace.core.model.DesignSpace;
 
 @SpringBootApplication
 @CrossOrigin(origins="*")

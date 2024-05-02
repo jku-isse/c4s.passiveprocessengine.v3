@@ -24,7 +24,6 @@ import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionS
 import at.jku.isse.passiveprocessengine.definition.serialization.ProcessRegistry;
 import at.jku.isse.passiveprocessengine.definition.serialization.ProcessRegistry.ProcessDeployResult;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
-import at.jku.isse.passiveprocessengine.demo.TestProcesses;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeListener;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;

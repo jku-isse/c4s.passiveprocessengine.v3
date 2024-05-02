@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.demo;
+package at.jku.isse.passiveprocessengine.instance.legacy;
 
 import java.util.ArrayList;
 
@@ -11,6 +11,7 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefiniti
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Constraint;
+import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 

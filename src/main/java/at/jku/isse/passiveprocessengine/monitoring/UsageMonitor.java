@@ -9,8 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
+import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
-import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
@@ -19,14 +19,14 @@ import net.logstash.logback.argument.StructuredArgument;
 public class UsageMonitor {
 
 	private ITimeStampProvider timeProvider;
-	private RuleServiceWrapper ruleService;
+	private RepairTreeProvider ruleService;
 
 	private final Logger monitor = LoggerFactory.getLogger("monitor.usage");
 
 	public static enum UsageEvents {ProcessViewed, StepViewed, ConstraintViewed, GuidanceExecuted, ProcessDeleted, ProcessCreated}
 	public static enum LogProperties {rootProcessInstanceId, processInstanceId, processDefinitionId, stepDefinitionId, evalResult, guidanceSize, constraintId, repairTemplate, repairRank, originTime, eventType, userId}
 
-	public UsageMonitor(ITimeStampProvider timeProvider, RuleServiceWrapper ruleService) {
+	public UsageMonitor(ITimeStampProvider timeProvider, RepairTreeProvider ruleService) {
 		this.timeProvider = timeProvider;
 		this.ruleService = ruleService;
 	}
@@ -77,7 +77,7 @@ public class UsageMonitor {
 	public void constraintedViewed(ConstraintResultWrapper cw, String userId) { //if not fulfilled, implies that repairtree was loaded
 		int repairCount = 0;
 		if (!cw.getEvalResult() && cw.getRuleResult() != null) {
-			RepairNode repairTree = ruleService.getRepairTree(cw.getRuleResult());
+			RepairNode repairTree = (RepairNode) ruleService.getRepairTree(cw.getRuleResult());
 			repairCount = repairTree.getRepairActions().size();
 			// TODO: obtain also maxRank?
 		}

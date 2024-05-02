@@ -29,8 +29,8 @@ public class TestDTOProcesses {
 	public TestDTOProcesses(TestArtifacts artifactFactory) {
 		this.artifactFactory = artifactFactory;
 		typeJira = artifactFactory.getJiraInstanceType();
-		//jiraFQN = "root/types/"+typeJira.getName();
-		jiraFQN = typeJira.getName();
+		jiraFQN = "root/types/"+typeJira.getName();
+		//jiraFQN = typeJira.getName();
 	}
 
 	protected DTOs.Process buildDefaultProcessSkeleton(String processName) {
@@ -104,6 +104,29 @@ public class TestDTOProcesses {
 	
 	protected void buildJiraOutput(String paraName, Step step) {
 		step.getOutput().put(paraName, typeJira.getName());
+	}
+	
+	public DTOs.Process getMinimalSingleStepProcess() {
+		DTOs.Process procD = buildDefaultProcessSkeleton("TestSingleStepProcess");
+		procD.getInput().put(JIRA_IN, typeJira.getName());
+		procD.getOutput().put(JIRA_OUT, typeJira.getName());
+		buildAndIncludeCondition(procD, Conditions.PRECONDITION,"self.in_jiraIn->size() = 1");					
+		
+		DTOs.Step sd1 = DTOs.Step.builder().code("Task1").build();
+		sd1.getInput().put(JIRA_IN, typeJira.getName());
+		sd1.getOutput().put(JIRA_OUT, typeJira.getName());
+		buildAndIncludeCondition(sd1, Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
+		buildAndIncludeCondition(sd1, Conditions.POSTCONDITION,"self.in_jiraIn->size() = 1 and self.in_jiraIn->forAll( issue | issue.state = 'Closed')");
+		sd1.getIoMapping().put(JIRA_OUT, "self.in_jiraIn");//->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
+		sd1.setInDNDid(DND_SUB_START);
+		sd1.setOutDNDid(DND_SUB_END);
+		procD.getSteps().add(sd1);
+		
+		DTOs.DecisionNode dn1 = procD.getDecisionNodeByCode(DND_SUB_START);
+		DTOs.DecisionNode dn2 = procD.getDecisionNodeByCode(DND_SUB_END);
+		dn1.getMapping().add(new DTOs.Mapping(procD.getCode(), JIRA_IN, sd1.getCode(), JIRA_IN)); //into both steps
+		dn2.getMapping().add(new DTOs.Mapping(sd1.getCode(), JIRA_OUT, procD.getCode(), JIRA_OUT)); //out of the first
+		return procD;
 	}
 	
 	public DTOs.Process getSimpleDTOSubprocess( ) {

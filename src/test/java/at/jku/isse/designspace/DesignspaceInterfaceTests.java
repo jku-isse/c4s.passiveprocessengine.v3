@@ -4,20 +4,33 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
+import at.jku.isse.passiveprocessengine.core.DesignspaceTestSetup;
+import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType.CARDINALITIES;
+import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-class DesignspaceInterfaceTests extends Designspace5Setup {
+class DesignspaceInterfaceTests  {
 
+	@Autowired
+	protected DesignspaceTestSetup dsSetup;
+	
+	protected InstanceRepository instanceRepository;
+	protected SchemaRegistry schemaRegistry;
+	protected RepairTreeProvider ruleServiceWrapper;
 
 	private static final String ENTRY1 = "Entry1";
 	private static final String TEST_BASE_TYPE = "TestBaseType";
@@ -28,6 +41,19 @@ class DesignspaceInterfaceTests extends Designspace5Setup {
 	private static final String TEST_CHILD_TYPE = "TestChildType";
 	private static final String PARENT_PROP = "parentProp";
 
+	@BeforeEach
+	public void setup() throws Exception {
+		dsSetup.setup();
+		this.schemaRegistry = dsSetup.getSchemaRegistry();
+		this.instanceRepository = dsSetup.getInstanceRepository();
+		this.ruleServiceWrapper = dsSetup.getRepairTreeProvider();				
+	}
+	
+	@AfterEach
+	public void tearDown() {
+		dsSetup.tearDown();
+	}
+	
 	@Test
 	void testBasicSchema() {
 		createBaseType();

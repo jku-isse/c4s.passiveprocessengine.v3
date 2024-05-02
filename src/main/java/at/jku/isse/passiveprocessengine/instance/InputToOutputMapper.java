@@ -10,8 +10,8 @@ import at.jku.isse.designspace.rule.arl.repair.Repair;
 import at.jku.isse.designspace.rule.arl.repair.RepairAction;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.arl.repair.RepairTreeFilter;
+import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
-import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import lombok.extern.slf4j.Slf4j;
@@ -21,9 +21,9 @@ public class InputToOutputMapper {
 
 	private static RepairTreeFilter rtf = new OutputUpdateRepairTreeFilter();
 
-	private RuleServiceWrapper ruleService;
+	private RepairTreeProvider ruleService;
 	
-	public InputToOutputMapper(RuleServiceWrapper ruleService) {
+	public InputToOutputMapper(RepairTreeProvider ruleService) {
 		this.ruleService = ruleService;
 	}
 	
@@ -35,7 +35,7 @@ public class InputToOutputMapper {
 			return Collections.emptyList(); // nothing to do
 		}
 
-		RepairNode repairTree = ruleService.getRepairTree(ruleResult);
+		RepairNode repairTree = (RepairNode) ruleService.getRepairTree(ruleResult);
 		rtf.filterRepairTree(repairTree);
 		//DONE: if there are (only) concrete repair actions (which should be the case with symmetric difference)
 

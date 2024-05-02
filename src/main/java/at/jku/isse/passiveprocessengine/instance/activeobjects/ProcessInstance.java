@@ -274,7 +274,8 @@ public class ProcessInstance extends ProcessStep {
 					.map(inst -> context.getWrappedInstance(DecisionNodeInstance.class, (PPEInstance) inst))
 					.map(obj -> (DecisionNodeInstance)obj)
 					.collect(Collectors.toSet());
-		} else return Collections.emptySet();
+		} else 
+			return Collections.emptySet();
 	}
 
 	@SuppressWarnings("unchecked")

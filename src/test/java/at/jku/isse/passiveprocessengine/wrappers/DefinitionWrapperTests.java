@@ -9,17 +9,19 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import at.jku.isse.BaseSpringConfig;
-import at.jku.isse.designspace.core.model.LanguageWorkspace;
-import at.jku.isse.designspace.core.model.ProjectWorkspace;
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.ConfigurationBuilder;
+import at.jku.isse.passiveprocessengine.core.DesignspaceTestSetup;
+import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType.CARDINALITIES;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType.PPEPropertyType;
+import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
+import at.jku.isse.passiveprocessengine.core.RuleDefinitionFactory;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
@@ -32,35 +34,36 @@ import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionT
 import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionType;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionScopeType;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
-import at.jku.isse.passiveprocessengine.designspace.DesignSpaceSchemaRegistry;
+import at.jku.isse.passiveprocessengine.designspace.DesignspaceAbstractionMapper;
 import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
-import at.jku.isse.passiveprocessengine.designspace.RuleServiceWrapper;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 public class DefinitionWrapperTests {
 	
-	ProjectWorkspace projectWS;	
-	LanguageWorkspace languageWS;
-	public DesignSpaceSchemaRegistry designspace;
-	public SchemaRegistry schemaReg;	
-	public ConfigurationBuilder configBuilder;
+	@Autowired
+	protected DesignspaceTestSetup dsSetup;
+	
+	protected InstanceRepository instanceRepository;
+	protected SchemaRegistry schemaReg;
+	protected RepairTreeProvider ruleServiceWrapper;
+	protected ConfigurationBuilder configBuilder;
+	
 	
 	@BeforeEach
-	protected
-	void setup() throws Exception {
-		languageWS = BaseSpringConfig.getLanguageWorkspace();
-		projectWS = BaseSpringConfig.getProjectWorkspace();
-		designspace = BaseSpringConfig.getSchemaRegistry(languageWS, projectWS);
-		schemaReg = designspace;			
-		assert(schemaReg != null);		
-		configBuilder = new ConfigurationBuilder(designspace, designspace, new RuleServiceWrapper(designspace), new RewriterFactory(designspace), designspace);		
-	}		
+	public void setup() throws Exception {
+		dsSetup.setup();
+		this.schemaReg = dsSetup.getSchemaRegistry();
+		this.instanceRepository = dsSetup.getInstanceRepository();
+		this.ruleServiceWrapper = dsSetup.getRepairTreeProvider();			
+		DesignspaceAbstractionMapper designspaceAbstractionMapper = (DesignspaceAbstractionMapper) schemaReg; // ugly as we know this is a DesignSpace in the background
+		RuleDefinitionFactory ruleDefinitionFactory = dsSetup.getRuleDefinitionFactory(); 
+		configBuilder = new ConfigurationBuilder(schemaReg, instanceRepository, ruleServiceWrapper, new RewriterFactory(designspaceAbstractionMapper), ruleDefinitionFactory);		
+	}
 	
 	@AfterEach
-	protected
-	void teardown() {
-		BaseSpringConfig.reset();
+	public void tearDown() {
+		dsSetup.tearDown();
 	}
 	
 	@Test

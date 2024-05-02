@@ -32,10 +32,10 @@ class DefinitionTests extends InstanceWrapperTests {
 	static JsonDefinitionSerializer json = new JsonDefinitionSerializer();
 	
 	@BeforeEach
-	protected
+	public
 	void setup() throws Exception {
 		super.setup();
-		artifactFactory = new TestArtifacts(designspace, schemaReg);
+		artifactFactory = new TestArtifacts(instanceRepository, schemaReg);
 		procFactory = new TestDTOProcesses(artifactFactory);
 		procDTO = procFactory.getSimpleDTOSubprocess();
 		procDTO.calculateDecisionNodeDepthIndex(1);
@@ -71,9 +71,14 @@ class DefinitionTests extends InstanceWrapperTests {
 		assertTrue(sd1.getPreconditions().size() > 0);
 		
 		DecisionNodeDefinition dnd1 = procDef.getDecisionNodeDefinitionByName("dndSubStart");
-		DecisionNodeDefinition dnd2 = procDef.getDecisionNodeDefinitionByName("dndSubEnd");
+		
+		DecisionNodeDefinition dnd2 = procDef.getDecisionNodeDefinitionByName("dndSubEnd");		
 		assertNotNull(dnd1);
 		assertNotNull(dnd2);
+		assertTrue(procDef.getDecisionNodeDefinitions().contains(dnd2));
+		assertTrue(procDef.getDecisionNodeDefinitions().contains(dnd1));
+		
+		DecisionNodeDefinition sd1In = sd1.getInDND();
 		assertTrue(sd1.getInDND().equals(dnd1));
 		assertTrue(sd1.getOutDND().equals(dnd2));
 		assertTrue(sd2.getInDND().equals(dnd1));
