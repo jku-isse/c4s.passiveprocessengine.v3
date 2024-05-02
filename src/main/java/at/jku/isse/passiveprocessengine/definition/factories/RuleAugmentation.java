@@ -140,9 +140,9 @@ public class RuleAugmentation {
 
 	// experiment with Temporal constraints
 		private void augmentTemporalPrecondition() {
-			Optional<String> preconditionOpt = stepDef.getCondition(Conditions.PRECONDITION);
-			if ( preconditionOpt.isEmpty() || stepDef.getInDND().getInSteps().isEmpty())
-				return;// there is no precondition or this is the first process step
+			//Optional<String> preconditionOpt = stepDef.getCondition(Conditions.PRECONDITION);
+			//if ( preconditionOpt.isEmpty() || stepDef.getInDND().getInSteps().isEmpty())
+			//	return;// there is no precondition or this is the first process step
 			// for each prior step, if the completion status changes, then we reenable
 			// rule is something like for an AND:
 			// eventually(always( self.inDNI.inSteps->forAll(priorStep | priorStep.expectedLifecycleState='COMPLETED') -> eventually(EXISTINGPRECONDITION) ))

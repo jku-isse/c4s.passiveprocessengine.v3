@@ -187,11 +187,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		//cw.setEvalResult(fulfilled);
 		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		List<Events.ProcessChangedEvent> qaChanges = new LinkedList<>();
-		qaChanges.add(new Events.QAConstraintFulfillmentChanged(this.getProcess(), this, cw));
+		qaChanges.add(new Events.QAConstraintFulfillmentChanged(this.getParentProcessOrThisIfProcessElseNull(), this, cw));
 		boolean newQaState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.qaState.toString()); // are all QA checks now fulfilled?
 		if (priorQAfulfilled != newQaState) { // a change in qa fulfillment that we might want to react to
 			priorQAfulfilled = newQaState;
-			qaChanges.add(new Events.QAFulfillmentChanged(this.getProcess(), this, newQaState));
+			qaChanges.add(new Events.QAFulfillmentChanged(this.getParentProcessOrThisIfProcessElseNull(), this, newQaState));
 			if (arePostCondFulfilled() && newQaState)  {
 				qaChanges.addAll(this.trigger(StepLifecycle.Trigger.MARK_COMPLETE)) ;
 			} else if (!newQaState && actualSM.isInState(State.COMPLETED)) {
@@ -668,7 +668,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			State actualLifecycleState = actualSM.getState();
 			if (actualLifecycleState != prevActualLifecycleState) { // state transition
 				instance.setSingleProperty(AbstractProcessStepType.CoreProperties.actualLifecycleState.toString(),actualSM.getState().toString());
-				ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
+				ProcessInstance pi = getParentProcessOrThisIfProcessElseNull();
 				events.add(new Events.StepStateTransitionEvent(pi, this, prevActualLifecycleState, actualLifecycleState, true));
 				events.addAll(triggerProcessTransitions());
 			}
@@ -691,7 +691,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 		if (expectedSM.getState() != prevExpState) { // state transition
 				instance.setSingleProperty(AbstractProcessStepType.CoreProperties.expectedLifecycleState.toString(),expectedSM.getState().toString());
-				ProcessInstance pi = this.getProcess() != null ? this.getProcess() : (ProcessInstance)this; //ugly hack if this is a process without parent
+				ProcessInstance pi = getParentProcessOrThisIfProcessElseNull();
 				events.add(new Events.StepStateTransitionEvent(pi, this, prevExpState, expectedSM.getState(), false));
 				switch(expectedSM.getState()) {
 				case ENABLED:

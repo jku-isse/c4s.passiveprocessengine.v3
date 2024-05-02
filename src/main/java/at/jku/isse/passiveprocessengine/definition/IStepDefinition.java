@@ -16,7 +16,7 @@ public interface IStepDefinition extends NameIdentifiableElement {
 	Map<String,PPEInstanceType> getExpectedOutput();
 	Map<String, String> getInputToOutputMappingRules();
 
-	Optional<String> getCondition(Conditions condition);
+	//Optional<String> getCondition(Conditions condition);
 	Set<ConstraintSpec> getQAConstraints();
 
 	DecisionNodeDefinition getOutDND();

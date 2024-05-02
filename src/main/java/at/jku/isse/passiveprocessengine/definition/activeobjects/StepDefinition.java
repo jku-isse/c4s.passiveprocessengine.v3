@@ -62,35 +62,35 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.expectedOutput.toString(), Map.class).put(paramName, type);
 	}
 
-	@Override
-	@Deprecated(forRemoval = true)
-	public Optional<String> getCondition(Conditions condition) {
-		Set<?> propSet = null;
-		switch(condition) {
-		case ACTIVATION:
-			propSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.activationconditions.toString(), Set.class);
-			break;
-		case CANCELATION:
-			propSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.cancelconditions.toString(), Set.class);
-			break;
-		case POSTCONDITION:
-			propSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.postconditions.toString(), Set.class);
-			break;
-		case PRECONDITION:
-			propSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.preconditions.toString(), Set.class);
-			break;
-		default:
-			break;
-		}
-		if (propSet != null ) {
-			return propSet.stream()
-					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (PPEInstance) inst))
-					.filter(Objects::nonNull)
-					.map(spec -> ((ConstraintSpec) spec).getConstraintSpec())
-					.findAny();
-		} else
-			return Optional.empty();
-	}
+//	@Override
+//	@Deprecated(forRemoval = true)
+//	public Optional<String> getCondition(Conditions condition) {
+//		Set<?> propSet = null;
+//		switch(condition) {
+//		case ACTIVATION:
+//			propSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.activationconditions.toString(), Set.class);
+//			break;
+//		case CANCELATION:
+//			propSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.cancelconditions.toString(), Set.class);
+//			break;
+//		case POSTCONDITION:
+//			propSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.postconditions.toString(), Set.class);
+//			break;
+//		case PRECONDITION:
+//			propSet = instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.preconditions.toString(), Set.class);
+//			break;
+//		default:
+//			break;
+//		}
+//		if (propSet != null ) {
+//			return propSet.stream()
+//					.map(inst -> context.getWrappedInstance(ConstraintSpec.class, (PPEInstance) inst))
+//					.filter(Objects::nonNull)
+//					.map(spec -> ((ConstraintSpec) spec).getConstraintSpec())
+//					.findAny();
+//		} else
+//			return Optional.empty();
+//	}
 
 	@SuppressWarnings("unchecked")
 	public Set<ConstraintSpec> getPreconditions() {
@@ -136,28 +136,28 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		} else return Collections.emptySet();
 	}
 
-	@SuppressWarnings("unchecked")
-	@Deprecated(forRemoval = true)
-	public void setCondition(Conditions condition, String ruleAsString) {
-		ConstraintSpec constraint = getProcessContext().getFactoryIndex().getConstraintFactory().createInstance(condition, condition+"0", ruleAsString, ruleAsString, 0, false);
-		switch(condition) {
-		case ACTIVATION:
-			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.activationconditions.toString(), Set.class).add(constraint.getInstance());
-			break;
-		case CANCELATION:
-			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.cancelconditions.toString(), Set.class).add(constraint.getInstance());
-			break;
-		case POSTCONDITION:
-			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.postconditions.toString(), Set.class).add(constraint.getInstance());
-			break;
-		case PRECONDITION:
-			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.preconditions.toString(), Set.class).add(constraint.getInstance());
-			break;
-		default:
-			break;
-
-		}
-	}
+//	@SuppressWarnings("unchecked")
+//	@Deprecated(forRemoval = true)
+//	public void setCondition(Conditions condition, String ruleAsString) {
+//		ConstraintSpec constraint = getProcessContext().getFactoryIndex().getConstraintFactory().createInstance(condition, condition+"0", ruleAsString, ruleAsString, 0, false);
+//		switch(condition) {
+//		case ACTIVATION:
+//			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.activationconditions.toString(), Set.class).add(constraint.getInstance());
+//			break;
+//		case CANCELATION:
+//			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.cancelconditions.toString(), Set.class).add(constraint.getInstance());
+//			break;
+//		case POSTCONDITION:
+//			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.postconditions.toString(), Set.class).add(constraint.getInstance());
+//			break;
+//		case PRECONDITION:
+//			instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.preconditions.toString(), Set.class).add(constraint.getInstance());
+//			break;
+//		default:
+//			break;
+//
+//		}
+//	}
 
 	@SuppressWarnings("unchecked")
 	public void addPrecondition(ConstraintSpec spec) {
