@@ -24,7 +24,7 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 		return (RuleResult) instance.getTypedProperty(ConstraintWrapperType.CoreProperties.crule.toString(), RuleResult.class);
 	}
 
-	protected void setCrIfEmpty(RuleResult cr) {
+	protected void setRuleResultIfEmpty(RuleResult cr) {
 		Object prevRuleResult = instance.getTypedProperty(ConstraintWrapperType.CoreProperties.crule.toString(), RuleResult.class);
 		if (prevRuleResult == null) {
 			instance.setSingleProperty(ConstraintWrapperType.CoreProperties.crule.toString(), cr);

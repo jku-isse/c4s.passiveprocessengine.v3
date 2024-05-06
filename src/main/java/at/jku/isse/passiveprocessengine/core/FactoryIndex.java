@@ -8,6 +8,7 @@ import at.jku.isse.passiveprocessengine.definition.factories.StepDefinitionFacto
 import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.instance.factories.ConstraintResultWrapperFactory;
 import at.jku.isse.passiveprocessengine.instance.factories.DecisionNodeInstanceFactory;
+import at.jku.isse.passiveprocessengine.instance.factories.ProcessConfigFactory;
 import at.jku.isse.passiveprocessengine.instance.factories.ProcessInstanceFactory;
 import at.jku.isse.passiveprocessengine.instance.factories.ProcessStepInstanceFactory;
 import lombok.Data;
@@ -26,6 +27,7 @@ public class FactoryIndex {
 	final ProcessDefinitionFactory processDefinitionFactory;
 	final StepDefinitionFactory stepDefinitionFactory;	
 	final RuleDefinitionFactory ruleDefinitionFactory;
+	final ProcessConfigFactory processConfigFactory;
 	
 	
 	/**
@@ -34,7 +36,7 @@ public class FactoryIndex {
 	 * @return FactoryIndex with new set of factory instances, 
 	 * if possible, ensure to build only once, to reuse Factories (multiple instances of same factory are ok, but not efficient)
 	 */
-	public static FactoryIndex build(ProcessContext context, RewriterFactory ruleRewriterFactory, RuleDefinitionFactory ruleDefinitionFactory) {
+	public static FactoryIndex build(ProcessContext context, RewriterFactory ruleRewriterFactory, RuleDefinitionFactory ruleDefinitionFactory, ProcessConfigFactory processConfigFactory) {
 		FactoryIndex index = new FactoryIndex(
 				new ConstraintResultWrapperFactory(context),
 				new DecisionNodeInstanceFactory(context),
@@ -46,7 +48,8 @@ public class FactoryIndex {
 				new MappingDefinitionFactory(context),
 				new ProcessDefinitionFactory(context, ruleRewriterFactory),
 				new StepDefinitionFactory(context),
-				ruleDefinitionFactory
+				ruleDefinitionFactory,
+				new ProcessConfigFactory(context)
 				);
 		return index;
 	}

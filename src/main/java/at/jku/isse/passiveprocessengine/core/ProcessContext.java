@@ -10,12 +10,10 @@ public class ProcessContext extends Context{
 
 	final InputToOutputMapper ioMapper;
 	protected FactoryIndex factoryIndex;
-			
 	
 	public ProcessContext(InstanceRepository instanceRepository, SchemaRegistry schemaRegistry, 
-			InputToOutputMapper ioMapper) {
-		super(instanceRepository, schemaRegistry);
-		
+			InputToOutputMapper ioMapper, RepairTreeProvider repairTreeProvider) {
+		super(instanceRepository, schemaRegistry, repairTreeProvider);
 		this.ioMapper = ioMapper;
 	}
 	

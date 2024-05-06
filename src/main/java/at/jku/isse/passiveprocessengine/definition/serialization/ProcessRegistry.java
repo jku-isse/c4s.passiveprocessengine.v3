@@ -46,7 +46,7 @@ public class ProcessRegistry {
 		this.context = context;
 	}
 
-	public void inject() {		
+	public void initProcessDefinitions() {		
 		// TODO: restructure designspace so that process type is available upon constructor call
 		processDefinitionType = context.getSchemaRegistry().getType(ProcessDefinition.class); // ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);
 		assert(processDefinitionType != null);

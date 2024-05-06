@@ -33,7 +33,7 @@ public class ConfigurationBuilder {
 		this.schemaRegistry = schemaRegistry;
 		initSchemaRegistry();
 		ioMapper = new InputToOutputMapper(ruleService);
-		initContext(rewriterFactory, ruleFactory);
+		initContext(rewriterFactory, ruleFactory, ruleService);
 	}
 	
 	private void initSchemaRegistry() {
@@ -70,8 +70,8 @@ public class ConfigurationBuilder {
 		configTypeProvider.produceTypeProperties();
 	}
 	
-	private void initContext(RewriterFactory rewriterFactory, RuleDefinitionFactory ruleFactory) {
-		context = new ProcessContext(instanceRepository, schemaRegistry, ioMapper);
+	private void initContext(RewriterFactory rewriterFactory, RuleDefinitionFactory ruleFactory, RepairTreeProvider repairTreeProvider) {
+		context = new ProcessContext(instanceRepository, schemaRegistry, ioMapper, repairTreeProvider);
 		context.inject(FactoryIndex.build(context, rewriterFactory, ruleFactory));
 	}
 	

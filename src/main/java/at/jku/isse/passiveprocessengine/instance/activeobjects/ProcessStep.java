@@ -183,7 +183,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		//ConstraintWrapper cw = qaState.get(id);
 		//in one occasion found null instance in map, which should not happen!!!
 		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (PPEInstance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).get(id));
-		cw.setCrIfEmpty(cr);
+		cw.setRuleResultIfEmpty(cr);
 		//cw.setEvalResult(fulfilled);
 		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		List<Events.ProcessChangedEvent> qaChanges = new LinkedList<>();
@@ -514,7 +514,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	public List<Events.ProcessChangedEvent> processPostConditionsChange(RuleResult cr, boolean isfulfilled) {
 		String id = cr.getName();
 		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (PPEInstance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.postconditions.toString(), Map.class).get(id));
-		cw.setCrIfEmpty(cr);
+		cw.setRuleResultIfEmpty(cr);
 		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.postconditions.toString());
 		List<Events.ProcessChangedEvent> events =  setPostConditionsFulfilled(newState);
@@ -549,7 +549,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	public List<Events.ProcessChangedEvent> processPreConditionsChange(RuleResult cr, boolean isfulfilled) {
 		String id = cr.getName();
 		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (PPEInstance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.preconditions.toString(), Map.class).get(id));
-		cw.setCrIfEmpty(cr);
+		cw.setRuleResultIfEmpty(cr);
 		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.preconditions.toString());
 		List<Events.ProcessChangedEvent> events =  setPreConditionsFulfilled(newState);
@@ -587,7 +587,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	public List<Events.ProcessChangedEvent> processCancelConditionsChange(RuleResult cr, boolean isfulfilled) {
 		String id = cr.getName();
 		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (PPEInstance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.cancelconditions.toString(), Map.class).get(id));
-		cw.setCrIfEmpty(cr);
+		cw.setRuleResultIfEmpty(cr);
 		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.cancelconditions.toString());
 		List<Events.ProcessChangedEvent> events =  setCancelConditionsFulfilled(newState);
@@ -617,7 +617,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	public List<Events.ProcessChangedEvent> processActivationConditionsChange(RuleResult cr, boolean isFulfilled) {
 		String id = cr.getName();
 		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (PPEInstance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.activationconditions.toString(), Map.class).get(id));
-		cw.setCrIfEmpty(cr);
+		cw.setRuleResultIfEmpty(cr);
 		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.activationconditions.toString());
 		List<Events.ProcessChangedEvent> events =  setActivationConditionsFulfilled(newState);
