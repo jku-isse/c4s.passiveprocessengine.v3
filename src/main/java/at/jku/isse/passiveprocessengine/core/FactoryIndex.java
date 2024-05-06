@@ -36,7 +36,7 @@ public class FactoryIndex {
 	 * @return FactoryIndex with new set of factory instances, 
 	 * if possible, ensure to build only once, to reuse Factories (multiple instances of same factory are ok, but not efficient)
 	 */
-	public static FactoryIndex build(ProcessContext context, RewriterFactory ruleRewriterFactory, RuleDefinitionFactory ruleDefinitionFactory, ProcessConfigFactory processConfigFactory) {
+	public static FactoryIndex build(ProcessContext context, RewriterFactory ruleRewriterFactory, RuleDefinitionFactory ruleDefinitionFactory) {
 		FactoryIndex index = new FactoryIndex(
 				new ConstraintResultWrapperFactory(context),
 				new DecisionNodeInstanceFactory(context),
