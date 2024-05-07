@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.core;
 
+import at.jku.isse.passiveprocessengine.designspace.DesignspaceAbstractionMapper;
 import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +11,7 @@ public class ProcessContext extends Context{
 
 	final InputToOutputMapper ioMapper;
 	protected FactoryIndex factoryIndex;
+
 	
 	public ProcessContext(InstanceRepository instanceRepository, SchemaRegistry schemaRegistry, 
 			InputToOutputMapper ioMapper, RepairTreeProvider repairTreeProvider) {
@@ -37,5 +39,6 @@ public class ProcessContext extends Context{
 	protected void inject(FactoryIndex factoryIndex) {
 		this.factoryIndex = factoryIndex;
 	}
+
 
 }
