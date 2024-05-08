@@ -44,13 +44,15 @@ public class ProcessRegistry {
 
 	public ProcessRegistry(ProcessContext context) {
 		this.context = context;
+		processDefinitionType = context.getSchemaRegistry().getType(ProcessDefinition.class); // ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);
+		assert(processDefinitionType != null);
+		processInstanceType = context.getSchemaRegistry().getType(ProcessInstance.class); 
+		assert(processInstanceType != null);
 	}
 
 	public void initProcessDefinitions() {		
 		// TODO: restructure designspace so that process type is available upon constructor call
-		processDefinitionType = context.getSchemaRegistry().getType(ProcessDefinition.class); // ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);
-		assert(processDefinitionType != null);
-		context.getSchemaRegistry().getAllNonDeletedInstanceTypes().stream().forEach(itype -> log.debug(String.format("Available instance type %s ", itype.getId())));
+		context.getSchemaRegistry().getAllNonDeletedInstanceTypes().stream().forEach(itype -> log.debug(String.format("Available instance type %s ", itype.getName())));
 		isInit = true;
 		tempStorePD.forEach(pd -> {
 			SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> result = storeProcessDefinition(pd, false); // if process already exists do nothing, if not exists and has errors log error, else create process
@@ -58,9 +60,7 @@ public class ProcessRegistry {
 				log.warn("Error loading process definition from file system: "+result.getKey().getName()+"\r\n"+result.getValue());
 			}
 		});
-		tempStorePD.clear();
-		
-		processInstanceType = context.getSchemaRegistry().getType(ProcessInstance.class); 
+		tempStorePD.clear();		
 	}
 
 

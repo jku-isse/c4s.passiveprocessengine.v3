@@ -6,6 +6,7 @@ import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import lombok.NonNull;
 
@@ -41,7 +42,9 @@ public class SpecificProcessStepType extends TypeProviderBase {
 		if (thisType.isPresent())
 			schemaRegistry.registerTypeByName(thisType.get());	
 		else {
-			PPEInstanceType type = schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getType(ProcessStep.class));
+			PPEInstanceType type = processType == null ? 
+				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getType(ProcessStep.class)) :			
+				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getType(ProcessInstance.class));			
 			schemaRegistry.registerTypeByName(type);		
 
 			stepDef.getExpectedInput().entrySet().stream()

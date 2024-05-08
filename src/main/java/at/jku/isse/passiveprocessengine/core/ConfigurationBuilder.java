@@ -8,6 +8,7 @@ import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessStepDefinitionType;
 import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
+import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
 import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType;
 import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
@@ -63,10 +64,12 @@ public class ConfigurationBuilder {
 		ConstraintWrapperType constraintWrapperType = new ConstraintWrapperType(schemaRegistry);
 		DecisionNodeInstanceType dniType = new DecisionNodeInstanceType(schemaRegistry);
 		AbstractProcessStepType stepType = new AbstractProcessStepType(schemaRegistry);
+		AbstractProcessInstanceType processType = new AbstractProcessInstanceType(schemaRegistry);
 		scopeTypeProvider.produceTypeProperties();
 		constraintWrapperType.produceTypeProperties();
 		dniType.produceTypeProperties();
 		stepType.produceTypeProperties();
+		processType.produceTypeProperties();
 		configTypeProvider.produceTypeProperties();
 	}
 	
