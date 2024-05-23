@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -106,7 +107,10 @@ public class ProcessDefinition extends StepDefinition{
 	public void deleteCascading() {
 		getDecisionNodeDefinitions().forEach(dnd -> dnd.deleteCascading());
 		getStepDefinitions().forEach(sd -> sd.deleteCascading());
-		PPEInstanceType thisType = this.getInstance().getInstanceType(); //.getOrCreateDesignSpaceInstanceType(ws, this);
+		// wring instanceType: we need to get the dynamically generate Instance (the one that is used for the ProcessInstance)
+		String processDefName = SpecificProcessInstanceType.getProcessName(this);
+		PPEInstanceType thisType = this.context.getSchemaRegistry().findNonDeletedInstanceTypeById(processDefName).get();		
+		//PPEInstanceType thisType = this.getInstance().getInstanceType(); WRONG OLD INSTANCE TYPE	
 		this.getPrematureTriggers().entrySet().stream()
 		.forEach(entry -> {
 			String name = SpecificProcessInstanceType.generatePrematureRuleName(entry.getKey(), this);

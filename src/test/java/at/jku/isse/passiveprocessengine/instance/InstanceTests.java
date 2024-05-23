@@ -118,6 +118,7 @@ class InstanceTests extends DefinitionWrapperTests {
 		ProcessInstance proc =  instantiateDefaultProcess(procFactory.getSimple2StepProcessDefinition(), jiraA);		
 		instanceRepository.concludeTransaction();
 		proc.printProcessToConsole(" ");
+		System.out.println(TestArtifacts.printProperties(jiraA));
 		
 		assert(proc.getProcessSteps().stream()
 				.filter(step -> step.getDefinition().getName().equals(TestDTOProcesses.SD1) )
@@ -129,13 +130,15 @@ class InstanceTests extends DefinitionWrapperTests {
 		artifactFactory.removeJiraFromReqs(jiraA, jiraC);		
 		artifactFactory.setStateToJiraInstance(jiraB, JiraStates.Closed);
 		// we close, thus keep SD1 in active state, thus no output propagation yet, 
-		instanceRepository.concludeTransaction();
+		instanceRepository.concludeTransaction();		
 		
 		artifactFactory.setStateToJiraInstance(jiraB, JiraStates.Open);
 		//now that we open again the jira issue, we fulfill SD1, and the output should be mapped, removing jiraC from SD2 input, and subsequently also from its output
 		instanceRepository.concludeTransaction();
 		
 		proc.printProcessToConsole(" ");		
+		System.out.println(TestArtifacts.printProperties(jiraA));
+		
 		assert(proc.getProcessSteps().stream()
 			.filter(step -> step.getDefinition().getName().equals(TestDTOProcesses.SD1) )
 			.allMatch(step -> (step.getOutput(TestDTOProcesses.JIRA_OUT).stream().findAny().get().getName().equals("jiraB")) && step.getExpectedLifecycleState().equals(State.COMPLETED) ) );
@@ -210,8 +213,10 @@ class InstanceTests extends DefinitionWrapperTests {
 		proc.printProcessToConsole(" ");			
 		assert(proc.getExpectedLifecycleState().equals(State.ACTIVE)); 
 			
+		artifactFactory.setStateToJiraInstance(jiraA, JiraStates.Closed);
 		artifactFactory.setStateToJiraInstance(jiraB, JiraStates.Closed);
 		artifactFactory.setStateToJiraInstance(jiraC, JiraStates.Closed);
+		artifactFactory.removeJiraFromReqs(jiraA, jiraC);
 		instanceRepository.concludeTransaction();
 		
 		proc.printProcessToConsole(" ");

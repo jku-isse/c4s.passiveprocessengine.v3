@@ -43,7 +43,7 @@ public class ConstraintSpec extends  ProcessDefinitionScopedElement{
 
 	@Override
 	public void deleteCascading() {
-		instance.markAsDeleted();
+		super.deleteCascading();
 	}
 	
 	public static Comparator<ConstraintSpec> COMPARATOR_BY_ORDERINDEX = new Comparator<>() {

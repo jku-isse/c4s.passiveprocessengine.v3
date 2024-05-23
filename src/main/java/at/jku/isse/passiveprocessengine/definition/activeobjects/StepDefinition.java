@@ -18,6 +18,7 @@ import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.factories.ProcessDefinitionFactory;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessStepDefinitionType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 import lombok.extern.slf4j.Slf4j;
 
@@ -404,8 +405,10 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 	@Override
 	public void deleteCascading() {
-
-		PPEInstanceType instType = this.instance.getInstanceType();//ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, null); // for deletion its ok to not provide the process instance type
+		// wring instanceType: we need to get the dynamically generate Instance (the one that is used for the ProcessStep)
+		String stepDefName = SpecificProcessStepType.getProcessStepName(this);
+		PPEInstanceType instType = this.context.getSchemaRegistry().findNonDeletedInstanceTypeById(stepDefName).get();	
+		//PPEInstanceType instType = this.instance.getInstanceType();//WRONG OLD instance type
 
 		this.getActivationconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.ACTIVATION));
 		this.getCancelconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.CANCELATION));

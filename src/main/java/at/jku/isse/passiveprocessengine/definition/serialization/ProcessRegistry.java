@@ -68,7 +68,7 @@ public class ProcessRegistry {
 		List<ProcessDefinition> defs = context.getInstanceRepository().getAllInstancesOfTypeOrSubtype(processDefinitionType).stream()
 				.filter(inst -> !inst.isMarkedAsDeleted())
 				.filter(inst -> (Boolean)inst.getTypedProperty((ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString()), Boolean.class, false) || !onlyValid)
-				.filter(inst -> inst.getId().equals(stringId))
+				.filter(inst -> inst.getName().equals(stringId))
 				.map(inst -> (ProcessDefinition)context.getWrappedInstance(ProcessDefinition.class, inst))
 				.collect(Collectors.toList());
 		if (defs.isEmpty())

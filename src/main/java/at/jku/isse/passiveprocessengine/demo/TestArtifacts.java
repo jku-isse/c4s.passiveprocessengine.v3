@@ -102,6 +102,18 @@ public class TestArtifacts {
 		return JiraStates.valueOf(state);
 	}
 
+	public static String printProperties(PPEInstance jira) {
+		PPEInstance parent = jira.getTypedProperty(TestArtifacts.CoreProperties.parent.toString(), PPEInstance.class);				
+		String state = jira.getTypedProperty(TestArtifacts.CoreProperties.state.toString(), String.class);
+		Set<PPEInstance> requirements = jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class);
+		
+		StringBuffer sb = new StringBuffer("Issue:"+jira.getName()+"::"+getState(jira)+"\r\n");
+		if (parent != null)
+			sb.append("  Parent: "+parent.getName()+"::"+getState(parent)+"\r\n");
+		requirements.stream().forEach(req -> sb.append("  Req: "+req.getName()+"::"+getState(req)+"\r\n"));
+		return sb.toString();
+	}
+	
 	public PPEInstanceType getDemoGitIssueType() {
 		PPEInstanceType typeGitDemo = schemaRegistry.createNewInstanceType("git_issue");
 		typeGitDemo.createSetPropertyType("linkedIssues", typeGitDemo);
