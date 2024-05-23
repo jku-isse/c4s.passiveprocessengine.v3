@@ -53,33 +53,12 @@
             <version>2.0.0</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>at.jku.isse.designspace</groupId>
-            <artifactId>artifact-connector.ds4wrapper</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
-        </dependency>
-<!--		<dependency>
-			<groupId>at.jku.isse.designspace</groupId>
-			<artifactId>core</artifactId>
-			<version>5.0</version>
-		</dependency>-->
-<!--		<dependency>
-			<groupId>at.jku.isse.designspace</groupId>
-			<artifactId>service-rule</artifactId>
-			<version>5.0</version>
-		</dependency> -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<version>${lombok.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<version>3.2.2</version>
-			<scope>test</scope>
-		</dependency>
+
 		<!-- <dependency> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-autoconfigure</artifactId> 
 			<version>2.2.3.RELEASE</version> <scope>compile</scope> </dependency> <dependency> 
 			<groupId>org.springframework.boot</groupId> <artifactId>spring-boot-starter-logging</artifactId> 
@@ -119,6 +98,12 @@
 
 		<!-- Test suite -->
 		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<version>3.2.2</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
 			<version>5.4.2</version>
@@ -136,6 +121,13 @@
 			<version>5.4.2</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+            <groupId>at.jku.isse.designspace</groupId>
+            <artifactId>artifact-connector.ds5wrapper</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+		
 <!--		<dependency>
 			<groupId>at.jku.isse.designspace</groupId>
 			<artifactId>artifact-connector.jira</artifactId>

@@ -389,7 +389,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 			});
 		getExpectedOutput().keySet().stream().forEach(out -> {
 			if (!getInputToOutputMappingRules().containsKey(out))
-				errors.add(new ProcessDefinitionError(this, "No Mapping Defined", "Step output '"+out+"' has not datamapping from input defined"));
+				errors.add(new ProcessDefinitionError(this, "No Mapping Defined", "Step output '"+out+"' has no datamapping from input defined"));
 			});
 
 		return errors;
