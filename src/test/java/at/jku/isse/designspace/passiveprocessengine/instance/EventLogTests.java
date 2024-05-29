@@ -20,9 +20,10 @@ import at.jku.isse.designspace.core.model.Workspace;
 import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.passiveprocessengine.TestUtils;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
-import at.jku.isse.designspace.rule.arl.repair.order.RepairNodeScorer;
-import at.jku.isse.designspace.rule.arl.repair.order.RepairStats;
-import at.jku.isse.designspace.rule.arl.repair.order.SortOnRepairPercentage;
+import at.jku.isse.designspace.rule.arl.repair.analyzer.RepairAnalyzer1;
+import at.jku.isse.designspace.rule.arl.repair.ranking.RepairNodeScoringMechanism;
+import at.jku.isse.designspace.rule.arl.repair.ranking.RepairTemplateLog;
+import at.jku.isse.designspace.rule.arl.repair.ranking.SortOnRepairPercentage;
 import at.jku.isse.designspace.rule.checker.ArlRuleEvaluator;
 import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
@@ -58,8 +59,6 @@ import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStateChangeLog;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStepStats;
-import at.jku.isse.passiveprocessengine.monitoring.RepairAnalyzer;
-import at.jku.isse.passiveprocessengine.monitoring.RepairFeatureToggle;
 import at.jku.isse.passiveprocessengine.monitoring.ReplayTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.UsageMonitor;
 
@@ -73,10 +72,10 @@ class EventLogTests {
 	ProcessInstanceChangeProcessor picp;
 	static JsonDefinitionSerializer json = new JsonDefinitionSerializer();
 	static ProcessQAStatsMonitor monitor;
-	static RepairAnalyzer repAnalyzer;
+	static RepairAnalyzer1 repAnalyzer;
 	static ProcessStateChangeLog logs = new ProcessStateChangeLog();
-	static RepairStats rs=new RepairStats();
-	static RepairNodeScorer scorer=new SortOnRepairPercentage();
+	static RepairTemplateLog rs=new RepairTemplateLog();
+	static RepairNodeScoringMechanism scorer=new SortOnRepairPercentage();
 	static ReplayTimeProvider timeProvider=new ReplayTimeProvider();
 	
 	@BeforeEach
@@ -90,7 +89,7 @@ class EventLogTests {
 		eventDistrib.registerHandler(monitor);
 		eventDistrib.registerHandler(logs);
 		picp = new ProcessInstanceChangeProcessor(ws, eventDistrib);
-		repAnalyzer = new RepairAnalyzer(ws,rs,scorer,timeProvider, new UsageMonitor(timeProvider),new RepairFeatureToggle());
+		repAnalyzer = new RepairAnalyzer1(ws,rs,scorer,timeProvider, new UsageMonitor(timeProvider),new RepairFeatureToggle());
 		WorkspaceListenerSequencer wsls = new WorkspaceListenerSequencer(ws);
 		wsls.registerListener(repAnalyzer);
 		wsls.registerListener(picp);

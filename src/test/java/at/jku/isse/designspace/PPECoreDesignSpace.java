@@ -1,7 +1,7 @@
 package at.jku.isse.designspace;
 
 import at.jku.isse.designspace.core.events.Event;
-import at.jku.isse.designspace.endpoints.grpc.service.GrpcUtils;
+//import at.jku.isse.designspace.endpoints.grpc.service.GrpcUtils;
 import at.jku.isse.designspace.rule.arl.repair.changepropagation.ParallelGraphGenerator;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import org.springframework.boot.SpringApplication;
@@ -39,12 +39,12 @@ public class PPECoreDesignSpace  implements ApplicationListener<ApplicationReady
     static boolean inconsistentPaths,  abstractStates, conflicts, pastChanges, pastIcon;
 
     public static void main(String[] args) {
-        if (args.length>0) {
+      /*  if (args.length>0) {
             if (args[0].equals("-capture"))
                 GrpcUtils.captureFileName=args[1];
             else if (args[0].equals("-replay"))
                 GrpcUtils.replayFileName=args[1];
-        }
+        }*/
 
         SpringApplication application = new SpringApplication(PPECoreDesignSpace.class);
         application.setBanner(new CustomBanner());
@@ -70,7 +70,7 @@ public class PPECoreDesignSpace  implements ApplicationListener<ApplicationReady
 
     @PreDestroy
     public void onExit() {
-        GrpcUtils.closeCapture();
+       // GrpcUtils.closeCapture();
     }
 
     private static class CustomBanner implements Banner {

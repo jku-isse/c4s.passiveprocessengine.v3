@@ -25,11 +25,13 @@ import at.jku.isse.designspace.core.service.WorkspaceService;
 import at.jku.isse.designspace.rule.arl.evaluator.EvaluationNode;
 import at.jku.isse.designspace.rule.arl.repair.RepairAction;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
-import at.jku.isse.designspace.rule.arl.repair.order.RepairNodeScorer;
-import at.jku.isse.designspace.rule.arl.repair.order.RepairStats;
-import at.jku.isse.designspace.rule.arl.repair.order.RepairTreeSorter;
-import at.jku.isse.designspace.rule.arl.repair.order.SortOnRepairPercentage;
-import at.jku.isse.designspace.rule.arl.repair.order.SortOnRestriction;
+import at.jku.isse.designspace.rule.arl.repair.analyzer.RepairAnalyzer1;
+import at.jku.isse.designspace.rule.arl.repair.analyzer.RepairFeatureToggle;
+import at.jku.isse.designspace.rule.arl.repair.ranking.RepairNodeScoringMechanism;
+import at.jku.isse.designspace.rule.arl.repair.ranking.RepairTemplateLog;
+import at.jku.isse.designspace.rule.arl.repair.ranking.RepairTreeSorter;
+import at.jku.isse.designspace.rule.arl.repair.ranking.SortOnRepairPercentage;
+import at.jku.isse.designspace.rule.arl.repair.ranking.SortOnRestriction;
 import at.jku.isse.designspace.rule.checker.ArlRuleEvaluator;
 import at.jku.isse.designspace.rule.checker.ConsistencyUtils;
 import at.jku.isse.designspace.rule.model.ConsistencyRule;
@@ -65,8 +67,6 @@ import at.jku.isse.passiveprocessengine.monitoring.CurrentSystemTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.ITimeStampProvider;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
-import at.jku.isse.passiveprocessengine.monitoring.RepairAnalyzer;
-import at.jku.isse.passiveprocessengine.monitoring.RepairFeatureToggle;
 import at.jku.isse.passiveprocessengine.monitoring.ReplayTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.UsageMonitor;
 
@@ -79,9 +79,9 @@ public class RepairAnalysisTests {
 
 	static JsonDefinitionSerializer json = new JsonDefinitionSerializer();
 	static ProcessQAStatsMonitor monitor;
-	static RepairAnalyzer repAnalyzer;
-	static RepairStats rs = new RepairStats();
-	static RepairNodeScorer scorer=new SortOnRestriction();
+	static RepairAnalyzer1 repAnalyzer;
+	static RepairTemplateLog rs = new RepairTemplateLog();
+	static RepairNodeScoringMechanism scorer=new SortOnRestriction();
 	static ITimeStampProvider timeProvider=new CurrentSystemTimeProvider();
 	static RepairFeatureToggle rtf=new RepairFeatureToggle(true,false,false, false);
 
@@ -97,7 +97,7 @@ public class RepairAnalysisTests {
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
 		eventDistrib.registerHandler(monitor);
 		ProcessInstanceChangeProcessor picp = new ProcessInstanceChangeProcessor(ws, eventDistrib);
-		repAnalyzer = new RepairAnalyzer(ws, rs,scorer,timeProvider, new UsageMonitor(timeProvider),rtf);
+		repAnalyzer = new RepairAnalyzer1(ws, rs,scorer,timeProvider, new UsageMonitor(timeProvider),rtf);
 		WorkspaceListenerSequencer wsls = new WorkspaceListenerSequencer(ws);
 		wsls.registerListener(repAnalyzer);
 		wsls.registerListener(picp);

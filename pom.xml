@@ -16,7 +16,7 @@
 
 	<properties>
 		<lombok.version>1.18.30</lombok.version>
-		<java.version>11</java.version>
+		<java.version>17</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
@@ -53,12 +53,12 @@
 		<dependency>
 			<groupId>at.jku.isse.designspace</groupId>
 			<artifactId>core</artifactId>
-			<version>4.4.0-SNAPSHOT</version>
+			<version>4.5.0</version>
 		</dependency>
 		<dependency>
 			<groupId>at.jku.isse.designspace</groupId>
 			<artifactId>rule</artifactId>
-			<version>4.6.1-SNAPSHOT</version>
+			<version>4.6.2</version>
 		</dependency>
 
 		<dependency>
@@ -143,8 +143,8 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<source>11</source>
-					<target>11</target>
+					<source>17</source>
+					<target>17</target>
 				</configuration>
 			</plugin>
 		</plugins>
