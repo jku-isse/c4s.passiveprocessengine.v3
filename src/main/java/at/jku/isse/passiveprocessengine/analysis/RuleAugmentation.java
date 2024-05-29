@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 
+import at.jku.isse.designspace.core.model.Cardinality;
 import at.jku.isse.designspace.core.model.InstanceType;
 import at.jku.isse.designspace.core.model.MapProperty;
 import at.jku.isse.designspace.core.model.ReservedNames;
@@ -20,10 +21,11 @@ import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.DataSource;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.DataSource.IoType;
 import at.jku.isse.passiveprocessengine.analysis.PrematureTriggerGenerator.StepParameter;
-import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
+import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.StepDefinition;
+import at.jku.isse.passiveprocessengine.instance.ProcessException;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import lombok.extern.slf4j.Slf4j;
@@ -69,6 +71,7 @@ public class RuleAugmentation {
 				try {  
 					arl = rewriteConstraint(arl);
 					log.debug(String.format("Augmented constraint %s for %s to %s", specId, sd.getName(), arl));
+					spec.setAugmentedConstraintSpec(arl);
 				} catch(Exception e) {
 					errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
 				}
@@ -85,6 +88,7 @@ public class RuleAugmentation {
 				try {  
 					arl = rewriteConstraint(arl);
 					log.debug(String.format("Augmented constraint %s for %s to %s", specId, sd.getName(), arl));
+					spec.setAugmentedConstraintSpec(arl);
 				} catch(Exception e) {
 					errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
 				}
@@ -101,6 +105,7 @@ public class RuleAugmentation {
 				try {  
 					arl = rewriteConstraint(arl);
 					log.debug(String.format("Augmented constraint %s for %s to %s", specId, sd.getName(), arl));
+					spec.setAugmentedConstraintSpec(arl);
 				} catch(Exception e) {
 					errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
 				}
@@ -162,6 +167,7 @@ public class RuleAugmentation {
 					try {  
 						arl = rewriteConstraint(arl);
 						log.debug(String.format("Augmented QA for %s to %s", sd.getName(), arl));
+						spec.setAugmentedConstraintSpec(arl);
 					} catch(Exception e) {
 						errors.add(new ProcessDefinitionError(sd, String.format("Error aumenting QA Constraint %s : %s", spec.getConstraintId(), arl), e.getMessage()));
 					}

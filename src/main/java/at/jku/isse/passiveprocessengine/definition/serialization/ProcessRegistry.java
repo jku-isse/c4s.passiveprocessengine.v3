@@ -22,6 +22,7 @@ import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceError;
 import at.jku.isse.passiveprocessengine.instance.ProcessStep;
+import at.jku.isse.passiveprocessengine.process.overriding.ProcessOverridingAnalysis;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -94,6 +95,10 @@ public class ProcessRegistry {
 		process.setCode(tempCode);
 		DefinitionTransformer.replaceStepNamesInMappings(process, originalCode, tempCode);
 		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> stagedProc = storeProcessDefinition(process, true);
+		
+		ProcessOverridingAnalysis poa=new ProcessOverridingAnalysis();
+		poa.beginAnalysis(stagedProc.getKey(),stagedProc.getValue() ,ws);
+		
 		if (!stagedProc.getValue().isEmpty())
 			return new ProcessDeployResult(stagedProc.getKey(), stagedProc.getValue(), Collections.emptyList());
 		// if we continue here, then no process error occurred and we can continue

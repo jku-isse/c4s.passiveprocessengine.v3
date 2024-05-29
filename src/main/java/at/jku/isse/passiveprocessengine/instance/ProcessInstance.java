@@ -43,7 +43,7 @@ public class ProcessInstance extends ProcessStep {
 	
 	public static final String designspaceTypeId = ProcessInstance.class.getSimpleName();
 
-	protected ZonedDateTime createdAt;
+	protected transient ZonedDateTime createdAt;
 		
 	public ProcessInstance(Instance instance) {
 		super(instance);
