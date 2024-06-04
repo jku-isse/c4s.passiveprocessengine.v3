@@ -11,7 +11,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 
-public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
+public class DTOMultiTypeAdapterFactory  implements TypeAdapterFactory {
 
     @SuppressWarnings("unchecked")
 	@Override

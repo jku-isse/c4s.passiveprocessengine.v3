@@ -12,7 +12,7 @@ import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 
-public class TransformationResultAdapterFactory extends MultiTypeAdapterFactory {
+public class TransformationResultAdapterFactory extends DTOMultiTypeAdapterFactory {
 
 	@Override
 	public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {

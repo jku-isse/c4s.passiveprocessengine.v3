@@ -4,6 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 
+import at.jku.isse.passiveprocessengine.monitoring.serialization.MonitoringMultiTypeAdapterFactory;
+
+
 
 public class JsonDefinitionSerializer {
 
@@ -18,7 +21,7 @@ public class JsonDefinitionSerializer {
 //				    ;
 
 		 gson = new GsonBuilder()
-				 .registerTypeAdapterFactory(new MultiTypeAdapterFactory())
+				 .registerTypeAdapterFactory(new MonitoringMultiTypeAdapterFactory())
 				 //.registerTypeAdapterFactory(runtimeTypeAdapterFactory)
 				 .setPrettyPrinting()
 				 .create();

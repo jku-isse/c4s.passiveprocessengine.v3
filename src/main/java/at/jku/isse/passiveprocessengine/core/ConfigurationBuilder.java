@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.core;
 
+import at.jku.isse.designspace.artifactconnector.core.repository.CoreTypeFactory;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
 import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
 import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionType;
@@ -55,7 +56,7 @@ public class ConfigurationBuilder {
 		dndTypeProvider.produceTypeProperties();
 		processTypeProvider.produceTypeProperties();
 		stepTypeProvider.produceTypeProperties();		
-		
+		new CoreTypeFactory(schemaRegistry).getBaseArtifactType(); // ensure base type exists
 	}
 	
 	private void registerAllInstanceBaseTypes() {

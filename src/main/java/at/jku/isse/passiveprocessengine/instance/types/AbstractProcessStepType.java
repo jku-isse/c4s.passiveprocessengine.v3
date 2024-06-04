@@ -9,6 +9,7 @@ import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 
 public class AbstractProcessStepType extends TypeProviderBase {
@@ -26,7 +27,7 @@ public class AbstractProcessStepType extends TypeProviderBase {
 			schemaRegistry.registerType(ProcessStep.class, thisType.get());
 			this.type = thisType.get();
 		} else {
-			type = schemaRegistry.createNewInstanceType(typeId);
+			type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getType(ProcessInstanceScopedElement.class));
 			schemaRegistry.registerType(ProcessStep.class, type);	
 		}
 	}

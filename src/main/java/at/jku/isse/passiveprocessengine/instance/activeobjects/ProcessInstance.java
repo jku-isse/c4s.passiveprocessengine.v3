@@ -35,8 +35,8 @@ import lombok.extern.slf4j.Slf4j;
 public class ProcessInstance extends ProcessStep {
 
 	protected ZonedDateTime createdAt;
-	private ProcessStepInstanceFactory stepFactory;
-	private DecisionNodeInstanceFactory decisionNodeFactory;
+	private transient ProcessStepInstanceFactory stepFactory;
+	private transient DecisionNodeInstanceFactory decisionNodeFactory;
 
 	public ProcessInstance(PPEInstance instance, ProcessContext context) {
 		super(instance, context);

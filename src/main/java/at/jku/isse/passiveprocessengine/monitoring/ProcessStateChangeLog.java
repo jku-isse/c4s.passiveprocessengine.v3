@@ -37,7 +37,7 @@ public class ProcessStateChangeLog implements IProcessEventHandler{
 	public Map<String, List<ProcessChangedEvent>> logs = new HashMap<>();
 
 	private static Gson gson = new GsonBuilder()
-			 .registerTypeAdapterFactory(new at.jku.isse.passiveprocessengine.monitoring.serialization.MultiTypeAdapterFactory())
+			 .registerTypeAdapterFactory(new at.jku.isse.passiveprocessengine.monitoring.serialization.MonitoringMultiTypeAdapterFactory())
 			 .setPrettyPrinting()
 			 .create();
 

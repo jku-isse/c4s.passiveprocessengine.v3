@@ -12,9 +12,9 @@ import lombok.NonNull;
 
 public class SpecificProcessStepType extends TypeProviderBase {
 
-	public static enum CoreProperties {actualLifecycleState, expectedLifecycleState, stepDefinition, inDNI, outDNI, qaState,
-	preconditions, postconditions, cancelconditions, activationconditions,
-	processedPreCondFulfilled, processedPostCondFulfilled, processedCancelCondFulfilled, processedActivationCondFulfilled, isWorkExpected}
+//	public static enum CoreProperties {actualLifecycleState, expectedLifecycleState, stepDefinition, inDNI, outDNI, qaState,
+//	preconditions, postconditions, cancelconditions, activationconditions,
+//	processedPreCondFulfilled, processedPostCondFulfilled, processedCancelCondFulfilled, processedActivationCondFulfilled, isWorkExpected}
 
 	private final StepDefinition stepDef;
 	private final PPEInstanceType processType;
@@ -43,8 +43,8 @@ public class SpecificProcessStepType extends TypeProviderBase {
 			schemaRegistry.registerTypeByName(thisType.get());	
 		else {
 			PPEInstanceType type = processType == null ? 
-				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getType(ProcessStep.class)) :			
-				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getType(ProcessInstance.class));			
+				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getType(ProcessInstance.class)) :			
+				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getType(ProcessStep.class));			
 			schemaRegistry.registerTypeByName(type);		
 
 			stepDef.getExpectedInput().entrySet().stream()

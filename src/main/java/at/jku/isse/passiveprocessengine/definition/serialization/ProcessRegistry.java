@@ -227,13 +227,15 @@ public class ProcessRegistry {
 		return processInstances.get(id);
 	}
 
-	public void removeProcess(String id) {
+	public boolean removeProcess(String id) {
 		ProcessInstance pi = processInstances.remove(id);
 		if (pi != null) {
 			pi.deleteCascading();
 			context.getInstanceRepository().concludeTransaction();
 			this.removedInstances.add(pi);
+			return true;
 		}
+		return false;
 	}
 
 	public List<ProcessInstance> getExistingAndPriorInstances() {

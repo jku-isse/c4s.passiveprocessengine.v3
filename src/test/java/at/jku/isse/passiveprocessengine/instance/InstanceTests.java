@@ -48,23 +48,23 @@ class InstanceTests extends DefinitionWrapperTests {
 	public
 	void setup() throws Exception {
 		super.setup();
-		artifactFactory = new TestArtifacts(super.instanceRepository, schemaReg);
-		procFactory = new TestDTOProcesses(artifactFactory);
-		typeJira = artifactFactory.getJiraInstanceType();
-				
 		EventDistributor eventDistrib = new EventDistributor();
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
 		eventDistrib.registerHandler(monitor);
 		ProcessInstanceChangeListener picp = new ProcessInstanceChangeProcessor(configBuilder.getContext(), eventDistrib);
 		ChangeEventTransformer picpWrapper = super.dsSetup.getChangeEventTransformer();
 		picpWrapper.registerWithWorkspace(picp);
+		
+		artifactFactory = new TestArtifacts(super.instanceRepository, schemaReg);
+		procFactory = new TestDTOProcesses(artifactFactory);
+		typeJira = artifactFactory.getJiraInstanceType();
 	//	WorkspaceListenerSequencer wsls = new WorkspaceListenerSequencer(ws);
 	//	wsls.registerListener(repAnalyzer);
 	//	wsls.registerListener(picp);
 		
 	}
 	
-	private ProcessDefinition getDefinition(DTOs.Process procDTO) {
+	protected ProcessDefinition getDefinition(DTOs.Process procDTO) {
 		procDTO.calculateDecisionNodeDepthIndex(1);
 		DefinitionTransformer transformer = new DefinitionTransformer(procDTO, configBuilder.getContext().getFactoryIndex(), schemaReg);
 		ProcessDefinition procDef = transformer.fromDTO(false);
@@ -74,7 +74,7 @@ class InstanceTests extends DefinitionWrapperTests {
 		return procDef;
 	}
 	
-	private ProcessInstance instantiateDefaultProcess(DTOs.Process procDTO, PPEInstance... inputs) {
+	protected ProcessInstance instantiateDefaultProcess(DTOs.Process procDTO, PPEInstance... inputs) {
 		ProcessDefinition procDef = getDefinition(procDTO);				
 		ProcessInstance procInstance = configBuilder.getContext().getFactoryIndex().getProcessInstanceFactory().getInstance(procDef, "TEST");
 		assert(procInstance != null);
@@ -85,7 +85,7 @@ class InstanceTests extends DefinitionWrapperTests {
 		return procInstance;
 	}
 	
-	private ProcessInstance instantiateDefaultProcess(@NonNull ProcessDefinition procDef,  PPEInstance... inputs) {		
+	protected ProcessInstance instantiateDefaultProcess(@NonNull ProcessDefinition procDef,  PPEInstance... inputs) {		
 		ProcessInstance procInstance = configBuilder.getContext().getFactoryIndex().getProcessInstanceFactory().getInstance(procDef, "TEST");
 		assert(procInstance != null);
 		for (PPEInstance input : inputs) {

@@ -23,7 +23,7 @@ import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStepStats;
 
 
-public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
+public class MonitoringMultiTypeAdapterFactory  implements TypeAdapterFactory {
 
     @Override
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
@@ -185,7 +185,7 @@ public class MultiTypeAdapterFactory  implements TypeAdapterFactory {
 	public static void writeToJSONFile(String pathInclFileName, Collection<ProcessStats> stats) {
 		 if (gson == null) {
 			 gson = new GsonBuilder()
-				 	.registerTypeAdapterFactory(new MultiTypeAdapterFactory())
+				 	.registerTypeAdapterFactory(new MonitoringMultiTypeAdapterFactory())
 	                .setPrettyPrinting()
 	                .create();
 		 }

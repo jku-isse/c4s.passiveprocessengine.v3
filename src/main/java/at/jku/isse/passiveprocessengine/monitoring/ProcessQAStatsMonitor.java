@@ -235,7 +235,7 @@ public class ProcessQAStatsMonitor implements IProcessEventHandler {
 	}
 
 	private static Gson gson = new GsonBuilder()
-			 .registerTypeAdapterFactory(new at.jku.isse.passiveprocessengine.monitoring.serialization.MultiTypeAdapterFactory())
+			 .registerTypeAdapterFactory(new at.jku.isse.passiveprocessengine.monitoring.serialization.MonitoringMultiTypeAdapterFactory())
 			 .setPrettyPrinting()
 			 .create();
 

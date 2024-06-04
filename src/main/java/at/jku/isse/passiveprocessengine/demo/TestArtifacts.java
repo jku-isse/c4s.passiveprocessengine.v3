@@ -3,6 +3,7 @@ package at.jku.isse.passiveprocessengine.demo;
 import java.util.Optional;
 import java.util.Set;
 
+import at.jku.isse.designspace.artifactconnector.core.repository.CoreTypeFactory;
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
@@ -28,7 +29,7 @@ public class TestArtifacts {
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
-				PPEInstanceType typeJira = schemaRegistry.createNewInstanceType(DEMOISSUETYPE);				
+				PPEInstanceType typeJira = schemaRegistry.createNewInstanceType(DEMOISSUETYPE, schemaRegistry.getTypeByName(CoreTypeFactory.BASE_TYPE_NAME));				
 				typeJira.createSinglePropertyType(CoreProperties.state.toString(), BuildInType.STRING);
 				typeJira.createSetPropertyType(CoreProperties.requirements.toString(), typeJira);
 				typeJira.createSetPropertyType(CoreProperties.bugs.toString(),  typeJira);
@@ -36,14 +37,16 @@ public class TestArtifacts {
 				typeJira.createSetPropertyType(CoreProperties.upstream.toString(),  typeJira);
 				typeJira.createSetPropertyType(CoreProperties.downstream.toString(),  typeJira);
 				//typeJira.createOpposablePropertyType(CoreProperties.upstream.toString(), Cardinality.SET, typeJira, CoreProperties.downstream.toString(), Cardinality.SET);				
-				typeJira.createSinglePropertyType(CoreProperties.html_url.toString(), BuildInType.STRING);
+				//typeJira.createSinglePropertyType(CoreProperties.html_url.toString(), BuildInType.STRING);
 				return typeJira;
 			}
 	}
 
 	public PPEInstance getJiraInstance(String name, PPEInstance... reqs) {
 		PPEInstance jira = repository.createInstance(name, getJiraInstanceType());
-		jira.setSingleProperty(CoreProperties.html_url.toString(),"http://localhost:7171/home");
+		jira.setSingleProperty(CoreTypeFactory.URL.toString(),"http://localhost:7171/home");
+		jira.setSingleProperty(CoreTypeFactory.EXTERNAL_TYPE.toString(),"none");
+		jira.setSingleProperty(CoreTypeFactory.EXTERNAL_DEFAULT_ID.toString(), name);
 		setStateToJiraInstance(jira, JiraStates.Open);
 		for(PPEInstance inst : reqs) {
 			jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).add(inst);
