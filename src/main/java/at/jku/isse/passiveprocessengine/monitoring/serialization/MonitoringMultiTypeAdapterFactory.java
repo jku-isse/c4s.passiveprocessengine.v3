@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.stream.Collectors;
@@ -33,6 +34,9 @@ public class MonitoringMultiTypeAdapterFactory  implements TypeAdapterFactory {
         if (type.getRawType() == OffsetDateTime.class) {
             return (TypeAdapter<T>) wrapOffsetDateTimeAdapter(gson, new TypeToken<OffsetDateTime>() {});
         }
+        if (type.getRawType() == ZonedDateTime.class) {
+            return (TypeAdapter<T>) wrapZonedDateTimeAdapter(gson, new TypeToken<ZonedDateTime>() {});
+        }                        
         if (type.getRawType() == StepStateTransitionEvent.class) {
         	return (TypeAdapter<T>) wrapStepStateTransitionEvent(gson, new TypeToken<StepStateTransitionEvent>() {});
         }
@@ -45,7 +49,7 @@ public class MonitoringMultiTypeAdapterFactory  implements TypeAdapterFactory {
         return null;
     }
 
-
+    
 
     private TypeAdapter<ProcessStats> wrapProcessStatsAdapter(Gson gson, TypeToken<ProcessStats> type) {
         final TypeAdapter<ProcessStats> delegate = gson.getDelegateAdapter(this, type);
@@ -66,6 +70,30 @@ public class MonitoringMultiTypeAdapterFactory  implements TypeAdapterFactory {
         };
     }
 
+    private TypeAdapter<ZonedDateTime> wrapZonedDateTimeAdapter(Gson gson, TypeToken<ZonedDateTime> type) {
+
+    	final TypeAdapter<String> delegate = gson.getDelegateAdapter(this, TypeToken.get(String.class) );
+
+        return new TypeAdapter<>() {
+
+            @Override
+            public void write(JsonWriter out, ZonedDateTime value) throws IOException {
+                if (value != null) {
+                	String strvalue = value.toString();
+            		delegate.write(out, strvalue);
+                } else
+                	delegate.write(out, "");
+
+            }
+
+            @Override public ZonedDateTime read(JsonReader in) throws IOException {
+            	String str = delegate.read(in);
+            	ZonedDateTime s = ZonedDateTime.parse(str);
+                return s;
+            }
+        };
+    }
+    
     private TypeAdapter<OffsetDateTime> wrapOffsetDateTimeAdapter(Gson gson, TypeToken<OffsetDateTime> type) {
 
     	final TypeAdapter<String> delegate = gson.getDelegateAdapter(this, TypeToken.get(String.class) );

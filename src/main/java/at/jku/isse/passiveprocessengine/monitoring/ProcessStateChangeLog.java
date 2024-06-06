@@ -16,6 +16,7 @@ import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedE
 import at.jku.isse.passiveprocessengine.instance.messages.Events.QAFulfillmentChanged;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.StepStateTransitionEvent;
 import at.jku.isse.passiveprocessengine.instance.messages.IProcessEventHandler;
+import at.jku.isse.passiveprocessengine.monitoring.serialization.MonitoringMultiTypeAdapterFactory;
 
 public class ProcessStateChangeLog implements IProcessEventHandler{
 
@@ -29,7 +30,7 @@ public class ProcessStateChangeLog implements IProcessEventHandler{
 		.filter(event -> event.getProcScope() != null) // wont handle process instance events
 		.forEach(event -> {
 			event.setTimestamp(timeStampProvider.getLastChangeTimeStamp());
-			List<ProcessChangedEvent> list = logs.computeIfAbsent(event.getProcScope().getInstance().getId(), k->new LinkedList<>() );
+			List<ProcessChangedEvent> list = logs.computeIfAbsent(event.getProcScope().getInstance().getName(), k->new LinkedList<>() );
 			list.add(event);
 		});
 	}
@@ -37,13 +38,13 @@ public class ProcessStateChangeLog implements IProcessEventHandler{
 	public Map<String, List<ProcessChangedEvent>> logs = new HashMap<>();
 
 	private static Gson gson = new GsonBuilder()
-			 .registerTypeAdapterFactory(new at.jku.isse.passiveprocessengine.monitoring.serialization.MonitoringMultiTypeAdapterFactory())
+			 .registerTypeAdapterFactory(new MonitoringMultiTypeAdapterFactory())
 			 .setPrettyPrinting()
 			 .create();
 
-	public String getEventLogAsJson(Long processId) {
-		if (logs.containsKey(processId)) {
-			return gson.toJson(logs.get(processId));
+	public String getEventLogAsJson(String processName) {
+		if (logs.containsKey(processName)) {
+			return gson.toJson(logs.get(processName));
 		} else {
 			return null;
 		}

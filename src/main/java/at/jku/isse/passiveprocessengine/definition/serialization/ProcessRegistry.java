@@ -33,8 +33,8 @@ public class ProcessRegistry {
 	protected PPEInstanceType processDefinitionType;
 	protected PPEInstanceType processInstanceType;
 
-	protected Set<DTOs.Process> tempStorePD = new HashSet<>();
-	protected boolean isInit = false;
+	//protected Set<DTOs.Process> tempStorePD = new HashSet<>();
+	//protected boolean isInit = false;
 	protected Map<String, ProcessInstance> processInstances = new HashMap<>();
 	protected List<ProcessInstance> removedInstances = new LinkedList<>();
 
@@ -48,20 +48,22 @@ public class ProcessRegistry {
 		assert(processDefinitionType != null);
 		processInstanceType = context.getSchemaRegistry().getType(ProcessInstance.class); 
 		assert(processInstanceType != null);
+		context.getSchemaRegistry().getAllNonDeletedInstanceTypes().stream().forEach(itype -> log.debug(String.format("Available instance type %s ", itype.getName())));
+		loadPersistedProcesses();
 	}
 
-	public void initProcessDefinitions() {		
-		// TODO: restructure designspace so that process type is available upon constructor call
-		context.getSchemaRegistry().getAllNonDeletedInstanceTypes().stream().forEach(itype -> log.debug(String.format("Available instance type %s ", itype.getName())));
-		isInit = true;
-		tempStorePD.forEach(pd -> {
-			SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> result = storeProcessDefinition(pd, false); // if process already exists do nothing, if not exists and has errors log error, else create process
-			if (!result.getValue().isEmpty()) {
-				log.warn("Error loading process definition from file system: "+result.getKey().getName()+"\r\n"+result.getValue());
-			}
-		});
-		tempStorePD.clear();		
-	}
+//	public void initProcessDefinitions() {		
+//		// TODO: restructure designspace so that process type is available upon constructor call
+//		context.getSchemaRegistry().getAllNonDeletedInstanceTypes().stream().forEach(itype -> log.debug(String.format("Available instance type %s ", itype.getName())));
+//		isInit = true;
+//		tempStorePD.forEach(pd -> {
+//			SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> result = storeProcessDefinition(pd, false); // if process already exists do nothing, if not exists and has errors log error, else create process
+//			if (!result.getValue().isEmpty()) {
+//				log.warn("Error loading process definition from file system: "+result.getKey().getName()+"\r\n"+result.getValue());
+//			}
+//		});
+//		tempStorePD.clear();		
+//	}
 
 
 	public Optional<ProcessDefinition> getProcessDefinition(String stringId, Boolean onlyValid) {
@@ -80,13 +82,13 @@ public class ProcessRegistry {
 	}
 
 	public ProcessDeployResult createProcessDefinitionIfNotExisting(DTOs.Process process) {
-		if (!isInit) { tempStorePD.add(process); return null;} // may occur upon bootup 
+	//	if (!isInit) { tempStorePD.add(process); return null;} // may occur upon bootup 
 		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> newPD = storeProcessDefinition(process, false);
 		return new ProcessDeployResult(newPD.getKey(), newPD.getValue(), Collections.emptyList());
 	}
 
 	public ProcessDeployResult createOrReplaceProcessDefinition(DTOs.Process process, boolean doReinstantiateExistingProcessInstances) {
-		if (!isInit) { tempStorePD.add(process); return null;} // may occur upon bootup where we dont expect replacement to happen and resort to standard behavior or creating only but not replacing
+	//	if (!isInit) { tempStorePD.add(process); return null;} // may occur upon bootup where we dont expect replacement to happen and resort to standard behavior or creating only but not replacing
 		String originalCode = process.getCode();
 		String tempCode = originalCode+STAGINGPOSTFIX;
 		process.setCode(tempCode);
@@ -244,7 +246,7 @@ public class ProcessRegistry {
 		return all;
 	}
 
-	public Set<ProcessInstance> loadPersistedProcesses() {
+	protected Set<ProcessInstance> loadPersistedProcesses() {
 		Set<ProcessInstance> existingProcessInstances = context.getInstanceRepository().getAllInstancesOfTypeOrSubtype(processInstanceType) //  context.getAllSubtypesRecursively(ProcessStep.getOrCreateDesignSpaceCoreSchema(ws))
 				.stream()
 				//.stream().filter(stepType -> stepType.name().startsWith(ProcessInstance.designspaceTypeId)) //everthing that is a process type
