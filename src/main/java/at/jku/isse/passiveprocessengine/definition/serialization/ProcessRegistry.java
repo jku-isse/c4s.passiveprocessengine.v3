@@ -225,12 +225,12 @@ public class ProcessRegistry {
 		}
 	}
 
-	public ProcessInstance getProcess(String id) {
-		return processInstances.get(id);
+	public ProcessInstance getProcessByName(String name) {
+		return processInstances.get(name);
 	}
 
-	public boolean removeProcess(String id) {
-		ProcessInstance pi = processInstances.remove(id);
+	public boolean removeProcessByName(String name) {
+		ProcessInstance pi = processInstances.remove(name);
 		if (pi != null) {
 			pi.deleteCascading();
 			context.getInstanceRepository().concludeTransaction();
@@ -240,6 +240,11 @@ public class ProcessRegistry {
 		return false;
 	}
 
+	public List<ProcessInstance> getNonDeletedProcessInstances() {
+		List<ProcessInstance> all = new LinkedList<>(processInstances.values());		
+		return all;
+	}
+	
 	public List<ProcessInstance> getExistingAndPriorInstances() {
 		List<ProcessInstance> all = new LinkedList<>(processInstances.values());
 		all.addAll(removedInstances);

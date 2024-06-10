@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
-import at.jku.isse.passiveprocessengine.core.RuleDefinitionFactory;
+import at.jku.isse.passiveprocessengine.core.RuleDefinitionService;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
@@ -28,10 +28,10 @@ public class RuleAugmentation {
 	private StepDefinition stepDef;
 	private PPEInstanceType stepType;
 	
-	private RuleDefinitionFactory ruleFactory;
+	private RuleDefinitionService ruleFactory;
 	private RewriterFactory ruleRewriter;
 
-	public RuleAugmentation(StepDefinition sd, PPEInstanceType stepType, RuleDefinitionFactory ruleFactory, RewriterFactory ruleRewriter) {		
+	public RuleAugmentation(StepDefinition sd, PPEInstanceType stepType, RuleDefinitionService ruleFactory, RewriterFactory ruleRewriter) {		
 		this.stepDef = sd;
 		this.stepType = stepType;
 		this.ruleFactory = ruleFactory;

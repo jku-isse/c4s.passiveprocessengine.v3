@@ -26,7 +26,7 @@ public class FactoryIndex {
 	final MappingDefinitionFactory mappingDefinitionFactory;
 	final ProcessDefinitionFactory processDefinitionFactory;
 	final StepDefinitionFactory stepDefinitionFactory;	
-	final RuleDefinitionFactory ruleDefinitionFactory;
+	final RuleDefinitionService ruleDefinitionFactory;
 	final ProcessConfigFactory processConfigFactory;
 	
 	
@@ -36,7 +36,7 @@ public class FactoryIndex {
 	 * @return FactoryIndex with new set of factory instances, 
 	 * if possible, ensure to build only once, to reuse Factories (multiple instances of same factory are ok, but not efficient)
 	 */
-	public static FactoryIndex build(ProcessContext context, RewriterFactory ruleRewriterFactory, RuleDefinitionFactory ruleDefinitionFactory) {
+	public static FactoryIndex build(ProcessContext context, RewriterFactory ruleRewriterFactory, RuleDefinitionService ruleDefinitionFactory) {
 		FactoryIndex index = new FactoryIndex(
 				new ConstraintResultWrapperFactory(context),
 				new DecisionNodeInstanceFactory(context),

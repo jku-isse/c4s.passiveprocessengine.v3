@@ -9,7 +9,7 @@ import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType.CARDINALITIES;
-import at.jku.isse.passiveprocessengine.core.RuleDefinitionFactory;
+import at.jku.isse.passiveprocessengine.core.RuleDefinitionService;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
@@ -22,9 +22,9 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 	private ProcessDefinition processDef;
 	private String prefix;
 	private Set<PropertySchemaDTO> props;
-	private RuleDefinitionFactory ruleFactory;
+	private RuleDefinitionService ruleFactory;
 	
-	public SpecificProcessConfigType(SchemaRegistry schemaRegistry, ProcessDefinition processDef, String prefix, Set<PropertySchemaDTO> props, RuleDefinitionFactory ruleFactory) {
+	public SpecificProcessConfigType(SchemaRegistry schemaRegistry, ProcessDefinition processDef, String prefix, Set<PropertySchemaDTO> props, RuleDefinitionService ruleFactory) {
 		super(schemaRegistry);
 		this.processDef = processDef;
 		this.prefix = prefix;
@@ -87,7 +87,7 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 			return (getInstanceType(schemaRegistry) != null && getCardinality() != null);
 		}
 
-		public boolean addPropertyToType(PPEInstanceType processConfig, DomainTypesRegistry factory, SchemaRegistry schemaRegistry, RuleDefinitionFactory ruleFactory) {
+		public boolean addPropertyToType(PPEInstanceType processConfig, DomainTypesRegistry factory, SchemaRegistry schemaRegistry, RuleDefinitionService ruleFactory) {
 			PPEInstanceType baseType = factory.getTypeByName(ProcessConfigBaseElementType.typeId);
 			
 			if (processConfig != null

@@ -30,7 +30,7 @@ public class ConfigurationBuilder {
 			, InstanceRepository instanceRepository
 			, RepairTreeProvider ruleService
 			, RewriterFactory rewriterFactory
-			, RuleDefinitionFactory ruleFactory) {
+			, RuleDefinitionService ruleFactory) {
 		this.instanceRepository = instanceRepository;
 		this.schemaRegistry = schemaRegistry;
 		initSchemaRegistry();
@@ -74,7 +74,7 @@ public class ConfigurationBuilder {
 		configTypeProvider.produceTypeProperties();
 	}
 	
-	private void initContext(RewriterFactory rewriterFactory, RuleDefinitionFactory ruleFactory, RepairTreeProvider repairTreeProvider) {
+	private void initContext(RewriterFactory rewriterFactory, RuleDefinitionService ruleFactory, RepairTreeProvider repairTreeProvider) {
 		context = new ProcessContext(instanceRepository, schemaRegistry, ioMapper, repairTreeProvider);
 		context.inject(FactoryIndex.build(context, rewriterFactory, ruleFactory));
 	}

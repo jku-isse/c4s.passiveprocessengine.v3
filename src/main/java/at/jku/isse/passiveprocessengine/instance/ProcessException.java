@@ -6,20 +6,30 @@ import java.util.stream.Collectors;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NonNull;
 
 @EqualsAndHashCode(callSuper = true)
-@Data
 public class ProcessException extends Exception {
-	private static final long serialVersionUID = 1L;
-	@NonNull
-	String mainMessage;
+	private static final long serialVersionUID = 1L;	
+	@Getter
 	List<String> errorMessages = new LinkedList<>();
 
+	public ProcessException(String mainMessage, List<String> errorMessages) {
+		super(mainMessage);
+		this.errorMessages = errorMessages;
+	}
+
+	public ProcessException(@NonNull String mainMessage) {
+		super(mainMessage);
+	}
+	
 	@Override
 	public String getMessage() {
-		return mainMessage +errorMessages.stream().collect(Collectors.joining(","," : \r\n[","]"));
+		return super.getMessage() +errorMessages.stream().collect(Collectors.joining(","," : \r\n[","]"));
 	}
+
+
 
 
 
