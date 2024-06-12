@@ -53,6 +53,13 @@
             <version>2.0.1</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>at.jku.isse.designspace</groupId>
+            <artifactId>artifact-connector.ds5wrapper</artifactId>
+            <version>1.0.1</version>
+            <scope>compile</scope>
+        </dependency>
+        
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -121,19 +128,6 @@
 			<version>5.4.2</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-            <groupId>at.jku.isse.designspace</groupId>
-            <artifactId>artifact-connector.ds5wrapper</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
-        </dependency>
-		
-<!--		<dependency>
-			<groupId>at.jku.isse.designspace</groupId>
-			<artifactId>artifact-connector.jira</artifactId>
-			<version>1.7.0</version>
-			<scope>test</scope>
-		</dependency>-->
 	</dependencies>
 
 	<build>

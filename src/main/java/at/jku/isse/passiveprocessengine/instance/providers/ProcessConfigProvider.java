@@ -47,7 +47,7 @@ public class ProcessConfigProvider implements IArtifactProvider {
 	public Set<FetchResponse> fetchArtifact(Set<ArtifactIdentifier> artifactIdentifiers) {
 		return artifactIdentifiers.stream()
 			.map(id -> {
-				Optional<PPEInstance> optInst = ws.findInstanceyById(id.getId());
+				Optional<PPEInstance> optInst = ws.findInstanceById(id.getId());
 				if (optInst.isEmpty()) {
 					return new ErrorResponse("No ProcessConfig found for id: "+Objects.toString(id));
 				} else {

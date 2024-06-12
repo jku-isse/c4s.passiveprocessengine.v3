@@ -30,6 +30,7 @@ public class TestArtifacts {
 				return thisType.get();
 			else {
 				PPEInstanceType typeJira = schemaRegistry.createNewInstanceType(DEMOISSUETYPE, schemaRegistry.getTypeByName(CoreTypeFactory.BASE_TYPE_NAME));				
+				schemaRegistry.registerTypeByName(typeJira);
 				typeJira.createSinglePropertyType(CoreProperties.state.toString(), BuildInType.STRING);
 				typeJira.createSetPropertyType(CoreProperties.requirements.toString(), typeJira);
 				typeJira.createSetPropertyType(CoreProperties.bugs.toString(),  typeJira);
