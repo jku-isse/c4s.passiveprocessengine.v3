@@ -35,7 +35,7 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 	@Override
 	public void produceTypeProperties() {
 		String subtypeName = getSubtypeName();
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(subtypeName);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(subtypeName);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerTypeByName(thisType.get());
 			this.type = thisType.get();
@@ -71,7 +71,7 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 				case("REAL"): return BuildInType.FLOAT;
 				default:
 					// complex type, FQN needed
-					return schemaRegistry.findNonDeletedInstanceTypeById(instanceType).orElse(null);
+					return schemaRegistry.findNonDeletedInstanceTypeByFQN(instanceType).orElse(null);
 			}
 		}
 

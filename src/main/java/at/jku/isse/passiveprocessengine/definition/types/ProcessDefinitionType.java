@@ -22,7 +22,7 @@ public class ProcessDefinitionType implements TypeProvider{
 	
 	public ProcessDefinitionType(SchemaRegistry schemaRegistry) {
 		this.schemaRegistry = schemaRegistry;
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerType(ProcessDefinition.class, thisType.get());
 			this.type = thisType.get();

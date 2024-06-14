@@ -107,17 +107,7 @@ public class ProcessDefinition extends StepDefinition{
 	public void deleteCascading() {
 		getDecisionNodeDefinitions().forEach(dnd -> dnd.deleteCascading());
 		getStepDefinitions().forEach(sd -> sd.deleteCascading());
-		// wring instanceType: we need to get the dynamically generate Instance (the one that is used for the ProcessInstance)
-		String processDefName = SpecificProcessInstanceType.getProcessName(this);
-		PPEInstanceType thisType = this.context.getSchemaRegistry().findNonDeletedInstanceTypeById(processDefName).get();		
-		//PPEInstanceType thisType = this.getInstance().getInstanceType(); WRONG OLD INSTANCE TYPE	
-		this.getPrematureTriggers().entrySet().stream()
-		.forEach(entry -> {
-			String name = SpecificProcessInstanceType.generatePrematureRuleName(entry.getKey(), this);
-			RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, thisType);//RuleDefinition.consistencyRuleTypeExists(ws,  name, thisType, entry.getValue());
-			if (crt != null) 
-				crt.markAsDeleted();
-		});
+		
 		// delete configtype
 		this.getExpectedInput().entrySet().stream()
 		.filter(entry -> entry.getValue().isOfTypeOrAnySubtype(context.getSchemaRegistry().getTypeByName(ProcessConfigBaseElementType.typeId)))
@@ -125,8 +115,20 @@ public class ProcessDefinition extends StepDefinition{
 			PPEInstanceType procConfig = configEntry.getValue().getInstanceType(); // context.getConfigFactory().getOrCreateProcessSpecificSubtype(configEntry.getKey(), this);
 			procConfig.markAsDeleted();
 		});
+		// wring instanceType: we need to get the dynamically generate Instance (the one that is used for the ProcessInstance)
+		String processDefName = SpecificProcessInstanceType.getProcessName(this);
+		PPEInstanceType thisType = this.context.getSchemaRegistry().getTypeByName(processDefName);
+		if (thisType != null) {
+			this.getPrematureTriggers().entrySet().stream()
+			.forEach(entry -> {
+				String name = SpecificProcessInstanceType.generatePrematureRuleName(entry.getKey(), this);
+				RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, thisType);//RuleDefinition.consistencyRuleTypeExists(ws,  name, thisType, entry.getValue());
+				if (crt != null) 
+					crt.markAsDeleted();
+			});			
+			thisType.markAsDeleted();
+		}
 		super.deleteCascading();
-		thisType.markAsDeleted();
 	}
 
 	

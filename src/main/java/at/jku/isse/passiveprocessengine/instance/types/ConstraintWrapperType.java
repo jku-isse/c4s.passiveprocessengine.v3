@@ -19,7 +19,7 @@ public class ConstraintWrapperType extends TypeProviderBase {
 	
 	public ConstraintWrapperType(SchemaRegistry schemaRegistry) {
 		super(schemaRegistry);
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerType(ConstraintResultWrapper.class, thisType.get());
 			this.type = thisType.get();

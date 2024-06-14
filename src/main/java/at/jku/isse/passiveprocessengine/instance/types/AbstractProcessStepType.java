@@ -22,7 +22,7 @@ public class AbstractProcessStepType extends TypeProviderBase {
 
 	public AbstractProcessStepType(SchemaRegistry schemaRegistry) {
 		super(schemaRegistry);
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerType(ProcessStep.class, thisType.get());
 			this.type = thisType.get();

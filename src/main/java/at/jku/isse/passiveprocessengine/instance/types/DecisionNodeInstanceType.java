@@ -20,7 +20,7 @@ public class DecisionNodeInstanceType extends TypeProviderBase {
 	
 	public DecisionNodeInstanceType(SchemaRegistry schemaRegistry) {
 		super(schemaRegistry);
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerType(DecisionNodeInstance.class, thisType.get());
 			this.type = thisType.get();

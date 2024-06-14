@@ -25,7 +25,7 @@ public class TestArtifacts {
 	}
 	
 	public PPEInstanceType getJiraInstanceType() {
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(DEMOISSUETYPE);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(DEMOISSUETYPE);
 			if (thisType.isPresent())
 				return thisType.get();
 			else {

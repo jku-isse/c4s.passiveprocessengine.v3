@@ -18,7 +18,7 @@ public class MappingDefinitionType  implements TypeProvider {
 	
 	public MappingDefinitionType(SchemaRegistry schemaRegistry) {
 		this.schemaRegistry = schemaRegistry;
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerType(MappingDefinition.class, thisType.get());
 			this.type = thisType.get();

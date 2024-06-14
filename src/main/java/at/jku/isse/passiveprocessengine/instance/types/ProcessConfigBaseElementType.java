@@ -16,7 +16,7 @@ public class ProcessConfigBaseElementType extends TypeProviderBase {
 	
 	public ProcessConfigBaseElementType(SchemaRegistry schemaRegistry) {
 		super(schemaRegistry);
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerTypeByName(thisType.get());
 			this.type = thisType.get();

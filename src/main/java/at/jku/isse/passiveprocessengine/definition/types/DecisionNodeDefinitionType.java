@@ -20,7 +20,7 @@ public class DecisionNodeDefinitionType implements TypeProvider {
 
 	public DecisionNodeDefinitionType(SchemaRegistry schemaRegistry) {
 		this.schemaRegistry = schemaRegistry;
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerType(DecisionNodeDefinition.class, thisType.get());
 			this.type = thisType.get();

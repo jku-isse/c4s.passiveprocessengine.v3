@@ -18,7 +18,7 @@ public class ProcessDefinitionScopeType  implements TypeProvider {
 	
 	public ProcessDefinitionScopeType(SchemaRegistry schemaRegistry) {
 		this.schemaRegistry = schemaRegistry;
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerType(ProcessDefinitionScopedElement.class, thisType.get());
 			this.type = thisType.get();

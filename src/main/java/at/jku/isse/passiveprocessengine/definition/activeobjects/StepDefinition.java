@@ -407,23 +407,22 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	public void deleteCascading() {
 		// wring instanceType: we need to get the dynamically generate Instance (the one that is used for the ProcessStep)
 		String stepDefName = SpecificProcessStepType.getProcessStepName(this);
-		PPEInstanceType instType = this.context.getSchemaRegistry().findNonDeletedInstanceTypeById(stepDefName).get();	
-		//PPEInstanceType instType = this.instance.getInstanceType();//WRONG OLD instance type
+		PPEInstanceType instType = this.context.getSchemaRegistry().getTypeByName(stepDefName);
+		if (instType != null) { 
+			this.getActivationconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.ACTIVATION));
+			this.getCancelconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.CANCELATION));
+			this.getPostconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.POSTCONDITION));
+			this.getPreconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.PRECONDITION));
 
-		this.getActivationconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.ACTIVATION));
-		this.getCancelconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.CANCELATION));
-		this.getPostconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.POSTCONDITION));
-		this.getPreconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.PRECONDITION));
-
-		this.getInputToOutputMappingRules().entrySet().stream()
+			this.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
 				String name = ProcessDefinitionFactory.getDataMappingId(entry, this);
 				RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
 				if (crt != null) crt.markAsDeleted();
 			});
-		//delete qa constraints:
-		ProcessDefinition pd = this.getProcess() !=null ? this.getProcess() : (ProcessDefinition)this;
-		this.getQAConstraints().stream()
+			//delete qa constraints:
+			ProcessDefinition pd = this.getProcess() !=null ? this.getProcess() : (ProcessDefinition)this;
+			this.getQAConstraints().stream()
 			.forEach(spec -> {
 				String specId = ProcessDefinitionFactory.getQASpecId(spec, pd);
 				RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(specId, instType);
@@ -431,8 +430,8 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 					crt.markAsDeleted();
 				spec.deleteCascading();
 			});
-
-		instType.markAsDeleted();
+			instType.markAsDeleted();
+		} // else // we never go around creating that step instance type probably due to errors in the definition
 		super.deleteCascading();
 	}
 

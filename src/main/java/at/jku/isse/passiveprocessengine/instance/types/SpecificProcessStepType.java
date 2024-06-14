@@ -38,7 +38,7 @@ public class SpecificProcessStepType extends TypeProviderBase {
 	@Override
 	public void produceTypeProperties() {
 		String stepName = SpecificProcessStepType.getProcessStepName(stepDef);
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(stepName);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(stepName);
 		if (thisType.isPresent())
 			schemaRegistry.registerTypeByName(thisType.get());	
 		else {

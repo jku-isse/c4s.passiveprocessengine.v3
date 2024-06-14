@@ -31,7 +31,7 @@ public class SpecificProcessInstanceType extends TypeProviderBase {
 	@Override
 	public void produceTypeProperties() {
 		String processName = getProcessName(procDef);
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(processName);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(processName);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerTypeByName(thisType.get());	
 			this.type = thisType.get();

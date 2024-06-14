@@ -16,7 +16,7 @@ public class ProcessInstanceScopeType extends TypeProviderBase {
 
 	public ProcessInstanceScopeType(SchemaRegistry schemaRegistry) {
 		super(schemaRegistry);
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeById(typeId);
+		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
 			schemaRegistry.registerType(ProcessInstanceScopedElement.class, thisType.get());
 			this.type = thisType.get();
