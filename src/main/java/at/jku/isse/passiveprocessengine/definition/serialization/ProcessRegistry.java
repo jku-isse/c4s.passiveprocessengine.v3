@@ -94,9 +94,12 @@ public class ProcessRegistry {
 		process.setCode(tempCode);
 		DefinitionTransformer.replaceStepNamesInMappings(process, originalCode, tempCode);
 		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> stagedProc = storeProcessDefinition(process, true);
-		if (!stagedProc.getValue().isEmpty())
+		if (!stagedProc.getValue().isEmpty()) {
+			//undo step name replacement
+			DefinitionTransformer.replaceStepNamesInMappings(process, tempCode, originalCode);
 			return new ProcessDeployResult(stagedProc.getKey(), stagedProc.getValue(), Collections.emptyList());
 		// if we continue here, then no process error occurred and we can continue
+		}
 		// we remove the staging one and replace the original
 		if (stagedProc.getKey() != null) {
 			stagedProc.getKey().deleteCascading();

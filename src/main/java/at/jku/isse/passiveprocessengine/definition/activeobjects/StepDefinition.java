@@ -326,13 +326,14 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		this.getPostconditions().stream().forEach(spec -> checkConstraintExists(instType, spec, Conditions.POSTCONDITION, errors));
 		this.getPreconditions().stream().forEach(spec -> checkConstraintExists(instType, spec, Conditions.PRECONDITION, errors));
 
-		this.getInputToOutputMappingRules().entrySet().stream()
+		// we dont need to check InputToOutput rule for subprocesses as these should produce the output internally/below in their childsteps
+		// hence dont check, unless there are no child steps.
+		if (this instanceof ProcessDefinition && ((ProcessDefinition)this).getStepDefinitions().size() > 0) {
+			log.debug("Skipping checking of Datamapping Rule for Subprocess Step: "+this.getName());
+		} else {
+			this.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
-				String name = ProcessDefinitionFactory.getDataMappingId(entry, this);
-				//Properties no longer used, just check for rules directly
-				//String propName = ProcessDefinitionFactory.CRD_DATAMAPPING_PREFIX+entry.getKey();
-				//PropertyType ioPropType = instType.getPropertyType(propName);
-				//InstanceType ruleType = ioPropType.getInstanceType();
+				String name = ProcessDefinitionFactory.getDataMappingId(entry, this);				
 				RuleDefinition ruleType = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
 				if (ruleType == null) 	{
 					log.error("Expected Datamapping Rule for existing process not found: "+name);
@@ -344,6 +345,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 						errors.add(new ProcessDefinitionError(this, String.format("DataMapping %s has an error", name), crt.getRuleError()));
 				}
 			});
+		}
 		//qa constraints:
 		ProcessDefinition pd = this.getProcess() !=null ? this.getProcess() : (ProcessDefinition)this;
 		this.getQAConstraints().stream()

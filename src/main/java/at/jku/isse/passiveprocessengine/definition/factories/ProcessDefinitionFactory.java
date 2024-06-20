@@ -64,6 +64,7 @@ public class ProcessDefinitionFactory extends DomainFactory {
 		//List<ProcessException> subProcessExceptions = new ArrayList<>();
 		processDef.getStepDefinitions().stream().forEach(stepDef -> {
 			if (stepDef instanceof ProcessDefinition) {
+				log.debug("Skipping creation of Datamapping Rule for Subprocess Step: "+stepDef.getName());
 				errors.addAll(initializeInstanceTypes((ProcessDefinition)stepDef, doGeneratePrematureDetectionConstraints));
 			} else {
 				// create the specific step type
@@ -73,7 +74,14 @@ public class ProcessDefinitionFactory extends DomainFactory {
 				stepDef.getInputToOutputMappingRules().entrySet().stream()
 				.forEach(entry -> {
 					if (entry.getValue() != null) {
-						RuleDefinition crt = getContext().getFactoryIndex().getRuleDefinitionFactory().createInstance(stepInstanceType, getDataMappingId(entry, stepDef), completeDatamappingRule(entry.getKey(), entry.getValue()));
+						String name = getDataMappingId(entry, stepDef);
+						String expression = completeDatamappingRule(entry.getKey(), entry.getValue());
+						RuleDefinition crt = getContext().getFactoryIndex().getRuleDefinitionFactory().createInstance(stepInstanceType, name, expression);
+						if (crt == null) {
+							log.warn("Unknown reason for rule creation failure");
+						} else {
+							System.out.println("Created "+name);
+						}
 						// do we really need to create those properties? or is creating just the rules ok? probably not
 						//type.createPropertyType(CRD_DATAMAPPING_PREFIX+entry.getKey(), Cardinality.SINGLE, crt);
 					}
