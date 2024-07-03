@@ -7,6 +7,7 @@ import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
+import lombok.NonNull;
 
 public class ConstraintSpec extends  ProcessDefinitionScopedElement{
 
@@ -24,7 +25,15 @@ public class ConstraintSpec extends  ProcessDefinitionScopedElement{
 	public String getConstraintSpec() {
 		return instance.getTypedProperty(ConstraintSpecType.CoreProperties.constraintSpec.toString(), String.class);
 	}
+	
+	public String getAugmentedConstraintSpec() {
+		return instance.getTypedProperty(ConstraintSpecType.CoreProperties.augmentedSpec.toString(), String.class);
+	}
 
+	public void setAugmentedConstraintSpec(@NonNull String augmentedArl) {
+		instance.setSingleProperty(ConstraintSpecType.CoreProperties.augmentedSpec.toString(), augmentedArl);
+	}
+	
 	public String getHumanReadableDescription() {
 		return instance.getTypedProperty(ConstraintSpecType.CoreProperties.humanReadableDescription.toString(), String.class);
 	}

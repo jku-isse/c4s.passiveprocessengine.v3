@@ -210,7 +210,7 @@ public class DefinitionTransformer {
 					break;
 				default:
 					String msg = "Unsupported constraint type: "+entry.getKey();
-					errors.add(new ProcessDefinitionError(step, "UnsupportedProcessDefinitionSchema", msg));
+					errors.add(new ProcessDefinitionError(step, "UnsupportedProcessDefinitionSchema", msg, ProcessDefinitionError.Severity.ERROR));
 					log.warn(msg);
 					break;
 				}
@@ -236,7 +236,7 @@ public class DefinitionTransformer {
 		//InstanceType iType = searchInFolderAndBelow(type, ws.TYPES_FOLDER); // we no longer search in folders, we expect exact name
 		Optional<PPEInstanceType> iType = schemaRegistry.findNonDeletedInstanceTypeByFQN(type);
 		if (iType.isEmpty()) {
-			errors.add(new ProcessDefinitionError(el, "Unknown Instance Type", "Input/Output definition "+param+" uses unknown instance type: "+type ));
+			errors.add(new ProcessDefinitionError(el, "Unknown Instance Type", "Input/Output definition "+param+" uses unknown instance type: "+type , ProcessDefinitionError.Severity.ERROR));
 			//throw new ProcessException("Process Description uses unknown instance type: "+type);
 			return BuildInType.METATYPE;
 		}

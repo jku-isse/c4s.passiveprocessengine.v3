@@ -100,7 +100,10 @@ public class ProcessDefinitionFactory extends DomainFactory {
 								.augmentAndCreateConditions());
 		});
 		errors.addAll(checkConstraintValidity(processDef, processInstanceType));
-		if (errors.isEmpty() ) {
+		
+		errors.addAll(ruleService.checkOverriding(processDef, getContext()));
+		
+		if (errors.isEmpty() || errors.stream().allMatch(error -> !error.getSeverity().equals(ProcessDefinitionError.Severity.ERROR))) {
 			// now lets also create premature rules here, as we need the process to exist first
 	//		if (doGeneratePrematureDetectionConstraints) {
 	//			new PrematureTriggerGenerator(ws, this).generatePrematureConstraints();
@@ -131,10 +134,10 @@ public class ProcessDefinitionFactory extends DomainFactory {
 			RuleDefinition crt = getContext().getSchemaRegistry().getRuleByNameAndContext(ruleId, processInstanceType); //.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
 			if (crt == null) {
 				log.error("Expected Rule for existing process not found: "+ruleId);
-				overallStatus.add(new ProcessDefinitionError(processDef, "Expected Premature Trigger Rule Not Found - Internal Data Corruption", ruleId));
+				overallStatus.add(new ProcessDefinitionError(processDef, "Expected Premature Trigger Rule Not Found - Internal Data Corruption", ruleId, ProcessDefinitionError.Severity.ERROR));
 			} else
 				if (crt.hasRuleError())
-					overallStatus.add(new ProcessDefinitionError(processDef, String.format("Premature Trigger Rule % has an error", ruleId), crt.getRuleError()));
+					overallStatus.add(new ProcessDefinitionError(processDef, String.format("Premature Trigger Rule % has an error", ruleId), crt.getRuleError(), ProcessDefinitionError.Severity.ERROR));
 		});
 		processDef.getStepDefinitions().forEach(sd -> overallStatus.addAll( sd.checkConstraintValidity(processInstanceType)));
 		return overallStatus;
@@ -143,19 +146,19 @@ public class ProcessDefinitionFactory extends DomainFactory {
 	public List<ProcessDefinitionError> checkProcessStructure(ProcessDefinition processDef) {
 		List<ProcessDefinitionError> status = new LinkedList<>();
 		if (processDef.getDecisionNodeDefinitions().stream().filter(dnd -> dnd.getInSteps().isEmpty()).count() > 1)
-			status.add(new ProcessDefinitionError(processDef, "Invalid Process Structure", "More than one entry decision node found"));
+			status.add(new ProcessDefinitionError(processDef, "Invalid Process Structure", "More than one entry decision node found", ProcessDefinitionError.Severity.ERROR));
 		if (processDef.getDecisionNodeDefinitions().stream().filter(dnd -> dnd.getOutSteps().isEmpty()).count() > 1)
-			status.add(new ProcessDefinitionError(processDef, "Invalid Process Structure", "More than one exit decision node found"));
+			status.add(new ProcessDefinitionError(processDef, "Invalid Process Structure", "More than one exit decision node found", ProcessDefinitionError.Severity.ERROR));
 		if (processDef.getExpectedInput().isEmpty()) {
-			status.add(new ProcessDefinitionError(processDef, "No Input Defined", "Step needs at least one input."));
+			status.add(new ProcessDefinitionError(processDef, "No Input Defined", "Step needs at least one input.", ProcessDefinitionError.Severity.ERROR));
 		}
 		processDef.getExpectedInput().entrySet().stream().forEach(entry -> {
 			if (entry.getValue() == null)
-				status.add(new ProcessDefinitionError(processDef, "Unavailable Type", "Artifact type of input '"+entry.getKey()+"' could not be resolved"));
+				status.add(new ProcessDefinitionError(processDef, "Unavailable Type", "Artifact type of input '"+entry.getKey()+"' could not be resolved", ProcessDefinitionError.Severity.ERROR));
 		});
 		processDef.getExpectedOutput().entrySet().stream().forEach(entry -> {
 			if (entry.getValue() == null)
-				status.add(new ProcessDefinitionError(processDef, "Unavailable Type", "Artifact type of output '"+entry.getKey()+"' could not be resolved"));
+				status.add(new ProcessDefinitionError(processDef, "Unavailable Type", "Artifact type of output '"+entry.getKey()+"' could not be resolved", ProcessDefinitionError.Severity.ERROR));
 		});
 
 		processDef.getStepDefinitions().stream()

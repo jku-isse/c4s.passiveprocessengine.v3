@@ -57,9 +57,10 @@ public class RuleAugmentation {
 				try {
 					List<StepParameter> singleUsage = extractStepParameterUsageFromConstraint(stepDef, arl);
 					arl = ruleRewriter.rewriteConstraint(stepType, arl, singleUsage, stepDef);
-					log.debug(String.format("Augmented constraint %s for %s to %s", specId, stepDef.getName(), arl));
+					log.debug(String.format("Augmented constraint %s for %s to %s", specId, stepDef.getName(), arl));				
+					spec.setAugmentedConstraintSpec(arl);
 				} catch(Exception e) {
-					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
+					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage(), ProcessDefinitionError.Severity.ERROR));
 				}
 				RuleDefinition crt =  ruleFactory.createInstance(stepType, specId, arl);
 				//TODO check if that needs to be stored, references anywhere
@@ -75,8 +76,9 @@ public class RuleAugmentation {
 					List<StepParameter> singleUsage = extractStepParameterUsageFromConstraint(stepDef, arl);
 					arl = ruleRewriter.rewriteConstraint(stepType, arl, singleUsage, stepDef);
 					log.debug(String.format("Augmented constraint %s for %s to %s", specId, stepDef.getName(), arl));
+					spec.setAugmentedConstraintSpec(arl);
 				} catch(Exception e) {
-					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
+					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage(), ProcessDefinitionError.Severity.ERROR));
 				}
 				RuleDefinition crt =  ruleFactory.createInstance( stepType, specId, arl);
 			}
@@ -91,8 +93,9 @@ public class RuleAugmentation {
 					List<StepParameter> singleUsage = extractStepParameterUsageFromConstraint(stepDef, arl);
 					arl = ruleRewriter.rewriteConstraint(stepType, arl, singleUsage, stepDef);
 					log.debug(String.format("Augmented constraint %s for %s to %s", specId, stepDef.getName(), arl));
+					spec.setAugmentedConstraintSpec(arl);
 				} catch(Exception e) {
-					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
+					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage(), ProcessDefinitionError.Severity.ERROR));
 				}
 				RuleDefinition crt =  ruleFactory.createInstance( stepType, specId, arl);
 			}
@@ -107,8 +110,9 @@ public class RuleAugmentation {
 					List<StepParameter> singleUsage = extractStepParameterUsageFromConstraint(stepDef, arl);
 					arl = ruleRewriter.rewriteConstraint(stepType, arl, singleUsage, stepDef);
 					log.debug(String.format("Augmented constraint %s for %s to %s", specId, stepDef.getName(), arl));
+					spec.setAugmentedConstraintSpec(arl);
 				} catch(Exception e) {
-					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage()));
+					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage(), ProcessDefinitionError.Severity.ERROR));
 				}
 				RuleDefinition crt =  ruleFactory.createInstance( stepType, specId, arl);
 			}
@@ -126,8 +130,9 @@ public class RuleAugmentation {
 						List<StepParameter> singleUsage = extractStepParameterUsageFromConstraint(stepDef, arl);
 						arl = ruleRewriter.rewriteConstraint(stepType, arl, singleUsage, stepDef);
 						log.debug(String.format("Augmented QA for %s to %s", stepDef.getName(), arl));
+						spec.setAugmentedConstraintSpec(arl);
 					} catch(Exception e) {
-						errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting QA Constraint %s : %s", spec.getConstraintId(), arl), e.getMessage()));
+						errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting QA Constraint %s : %s", spec.getConstraintId(), arl), e.getMessage(), ProcessDefinitionError.Severity.ERROR));
 					}
 					RuleDefinition crt =  ruleFactory.createInstance(stepType, specId, arl);
 				}

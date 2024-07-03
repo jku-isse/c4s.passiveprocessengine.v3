@@ -338,11 +338,11 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 				if (ruleType == null) 	{
 					log.error("Expected Datamapping Rule for existing process not found: "+name);
 					//status.put(name, "Corrupt data - Expected Datamapping Rule not found");
-					errors.add(new ProcessDefinitionError(this, "Expected DataMapping Not Found - Internal Data Corruption", name));
+					errors.add(new ProcessDefinitionError(this, "Expected DataMapping Not Found - Internal Data Corruption", name, ProcessDefinitionError.Severity.ERROR));
 				} else {
 					RuleDefinition crt = (RuleDefinition)ruleType;
 					if (crt.hasRuleError())
-						errors.add(new ProcessDefinitionError(this, String.format("DataMapping %s has an error", name), crt.getRuleError()));
+						errors.add(new ProcessDefinitionError(this, String.format("DataMapping %s has an error", name), crt.getRuleError(), ProcessDefinitionError.Severity.ERROR));
 				}
 			});
 		}
@@ -354,10 +354,10 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 				RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(specId, instType);//RuleDefinition.RuleDefinitionExists(ws,  specId, instType, spec.getQaConstraintSpec());
 				if (crt == null) {
 					log.error("Expected Rule for existing process not found: "+specId);
-					errors.add(new ProcessDefinitionError(this, "Expected QA Constraint Not Found - Internal Data Corruption", specId));
+					errors.add(new ProcessDefinitionError(this, "Expected QA Constraint Not Found - Internal Data Corruption", specId, ProcessDefinitionError.Severity.ERROR));
 				} else
 					if (crt.hasRuleError())
-						errors.add(new ProcessDefinitionError(this, String.format("QA Constraint %s has an error", specId), crt.getRuleError()));
+						errors.add(new ProcessDefinitionError(this, String.format("QA Constraint %s has an error", specId), crt.getRuleError(), ProcessDefinitionError.Severity.ERROR));
 			});
 		return errors;
 	}
@@ -367,32 +367,32 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
 		if (crt == null) {
 			log.error("Expected Rule for existing process not found: "+name);
-			errors.add(new ProcessDefinitionError(this, "Expected Constraint Not Found - Internal Data Corruption", name));
+			errors.add(new ProcessDefinitionError(this, "Expected Constraint Not Found - Internal Data Corruption", name, ProcessDefinitionError.Severity.ERROR));
 		} else {
 			if (crt.hasRuleError())
-				errors.add(new ProcessDefinitionError(this, String.format("Condition % has an error", spec.getName()), crt.getRuleError()));
+				errors.add(new ProcessDefinitionError(this, String.format("Condition % has an error", spec.getName()), crt.getRuleError(), ProcessDefinitionError.Severity.ERROR));
 		}
 	}
 
 	public List<ProcessDefinitionError> checkStepStructureValidity() {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
 		if (getPostconditions().isEmpty() && !this.getName().startsWith(NOOPSTEP_PREFIX)) {
-			errors.add(new ProcessDefinitionError(this, "No Condition Defined", "Step needs at least one post-condition to signal when a step is considered finished."));
+			errors.add(new ProcessDefinitionError(this, "No Condition Defined", "Step needs at least one post-condition to signal when a step is considered finished.", ProcessDefinitionError.Severity.ERROR));
 		}
 		if (getExpectedInput().isEmpty() && !this.getName().startsWith(NOOPSTEP_PREFIX)) {
-			errors.add(new ProcessDefinitionError(this, "No Input Defined", "Step needs at least one input."));
+			errors.add(new ProcessDefinitionError(this, "No Input Defined", "Step needs at least one input.", ProcessDefinitionError.Severity.ERROR));
 		}
 		getExpectedInput().entrySet().stream().forEach(entry -> {
 			if (entry.getValue() == null)
-				errors.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of input '"+entry.getKey()+"' could not be resolved"));
+				errors.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of input '"+entry.getKey()+"' could not be resolved", ProcessDefinitionError.Severity.ERROR));
 			});
 		getExpectedOutput().entrySet().stream().forEach(entry -> {
 			if (entry.getValue() == null)
-				errors.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of output '"+entry.getKey()+"' could not be resolved"));
+				errors.add(new ProcessDefinitionError(this, "Unavailable Type", "Artifact type of output '"+entry.getKey()+"' could not be resolved", ProcessDefinitionError.Severity.ERROR));
 			});
 		getExpectedOutput().keySet().stream().forEach(out -> {
 			if (!getInputToOutputMappingRules().containsKey(out))
-				errors.add(new ProcessDefinitionError(this, "No Mapping Defined", "Step output '"+out+"' has no datamapping from input defined"));
+				errors.add(new ProcessDefinitionError(this, "No Mapping Defined", "Step output '"+out+"' has no datamapping from input defined", ProcessDefinitionError.Severity.ERROR));
 			});
 
 		return errors;

@@ -9,8 +9,10 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.ProcessInstanceChangeListener;
+import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.BaseSpringConfig;
 import at.jku.isse.passiveprocessengine.core.ChangeEventTransformer;
+import at.jku.isse.passiveprocessengine.core.PPEExecutedRepairListener;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
@@ -25,8 +27,10 @@ import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
 import at.jku.isse.passiveprocessengine.monitoring.CurrentSystemTimeProvider;
+import at.jku.isse.passiveprocessengine.monitoring.ExecutedRepairListenerImpl;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
+import at.jku.isse.passiveprocessengine.monitoring.UsageMonitor;
 import at.jku.isse.passiveprocessengine.wrappers.DefinitionWrapperTests;
 import lombok.NonNull;
 
@@ -58,6 +62,10 @@ class InstanceTests extends DefinitionWrapperTests {
 		artifactFactory = new TestArtifacts(super.instanceRepository, schemaReg);
 		procFactory = new TestDTOProcesses(artifactFactory);
 		typeJira = artifactFactory.getJiraInstanceType();
+		UsageMonitor usageMonitor = new UsageMonitor(new CurrentSystemTimeProvider(), ruleServiceWrapper);
+		ExecutedRepairListenerImpl repairListener = new ExecutedRepairListenerImpl(usageMonitor, configBuilder.getContext());
+		ruleServiceWrapper.register(repairListener);
+		
 	//	WorkspaceListenerSequencer wsls = new WorkspaceListenerSequencer(ws);
 	//	wsls.registerListener(repAnalyzer);
 	//	wsls.registerListener(picp);

@@ -6,7 +6,7 @@
 
 	<groupId>at.jku.isse.designspace.passiveprocessengine</groupId>
 	<artifactId>c4s.passiveprocessengine.v3</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1.0.2-SNAPSHOT</version>
 
 	<distributionManagement>
 		<repository>
@@ -50,13 +50,13 @@
         <dependency>
             <groupId>at.jku.isse.designspace</groupId>
             <artifactId>artifact-connector.core</artifactId>
-            <version>2.0.1</version>
+            <version>2.0.2</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>at.jku.isse.designspace</groupId>
-            <artifactId>artifact-connector.ds5wrapper</artifactId>
-            <version>1.0.1</version>
+            <artifactId>artifact-connector.ds4wrapper</artifactId>
+            <version>1.0.2</version>
             <scope>compile</scope>
         </dependency>
         
