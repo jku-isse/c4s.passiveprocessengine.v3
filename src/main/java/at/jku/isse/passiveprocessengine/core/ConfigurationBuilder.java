@@ -22,6 +22,7 @@ public class ConfigurationBuilder {
 
 	final InstanceRepository instanceRepository;
 	final SchemaRegistry schemaRegistry;
+	final CoreTypeFactory coreTypeFactory;
 	
 	protected ProcessContext context;
 	protected InputToOutputMapper ioMapper;
@@ -30,9 +31,11 @@ public class ConfigurationBuilder {
 			, InstanceRepository instanceRepository
 			, RepairTreeProvider ruleService
 			, RewriterFactory rewriterFactory
-			, RuleDefinitionService ruleFactory) {
+			, RuleDefinitionService ruleFactory
+			, CoreTypeFactory coreTypeFactory) {
 		this.instanceRepository = instanceRepository;
 		this.schemaRegistry = schemaRegistry;
+		this.coreTypeFactory = coreTypeFactory;
 		initSchemaRegistry();
 		ioMapper = new InputToOutputMapper(ruleService);
 		initContext(rewriterFactory, ruleFactory, ruleService);
@@ -56,7 +59,7 @@ public class ConfigurationBuilder {
 		dndTypeProvider.produceTypeProperties();
 		processTypeProvider.produceTypeProperties();
 		stepTypeProvider.produceTypeProperties();		
-		new CoreTypeFactory(schemaRegistry).getBaseArtifactType(); // ensure base type exists
+		coreTypeFactory.getBaseArtifactType(); // ensure base type exists
 	}
 	
 	private void registerAllInstanceBaseTypes() {

@@ -58,7 +58,7 @@ public class DefinitionWrapperTests {
 		this.ruleServiceWrapper = dsSetup.getRepairTreeProvider();			
 		DesignspaceAbstractionMapper designspaceAbstractionMapper = (DesignspaceAbstractionMapper) schemaReg; // ugly as we know this is a DesignSpace in the background
 		RuleEvaluationService ruleEvaluationFactory = dsSetup.getRuleEvaluationService(); 
-		configBuilder = new ConfigurationBuilder(schemaReg, instanceRepository, ruleServiceWrapper, new RewriterFactory(designspaceAbstractionMapper), ruleEvaluationFactory);
+		configBuilder = new ConfigurationBuilder(schemaReg, instanceRepository, ruleServiceWrapper, new RewriterFactory(designspaceAbstractionMapper), ruleEvaluationFactory, dsSetup.getCoreTypeFactory());
 	}
 	
 	@AfterEach
