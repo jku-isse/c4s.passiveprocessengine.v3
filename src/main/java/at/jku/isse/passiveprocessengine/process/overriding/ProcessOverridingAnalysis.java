@@ -12,6 +12,7 @@ import at.jku.isse.designspace.rule.arl.expressions.RootExpression;
 import at.jku.isse.designspace.rule.arl.parser.ArlParser;
 import at.jku.isse.designspace.rule.arl.parser.ArlType;
 import at.jku.isse.designspace.rule.model.ConsistencyRuleType;
+import at.jku.isse.designspace.rule.overriding.ConstraintContext;
 import at.jku.isse.designspace.rule.overriding.OverridingConstraintData;
 import at.jku.isse.passiveprocessengine.definition.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinition;
@@ -28,7 +29,7 @@ public class ProcessOverridingAnalysis {
 	Workspace ws;
 	Expression overridableExp=null;
 	Map<String,String> mappings=new HashMap<>();
-	List<OverridingConstraintData> ovc_list=new LinkedList<>();
+	List<ConstraintContext> ovc_list=new LinkedList<>();
 	public ProcessOverridingAnalysis(ProcessDefinition process, List<ProcessDefinitionError> errors,Workspace ws) {
 		super();
 		this.pd = process;
@@ -72,12 +73,14 @@ public class ProcessOverridingAnalysis {
 				// 2.2: QA Constraints 
 				sd.getQAConstraints().stream().forEach(qa->{
 					String specId = getConstraintName(Conditions.QA, qa.getOrderIndex(), stepType);
-					String arl=qa.getAugmentedConstraintSpec();
+					//String arl=qa.getAugmentedConstraintSpec();
+					String arl=qa.getConstraintSpec();
 					if(arl!=null && qa.getInstance().getPropertyAsValue("isOverridable").equals(false) && overridableExp!=null) 
 					{
 						//Completing IO mappings into the Constraint.Code is here decide later if needed or not
 						//arl=embeddingIOMappingIntoConstraint(arl);
-						checkImpact(stepType, specId, arl, qa, warnings);
+						inferImpact(stepType, specId, arl, qa, warnings);
+						//checkImpact(stepType, specId, arl, qa, warnings);
 					}
 					else if(arl!=null && qa.getInstance().getPropertyAsValue("isOverridable").equals(true))
 					{
@@ -92,7 +95,7 @@ public class ProcessOverridingAnalysis {
 					{
 						//Completing IO mappings into the Constraint.Code is here decide later if needed or not
 						//arl=embeddingIOMappingIntoConstraint(arl);
-						checkImpact(stepType, specId, arl, post, warnings);
+						inferImpact(stepType, specId, arl, post, warnings);
 					}
 					else if(arl!=null && post.getInstance().getPropertyAsValue("isOverridable").equals(true))
 					{
@@ -109,17 +112,35 @@ public class ProcessOverridingAnalysis {
 	public void generateOverridingData(InstanceType stepType,String specId,String arl)
 	{
 		overridableExp=generateSyntaxTree(stepType,specId,arl);
-		OverridingConstraintData ovc=new OverridingConstraintData();
-		overridableExp.getOverridingData(ovc,null);
-		ovc_list.add(ovc);
+		ConstraintContext context=new ConstraintContext();
+		overridableExp.getConstraintContext(context, null);
+		ovc_list.add(context);
 	}
 	
-	public void checkImpact(InstanceType stepType,String specId,String arl,ConstraintSpec rule,List<ProcessDefinitionError> warnings)
+	public void inferImpact(InstanceType stepType,String specId,String arl,ConstraintSpec rule,List<ProcessDefinitionError> warnings)
 	{
 		Expression syntaxTree=generateSyntaxTree(stepType,specId,arl);
-		for(OverridingConstraintData ovc:ovc_list)
+		ConstraintContext context=new ConstraintContext();
+		syntaxTree.getConstraintContext(context, null);
+		System.out.println("Infer here");
+		for(ConstraintContext ovc:ovc_list)
 		{
-			String res=syntaxTree.isReachable(ovc,null);
+			ovc=ovc.fillMissingWorkItemPathDetails(); // e.g.  self.out_REQs->forAll(req | req.predecessorItems -> forAll(pre | pre.state='Active'))
+			ovc=ovc.toLast();
+			context=context.fillMissingWorkItemPathDetails();
+			context=context.findWorkItemType(ovc.getWorkItemType());
+			int res=1;
+			if(context!=null) // direct workitem found.
+				res=ovc.isFullfillable(context);
+			if(res==0)
+			{
+				warnings.add(new ProcessDefinitionError(rule, CONSTRAINT_OVERRIDING_WARNING , rule.getName()+" 'IsOverrideable' property might require to be ENABLED."));
+			}
+			else if(res==-1)
+			{
+				warnings.add(new ProcessDefinitionError(rule, CONSTRAINT_OVERRIDING_WARNING ,rule.getName()+" 'IsOverrideable' property must be ENABLED."));
+			}
+			/*String res=ovc.doesContainSameContext(context);
 			if(res.equals("0"))
 			{
 				warnings.add(new ProcessDefinitionError(rule, CONSTRAINT_OVERRIDING_WARNING , rule.getName()+" 'IsOverrideable' property might require to be ENABLED."));
@@ -127,7 +148,24 @@ public class ProcessOverridingAnalysis {
 			else if(res.equals("-1"))
 			{
 				warnings.add(new ProcessDefinitionError(rule, CONSTRAINT_OVERRIDING_WARNING ,rule.getName()+" 'IsOverrideable' property must be ENABLED."));
+			}*/
+		}
+	}
+	
+	public void checkImpact(InstanceType stepType,String specId,String arl,ConstraintSpec rule,List<ProcessDefinitionError> warnings)
+	{
+		Expression syntaxTree=generateSyntaxTree(stepType,specId,arl);
+		for(ConstraintContext ovc:ovc_list)
+		{
+		/*	String res=syntaxTree.isReachable(ovc,null);
+			if(res.equals("0"))
+			{
+				warnings.add(new ProcessDefinitionError(rule, CONSTRAINT_OVERRIDING_WARNING , rule.getName()+" 'IsOverrideable' property might require to be ENABLED."));
 			}
+			else if(res.equals("-1"))
+			{
+				warnings.add(new ProcessDefinitionError(rule, CONSTRAINT_OVERRIDING_WARNING ,rule.getName()+" 'IsOverrideable' property must be ENABLED."));
+			}*/
 		}
 	}
 
@@ -145,8 +183,8 @@ public class ProcessOverridingAnalysis {
 	public Expression generateSyntaxTree(InstanceType stepType,String specID,String arl)
 	{
 		ArlParser parser = new ArlParser();
-		ConsistencyRuleType crt = ConsistencyRuleType.create(ws, stepType, specID, arl);
-		ArlType contextType=ArlType.get(ArlType.TypeKind.INSTANCE, ArlType.CollectionKind.SINGLE, crt.contextInstanceType());
+		//ConsistencyRuleType crt = ConsistencyRuleType.create(ws, stepType, specID, arl);
+		ArlType contextType=ArlType.get(ArlType.TypeKind.INSTANCE, ArlType.CollectionKind.SINGLE, stepType);
 		return new RootExpression((Expression) parser.parse(arl, contextType, null));
 	}
 

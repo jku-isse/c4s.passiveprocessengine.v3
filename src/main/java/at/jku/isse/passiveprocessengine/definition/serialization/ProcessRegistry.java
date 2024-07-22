@@ -29,8 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProcessRegistry {
 	
-	
-	
 	protected Workspace ws;
 	protected InstanceType procDefType;
 	private ProcessConfigBaseElementFactory configFactory;
@@ -45,14 +43,23 @@ public class ProcessRegistry {
 	
 	public static final String STAGINGPOSTFIX = "_STAGING";
 	
+	protected List<ProcessDefinitionError> override_warnings;
+	
 	public ProcessRegistry() {
-		
+		override_warnings=new LinkedList<>();
 	}
 	
 	//Added Code
 	public Workspace getWorkspace()
 	{
 		return this.ws;
+	}
+	public List<ProcessDefinitionError> getOverride_warnings() {
+		return override_warnings;
+	}
+
+	public void setOverride_warnings(List<ProcessDefinitionError> override_warnings) {
+		this.override_warnings = override_warnings;
 	}
 	//End
 	
@@ -96,8 +103,9 @@ public class ProcessRegistry {
 		DefinitionTransformer.replaceStepNamesInMappings(process, originalCode, tempCode);
 		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> stagedProc = storeProcessDefinition(process, true);
 		
-		ProcessOverridingAnalysis poa=new ProcessOverridingAnalysis();
+	/*	ProcessOverridingAnalysis poa=new ProcessOverridingAnalysis();
 		poa.beginAnalysis(stagedProc.getKey(),stagedProc.getValue() ,ws);
+		this.setOverride_warnings(stagedProc.getValue());*/
 		
 		if (!stagedProc.getValue().isEmpty())
 			return new ProcessDeployResult(stagedProc.getKey(), stagedProc.getValue(), Collections.emptyList());
@@ -171,6 +179,10 @@ public class ProcessRegistry {
 				if (Boolean.parseBoolean(process.getProcessConfig().getOrDefault(CONFIG_KEY_doImmediateInstantiateAllSteps, "true")))
 					doImmediateInstantiateAllSteps = true;
 				pd.setImmediateInstantiateAllStepsEnabled(doImmediateInstantiateAllSteps);
+				/*ProcessOverridingAnalysis poa=new ProcessOverridingAnalysis();
+				poa.beginAnalysis(pd,errors ,ws);
+				this.setOverride_warnings(errors);*/
+				
 			} else {
 				pd.setIsWithoutBlockingErrors(false);
 			}
