@@ -55,10 +55,15 @@
         </dependency>
         <dependency>
             <groupId>at.jku.isse.designspace</groupId>
-            <artifactId>artifact-connector.ds5wrapper</artifactId>
+            <artifactId>artifact-connector.ds4wrapper</artifactId>
             <version>1.0.3</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+			<groupId>at.jku.isse.designspace</groupId>
+			<artifactId>rule</artifactId>
+			<version>4.6.5</version>
+		</dependency>
         
 		<dependency>
 			<groupId>org.projectlombok</groupId>
