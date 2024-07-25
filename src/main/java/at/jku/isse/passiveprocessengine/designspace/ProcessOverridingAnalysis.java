@@ -10,6 +10,7 @@ import at.jku.isse.designspace.rule.arl.expressions.Expression;
 import at.jku.isse.designspace.rule.arl.expressions.RootExpression;
 import at.jku.isse.designspace.rule.arl.parser.ArlParser;
 import at.jku.isse.designspace.rule.arl.parser.ArlType;
+import at.jku.isse.designspace.rule.overriding.ConstraintContext;
 import at.jku.isse.designspace.rule.overriding.OverridingConstraintData;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
@@ -30,13 +31,15 @@ public class ProcessOverridingAnalysis {
 	
 	private Expression overridableExp=null;
 	private Map<String,String> mappings=new HashMap<>();
-	private List<OverridingConstraintData> ovc_list=new LinkedList<>();
+	private List<ConstraintContext> ovc_list=new LinkedList<>();
 
-	public ProcessOverridingAnalysis(ProcessContext context, DesignspaceAbstractionMapper abstractionMapper) {
+	public ProcessOverridingAnalysis(ProcessContext context) {
 		this.context = context;
-		this.abstractionMapper = abstractionMapper;
+		this.abstractionMapper = (DesignspaceAbstractionMapper) context.getSchemaRegistry();
 	}
-	
+	public String getConstraintName(Conditions condition, int specOrderIndex, InstanceType stepType) {
+		return "crd_"+condition+specOrderIndex+"_"+stepType.name();
+	}
 	
 	//TODO: Multiple overridedTrees as well as the sequence
 	public List<ProcessDefinitionError> beginAnalysis(ProcessDefinition process, List<ProcessDefinitionError> warnings) {
@@ -69,7 +72,7 @@ public class ProcessOverridingAnalysis {
 					{
 						//Completing IO mappings into the Constraint.Code is here decide later if needed or not
 						//arl=embeddingIOMappingIntoConstraint(arl);
-						checkImpact(stepType, specId, arl, qa, warnings);
+						inferImpact(stepType, specId, arl, qa, warnings);
 					}
 					else if(arl!=null && qa.isOverridable())
 					{
@@ -84,7 +87,7 @@ public class ProcessOverridingAnalysis {
 					{
 						//Completing IO mappings into the Constraint.Code is here decide later if needed or not
 						//arl=embeddingIOMappingIntoConstraint(arl);
-						checkImpact(stepType, specId, arl, post, warnings);
+						inferImpact(stepType, specId, arl, post, warnings);
 					}
 					else if(arl!=null && post.isOverridable())
 					{
@@ -100,31 +103,67 @@ public class ProcessOverridingAnalysis {
 	
 	public void generateOverridingData(PPEInstanceType stepType,String specId,String arl)
 	{
-//		InstanceType type = (InstanceType) abstractionMapper.mapProcessDomainInstanceTypeToDesignspaceInstanceType(stepType);
-//		overridableExp=generateSyntaxTree(type,specId,arl);
-//		OverridingConstraintData ovc=new OverridingConstraintData();
-//		overridableExp.getOverridingData(ovc,null); //TIM is created in Rootnode
-//		ovc_list.add(ovc);
+		InstanceType type = (InstanceType) abstractionMapper.mapProcessDomainInstanceTypeToDesignspaceInstanceType(stepType);
+		overridableExp=generateSyntaxTree(type,specId,arl);
+		ConstraintContext cons_context=new ConstraintContext();
+		overridableExp.getConstraintContext(cons_context, null);
+		ovc_list.add(cons_context);
 	}
 	
-	public void checkImpact(PPEInstanceType stepType, String specId, String arl, ConstraintSpec rule, List<ProcessDefinitionError> warnings)
+	public void inferImpact(PPEInstanceType stepType,String specId,String arl,ConstraintSpec rule,List<ProcessDefinitionError> warnings)
 	{
-//		InstanceType type = (InstanceType) abstractionMapper.mapProcessDomainInstanceTypeToDesignspaceInstanceType(stepType);
-//		Expression syntaxTree=generateSyntaxTree(type,specId,arl);
-//		for(OverridingConstraintData ovc:ovc_list)
-//		{
-//			String res=syntaxTree.isReachable(ovc,null); //TIM is created in Rootnode
-//			if(res.equals("0"))
-//			{
-//				warnings.add(new ProcessDefinitionError(rule, CONSTRAINT_OVERRIDING_WARNING , rule.getName()+" 'IsOverrideable' property might require to be ENABLED.", ProcessDefinitionError.Severity.INFO));
-//			}
-//			else if(res.equals("-1"))
-//			{
-//				warnings.add(new ProcessDefinitionError(rule, CONSTRAINT_OVERRIDING_WARNING ,rule.getName()+" 'IsOverrideable' property must be ENABLED.", ProcessDefinitionError.Severity.WARNING));
-//			}
-//		}
+		InstanceType type = (InstanceType) abstractionMapper.mapProcessDomainInstanceTypeToDesignspaceInstanceType(stepType);
+		Expression syntaxTree=generateSyntaxTree(type,specId,arl);
+		ConstraintContext context=new ConstraintContext();
+		syntaxTree.getConstraintContext(context, null);
+		System.out.println("Infer here");
+		for(ConstraintContext ovc:ovc_list)
+		{
+			ovc=ovc.fillMissingWorkItemPathDetails(); // e.g.  self.out_REQs->forAll(req | req.predecessorItems -> forAll(pre | pre.state='Active'))
+			ovc=ovc.toLast();
+			context=context.fillMissingWorkItemPathDetails();
+			context=context.findWorkItemType(ovc.getWorkItemType());
+			int res=1;
+			if(context!=null) // direct workitem found.
+				res=ovc.isFullfillable(context);
+			if(res==0)
+			{
+				warnings.add(new ProcessDefinitionError(rule, CONSTRAINT_OVERRIDING_WARNING , rule.getName()+" 'IsOverrideable' property might require to be ENABLED.", ProcessDefinitionError.Severity.INFO));
+			}
+			else if(res==-1)
+			{
+				warnings.add(new ProcessDefinitionError(rule, CONSTRAINT_OVERRIDING_WARNING ,rule.getName()+" 'IsOverrideable' property must be ENABLED.", ProcessDefinitionError.Severity.WARNING));
+			}
+			/*String res=ovc.doesContainSameContext(context);
+			if(res.equals("0"))
+			{
+				warnings.add(new ProcessDefinitionError(rule, CONSTRAINT_OVERRIDING_WARNING , rule.getName()+" 'IsOverrideable' property might require to be ENABLED."));
+			}
+			else if(res.equals("-1"))
+			{
+				warnings.add(new ProcessDefinitionError(rule, CONSTRAINT_OVERRIDING_WARNING ,rule.getName()+" 'IsOverrideable' property must be ENABLED."));
+			}*/
+		}
 	}
-
+	
+	/*public void checkImpact(PPEInstanceType stepType, String specId, String arl, ConstraintSpec rule, List<ProcessDefinitionError> warnings)
+	{
+		InstanceType type = (InstanceType) abstractionMapper.mapProcessDomainInstanceTypeToDesignspaceInstanceType(stepType);
+		Expression syntaxTree=generateSyntaxTree(type,specId,arl);
+		for(OverridingConstraintData ovc:ovc_list)
+		{
+			String res=syntaxTree.isReachable(ovc,null); //TIM is created in Rootnode
+			if(res.equals("0"))
+			{
+				warnings.add(new ProcessDefinitionError(rule, CONSTRAINT_OVERRIDING_WARNING , rule.getName()+" 'IsOverrideable' property might require to be ENABLED.", ProcessDefinitionError.Severity.INFO));
+			}
+			else if(res.equals("-1"))
+			{
+				warnings.add(new ProcessDefinitionError(rule, CONSTRAINT_OVERRIDING_WARNING ,rule.getName()+" 'IsOverrideable' property must be ENABLED.", ProcessDefinitionError.Severity.WARNING));
+			}
+		}
+	}
+*/
 	public String embeddingIOMappingIntoConstraint(String arl)
 	{
 		for (Map.Entry<String, String> mapping : mappings.entrySet()) {

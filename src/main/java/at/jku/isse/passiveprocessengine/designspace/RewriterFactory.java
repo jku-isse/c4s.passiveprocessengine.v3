@@ -22,7 +22,7 @@ public class RewriterFactory {
 	}
 
 	public List<ProcessDefinitionError> checkOverriding(ProcessDefinition processDefinition, ProcessContext context) {
-		ProcessOverridingAnalysis poa = new ProcessOverridingAnalysis(context, mapper);
+		ProcessOverridingAnalysis poa = new ProcessOverridingAnalysis(context);
 		return poa.beginAnalysis(processDefinition, new ArrayList<ProcessDefinitionError>());
 		
 	}

@@ -18,6 +18,7 @@ import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
+import at.jku.isse.passiveprocessengine.designspace.ProcessOverridingAnalysis;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceError;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
@@ -38,7 +39,7 @@ public class ProcessRegistry {
 	protected Map<String, ProcessInstance> processInstances = new HashMap<>();
 	protected List<ProcessInstance> removedInstances = new LinkedList<>();
 
-	
+	protected List<ProcessDefinitionError> override_warnings;
 
 	public static final String STAGINGPOSTFIX = "_STAGING";
 
@@ -50,7 +51,18 @@ public class ProcessRegistry {
 		assert(processInstanceType != null);
 		context.getSchemaRegistry().getAllNonDeletedInstanceTypes().stream().forEach(itype -> log.debug(String.format("Available instance type %s ", itype.getName())));
 		loadPersistedProcesses();
+		override_warnings=new LinkedList<>();
 	}
+	
+		//Added Code
+		public List<ProcessDefinitionError> getOverride_warnings() {
+			return override_warnings;
+		}
+
+		public void setOverride_warnings(List<ProcessDefinitionError> override_warnings) {
+			this.override_warnings = override_warnings;
+		}
+		//End
 
 //	public void initProcessDefinitions() {		
 //		// TODO: restructure designspace so that process type is available upon constructor call
@@ -94,6 +106,9 @@ public class ProcessRegistry {
 		process.setCode(tempCode);
 		DefinitionTransformer.replaceStepNamesInMappings(process, originalCode, tempCode);
 		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> stagedProc = storeProcessDefinition(process, true);
+		ProcessOverridingAnalysis poa=new ProcessOverridingAnalysis(context);
+		poa.beginAnalysis(stagedProc.getKey(),stagedProc.getValue());
+		this.setOverride_warnings(stagedProc.getValue());
 		if (!stagedProc.getValue().isEmpty()) {
 			//undo step name replacement
 			DefinitionTransformer.replaceStepNamesInMappings(process, tempCode, originalCode);
@@ -128,7 +143,7 @@ public class ProcessRegistry {
 		return new ProcessDeployResult(newPD.getKey(), newPD.getValue(), pInstErrors);
 	}
 
-	private SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> storeProcessDefinition(DTOs.Process process, boolean isInStaging) {	
+	public SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> storeProcessDefinition(DTOs.Process process, boolean isInStaging) {	
 		boolean onlyValid = isInStaging ? false : true;
 		Optional<ProcessDefinition> optPD = getProcessDefinition(process.getCode(), onlyValid);
 		// in staging we overwrite existing process (as this is an old staged process)
@@ -149,7 +164,9 @@ public class ProcessRegistry {
 		DefinitionTransformer transformer = new DefinitionTransformer(process, context.getFactoryIndex(), context.getSchemaRegistry());			
 		ProcessDefinition pd = transformer.fromDTO(isInStaging);
 		List<ProcessDefinitionError> errors = transformer.getErrors();
-
+		/*ProcessOverridingAnalysis poa=new ProcessOverridingAnalysis();
+		poa.beginAnalysis(pd,errors ,ws);
+		this.setOverride_warnings(errors);*/
 		return new SimpleEntry<>(pd, errors);
 	}
 
