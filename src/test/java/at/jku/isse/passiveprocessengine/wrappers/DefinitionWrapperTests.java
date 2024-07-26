@@ -20,6 +20,7 @@ import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType.CARDINALITIES;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType.PPEPropertyType;
 import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
+import at.jku.isse.passiveprocessengine.core.RuleAnalysisService;
 import at.jku.isse.passiveprocessengine.core.RuleEvaluationService;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
@@ -57,7 +58,7 @@ public class DefinitionWrapperTests {
 		this.ruleServiceWrapper = dsSetup.getRepairTreeProvider();			
 		DesignspaceAbstractionMapper designspaceAbstractionMapper = (DesignspaceAbstractionMapper) schemaReg; // ugly as we know this is a DesignSpace in the background
 		RuleEvaluationService ruleEvaluationFactory = dsSetup.getRuleEvaluationService(); 
-		configBuilder = new ProcessEngineConfigurationBuilder(schemaReg, instanceRepository, ruleServiceWrapper, new RewriterFactory(designspaceAbstractionMapper, true), ruleEvaluationFactory, dsSetup.getCoreTypeFactory());
+		configBuilder = new ProcessEngineConfigurationBuilder(schemaReg, instanceRepository, ruleServiceWrapper, new RewriterFactory(designspaceAbstractionMapper, true), ruleEvaluationFactory, dsSetup.getCoreTypeFactory(), (RuleAnalysisService) ruleServiceWrapper);
 	}
 	
 	@AfterEach
