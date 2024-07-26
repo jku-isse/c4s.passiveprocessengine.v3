@@ -6,6 +6,7 @@ import java.util.List;
 
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
+import at.jku.isse.passiveprocessengine.core.RuleAnalysisService;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
@@ -17,6 +18,7 @@ public class RewriterFactory {
 
 	private final DesignspaceAbstractionMapper mapper;
 	private final boolean doOverridingAnalysis;
+	
 	
 	public String rewriteConstraint(PPEInstanceType ruleContext, String constraint, List<StepParameter> singleUsage, StepDefinition stepDef) throws Exception {
 		ConstraintRewriter rewriter = new ConstraintRewriter((at.jku.isse.designspace.core.model.InstanceType) mapper.mapProcessDomainInstanceTypeToDesignspaceInstanceType(ruleContext));

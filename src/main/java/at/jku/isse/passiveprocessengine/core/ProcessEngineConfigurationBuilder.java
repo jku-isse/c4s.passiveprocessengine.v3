@@ -32,13 +32,14 @@ public class ProcessEngineConfigurationBuilder {
 			, RepairTreeProvider ruleService
 			, RewriterFactory rewriterFactory
 			, RuleDefinitionService ruleFactory
-			, CoreTypeFactory coreTypeFactory) {
+			, CoreTypeFactory coreTypeFactory
+			, RuleAnalysisService ruleAnalysisService) {
 		this.instanceRepository = instanceRepository;
 		this.schemaRegistry = schemaRegistry;
 		this.coreTypeFactory = coreTypeFactory;
 		initSchemaRegistry();
 		ioMapper = new InputToOutputMapper(ruleService);
-		initContext(rewriterFactory, ruleFactory, ruleService);
+		initContext(rewriterFactory, ruleFactory, ruleService, ruleAnalysisService);
 	}
 	
 	private void initSchemaRegistry() {
@@ -77,8 +78,8 @@ public class ProcessEngineConfigurationBuilder {
 		configTypeProvider.produceTypeProperties();
 	}
 	
-	private void initContext(RewriterFactory rewriterFactory, RuleDefinitionService ruleFactory, RepairTreeProvider repairTreeProvider) {
-		context = new ProcessContext(instanceRepository, schemaRegistry, ioMapper, repairTreeProvider);
+	private void initContext(RewriterFactory rewriterFactory, RuleDefinitionService ruleFactory, RepairTreeProvider repairTreeProvider, RuleAnalysisService ruleAnalysisService) {
+		context = new ProcessContext(instanceRepository, schemaRegistry, ioMapper, repairTreeProvider, ruleAnalysisService);
 		context.inject(FactoryIndex.build(context, rewriterFactory, ruleFactory));
 	}
 	

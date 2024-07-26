@@ -1,6 +1,5 @@
 package at.jku.isse.passiveprocessengine.core;
 
-import at.jku.isse.passiveprocessengine.designspace.DesignspaceAbstractionMapper;
 import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -14,8 +13,8 @@ public class ProcessContext extends Context{
 
 	
 	public ProcessContext(InstanceRepository instanceRepository, SchemaRegistry schemaRegistry, 
-			InputToOutputMapper ioMapper, RepairTreeProvider repairTreeProvider) {
-		super(instanceRepository, schemaRegistry, repairTreeProvider);
+			InputToOutputMapper ioMapper, RepairTreeProvider repairTreeProvider, RuleAnalysisService ruleAnalysisService) {
+		super(instanceRepository, schemaRegistry, repairTreeProvider, ruleAnalysisService);
 		this.ioMapper = ioMapper;
 	}
 	
