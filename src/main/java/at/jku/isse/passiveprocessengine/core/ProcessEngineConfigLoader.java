@@ -18,10 +18,10 @@ public class ProcessEngineConfigLoader {
 	private boolean doOverridingAnalysis = false;
 	
 	@Getter
-	private Properties props;
+	private Properties props = new Properties();
 	
 	public ProcessEngineConfigLoader() {
-		props = loadProperties();
+		loadProperties();
 	}
 	
 	private Properties loadProperties() {
