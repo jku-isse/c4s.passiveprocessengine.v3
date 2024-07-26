@@ -18,7 +18,7 @@ import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeType;
 import lombok.Getter;
 
 @Getter
-public class ConfigurationBuilder {
+public class ProcessEngineConfigurationBuilder {
 
 	final InstanceRepository instanceRepository;
 	final SchemaRegistry schemaRegistry;
@@ -27,7 +27,7 @@ public class ConfigurationBuilder {
 	protected ProcessContext context;
 	protected InputToOutputMapper ioMapper;
 	
-	public ConfigurationBuilder(SchemaRegistry schemaRegistry
+	public ProcessEngineConfigurationBuilder(SchemaRegistry schemaRegistry
 			, InstanceRepository instanceRepository
 			, RepairTreeProvider ruleService
 			, RewriterFactory rewriterFactory

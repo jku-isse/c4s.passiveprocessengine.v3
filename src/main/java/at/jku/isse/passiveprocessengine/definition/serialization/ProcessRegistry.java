@@ -39,8 +39,6 @@ public class ProcessRegistry {
 	protected Map<String, ProcessInstance> processInstances = new HashMap<>();
 	protected List<ProcessInstance> removedInstances = new LinkedList<>();
 
-	protected List<ProcessDefinitionError> override_warnings;
-
 	public static final String STAGINGPOSTFIX = "_STAGING";
 
 	public ProcessRegistry(ProcessContext context) {
@@ -51,18 +49,9 @@ public class ProcessRegistry {
 		assert(processInstanceType != null);
 		context.getSchemaRegistry().getAllNonDeletedInstanceTypes().stream().forEach(itype -> log.debug(String.format("Available instance type %s ", itype.getName())));
 		loadPersistedProcesses();
-		override_warnings=new LinkedList<>();
 	}
 	
-		//Added Code
-		public List<ProcessDefinitionError> getOverride_warnings() {
-			return override_warnings;
-		}
 
-		public void setOverride_warnings(List<ProcessDefinitionError> override_warnings) {
-			this.override_warnings = override_warnings;
-		}
-		//End
 
 //	public void initProcessDefinitions() {		
 //		// TODO: restructure designspace so that process type is available upon constructor call
@@ -106,9 +95,7 @@ public class ProcessRegistry {
 		process.setCode(tempCode);
 		DefinitionTransformer.replaceStepNamesInMappings(process, originalCode, tempCode);
 		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> stagedProc = storeProcessDefinition(process, true);
-		ProcessOverridingAnalysis poa=new ProcessOverridingAnalysis(context);
-		poa.beginAnalysis(stagedProc.getKey(),stagedProc.getValue());
-		this.setOverride_warnings(stagedProc.getValue());
+	
 		if (!stagedProc.getValue().isEmpty()) {
 			//undo step name replacement
 			DefinitionTransformer.replaceStepNamesInMappings(process, tempCode, originalCode);

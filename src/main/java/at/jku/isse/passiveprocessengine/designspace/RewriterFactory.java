@@ -1,6 +1,7 @@
 package at.jku.isse.passiveprocessengine.designspace;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 public class RewriterFactory {
 
 	private final DesignspaceAbstractionMapper mapper;
+	private final boolean doOverridingAnalysis;
 	
 	public String rewriteConstraint(PPEInstanceType ruleContext, String constraint, List<StepParameter> singleUsage, StepDefinition stepDef) throws Exception {
 		ConstraintRewriter rewriter = new ConstraintRewriter((at.jku.isse.designspace.core.model.InstanceType) mapper.mapProcessDomainInstanceTypeToDesignspaceInstanceType(ruleContext));
@@ -22,8 +24,10 @@ public class RewriterFactory {
 	}
 
 	public List<ProcessDefinitionError> checkOverriding(ProcessDefinition processDefinition, ProcessContext context) {
-		ProcessOverridingAnalysis poa = new ProcessOverridingAnalysis(context);
-		return poa.beginAnalysis(processDefinition, new ArrayList<ProcessDefinitionError>());
-		
+		if (doOverridingAnalysis) {
+			ProcessOverridingAnalysis poa = new ProcessOverridingAnalysis(context);
+			return poa.beginAnalysis(processDefinition, new ArrayList<ProcessDefinitionError>());
+		} else
+			return Collections.emptyList();
 	}
 }

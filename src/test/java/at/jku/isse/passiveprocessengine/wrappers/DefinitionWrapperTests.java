@@ -1,10 +1,9 @@
 package at.jku.isse.passiveprocessengine.wrappers;
 
-import static org.junit.Assert.assertNull;
-
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,7 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.ConfigurationBuilder;
+import at.jku.isse.passiveprocessengine.core.ProcessEngineConfigurationBuilder;
 import at.jku.isse.passiveprocessengine.core.DesignspaceTestSetup;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
@@ -47,7 +46,7 @@ public class DefinitionWrapperTests {
 	protected InstanceRepository instanceRepository;
 	protected SchemaRegistry schemaReg;
 	protected RepairTreeProvider ruleServiceWrapper;
-	protected ConfigurationBuilder configBuilder;
+	protected ProcessEngineConfigurationBuilder configBuilder;
 	
 	
 	@BeforeEach
@@ -58,7 +57,7 @@ public class DefinitionWrapperTests {
 		this.ruleServiceWrapper = dsSetup.getRepairTreeProvider();			
 		DesignspaceAbstractionMapper designspaceAbstractionMapper = (DesignspaceAbstractionMapper) schemaReg; // ugly as we know this is a DesignSpace in the background
 		RuleEvaluationService ruleEvaluationFactory = dsSetup.getRuleEvaluationService(); 
-		configBuilder = new ConfigurationBuilder(schemaReg, instanceRepository, ruleServiceWrapper, new RewriterFactory(designspaceAbstractionMapper), ruleEvaluationFactory, dsSetup.getCoreTypeFactory());
+		configBuilder = new ProcessEngineConfigurationBuilder(schemaReg, instanceRepository, ruleServiceWrapper, new RewriterFactory(designspaceAbstractionMapper, true), ruleEvaluationFactory, dsSetup.getCoreTypeFactory());
 	}
 	
 	@AfterEach
@@ -129,7 +128,7 @@ public class DefinitionWrapperTests {
 	@Test
 	void testNonRegisteredType() {
 		PPEInstanceType nonExistingType = schemaReg.getTypeByName("nonono");
-		assertNull(nonExistingType);
+		Assertions.assertNull(nonExistingType);
 	}
 	
 	@Test
