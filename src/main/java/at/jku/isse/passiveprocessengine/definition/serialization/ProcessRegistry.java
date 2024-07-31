@@ -224,6 +224,7 @@ public class ProcessRegistry {
 		if (errors.isEmpty()) {
 			processInstances.put(pInst.getName(), pInst);
 			context.getInstanceRepository().concludeTransaction();
+			setProcessAuthorizedUsers(pInst, input);
 			return new SimpleEntry<>(pInst, errors);
 		} else {
 			pInst.deleteCascading();
@@ -231,6 +232,16 @@ public class ProcessRegistry {
 			return new SimpleEntry<>(pInst, errors);
 		}
 	}
+
+	private void setProcessAuthorizedUsers(ProcessInstance proc, Map<String, Set<PPEInstance>> input) {		
+		input.values().stream()
+			.flatMap(inStream -> inStream.stream())
+			.forEach(inputArt -> { 
+				inputArt.getOwners().stream().forEach(owner -> proc.getInstance().addOwner(owner));				
+			});
+	}
+
+
 
 	public ProcessInstance getProcessByName(String name) {
 		return processInstances.get(name);
