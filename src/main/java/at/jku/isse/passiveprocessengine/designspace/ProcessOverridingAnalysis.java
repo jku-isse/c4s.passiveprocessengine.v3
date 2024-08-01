@@ -1,24 +1,15 @@
 package at.jku.isse.passiveprocessengine.designspace;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import at.jku.isse.designspace.core.model.InstanceType;
-import at.jku.isse.designspace.rule.arl.expressions.Expression;
-import at.jku.isse.designspace.rule.arl.expressions.RootExpression;
-import at.jku.isse.designspace.rule.arl.parser.ArlParser;
-import at.jku.isse.designspace.rule.arl.parser.ArlType;
-import at.jku.isse.designspace.rule.overriding.ConstraintContext;
-import at.jku.isse.designspace.rule.overriding.OverridingConstraintData;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.RuleAnalysisService.OverrideAnalysisSession;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.factories.ProcessDefinitionFactory;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
@@ -58,15 +49,17 @@ public class ProcessOverridingAnalysis {
 				sd.getPreconditions().stream().forEach(pre->{
 					
 					String specId = ProcessDefinitionFactory.getConstraintName(Conditions.PRECONDITION, pre.getOrderIndex(), stepType);
-					String arl=pre.getAugmentedConstraintSpec();
+					String arl=pre.getConstraintSpec();
+					//String arl=pre.getAugmentedConstraintSpec();
 					if (arl!= null && pre.isOverridable()) {						
-						oas.generateOverridingData(stepType,specId,arl);
+						oas.generateOverridingData(stepType,specId,arl,pre.getName());
 					}//else do nothing TODO: if previous step have then we might need to check discuss.
 				});
 				// 2.2: QA Constraints 
 				sd.getQAConstraints().stream().forEach(qa->{
 					String specId = ProcessDefinitionFactory.getConstraintName(Conditions.QA, qa.getOrderIndex(), stepType);
-					String arl=qa.getAugmentedConstraintSpec();
+					String arl=qa.getConstraintSpec();
+					//String arl=qa.getAugmentedConstraintSpec();
 					if(arl!=null && !qa.isOverridable() && oas.isCurrentRuleAnalyzable()) 
 					{
 						//Completing IO mappings into the Constraint.Code is here decide later if needed or not
@@ -75,13 +68,14 @@ public class ProcessOverridingAnalysis {
 					}
 					else if(arl!=null && qa.isOverridable())
 					{
-						oas.generateOverridingData(stepType,specId,arl);
+						oas.generateOverridingData(stepType,specId,arl,qa.getName());
 					}
 				});
 				// 2.3: Post Conditions 
 				sd.getPostconditions().stream().forEach(post->{
 					String specId = ProcessDefinitionFactory.getConstraintName(Conditions.POSTCONDITION, post.getOrderIndex(), stepType);
-					String arl=post.getAugmentedConstraintSpec();
+					String arl=post.getConstraintSpec();
+					//String arl=post.getAugmentedConstraintSpec();
 					if(arl!=null && !post.isOverridable() && oas.isCurrentRuleAnalyzable()) 
 					{
 						//Completing IO mappings into the Constraint.Code is here decide later if needed or not
@@ -90,7 +84,7 @@ public class ProcessOverridingAnalysis {
 					}
 					else if(arl!=null && post.isOverridable())
 					{
-						oas.generateOverridingData(stepType,specId,arl);
+						oas.generateOverridingData(stepType,specId,arl,post.getName());
 					}
 				});
 			}
