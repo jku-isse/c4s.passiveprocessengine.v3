@@ -374,7 +374,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			if (instance.getInstanceType().getPropertyType(param).isAssignable(artifact)) {
 			//Property<?> prop = instance.getProperty(PREFIX_IN+inParam);
 			//if (prop.propertyType.isAssignable(artifact)) {
-				instance.getTypedProperty(param, Set.class).add(artifact);
+				instance.getTypedProperty(param, Set.class).add(artifact);				
+				addAuthorizedUsersFromArtifact(artifact);				
 				return IOResponse.okResponse();
 			} else {
 				String msg = String.format("Cannot add input %s to %s with nonmatching artifact type %s of id %s %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.getId(), artifact.getName());
@@ -387,6 +388,13 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			return IOResponse.errorResponse(msg);
 		}
 	}
+	
+	private void addAuthorizedUsersFromArtifact(PPEInstance artifact) {
+		ProcessInstance pi = this.getParentProcessOrThisIfProcessElseNull();
+		if (pi != null) {
+			artifact.getOwners().stream().forEach(owner ->pi.getInstance().addOwner(owner));			
+		}
+	}		
 
 	@SuppressWarnings("unchecked")
 	public Set<PPEInstance> getOutput(String outParam) {
@@ -405,6 +413,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			//Property<?> prop = instance.getProperty();
 			if (instance.getInstanceType().getPropertyType(param).isAssignable(artifact)) {
 				instance.getTypedProperty(SpecificProcessStepType.PREFIX_OUT+param, Set.class).add(artifact);
+				addAuthorizedUsersFromArtifact(artifact);
 				return IOResponse.okResponse();
 			} else {
 				String msg = String.format("Cannot add outnput %s to %s with nonmatching artifact type %s of id % %s", param, this.getName(), artifact.getInstanceType().toString(), artifact.getId(), artifact.getName());

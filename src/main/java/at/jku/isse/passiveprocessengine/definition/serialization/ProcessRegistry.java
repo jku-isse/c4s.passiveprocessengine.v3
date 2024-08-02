@@ -3,7 +3,6 @@ package at.jku.isse.passiveprocessengine.definition.serialization;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +17,6 @@ import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
-import at.jku.isse.passiveprocessengine.designspace.ProcessOverridingAnalysis;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceError;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
@@ -224,6 +222,7 @@ public class ProcessRegistry {
 		if (errors.isEmpty()) {
 			processInstances.put(pInst.getName(), pInst);
 			context.getInstanceRepository().concludeTransaction();
+			setProcessAuthorizedUsers(pInst, input);
 			return new SimpleEntry<>(pInst, errors);
 		} else {
 			pInst.deleteCascading();
@@ -231,6 +230,16 @@ public class ProcessRegistry {
 			return new SimpleEntry<>(pInst, errors);
 		}
 	}
+
+	private void setProcessAuthorizedUsers(ProcessInstance proc, Map<String, Set<PPEInstance>> input) {		
+		input.values().stream()
+			.flatMap(inStream -> inStream.stream())
+			.forEach(inputArt -> { 
+				inputArt.getOwners().stream().forEach(owner -> proc.getInstance().addOwner(owner));				
+			});
+	}
+
+
 
 	public ProcessInstance getProcessByName(String name) {
 		return processInstances.get(name);
