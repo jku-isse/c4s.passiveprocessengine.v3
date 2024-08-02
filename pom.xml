@@ -54,6 +54,7 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+        	<groupId>at.jku.isse.designspace</groupId>
             <artifactId>artifact-connector.ds5wrapper</artifactId>
             <version>1.0.7</version>
             <scope>compile</scope>
