@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.designspace;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -10,9 +11,14 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import at.jku.isse.designspace.core.model.InstanceType;
+import org.apache.jena.ontapi.model.OntClass;
+
+import at.jku.isse.artifacteventstreaming.rule.RuleSchemaProvider;
+import at.jku.isse.designspace.rule.arl.expressions.Expression;
+import at.jku.isse.designspace.rule.arl.expressions.RootExpression;
 import at.jku.isse.designspace.rule.arl.expressions.VariableExpression;
-import at.jku.isse.designspace.rule.checker.ArlEvaluator;
+import at.jku.isse.designspace.rule.arl.parser.ArlParser;
+import at.jku.isse.designspace.rule.arl.parser.ArlType;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.factories.RuleAugmentation.StepParameter;
 import lombok.Data;
@@ -20,18 +26,20 @@ import lombok.Data;
 
 public class ConstraintRewriter {
 	
-	private final InstanceType ruleContext;
+	private final OntClass ruleContext;
+	private final RuleSchemaProvider factory;
 	private static final AtomicInteger varCount = new AtomicInteger(0);
 	
-	public ConstraintRewriter(InstanceType ruleContext) {
+	public ConstraintRewriter(OntClass ruleContext, RuleSchemaProvider ruleFactory) {
 		this.ruleContext = ruleContext;
+		this.factory = ruleFactory;
 	}
 	
 	
 	public String rewriteConstraint(String constraint, List<StepParameter> singleUsage, StepDefinition stepDef) throws Exception {		
 		// we recreate the constraint to ensure we have all the types in iterators available
-		ArlEvaluator ae = new ArlEvaluator(ruleContext, constraint);
-		constraint = ae.syntaxTree.getOriginalARL(0, false);
+		var ae = new ParsedConstraint(constraint, ruleContext, factory);
+		constraint = ae.getArlExpression();//ae.syntaxTree.getOriginalARL(0, false);
 
 		
 		// we need to obtain for every in and out param that we have a source for the location, and then replace from the back every this location with the path from the source
@@ -70,19 +78,19 @@ public class ConstraintRewriter {
 
 		}
 		// ensure the new constraint is correct
-		ae = new ArlEvaluator(ruleContext, constraint);
-		constraint = ae.syntaxTree.getOriginalARL(0, false);
+		ae = new ParsedConstraint(constraint, ruleContext, factory);
+		constraint = ae.getArlExpression();//ae.syntaxTree.getOriginalARL(0, false);
 		return constraint;
 	}
 
-	private String ensureUniqueVarNames(String query, InstanceType typeStep) {
+	private String ensureUniqueVarNames(String query, OntClass typeStep) {
 		// we need to check in any NavPath that it doesnt contain a var name (e.g., in an iteration etc) that occurred before,
 		// i.e., we need unique var names per constraint
-		ArlEvaluator ae = new ArlEvaluator(typeStep, query);
+		var ae = new ParsedConstraint(query, ruleContext, factory);
 		int varCountLocal = varCount.incrementAndGet();
-		ae.parser.currentEnvironment.locals.values().stream()
-			.filter(var -> !((VariableExpression)var).name.equals("self"))
-			.forEach(var -> ((VariableExpression)var).name = ((VariableExpression)var).name+"_"+varCountLocal);
+		ae.getLocalParserVariables().stream()
+			.filter(variable -> !((VariableExpression)variable).name.equals("self"))
+			.forEach(variable -> ((VariableExpression)variable).name = ((VariableExpression)variable).name+"_"+varCountLocal);
 		String rewritten = ae.syntaxTree.getOriginalARL(0, false);
 		return rewritten;
 	}
@@ -90,9 +98,8 @@ public class ConstraintRewriter {
 	private DataSource getFirstOccuranceOfOutParam(StepDefinition step, StepParameter outParam) throws IllegalArgumentException{
 		String mapping = step.getInputToOutputMappingRules().get(outParam.getName()); // we assume for now that the mapping name is equal to the out param name, (this will be guaranteed in the future)
 		if (mapping != null) { // for now, we need to process the mapping constraints (will not be necessary once these are defines using derived properties)
-			//InstanceType stepType = ProcessStep.getOrCreateDesignSpaceInstanceType(ws, step);
-			ArlEvaluator ae = new ArlEvaluator(ruleContext, mapping);
-			mapping = ae.syntaxTree.getOriginalARL(0, false);
+			var ae = new ParsedConstraint(mapping, ruleContext, factory);
+			mapping = ae.getArlExpression();
 
 			//int posSym = Math.max(mapping.indexOf("->symmetricDifference"), mapping.indexOf(".symmetricDifference")); //Symmetric difference is removed upon loading from DTOs and added extra upon creating mapping rules
 			//if (posSym > 0) {
@@ -107,9 +114,6 @@ public class ConstraintRewriter {
 		// otherwise keep this outparam
 		return new DataSource(step, outParam.getName(), at.jku.isse.passiveprocessengine.designspace.ConstraintRewriter.DataSource.IoType.stepOut, "self.out_"+outParam.getName());
 	}
-
-	
-	
 	
 
 
@@ -117,6 +121,31 @@ public class ConstraintRewriter {
 		@Override
 		public int compare(DataSource o1, DataSource o2) {
 			return Integer.compare(o1.getUpstreamSources().size(), o2.getUpstreamSources().size());
+		}
+	}
+
+	private static class ParsedConstraint {
+		
+		private final ArlParser parser;
+		private final RootExpression<Object> syntaxTree;
+		
+		public ParsedConstraint(String expression, OntClass contextType, RuleSchemaProvider factory) {
+			parser = new ArlParser(factory.getModelAccess());
+			var arlContextType = ArlType.get(ArlType.TypeKind.INSTANCE, ArlType.CollectionKind.SINGLE, contextType, factory.getModelAccess());	
+	        try {
+	            syntaxTree = new RootExpression((Expression) parser.parse(expression, arlContextType, null), factory.getModelAccess());
+	            
+	        } catch(Exception ex) {
+	        	throw new IllegalArgumentException(String.format("Parsing error in '%s': %s (Line=%d, Column=%d)", expression, ex.toString(), parser.getLine(), parser.getColumn()));
+	        }
+		}
+		
+		public String getArlExpression() {
+			return syntaxTree.getOriginalARL(0, false);
+		}
+		
+		private Collection<Object> getLocalParserVariables() {
+			return parser.currentEnvironment.locals.values();
 		}
 	}
 	

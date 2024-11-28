@@ -50,15 +50,21 @@
         <dependency>
             <groupId>at.jku.isse.designspace</groupId>
             <artifactId>artifact-connector.core</artifactId>
-            <version>2.0.5</version>
+            <version>2.0.7</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
+<!--        <dependency>
             <groupId>at.jku.isse.designspace</groupId>
             <artifactId>artifact-connector.ds4wrapper</artifactId>
             <version>1.0.5</version>
             <scope>compile</scope>
-        </dependency>
+        </dependency>-->
+        <dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>apache-jena-libs</artifactId>
+			<type>pom</type>
+			<version>5.1.0</version>
+		</dependency>
         
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -86,11 +92,11 @@
 			<version>2.6.0</version>
 		</dependency>
 		<!-- Inject -->
-		<dependency>
+<!--		<dependency>
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
 			<version>4.2.3</version>
-		</dependency>
+		</dependency>-->
 		<!-- JSON -->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>

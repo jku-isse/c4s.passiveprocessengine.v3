@@ -7,10 +7,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.inject.Inject;
-
-import org.springframework.beans.factory.annotation.Autowired;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -30,14 +26,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProcessQAStatsMonitor implements IProcessEventHandler {
 
-	@Autowired
 	ITimeStampProvider timeStampProvider;
 
 	public Map<ProcessInstance, ProcessStats> stats = new HashMap<>();
 
 	public ProcessQAStatsMonitor() {}
 
-	@Inject
 	public ProcessQAStatsMonitor(ITimeStampProvider tsProvider) {
 		this.timeStampProvider = tsProvider;
 	}

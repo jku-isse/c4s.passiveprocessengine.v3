@@ -6,8 +6,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -17,11 +15,12 @@ import at.jku.isse.passiveprocessengine.instance.messages.Events.QAFulfillmentCh
 import at.jku.isse.passiveprocessengine.instance.messages.Events.StepStateTransitionEvent;
 import at.jku.isse.passiveprocessengine.instance.messages.IProcessEventHandler;
 import at.jku.isse.passiveprocessengine.monitoring.serialization.MonitoringMultiTypeAdapterFactory;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class ProcessStateChangeLog implements IProcessEventHandler{
 
-	@Autowired
-	ITimeStampProvider timeStampProvider;
+	private final ITimeStampProvider timeStampProvider;
 
 	@Override
 	public void handleEvents(Collection<ProcessChangedEvent> events) {
