@@ -34,8 +34,8 @@ import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionT
 import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionType;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionScopeType;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
-import at.jku.isse.passiveprocessengine.designspace.DesignspaceAbstractionMapper;
 import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
+import at.jku.isse.passiveprocessengine.rdfwrapper.AbstractionMapper;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -56,7 +56,7 @@ public class DefinitionWrapperTests {
 		this.schemaReg = dsSetup.getSchemaRegistry();
 		this.instanceRepository = dsSetup.getInstanceRepository();
 		this.ruleServiceWrapper = dsSetup.getRepairTreeProvider();			
-		DesignspaceAbstractionMapper designspaceAbstractionMapper = (DesignspaceAbstractionMapper) schemaReg; // ugly as we know this is a DesignSpace in the background
+		AbstractionMapper designspaceAbstractionMapper = (AbstractionMapper) schemaReg; // ugly as we know this is a DesignSpace in the background
 		RuleEvaluationService ruleEvaluationFactory = dsSetup.getRuleEvaluationService(); 
 		configBuilder = new ProcessEngineConfigurationBuilder(schemaReg, instanceRepository, ruleServiceWrapper, new RewriterFactory(designspaceAbstractionMapper, true), ruleEvaluationFactory, dsSetup.getCoreTypeFactory(), (RuleAnalysisService) ruleServiceWrapper);
 	}

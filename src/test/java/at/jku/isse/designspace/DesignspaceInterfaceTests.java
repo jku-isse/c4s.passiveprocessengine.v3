@@ -1,5 +1,7 @@
 package at.jku.isse.designspace;
 
+import static org.junit.Assert.assertTrue;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,18 +60,18 @@ class DesignspaceInterfaceTests  {
 	void testBasicSchema() {
 		createBaseType();
 		PPEInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
-		assert(baseType != null);
-		assert(baseType.getPropertyType(LIST_PROP).getCardinality().equals(CARDINALITIES.LIST));
-		assert(baseType.getPropertyType(LIST_PROP).getInstanceType().getName().equals(TEST_BASE_TYPE));
+		assertTrue(baseType != null);
+		assertTrue(baseType.getPropertyType(LIST_PROP).getCardinality().equals(CARDINALITIES.LIST));
+		assertTrue(baseType.getPropertyType(LIST_PROP).getInstanceType().getName().equals(TEST_BASE_TYPE));
 		
-		assert(baseType.getPropertyType(SET_PROP).getCardinality().equals(CARDINALITIES.SET));
-		assert(baseType.getPropertyType(SET_PROP).getInstanceType().equals(BuildInType.BOOLEAN));
+		assertTrue(baseType.getPropertyType(SET_PROP).getCardinality().equals(CARDINALITIES.SET));
+		assertTrue(baseType.getPropertyType(SET_PROP).getInstanceType().equals(BuildInType.BOOLEAN));
 		
-		assert(baseType.getPropertyType(MAP_PROP).getCardinality().equals(CARDINALITIES.MAP));
-		assert(baseType.getPropertyType(MAP_PROP).getInstanceType().equals(BuildInType.INTEGER));
+		assertTrue(baseType.getPropertyType(MAP_PROP).getCardinality().equals(CARDINALITIES.MAP));
+		assertTrue(baseType.getPropertyType(MAP_PROP).getInstanceType().equals(BuildInType.INTEGER));
 		
-		assert(baseType.getPropertyType(SINGLE_PROP).getCardinality().equals(CARDINALITIES.SINGLE));
-		assert(baseType.getPropertyType(SINGLE_PROP).getInstanceType().equals(BuildInType.STRING));
+		assertTrue(baseType.getPropertyType(SINGLE_PROP).getCardinality().equals(CARDINALITIES.SINGLE));
+		assertTrue(baseType.getPropertyType(SINGLE_PROP).getInstanceType().equals(BuildInType.STRING));
 	}
 	
 	@Test
@@ -77,11 +79,11 @@ class DesignspaceInterfaceTests  {
 		createBaseType();
 		createChildType();
 		PPEInstanceType childType = schemaRegistry.getTypeByName(TEST_CHILD_TYPE);
-		assert(childType != null);
+		assertTrue(childType != null);
 		PPEInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
-		assert(baseType != null);
-		assert(childType.getPropertyType(PARENT_PROP).getInstanceType().equals(baseType));
-		assert(childType.getPropertyType(PARENT_PROP).getCardinality().equals(CARDINALITIES.SINGLE));
+		assertTrue(baseType != null);
+		assertTrue(childType.getPropertyType(PARENT_PROP).getInstanceType().equals(baseType));
+		assertTrue(childType.getPropertyType(PARENT_PROP).getCardinality().equals(CARDINALITIES.SINGLE));
 		
 	}
 	
@@ -98,10 +100,10 @@ class DesignspaceInterfaceTests  {
 		inst1.getTypedProperty(SET_PROP, Set.class).add(Boolean.TRUE);
 		inst1.getTypedProperty(MAP_PROP, Map.class).put(ENTRY1, 3);
 		
-		assert(inst1.getTypedProperty(SINGLE_PROP, String.class).equals(ENTRY1));
-		assert(inst1.getTypedProperty(LIST_PROP, List.class).get(0).equals(inst2));
-		assert(inst1.getTypedProperty(SET_PROP, Set.class).stream().anyMatch(entry -> entry==Boolean.TRUE));
-		assert(inst1.getTypedProperty(MAP_PROP, Map.class).get(ENTRY1).equals(3));
+		assertTrue(inst1.getTypedProperty(SINGLE_PROP, String.class).equals(ENTRY1));
+		assertTrue(inst1.getTypedProperty(LIST_PROP, List.class).get(0).equals(inst2));
+		assertTrue(inst1.getTypedProperty(SET_PROP, Set.class).stream().anyMatch(entry -> entry==Boolean.TRUE));
+		assertTrue(inst1.getTypedProperty(MAP_PROP, Map.class).get(ENTRY1).equals(3));
 	}
 	
 	@Test
@@ -118,15 +120,15 @@ class DesignspaceInterfaceTests  {
 		inst1.getTypedProperty(MAP_PROP, Map.class).put(ENTRY1, 3);
 		
 		PPEInstanceType childType = schemaRegistry.getTypeByName(TEST_CHILD_TYPE);
-		assert(childType != null);
+		assertTrue(childType != null);
 		inst2.setInstanceType(childType);
 		inst3.setInstanceType(childType);
-		assert(inst2.getInstanceType().equals(childType));
+		assertTrue(inst2.getInstanceType().equals(childType));
 		
 		inst2.setSingleProperty(PARENT_PROP, inst3);
 		
 		PPEInstance parent = (PPEInstance) inst1.getTypedProperty(LIST_PROP, List.class).get(0);
-		assert(parent.getTypedProperty(PARENT_PROP, PPEInstance.class).equals(inst3));
+		assertTrue(parent.getTypedProperty(PARENT_PROP, PPEInstance.class).equals(inst3));
 	}
 	
 	protected void createBaseType() {

@@ -24,14 +24,14 @@ public class RewriterFactory {
 	private final RuleSchemaProvider ruleFactory;
 	
 	public String rewriteConstraint(PPEInstanceType ruleContext, String constraint, List<StepParameter> singleUsage, StepDefinition stepDef) throws Exception {
-		ConstraintRewriter rewriter = new ConstraintRewriter((OntClass) mapper.mapProcessDomainInstanceTypeToOntClass(ruleContext), ruleFactory);
+		ConstraintRewriter rewriter = new ConstraintRewriter(mapper.mapProcessDomainInstanceTypeToOntClass(ruleContext), ruleFactory);
 		return rewriter.rewriteConstraint(constraint, singleUsage, stepDef);
 	}
 
 	public List<ProcessDefinitionError> checkOverriding(ProcessDefinition processDefinition, ProcessContext context) {
 		if (doOverridingAnalysis) {
 			ProcessOverridingAnalysis poa = new ProcessOverridingAnalysis(context);
-			return poa.beginAnalysis(processDefinition, new ArrayList<ProcessDefinitionError>());
+			return poa.beginAnalysis(processDefinition, new ArrayList<>());
 		} else
 			return Collections.emptyList();
 	}
