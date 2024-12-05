@@ -14,7 +14,7 @@ public class DecisionNodeDefinitionFactory extends DomainFactory {
 	}
 
 	public DecisionNodeDefinition createInstance(String dndId) {
-		PPEInstance instance = getContext().getInstanceRepository().createInstance(dndId, getContext().getSchemaRegistry().getType(DecisionNodeDefinition.class));
+		PPEInstance instance = getContext().getInstanceRepository().createInstance(dndId, getContext().getSchemaRegistry().getTypeByName(DecisionNodeDefinitionType.typeId));
 		// default SEQ
 		instance.setSingleProperty(DecisionNodeDefinitionType.CoreProperties.inFlowType.toString(), InFlowType.SEQ.toString());
 		instance.setSingleProperty(DecisionNodeDefinitionType.CoreProperties.hierarchyDepth.toString(), -1);

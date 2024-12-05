@@ -24,19 +24,19 @@ public class ProcessDefinitionType implements TypeProvider{
 		this.schemaRegistry = schemaRegistry;
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
-			schemaRegistry.registerType(ProcessDefinition.class, thisType.get());
+		//	schemaRegistry.registerType(ProcessDefinition.class, thisType.get());
 			this.type = thisType.get();
 		} else {
-			PPEInstanceType type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getType(StepDefinition.class));
-			schemaRegistry.registerType(ProcessDefinition.class, type);
+			PPEInstanceType type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getTypeByName(ProcessStepDefinitionType.typeId));
+		//	schemaRegistry.registerType(ProcessDefinition.class, type);
 			this.type = type;
 		}
 	}
 	
 	@Override
 	public void produceTypeProperties() {
-			type.createListPropertyType(CoreProperties.stepDefinitions.toString(), schemaRegistry.getType(StepDefinition.class));
-			type.createSetPropertyType(CoreProperties.decisionNodeDefinitions.toString(),  schemaRegistry.getType(DecisionNodeDefinition.class));
+			type.createListPropertyType(CoreProperties.stepDefinitions.toString(), schemaRegistry.getTypeByName(ProcessStepDefinitionType.typeId));
+			type.createSetPropertyType(CoreProperties.decisionNodeDefinitions.toString(),  schemaRegistry.getTypeByName(DecisionNodeDefinitionType.typeId));
 			type.createMapPropertyType(CoreProperties.prematureTriggers.toString(),  BuildInType.STRING, BuildInType.STRING);
 			type.createMapPropertyType(CoreProperties.prematureTriggerMappings.toString(),  BuildInType.STRING, BuildInType.STRING);
 			type.createSinglePropertyType(CoreProperties.isImmediateDataPropagationEnabled.toString(),  BuildInType.BOOLEAN);

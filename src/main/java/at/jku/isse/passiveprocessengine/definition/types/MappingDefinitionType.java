@@ -20,11 +20,11 @@ public class MappingDefinitionType  implements TypeProvider {
 		this.schemaRegistry = schemaRegistry;
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
-			schemaRegistry.registerType(MappingDefinition.class, thisType.get());
+			//schemaRegistry.registerType(MappingDefinition.class, thisType.get());
 			this.type = thisType.get();
 		} else {
-			PPEInstanceType type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getType(ProcessDefinitionScopedElement.class));
-			schemaRegistry.registerType(MappingDefinition.class, type);
+			PPEInstanceType type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getTypeByName(ProcessDefinitionScopeType.typeId));
+			//schemaRegistry.registerType(MappingDefinition.class, type);
 			this.type = type;
 		}
 	}

@@ -18,11 +18,11 @@ public class ProcessConfigBaseElementType extends TypeProviderBase {
 		super(schemaRegistry);
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
-			schemaRegistry.registerTypeByName(thisType.get());
+			//schemaRegistry.registerTypeByName(thisType.get());
 			this.type = thisType.get();
 		} else {
-			type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getType(ProcessInstanceScopedElement.class));
-			schemaRegistry.registerTypeByName(type);			
+			type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getTypeByName(ProcessInstanceScopeType.typeId));
+		//	schemaRegistry.registerTypeByName(type);			
 		}
 	}
 

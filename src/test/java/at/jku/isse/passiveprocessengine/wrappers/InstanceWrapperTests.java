@@ -10,6 +10,10 @@ import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultW
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
+import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType;
+import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
+import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeType;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -22,10 +26,10 @@ public class InstanceWrapperTests extends DefinitionWrapperTests {
 	
 	@Test
 	void testAllBaseInstanceTypeRegistration() {				
-		assert(schemaReg.getType(ProcessInstanceScopedElement.class) != null);
-		assert(schemaReg.getType(ConstraintResultWrapper.class) != null);
-		assert(schemaReg.getType(DecisionNodeInstance.class) != null);
-		assert(schemaReg.getType(ProcessStep.class) != null);	
+		assert(schemaReg.getTypeByName(ProcessInstanceScopeType.typeId) != null);
+		assert(schemaReg.getTypeByName(ConstraintWrapperType.typeId) != null);
+		assert(schemaReg.getTypeByName(DecisionNodeInstanceType.typeId) != null);
+		assert(schemaReg.getTypeByName(AbstractProcessStepType.typeId) != null);	
 	}
 	
 

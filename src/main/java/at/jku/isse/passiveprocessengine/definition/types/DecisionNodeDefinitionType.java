@@ -22,11 +22,11 @@ public class DecisionNodeDefinitionType implements TypeProvider {
 		this.schemaRegistry = schemaRegistry;
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
-			schemaRegistry.registerType(DecisionNodeDefinition.class, thisType.get());
+			//schemaRegistry.registerType(DecisionNodeDefinition.class, thisType.get());
 			this.type = thisType.get();
 		} else {
-			type = schemaRegistry.createNewInstanceType(typeId,  schemaRegistry.getType(ProcessDefinitionScopedElement.class));
-			schemaRegistry.registerType(DecisionNodeDefinition.class, type);
+			type = schemaRegistry.createNewInstanceType(typeId,  schemaRegistry.getTypeByName(ProcessDefinitionScopeType.typeId));
+		//	schemaRegistry.registerType(DecisionNodeDefinition.class, type);
 		}
 	}
 	
@@ -34,9 +34,9 @@ public class DecisionNodeDefinitionType implements TypeProvider {
 	@Override
 	public void produceTypeProperties() {
 		type.createSinglePropertyType(DecisionNodeDefinitionType.CoreProperties.inFlowType.toString(), BuildInType.STRING);
-		type.createSetPropertyType(DecisionNodeDefinitionType.CoreProperties.inSteps.toString(), schemaRegistry.getType(StepDefinition.class));
-		type.createSetPropertyType(DecisionNodeDefinitionType.CoreProperties.outSteps.toString(),  schemaRegistry.getType(StepDefinition.class));
-		type.createSetPropertyType(DecisionNodeDefinitionType.CoreProperties.dataMappingDefinitions.toString(),  schemaRegistry.getType(MappingDefinition.class));
+		type.createSetPropertyType(DecisionNodeDefinitionType.CoreProperties.inSteps.toString(), schemaRegistry.getTypeByName(ProcessStepDefinitionType.typeId));
+		type.createSetPropertyType(DecisionNodeDefinitionType.CoreProperties.outSteps.toString(),  schemaRegistry.getTypeByName(ProcessStepDefinitionType.typeId));
+		type.createSetPropertyType(DecisionNodeDefinitionType.CoreProperties.dataMappingDefinitions.toString(),  schemaRegistry.getTypeByName(MappingDefinitionType.typeId));
 		type.createSinglePropertyType((DecisionNodeDefinitionType.CoreProperties.hierarchyDepth.toString()),  BuildInType.INTEGER);
 		type.createSinglePropertyType(DecisionNodeDefinitionType.CoreProperties.closingDN.toString(), type);
 

@@ -40,7 +40,7 @@ public class ProcessDefinitionFactory extends DomainFactory {
 	 * @return Basic, empty process definition structure. Creation of rules and specific process instance types requires calling 'initializeInstanceTypes'
 	 */
 	public ProcessDefinition createInstance(String processId) {
-		PPEInstance instance = getContext().getInstanceRepository().createInstance(processId, getContext().getSchemaRegistry().getType(ProcessDefinition.class));
+		PPEInstance instance = getContext().getInstanceRepository().createInstance(processId, getContext().getSchemaRegistry().getTypeByName(ProcessDefinitionType.typeId));
 		instance.setSingleProperty(ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString(), false);
 		return getContext().getWrappedInstance(ProcessDefinition.class, instance);				
 	}

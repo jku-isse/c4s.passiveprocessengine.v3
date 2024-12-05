@@ -20,11 +20,11 @@ public class AbstractProcessInstanceType extends TypeProviderBase {
 		super(schemaRegistry);
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
-			schemaRegistry.registerType(ProcessStep.class, thisType.get());
+			//schemaRegistry.registerType(ProcessStep.class, thisType.get());
 			this.type = thisType.get();
 		} else {
-			type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getType(ProcessStep.class));
-			schemaRegistry.registerType(ProcessInstance.class, type);	
+			type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getTypeByName(AbstractProcessStepType.typeId));
+			//schemaRegistry.registerType(ProcessInstance.class, type);	
 		}
 	}
 

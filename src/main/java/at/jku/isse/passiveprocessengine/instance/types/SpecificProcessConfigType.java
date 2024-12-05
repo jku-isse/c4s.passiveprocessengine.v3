@@ -13,6 +13,7 @@ import at.jku.isse.passiveprocessengine.core.RuleDefinitionService;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
 import lombok.Data;
 
 
@@ -37,13 +38,13 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 		String subtypeName = getSubtypeName();
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(subtypeName);
 		if (thisType.isPresent()) {
-			schemaRegistry.registerTypeByName(thisType.get());
+			//schemaRegistry.registerTypeByName(thisType.get());
 			this.type = thisType.get();
 		} else {
 			type = schemaRegistry.createNewInstanceType(subtypeName, schemaRegistry.getTypeByName(ProcessConfigBaseElementType.typeId));
-			schemaRegistry.registerTypeByName(type);			
+			//schemaRegistry.registerTypeByName(type);			
 							
-			type.createSinglePropertyType("processDefinition", schemaRegistry.getType(ProcessDefinition.class));
+			type.createSinglePropertyType("processDefinition", schemaRegistry.getTypeByName(ProcessDefinitionType.typeId));
 			// augment config
 			Map<PropertySchemaDTO, Boolean> result = new HashMap<>();
 			props.forEach(prop -> result.put(prop, prop.addPropertyToType(type, schemaRegistry, schemaRegistry, ruleFactory)));

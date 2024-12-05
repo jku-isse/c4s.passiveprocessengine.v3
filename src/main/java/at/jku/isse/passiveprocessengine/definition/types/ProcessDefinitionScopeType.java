@@ -20,11 +20,11 @@ public class ProcessDefinitionScopeType  implements TypeProvider {
 		this.schemaRegistry = schemaRegistry;
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
-			schemaRegistry.registerType(ProcessDefinitionScopedElement.class, thisType.get());
+			//schemaRegistry.registerType(ProcessDefinitionScopedElement.class, thisType.get());
 			this.type = thisType.get();
 		} else {
 			PPEInstanceType type = schemaRegistry.createNewInstanceType(typeId);
-			schemaRegistry.registerType(ProcessDefinitionScopedElement.class, type);
+			//schemaRegistry.registerType(ProcessDefinitionScopedElement.class, type);
 			this.type = type;
 		}
 	}
@@ -32,8 +32,8 @@ public class ProcessDefinitionScopeType  implements TypeProvider {
 	@Override
 	public void produceTypeProperties() {
 		
-			schemaRegistry.registerType(ProcessDefinitionScopedElement.class, type);
-			type.createSinglePropertyType(ProcessDefinitionScopeType.CoreProperties.process.toString(), schemaRegistry.getType(ProcessDefinition.class));
+			//schemaRegistry.registerType(ProcessDefinitionScopedElement.class, type);
+			type.createSinglePropertyType(ProcessDefinitionScopeType.CoreProperties.process.toString(), schemaRegistry.getTypeByName(ProcessDefinitionType.typeId));
 			type.createSinglePropertyType((ProcessDefinitionScopeType.CoreProperties.orderIndex.toString()), BuildInType.INTEGER);
 			
 		

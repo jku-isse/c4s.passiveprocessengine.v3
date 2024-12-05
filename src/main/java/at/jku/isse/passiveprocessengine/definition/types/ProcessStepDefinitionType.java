@@ -26,11 +26,11 @@ public class ProcessStepDefinitionType implements TypeProvider {
 		this.schemaRegistry = schemaRegistry;
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
-			schemaRegistry.registerType(StepDefinition.class, thisType.get());
+		//	schemaRegistry.registerType(StepDefinition.class, thisType.get());
 			this.type = thisType.get();
 		} else {
-			PPEInstanceType type = schemaRegistry.createNewInstanceType(typeId,  schemaRegistry.getType(ProcessDefinitionScopedElement.class));
-			schemaRegistry.registerType(StepDefinition.class, type);
+			PPEInstanceType type = schemaRegistry.createNewInstanceType(typeId,  schemaRegistry.getTypeByName(ProcessDefinitionScopeType.typeId));
+		//	schemaRegistry.registerType(StepDefinition.class, type);
 			this.type = type;
 		}
 	}
@@ -39,13 +39,13 @@ public class ProcessStepDefinitionType implements TypeProvider {
 	@Override
 	public void produceTypeProperties() {
 		
-				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.qaConstraints.toString(), schemaRegistry.getType(ConstraintSpec.class));
+				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.qaConstraints.toString(), schemaRegistry.getTypeByName(ConstraintSpecType.typeId));
 				type.createMapPropertyType(ProcessStepDefinitionType.CoreProperties.expectedInput.toString(), BuildInType.STRING, BuildInType.METATYPE);
 				type.createMapPropertyType(ProcessStepDefinitionType.CoreProperties.expectedOutput.toString(), BuildInType.STRING, BuildInType.METATYPE);
-				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.preconditions.toString(), schemaRegistry.getType(ConstraintSpec.class));
-				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.postconditions.toString(), schemaRegistry.getType(ConstraintSpec.class));
-				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.cancelconditions.toString(), schemaRegistry.getType(ConstraintSpec.class));
-				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.activationconditions.toString(), schemaRegistry.getType(ConstraintSpec.class));
+				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.preconditions.toString(), schemaRegistry.getTypeByName(ConstraintSpecType.typeId));
+				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.postconditions.toString(), schemaRegistry.getTypeByName(ConstraintSpecType.typeId));
+				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.cancelconditions.toString(), schemaRegistry.getTypeByName(ConstraintSpecType.typeId));
+				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.activationconditions.toString(), schemaRegistry.getTypeByName(ConstraintSpecType.typeId));
 				type.createSinglePropertyType(ProcessStepDefinitionType.CoreProperties.inDND.toString(), BuildInType.STRING);
 				type.createSinglePropertyType(ProcessStepDefinitionType.CoreProperties.outDND.toString(), BuildInType.STRING);
 				type.createMapPropertyType((ProcessStepDefinitionType.CoreProperties.ioMappingRules.toString()), BuildInType.STRING, BuildInType.STRING);

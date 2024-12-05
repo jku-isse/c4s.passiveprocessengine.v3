@@ -18,7 +18,7 @@ public class DecisionNodeInstanceFactory extends DomainFactory {
 
 	public DecisionNodeInstance getInstance(DecisionNodeDefinition dnd) {				
 		PPEInstance instance = getContext().getInstanceRepository().createInstance(dnd.getName()+"_"+UUID.randomUUID()
-			, getContext().getSchemaRegistry().getType(DecisionNodeInstance.class));
+			, getContext().getSchemaRegistry().getTypeByName(DecisionNodeInstanceType.typeId));
 		DecisionNodeInstance dni = getContext().getWrappedInstance(DecisionNodeInstance.class, instance);
 		//dni.init(dnd);
 		instance.setSingleProperty(DecisionNodeInstanceType.CoreProperties.dnd.toString(),dnd.getInstance());

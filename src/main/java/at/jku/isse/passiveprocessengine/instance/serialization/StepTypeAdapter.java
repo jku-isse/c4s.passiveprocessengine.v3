@@ -16,6 +16,7 @@ import at.jku.isse.passiveprocessengine.core.serialization.ConfigurablePropertyT
 import at.jku.isse.passiveprocessengine.core.serialization.TypeAdapterRegistry;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 
 public class StepTypeAdapter extends ConfigurablePropertyTypeAdapter {
@@ -29,7 +30,7 @@ public class StepTypeAdapter extends ConfigurablePropertyTypeAdapter {
 			ProcessContext context) {
 		super(registry, propertiesToSerializeShallow, propertiesToSerializeDeep);
 		this.context = context;
-		baseStepType = context.getSchemaRegistry().getType(ProcessStep.class);
+		baseStepType = context.getSchemaRegistry().getTypeByName(AbstractProcessStepType.typeId);
 		assert(baseStepType != null);
 	}
 	

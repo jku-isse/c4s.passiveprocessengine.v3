@@ -7,6 +7,7 @@ import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessStepDefinitionType;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
@@ -24,19 +25,19 @@ public class AbstractProcessStepType extends TypeProviderBase {
 		super(schemaRegistry);
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
-			schemaRegistry.registerType(ProcessStep.class, thisType.get());
+			//schemaRegistry.registerType(ProcessStep.class, thisType.get());
 			this.type = thisType.get();
 		} else {
-			type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getType(ProcessInstanceScopedElement.class));
-			schemaRegistry.registerType(ProcessStep.class, type);	
+			type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getTypeByName(ProcessInstanceScopeType.typeId));
+			//schemaRegistry.registerType(ProcessStep.class, type);	
 		}
 	}
 
 	@Override
 	public void produceTypeProperties() {
-		type.createSinglePropertyType(CoreProperties.stepDefinition.toString(),schemaRegistry.getType(StepDefinition.class));
-		type.createSinglePropertyType(CoreProperties.inDNI.toString(),  schemaRegistry.getType(DecisionNodeInstance.class));
-		type.createSinglePropertyType(CoreProperties.outDNI.toString(),  schemaRegistry.getType(DecisionNodeInstance.class));
+		type.createSinglePropertyType(CoreProperties.stepDefinition.toString(),schemaRegistry.getTypeByName(ProcessStepDefinitionType.typeId));
+		type.createSinglePropertyType(CoreProperties.inDNI.toString(),  schemaRegistry.getTypeByName(DecisionNodeInstanceType.typeId));
+		type.createSinglePropertyType(CoreProperties.outDNI.toString(),  schemaRegistry.getTypeByName(DecisionNodeInstanceType.typeId));
 
 		type.createSinglePropertyType(CoreProperties.actualLifecycleState.toString(),  BuildInType.STRING);
 		type.createSinglePropertyType(CoreProperties.expectedLifecycleState.toString(), BuildInType.STRING);
@@ -47,11 +48,11 @@ public class AbstractProcessStepType extends TypeProviderBase {
 		type.createSinglePropertyType(CoreProperties.processedActivationCondFulfilled.toString(),  BuildInType.BOOLEAN);
 		type.createSinglePropertyType(CoreProperties.isWorkExpected.toString(), BuildInType.BOOLEAN);
 		// opposable no longer possible as, we cant then set it for pre/post, etc
-		type.createMapPropertyType(CoreProperties.qaState.toString(), BuildInType.STRING, schemaRegistry.getType(ConstraintResultWrapper.class));
+		type.createMapPropertyType(CoreProperties.qaState.toString(), BuildInType.STRING, schemaRegistry.getTypeByName(ConstraintWrapperType.typeId));
 		//check if we need to set step parent on opposite end --> we do now set it upon instantiation
-		type.createMapPropertyType(CoreProperties.preconditions.toString(), BuildInType.STRING, schemaRegistry.getType(ConstraintResultWrapper.class));
-		type.createMapPropertyType(CoreProperties.postconditions.toString(),BuildInType.STRING, schemaRegistry.getType(ConstraintResultWrapper.class));
-		type.createMapPropertyType(CoreProperties.cancelconditions.toString(), BuildInType.STRING, schemaRegistry.getType(ConstraintResultWrapper.class));
-		type.createMapPropertyType(CoreProperties.activationconditions.toString(), BuildInType.STRING, schemaRegistry.getType(ConstraintResultWrapper.class));
+		type.createMapPropertyType(CoreProperties.preconditions.toString(), BuildInType.STRING, schemaRegistry.getTypeByName(ConstraintWrapperType.typeId));
+		type.createMapPropertyType(CoreProperties.postconditions.toString(),BuildInType.STRING, schemaRegistry.getTypeByName(ConstraintWrapperType.typeId));
+		type.createMapPropertyType(CoreProperties.cancelconditions.toString(), BuildInType.STRING, schemaRegistry.getTypeByName(ConstraintWrapperType.typeId));
+		type.createMapPropertyType(CoreProperties.activationconditions.toString(), BuildInType.STRING, schemaRegistry.getTypeByName(ConstraintWrapperType.typeId));
 	}
 }

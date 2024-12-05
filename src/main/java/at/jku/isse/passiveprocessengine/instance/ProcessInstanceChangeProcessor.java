@@ -31,6 +31,7 @@ import at.jku.isse.passiveprocessengine.instance.messages.Commands.OutputChanged
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.PrematureStepTriggerCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.QAConstraintChangedCmd;
+import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
@@ -52,7 +53,7 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 	public ProcessInstanceChangeProcessor(ProcessContext context, EventDistributor distributor) {		
 		this.distributor = distributor;
 		this.context = context;
-		stepType = context.getSchemaRegistry().getType(ProcessStep.class);
+		stepType = context.getSchemaRegistry().getTypeByName(AbstractProcessStepType.typeId);
 		assert(stepType != null);
 	}
 

@@ -58,14 +58,9 @@ class InstanceTests extends DefinitionWrapperTests {
 		artifactFactory = new TestArtifacts(super.instanceRepository, schemaReg);
 		procFactory = new TestDTOProcesses(artifactFactory);
 		typeJira = artifactFactory.getJiraInstanceType();
-		UsageMonitor usageMonitor = new UsageMonitor(new CurrentSystemTimeProvider(), ruleServiceWrapper);
-		ExecutedRepairListenerImpl repairListener = new ExecutedRepairListenerImpl(usageMonitor, configBuilder.getContext());
-		ruleServiceWrapper.register(repairListener);
-		
-	//	WorkspaceListenerSequencer wsls = new WorkspaceListenerSequencer(ws);
-	//	wsls.registerListener(repAnalyzer);
-	//	wsls.registerListener(picp);
-		
+		//UsageMonitor usageMonitor = new UsageMonitor(new CurrentSystemTimeProvider(), ruleServiceWrapper);
+		//ExecutedRepairListenerImpl repairListener = new ExecutedRepairListenerImpl(usageMonitor, configBuilder.getContext());
+		//ruleServiceWrapper.register(repairListener);					
 	}
 	
 	protected ProcessDefinition getDefinition(DTOs.Process procDTO) {

@@ -20,7 +20,7 @@ public class ConstraintResultWrapperFactory extends DomainFactory {
 
 	public ConstraintResultWrapper createInstance(ConstraintSpec qaSpec, ZonedDateTime lastChanged, ProcessStep owningStep, ProcessInstance proc) {
 		PPEInstance inst = getContext().getInstanceRepository().createInstance(qaSpec.getName()+proc.getName()+"_"+UUID.randomUUID()
-			, getContext().getSchemaRegistry().getType(ConstraintResultWrapper.class));
+			, getContext().getSchemaRegistry().getTypeByName(ConstraintWrapperType.typeId));
 		ConstraintResultWrapper cw = getContext().getWrappedInstance(ConstraintResultWrapper.class, inst);
 		cw.getInstance().setSingleProperty(ConstraintWrapperType.CoreProperties.parentStep.toString(), owningStep.getInstance());
 		cw.setSpec(qaSpec);

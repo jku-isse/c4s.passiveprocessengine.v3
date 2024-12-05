@@ -7,6 +7,7 @@ import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
+import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
@@ -21,11 +22,11 @@ public class ConstraintWrapperType extends TypeProviderBase {
 		super(schemaRegistry);
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
-			schemaRegistry.registerType(ConstraintResultWrapper.class, thisType.get());
+			//schemaRegistry.registerType(ConstraintResultWrapper.class, thisType.get());
 			this.type = thisType.get();
 		} else {
-			type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getType(ProcessInstanceScopedElement.class));
-			schemaRegistry.registerType(ConstraintResultWrapper.class, type);
+			type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getTypeByName(ProcessInstanceScopeType.typeId));
+			//schemaRegistry.registerType(ConstraintResultWrapper.class, type);
 		}
 	}
 
@@ -34,8 +35,8 @@ public class ConstraintWrapperType extends TypeProviderBase {
 		
 			// so ugly:
 			ProcessInstanceScopeType.addGenericProcessProperty(type, schemaRegistry);
-			type.createSinglePropertyType(ConstraintWrapperType.CoreProperties.qaSpec.toString(), schemaRegistry.getType(ConstraintSpec.class));
-			type.createSinglePropertyType(ConstraintWrapperType.CoreProperties.parentStep.toString(), schemaRegistry.getType(ProcessStep.class));
+			type.createSinglePropertyType(ConstraintWrapperType.CoreProperties.qaSpec.toString(), schemaRegistry.getTypeByName(ConstraintSpecType.typeId));
+			type.createSinglePropertyType(ConstraintWrapperType.CoreProperties.parentStep.toString(), schemaRegistry.getTypeByName(AbstractProcessStepType.typeId));
 			type.createSinglePropertyType(ConstraintWrapperType.CoreProperties.lastChanged.toString(), BuildInType.STRING);
 			type.createSinglePropertyType(ConstraintWrapperType.CoreProperties.crule.toString(), BuildInType.RULE);
 			type.createSinglePropertyType(ConstraintWrapperType.CoreProperties.isOverriden.toString(),  BuildInType.BOOLEAN);

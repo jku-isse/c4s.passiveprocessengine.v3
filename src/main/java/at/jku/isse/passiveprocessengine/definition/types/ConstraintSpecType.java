@@ -21,11 +21,12 @@ public class ConstraintSpecType implements TypeProvider {
 		this.schemaRegistry = schemaRegistry;
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
-			schemaRegistry.registerType(ConstraintSpec.class, thisType.get());
+			//schemaRegistry.registerType(ConstraintSpec.class, thisType.get());
 			this.type = thisType.get();
 		} else {
-			PPEInstanceType type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getType(ProcessDefinitionScopedElement.class));
-			schemaRegistry.registerType(ConstraintSpec.class, type);
+			//PPEInstanceType type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getType(ProcessDefinitionScopedElement.class));
+			PPEInstanceType type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getTypeByName(ProcessDefinitionScopeType.typeId));			
+			//schemaRegistry.registerType(ConstraintSpec.class, type);
 			this.type = type;
 		}
 	}

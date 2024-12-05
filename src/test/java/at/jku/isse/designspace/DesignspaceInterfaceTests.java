@@ -137,14 +137,14 @@ class DesignspaceInterfaceTests  {
 		testType.createListPropertyType(LIST_PROP, testType);
 		testType.createSetPropertyType(SET_PROP, BuildInType.BOOLEAN);
 		testType.createMapPropertyType(MAP_PROP, BuildInType.STRING, BuildInType.INTEGER);
-		schemaRegistry.registerTypeByName(testType);
+		//schemaRegistry.registerTypeByName(testType);
 	}
 	
 	protected void createChildType() {
 		
 		PPEInstanceType childType = schemaRegistry.createNewInstanceType(TEST_CHILD_TYPE, schemaRegistry.getTypeByName(TEST_BASE_TYPE));
 		childType.createSinglePropertyType(PARENT_PROP, schemaRegistry.getTypeByName(TEST_BASE_TYPE));
-		schemaRegistry.registerTypeByName(childType);
+		//schemaRegistry.registerTypeByName(childType);
 	}
 	
 	

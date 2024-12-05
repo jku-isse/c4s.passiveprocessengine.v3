@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.jena.ontapi.model.OntClass;
-
 import at.jku.isse.artifacteventstreaming.rule.RuleSchemaProvider;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
@@ -21,10 +19,10 @@ public class RewriterFactory {
 
 	private final AbstractionMapper mapper;
 	private final boolean doOverridingAnalysis;
-	private final RuleSchemaProvider ruleFactory;
+	private final RuleSchemaProvider ruleSchema;
 	
 	public String rewriteConstraint(PPEInstanceType ruleContext, String constraint, List<StepParameter> singleUsage, StepDefinition stepDef) throws Exception {
-		ConstraintRewriter rewriter = new ConstraintRewriter(mapper.mapProcessDomainInstanceTypeToOntClass(ruleContext), ruleFactory);
+		ConstraintRewriter rewriter = new ConstraintRewriter(mapper.mapProcessDomainInstanceTypeToOntClass(ruleContext), ruleSchema);
 		return rewriter.rewriteConstraint(constraint, singleUsage, stepDef);
 	}
 

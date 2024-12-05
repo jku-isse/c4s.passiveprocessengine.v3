@@ -18,11 +18,11 @@ public class ProcessInstanceScopeType extends TypeProviderBase {
 		super(schemaRegistry);
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
-			schemaRegistry.registerType(ProcessInstanceScopedElement.class, thisType.get());
+			//schemaRegistry.registerType(ProcessInstanceScopedElement.class, thisType.get());
 			this.type = thisType.get();
 		} else {
 			type = schemaRegistry.createNewInstanceType(typeId);
-			schemaRegistry.registerType(ProcessInstanceScopedElement.class, type);
+			//schemaRegistry.registerType(ProcessInstanceScopedElement.class, type);
 		}
 	}
 	
@@ -34,7 +34,7 @@ public class ProcessInstanceScopeType extends TypeProviderBase {
 	
 	public static void addGenericProcessProperty(PPEInstanceType instType, DomainTypesRegistry schemaRegistry) {
 		if (instType.getPropertyType(ProcessInstanceScopeType.CoreProperties.process.toString()) == null) {
-			instType.createSinglePropertyType(ProcessInstanceScopeType.CoreProperties.process.toString(), schemaRegistry.getType(ProcessStep.class));
+			instType.createSinglePropertyType(ProcessInstanceScopeType.CoreProperties.process.toString(), schemaRegistry.getTypeByName(AbstractProcessStepType.typeId));
 		}
 	}
 }

@@ -18,6 +18,7 @@ import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultW
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
 import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType;
 import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
@@ -39,32 +40,32 @@ public class ProcessInstanceTypeAdapterRegistryFactory {
 						, concat(getShallowProcessInstanceProperties().stream(), getShallowProcessStepProperties().stream()).collect(toSet())
 						, concat(getDeepProcessInstanceProperties().stream(), getDeepProcessStepProperties().stream()).collect(toSet())
 						, context)
-				, schemaReg.getType(ProcessInstance.class));
+				, schemaReg.getTypeByName(AbstractProcessInstanceType.typeId));
 		// process step
 		typeAdapterRegistry.registerTypeAdapter(
 				new StepTypeAdapter(typeAdapterRegistry 
 						, getShallowProcessStepProperties()
 						, getDeepProcessStepProperties()
 						, context)
-				, schemaReg.getType(ProcessStep.class));
+				, schemaReg.getTypeByName(AbstractProcessStepType.typeId));
 		// decision node - only shallow
 		typeAdapterRegistry.registerTypeAdapter(
 				new ConfigurablePropertyTypeAdapter(typeAdapterRegistry 
 						, getShallowDecisionNodeProperties()
 						, Collections.emptySet())
-				, schemaReg.getType(DecisionNodeInstance.class));
+				, schemaReg.getTypeByName(DecisionNodeInstanceType.typeId));
 		// constraint wrapper - only deep
 		typeAdapterRegistry.registerTypeAdapter(
 				new ConfigurablePropertyTypeAdapter(typeAdapterRegistry 
 						, Collections.emptySet()
 						, getDeepProcessWrapperProperties() )
-				, schemaReg.getType(ConstraintResultWrapper.class));
+				, schemaReg.getTypeByName(ConstraintWrapperType.typeId));
 		// constraint spec, wrapper needs spec as there the actual constraint is described, wrapper could be also shallow
 		typeAdapterRegistry.registerTypeAdapter(
 				new ConfigurablePropertyTypeAdapter(typeAdapterRegistry 
 						, getShallowConstraintSpecProperties()
 						, Collections.emptySet())
-				, schemaReg.getType(ConstraintSpec.class));
+				, schemaReg.getTypeByName(ConstraintSpecType.typeId));
 		// Artifacts minimal info - only shallow
 		typeAdapterRegistry.registerTypeAdapter(
 				new ConfigurablePropertyTypeAdapter(typeAdapterRegistry 

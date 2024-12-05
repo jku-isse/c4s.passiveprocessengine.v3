@@ -9,6 +9,7 @@ import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
@@ -33,16 +34,16 @@ public class SpecificProcessInstanceType extends TypeProviderBase {
 		String processName = getProcessName(procDef);
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(processName);
 		if (thisType.isPresent()) {
-			schemaRegistry.registerTypeByName(thisType.get());	
+			//schemaRegistry.registerTypeByName(thisType.get());	
 			this.type = thisType.get();
 		} else {
 			String processAsTaskName = SpecificProcessStepType.getProcessStepName(procDef);
 			type = schemaRegistry.createNewInstanceType(processName, schemaRegistry.getTypeByName(processAsTaskName));
-			schemaRegistry.registerTypeByName(type);		
+			//schemaRegistry.registerTypeByName(type);		
 
-			type.createSinglePropertyType(SpecificProcessInstanceType.CoreProperties.processDefinition.toString(), schemaRegistry.getType(ProcessDefinition.class));
-			type.createSetPropertyType(SpecificProcessInstanceType.CoreProperties.stepInstances.toString(), schemaRegistry.getType(ProcessStep.class));
-			type.createSetPropertyType(SpecificProcessInstanceType.CoreProperties.decisionNodeInstances.toString(), schemaRegistry.getType(DecisionNodeInstance.class));
+			type.createSinglePropertyType(SpecificProcessInstanceType.CoreProperties.processDefinition.toString(), schemaRegistry.getTypeByName(ProcessDefinitionType.typeId));
+			type.createSetPropertyType(SpecificProcessInstanceType.CoreProperties.stepInstances.toString(), schemaRegistry.getTypeByName(AbstractProcessStepType.typeId));
+			type.createSetPropertyType(SpecificProcessInstanceType.CoreProperties.decisionNodeInstances.toString(), schemaRegistry.getTypeByName(DecisionNodeInstanceType.typeId));
 			type.createSinglePropertyType(SpecificProcessInstanceType.CoreProperties.createdAt.toString(), BuildInType.STRING);			
 		}
 

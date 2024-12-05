@@ -40,12 +40,12 @@ public class SpecificProcessStepType extends TypeProviderBase {
 		String stepName = SpecificProcessStepType.getProcessStepName(stepDef);
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(stepName);
 		if (thisType.isPresent())
-			schemaRegistry.registerTypeByName(thisType.get());	
+			;//schemaRegistry.registerTypeByName(thisType.get());	
 		else {
 			PPEInstanceType type = processType == null ? 
-				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getType(ProcessInstance.class)) :			
-				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getType(ProcessStep.class));			
-			schemaRegistry.registerTypeByName(type);		
+				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getTypeByName(AbstractProcessInstanceType.typeId)) :			
+				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getTypeByName(AbstractProcessStepType.typeId));			
+			//schemaRegistry.registerTypeByName(type);		
 
 			stepDef.getExpectedInput().entrySet().stream()
 			.forEach(entry -> {

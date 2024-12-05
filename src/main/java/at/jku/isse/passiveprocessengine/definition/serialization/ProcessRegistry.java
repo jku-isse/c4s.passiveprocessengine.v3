@@ -21,6 +21,7 @@ import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
 import at.jku.isse.passiveprocessengine.designspace.ProcessOverridingAnalysis;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceError;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
+import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -43,9 +44,9 @@ public class ProcessRegistry {
 
 	public ProcessRegistry(ProcessContext context) {
 		this.context = context;
-		processDefinitionType = context.getSchemaRegistry().getType(ProcessDefinition.class); // ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);
+		processDefinitionType = context.getSchemaRegistry().getTypeByName(ProcessDefinitionType.typeId); // ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);
 		assert(processDefinitionType != null);
-		processInstanceType = context.getSchemaRegistry().getType(ProcessInstance.class); 
+		processInstanceType = context.getSchemaRegistry().getTypeByName(AbstractProcessInstanceType.typeId); 
 		assert(processInstanceType != null);
 		context.getSchemaRegistry().getAllNonDeletedInstanceTypes().stream().forEach(itype -> log.debug(String.format("Available instance type %s ", itype.getName())));
 		loadPersistedProcesses();

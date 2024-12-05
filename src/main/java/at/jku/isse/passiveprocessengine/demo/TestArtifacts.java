@@ -25,12 +25,12 @@ public class TestArtifacts {
 	}
 	
 	public PPEInstanceType getJiraInstanceType() {
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(DEMOISSUETYPE);
+		Optional<PPEInstanceType> thisType = Optional.ofNullable(schemaRegistry.getTypeByName(DEMOISSUETYPE));
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
 				PPEInstanceType typeJira = schemaRegistry.createNewInstanceType(DEMOISSUETYPE, schemaRegistry.getTypeByName(CoreTypeFactory.BASE_TYPE_NAME));				
-				schemaRegistry.registerTypeByName(typeJira);
+				//schemaRegistry.registerTypeByName(typeJira);
 				typeJira.createSinglePropertyType(CoreProperties.state.toString(), BuildInType.STRING);
 				typeJira.createSetPropertyType(CoreProperties.requirements.toString(), typeJira);
 				typeJira.createSetPropertyType(CoreProperties.bugs.toString(),  typeJira);
@@ -45,9 +45,9 @@ public class TestArtifacts {
 
 	public PPEInstance getJiraInstance(String name, PPEInstance... reqs) {
 		PPEInstance jira = repository.createInstance(name, getJiraInstanceType());
-		jira.setSingleProperty(CoreTypeFactory.URL.toString(),"http://localhost:7171/home");
-		jira.setSingleProperty(CoreTypeFactory.EXTERNAL_TYPE.toString(),"none");
-		jira.setSingleProperty(CoreTypeFactory.EXTERNAL_DEFAULT_ID.toString(), name);
+		jira.setSingleProperty(CoreTypeFactory.URL,"http://localhost:7171/home");
+		jira.setSingleProperty(CoreTypeFactory.EXTERNAL_TYPE,"none");
+		jira.setSingleProperty(CoreTypeFactory.EXTERNAL_DEFAULT_ID, name);
 		setStateToJiraInstance(jira, JiraStates.Open);
 		for(PPEInstance inst : reqs) {
 			jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).add(inst);
