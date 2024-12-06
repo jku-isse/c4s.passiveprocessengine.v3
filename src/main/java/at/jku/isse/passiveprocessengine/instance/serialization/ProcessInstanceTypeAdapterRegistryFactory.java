@@ -142,7 +142,7 @@ public class ProcessInstanceTypeAdapterRegistryFactory {
 	private static Set<String> getShallowConstraintSpecProperties() {
 		return Set.of(ConstraintSpecType.CoreProperties.constraintSpec.toString()
 				, ConstraintSpecType.CoreProperties.humanReadableDescription.toString()
-				, ConstraintSpecType.CoreProperties.specOrderIndex.toString()
+				, ConstraintSpecType.CoreProperties.constraintSpecOrderIndex.toString()
 				, ConstraintSpecType.CoreProperties.isOverridable.toString()
 				, ConstraintSpecType.CoreProperties.ruleType.toString()
 				, ConstraintSpecType.CoreProperties.conditionsType.toString()

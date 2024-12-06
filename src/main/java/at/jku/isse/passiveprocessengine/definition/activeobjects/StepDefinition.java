@@ -279,7 +279,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	}
 
 	public void setDepthIndexRecursive(int indexToSet) {
-		instance.setSingleProperty(ProcessStepDefinitionType.CoreProperties.hierarchyDepth.toString(), indexToSet);
+		instance.setSingleProperty(ProcessStepDefinitionType.CoreProperties.stepHierarchyDepth.toString(), indexToSet);
 		DecisionNodeDefinition dnd = this.getOutDND();
 		if (dnd != null) { //avoid NPE on process without outDND
 			int newIndex = (dnd.getInSteps().size() > 1) ? indexToSet - 1 : indexToSet; // if in branching, reduction of index, otherwise same index as just a sequence
@@ -293,7 +293,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 	}
 
 	public Integer getDepthIndex() {
-		return instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.hierarchyDepth.toString(), Integer.class, -1);
+		return instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.stepHierarchyDepth.toString(), Integer.class, -1);
 	}
 
 	public void setHtml_url(String html_url)

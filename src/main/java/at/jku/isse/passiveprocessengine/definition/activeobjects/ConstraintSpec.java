@@ -39,7 +39,7 @@ public class ConstraintSpec extends  ProcessDefinitionScopedElement{
 	}
 
 	public Integer getOrderIndex() {
-		return instance.getTypedProperty(ConstraintSpecType.CoreProperties.specOrderIndex.toString(), Integer.class);
+		return instance.getTypedProperty(ConstraintSpecType.CoreProperties.constraintSpecOrderIndex.toString(), Integer.class);
 	}
 
 	public boolean isOverridable() {

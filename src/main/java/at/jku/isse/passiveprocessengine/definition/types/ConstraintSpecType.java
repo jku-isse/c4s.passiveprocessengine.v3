@@ -11,7 +11,7 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefiniti
 
 public class ConstraintSpecType implements TypeProvider {
 
-	public static enum CoreProperties {constraintSpec, augmentedSpec, humanReadableDescription, specOrderIndex, isOverridable, ruleType, conditionsType}
+	public static enum CoreProperties {constraintSpec, augmentedSpec, humanReadableDescription, constraintSpecOrderIndex, isOverridable, ruleType, conditionsType}
 
 	private SchemaRegistry schemaRegistry;
 	public static final String typeId = ConstraintSpecType.class.getSimpleName();
@@ -37,7 +37,7 @@ public class ConstraintSpecType implements TypeProvider {
 		type.createSinglePropertyType(CoreProperties.constraintSpec.toString(), BuildInType.STRING);
 		type.createSinglePropertyType(CoreProperties.augmentedSpec.toString(),  BuildInType.STRING);
 		type.createSinglePropertyType(CoreProperties.humanReadableDescription.toString(),  BuildInType.STRING);
-		type.createSinglePropertyType(CoreProperties.specOrderIndex.toString(),  BuildInType.INTEGER);
+		type.createSinglePropertyType(CoreProperties.constraintSpecOrderIndex.toString(),  BuildInType.INTEGER);
 		type.createSinglePropertyType(CoreProperties.isOverridable.toString(),  BuildInType.BOOLEAN);
 		type.createSinglePropertyType(CoreProperties.ruleType.toString(),  BuildInType.RULE);
 		type.createSinglePropertyType(CoreProperties.conditionsType.toString(),  BuildInType.STRING);

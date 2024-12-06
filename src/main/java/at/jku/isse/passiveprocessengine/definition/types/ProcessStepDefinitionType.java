@@ -17,7 +17,7 @@ public class ProcessStepDefinitionType implements TypeProvider {
 	preconditions, postconditions, cancelconditions, activationconditions,
 	qaConstraints,
 	inDND, outDND, specOrderIndex,html_url,description,
-	hierarchyDepth}
+	stepHierarchyDepth}
 	public static final String typeId = StepDefinition.class.getSimpleName();
 	private SchemaRegistry schemaRegistry;
 	private final PPEInstanceType type;
@@ -50,7 +50,7 @@ public class ProcessStepDefinitionType implements TypeProvider {
 				type.createSinglePropertyType(ProcessStepDefinitionType.CoreProperties.outDND.toString(), BuildInType.STRING);
 				type.createMapPropertyType((ProcessStepDefinitionType.CoreProperties.ioMappingRules.toString()), BuildInType.STRING, BuildInType.STRING);
 				type.createSinglePropertyType((ProcessStepDefinitionType.CoreProperties.specOrderIndex.toString()), BuildInType.INTEGER);
-				type.createSinglePropertyType((ProcessStepDefinitionType.CoreProperties.hierarchyDepth.toString()), BuildInType.INTEGER);
+				type.createSinglePropertyType((ProcessStepDefinitionType.CoreProperties.stepHierarchyDepth.toString()), BuildInType.INTEGER);
 				type.createSinglePropertyType((ProcessStepDefinitionType.CoreProperties.html_url.toString()), BuildInType.STRING);
 				type.createSinglePropertyType((ProcessStepDefinitionType.CoreProperties.description.toString()), BuildInType.STRING);
 	}

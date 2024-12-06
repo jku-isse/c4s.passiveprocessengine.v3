@@ -32,7 +32,7 @@ public class ConstraintSpecFactory extends DomainFactory{
 		instance.setSingleProperty(ConstraintSpecType.CoreProperties.constraintSpec.toString(),constraintSpec);
 		instance.setSingleProperty(ConstraintSpecType.CoreProperties.augmentedSpec.toString(),augmentedSpec);
 		instance.setSingleProperty(ConstraintSpecType.CoreProperties.humanReadableDescription.toString(), humanReadableDescription == null ? "" : humanReadableDescription);
-		instance.setSingleProperty(ConstraintSpecType.CoreProperties.specOrderIndex.toString(), specOrderIndex);
+		instance.setSingleProperty(ConstraintSpecType.CoreProperties.constraintSpecOrderIndex.toString(), specOrderIndex);
 		instance.setSingleProperty(ConstraintSpecType.CoreProperties.isOverridable.toString(), isOverridable);
 		instance.setSingleProperty(ConstraintSpecType.CoreProperties.conditionsType.toString(), condition.toString());
 		return getContext().getWrappedInstance(ConstraintSpec.class, instance);
