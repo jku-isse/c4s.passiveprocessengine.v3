@@ -10,6 +10,7 @@ import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Constraint
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.DecisionNode;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Step;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 
 public class TestDTOProcesses {
 
@@ -29,7 +30,8 @@ public class TestDTOProcesses {
 	public TestDTOProcesses(TestArtifacts artifactFactory) {
 		this.artifactFactory = artifactFactory;
 		typeJira = artifactFactory.getJiraInstanceType();
-		jiraFQN = "root/types/"+typeJira.getName();
+		//jiraFQN = "root/types/"+typeJira.getName();
+		jiraFQN = typeJira.getId();
 		//jiraFQN = "ProcessTypesFolder/"+typeJira.getName();
 		//jiraFQN = typeJira.getName();
 	}
@@ -100,22 +102,22 @@ public class TestDTOProcesses {
 	}
 	
 	protected void buildJiraInput(String paraName, Step step) {
-		step.getInput().put(paraName, typeJira.getName());
+		step.getInput().put(paraName, typeJira.getId());
 	}
 	
 	protected void buildJiraOutput(String paraName, Step step) {
-		step.getOutput().put(paraName, typeJira.getName());
+		step.getOutput().put(paraName, typeJira.getId());
 	}
 	
 	public DTOs.Process getMinimalSingleStepProcess() {
 		DTOs.Process procD = buildDefaultProcessSkeleton("TestSingleStepProcess");
-		procD.getInput().put(JIRA_IN, typeJira.getName());
-		procD.getOutput().put(JIRA_OUT, typeJira.getName());
+		procD.getInput().put(JIRA_IN, typeJira.getId());
+		procD.getOutput().put(JIRA_OUT, typeJira.getId());
 		buildAndIncludeCondition(procD, Conditions.PRECONDITION,"self.in_jiraIn->size() = 1");					
 		
 		DTOs.Step sd1 = DTOs.Step.builder().code("Task1").build();
-		sd1.getInput().put(JIRA_IN, typeJira.getName());
-		sd1.getOutput().put(JIRA_OUT, typeJira.getName());
+		sd1.getInput().put(JIRA_IN, typeJira.getId());
+		sd1.getOutput().put(JIRA_OUT, typeJira.getId());
 		buildAndIncludeCondition(sd1, Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 		buildAndIncludeCondition(sd1, Conditions.POSTCONDITION,"self.in_jiraIn->size() = 1 and self.in_jiraIn->forAll( issue | issue.state = 'Closed')");
 		sd1.getIoMapping().put(JIRA_OUT, "self.in_jiraIn");//->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
@@ -133,13 +135,13 @@ public class TestDTOProcesses {
 	public DTOs.Process getSimpleDTOSubprocess( ) {
 		
 		DTOs.Process procD = buildDefaultProcessSkeleton("TestSerializeProc1");
-		procD.getInput().put(JIRA_IN, typeJira.getName());
-		procD.getOutput().put(JIRA_OUT, typeJira.getName());
+		procD.getInput().put(JIRA_IN, typeJira.getId());
+		procD.getOutput().put(JIRA_OUT, typeJira.getId());
 		buildAndIncludeCondition(procD, Conditions.PRECONDITION,"self.in_jiraIn->size() = 1");					
 		
 		DTOs.Step sd1 = DTOs.Step.builder().code("subtask1").build();
-		sd1.getInput().put(JIRA_IN, typeJira.getName());
-		sd1.getOutput().put(JIRA_OUT, typeJira.getName());
+		sd1.getInput().put(JIRA_IN, typeJira.getId());
+		sd1.getOutput().put(JIRA_OUT, typeJira.getId());
 		buildAndIncludeCondition(sd1, Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 		buildAndIncludeCondition(sd1, Conditions.POSTCONDITION,"self.in_jiraIn->size() = 1 and self.in_jiraIn->forAll( issue | issue.state = 'Closed')");
 		sd1.getIoMapping().put(JIRA_OUT, "self.in_jiraIn");//->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
@@ -148,7 +150,7 @@ public class TestDTOProcesses {
 		procD.getSteps().add(sd1);
 
 		DTOs.Step sd2 = DTOs.Step.builder().code("subtask2").build();
-		sd2.getInput().put(JIRA_IN, typeJira.getName());
+		sd2.getInput().put(JIRA_IN, typeJira.getId());
 		buildAndIncludeCondition(sd2, Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 		buildAndIncludeCondition(sd2, Conditions.POSTCONDITION,  "self.in_jiraIn->size() = 1 and self.in_jiraIn->forAll( issue | issue.state = 'Closed')");					
 		sd2.setInDNDid(DND_SUB_START);
@@ -165,14 +167,14 @@ public class TestDTOProcesses {
 
 	public DTOs.Process getSimpleSuperDTOProcessDefinition( ) {	
 		DTOs.Process procD = buildDefaultProcessSkeleton("TestParentProc1");
-		procD.getInput().put(JIRA_IN, typeJira.getName());
-		procD.getOutput().put(JIRA_OUT, typeJira.getName());
+		procD.getInput().put(JIRA_IN, typeJira.getId());
+		procD.getOutput().put(JIRA_OUT, typeJira.getId());
 		buildAndIncludeCondition(procD, Conditions.PRECONDITION,"self.in_jiraIn->size() = 1");			
 		DTOs.DecisionNode dn1 = procD.getDecisionNodeByCode(DND_SUB_START);
 		DTOs.DecisionNode dn2 = procD.getDecisionNodeByCode(DND_SUB_END);
 		
 		DTOs.Step sd1 = buildAndIncludeStep("paratask1", procD);
-		sd1.getInput().put(JIRA_IN, typeJira.getName());		
+		sd1.getInput().put(JIRA_IN, typeJira.getId());		
 		buildAndIncludeCondition(sd1, Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 		buildAndIncludeCondition(sd1, Conditions.POSTCONDITION,"self.in_jiraIn->size() = 1 and self.in_jiraIn->forAll( issue | issue.state = 'Closed')");		
 		buildInAndOutDNs(sd1, dn1, dn2);
@@ -192,8 +194,8 @@ public class TestDTOProcesses {
 	public DTOs.Process getSimple2StepProcessDefinition( ) {
 		
 		DTOs.Process procD = buildDefaultProcessSkeleton("SimpleProc");
-		procD.getInput().put(JIRA_IN, typeJira.getName());
-		procD.getOutput().put(JIRA_OUT, typeJira.getName());
+		procD.getInput().put(JIRA_IN, typeJira.getId());
+		procD.getOutput().put(JIRA_OUT, typeJira.getId());
 		buildAndIncludeCondition(procD, Conditions.PRECONDITION,"self.in_jiraIn->size() = 1");
 		buildAndIncludeCondition(procD, Conditions.POSTCONDITION,"self.out_jiraOut->size() > 0");
 						

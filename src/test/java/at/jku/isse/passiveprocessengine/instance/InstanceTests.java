@@ -68,7 +68,7 @@ class InstanceTests extends DefinitionWrapperTests {
 		DefinitionTransformer transformer = new DefinitionTransformer(procDTO, configBuilder.getContext().getFactoryIndex(), schemaReg);
 		ProcessDefinition procDef = transformer.fromDTO(false);
 		assert(procDef != null);
-		transformer.getErrors().stream().forEach(err -> System.out.println(err.toString()));
+		transformer.getErrors().stream().forEach(err -> System.out.println(err.toString()));		
 		assert(transformer.getErrors().isEmpty());
 		return procDef;
 	}

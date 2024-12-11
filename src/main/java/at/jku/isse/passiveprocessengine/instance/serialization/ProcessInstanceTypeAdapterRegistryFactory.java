@@ -71,7 +71,7 @@ public class ProcessInstanceTypeAdapterRegistryFactory {
 				new ConfigurablePropertyTypeAdapter(typeAdapterRegistry 
 						, getShallowArtifactProperties()
 						, Collections.emptySet())
-				, schemaReg.getTypeByName(CoreTypeFactory.BASE_TYPE_NAME));
+				, schemaReg.getTypeByName(CoreTypeFactory.BASE_TYPE_URI));
 		
 		return typeAdapterRegistry;
 	}

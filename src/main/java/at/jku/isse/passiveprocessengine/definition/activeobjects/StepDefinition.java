@@ -211,7 +211,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 	public void setOutDND(DecisionNodeDefinition outDND) {
 		// we assume for now, there is no need for rewiring, and we throw an exception if this should be the case
-		if (instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.outDND.toString(), PPEInstance.class) != null) {
+		if (instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.outDND.toString(), String.class) != null) {
 			String msg = String.format("Rewiring in step %s of decision nodes not supported", this.getName());
 			log.error(msg);
 			throw new RuntimeException(msg);
@@ -243,9 +243,9 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 	public void setInDND(DecisionNodeDefinition inDND) {
 		// we assume for now, there is no need for rewiring, and we throw an exception if this should be the case
-		if (instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.inDND.toString(), PPEInstance.class) != null) {
-			DecisionNodeDefinition priorDND = context.getWrappedInstance(DecisionNodeDefinition.class, instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.inDND.toString(), PPEInstance.class));			
-			String msg = String.format("InDND already set to %s, Rewiring inDND of step %s to dnd %s not supported", priorDND.getName(), this.getName(), inDND.getName());
+		if (instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.inDND.toString(), String.class) != null) {
+			String priorDND =  instance.getTypedProperty(ProcessStepDefinitionType.CoreProperties.inDND.toString(), String.class);			
+			String msg = String.format("InDND already set to %s, Rewiring inDND of step %s to dnd %s not supported", priorDND, this.getName(), inDND.getName());
 			log.error(msg);
 			throw new RuntimeException(msg);
 		}
@@ -370,7 +370,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 			errors.add(new ProcessDefinitionError(this, "Expected Constraint Not Found - Internal Data Corruption", name, ProcessDefinitionError.Severity.ERROR));
 		} else {
 			if (crt.hasRuleError())
-				errors.add(new ProcessDefinitionError(this, String.format("Condition % has an error", spec.getName()), crt.getRuleError(), ProcessDefinitionError.Severity.ERROR));
+				errors.add(new ProcessDefinitionError(this, String.format("Condition %s has an error", spec.getName()), crt.getRuleError(), ProcessDefinitionError.Severity.ERROR));
 		}
 	}
 

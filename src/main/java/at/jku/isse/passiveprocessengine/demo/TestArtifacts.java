@@ -12,7 +12,7 @@ import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 
 public class TestArtifacts {
 
-	public static final String DEMOISSUETYPE = "DemoIssue";
+	public static final String DEMOISSUETYPE = "http://isse.jku.at/demo#DemoIssue";
 	public static enum CoreProperties { state, requirements, bugs, parent, html_url, upstream, downstream }
 	public static enum JiraStates { Open, InProgress, Closed, ReadyForReview, Released}
 
@@ -29,7 +29,7 @@ public class TestArtifacts {
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
-				PPEInstanceType typeJira = schemaRegistry.createNewInstanceType(DEMOISSUETYPE, schemaRegistry.getTypeByName(CoreTypeFactory.BASE_TYPE_NAME));				
+				PPEInstanceType typeJira = schemaRegistry.createNewInstanceType(DEMOISSUETYPE, schemaRegistry.getTypeByName(CoreTypeFactory.BASE_TYPE_URI));				
 				//schemaRegistry.registerTypeByName(typeJira);
 				typeJira.createSinglePropertyType(CoreProperties.state.toString(), BuildInType.STRING);
 				typeJira.createSetPropertyType(CoreProperties.requirements.toString(), typeJira);

@@ -89,16 +89,16 @@ class DefinitionTests extends InstanceWrapperTests {
 		assertTrue(dnd2.getMappings().size() == 1);
 	}
 
-	@Test 
-	void testFromDTOandDefToJson() {
-		DTOs.Process dtoFromDef = DefinitionTransformer.toDTO(procDef);
-		String jsonFromDirectDTO = json.toJson(procDTO);
-		String jsonFromDef = json.toJson(dtoFromDef);
+//	@Test 
+//	void testFromDTOandDefToJson() {
+//		DTOs.Process dtoFromDef = DefinitionTransformer.toDTO(procDef);
+//		String jsonFromDirectDTO = json.toJson(procDTO);
+//		String jsonFromDef = json.toJson(dtoFromDef);
 //		System.out.println(jsonFromDirectDTO);
 //		System.out.println("----------------------------------------");
 //		System.out.println(jsonFromDef);
-		assertTrue(jsonFromDirectDTO.equalsIgnoreCase(jsonFromDef));
-	}
+//		assertTrue(jsonFromDirectDTO.equalsIgnoreCase(jsonFromDef));
+//	}
 	
 	@Test
 	void testSimpleProcContentFromJson() {

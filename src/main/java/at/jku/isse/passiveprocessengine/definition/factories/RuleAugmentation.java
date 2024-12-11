@@ -23,7 +23,7 @@ public class RuleAugmentation {
 
 	public static final String RESERVED_PROPERTY_STEP_AUGMENTATION_STATUS = "@stepAugmentationStatus";
 
-	private static final String INSTANCETYPE_PROPERTY_METADATA = "@propertyMetadata";
+	private static final String INSTANCETYPE_PROPERTY_METADATA = "propertyMetadata";
 	
 	private StepDefinition stepDef;
 	private PPEInstanceType stepType;
