@@ -120,7 +120,7 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 					String.valueOf(op.getValue())
 					));
 			}
-		} else if (op.getName().equals("result") && isOfCRDType(element)) {
+		} else if (op.getName().equals("ruleHasConsistentResult") && isOfCRDType(element)) {
 			RuleResult cr = (RuleResult)element;
 			PPEInstance ruleContext = cr.getContextInstance();
 			if (isOfStepType(ruleContext)) { // rule belonging to a step, or TODO: process!				
