@@ -33,7 +33,7 @@ class DefinitionTests extends InstanceWrapperTests {
 	
 	@BeforeEach
 	public
-	void setup() throws Exception {
+	void setup() {
 		super.setup();
 		artifactFactory = new TestArtifacts(instanceRepository, schemaReg);
 		procFactory = new TestDTOProcesses(artifactFactory);

@@ -26,7 +26,7 @@ class InstanceSerializationTests extends InstanceTests {
 	
 	@BeforeEach
 	public
-	void setup() throws Exception {
+	void setup()  {
 		super.setup();
 		gson = getGson(getTypeAdapterRegistry(configBuilder.getContext()));
 	}

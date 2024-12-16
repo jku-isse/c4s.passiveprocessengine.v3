@@ -35,11 +35,11 @@ import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.AbstractionMapper;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFWrapperSetup;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
+//@ExtendWith(SpringExtension.class)
+//@SpringBootTest
 public class DefinitionWrapperTests {
 	
-	@Autowired
+	//@Autowired
 	protected DesignspaceTestSetup dsSetup;
 	
 	protected InstanceRepository instanceRepository;
@@ -49,7 +49,8 @@ public class DefinitionWrapperTests {
 	
 	
 	@BeforeEach
-	public void setup() throws Exception {
+	public void setup() {
+		dsSetup = new RDFWrapperSetup();
 		dsSetup.setup();
 		this.schemaReg = dsSetup.getSchemaRegistry();
 		this.instanceRepository = dsSetup.getInstanceRepository();
@@ -155,7 +156,7 @@ public class DefinitionWrapperTests {
 		assertTrue(inType.getCardinality().equals(CARDINALITIES.SET));
 		assertTrue(inType.getInstanceType().equals(stepType));
 		
-		PPEPropertyType procType = type.getPropertyType(ProcessDefinitionScopeType.CoreProperties.process.toString());
+		PPEPropertyType procType = type.getPropertyType(ProcessDefinitionScopeType.CoreProperties.processDefinition.toString());
 		assertTrue(procType != null);
 		assertTrue(procType.getCardinality().equals(CARDINALITIES.SINGLE));
 		PPEInstanceType procInstanceType = procType.getInstanceType(); 

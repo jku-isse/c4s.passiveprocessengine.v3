@@ -30,8 +30,8 @@ import at.jku.isse.passiveprocessengine.monitoring.UsageMonitor;
 import at.jku.isse.passiveprocessengine.wrappers.DefinitionWrapperTests;
 import lombok.NonNull;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
+//@ExtendWith(SpringExtension.class)
+//@SpringBootTest
 public
 class InstanceTests extends DefinitionWrapperTests {
 
@@ -44,9 +44,10 @@ class InstanceTests extends DefinitionWrapperTests {
 	ProcessQAStatsMonitor monitor;
 	
 	
+	@Override
 	@BeforeEach
 	public
-	void setup() throws Exception {
+	void setup() {
 		super.setup();
 		EventDistributor eventDistrib = new EventDistributor();
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
@@ -74,9 +75,11 @@ class InstanceTests extends DefinitionWrapperTests {
 	}
 	
 	protected ProcessInstance instantiateDefaultProcess(DTOs.Process procDTO, PPEInstance... inputs) {
-		ProcessDefinition procDef = getDefinition(procDTO);				
+		ProcessDefinition procDef = getDefinition(procDTO);		
 		ProcessInstance procInstance = configBuilder.getContext().getFactoryIndex().getProcessInstanceFactory().getInstance(procDef, "TEST");
 		assert(procInstance != null);
+		configBuilder.getContext().getInstanceRepository().concludeTransaction();
+		configBuilder.getContext().getInstanceRepository().startWriteTransaction();
 		for (PPEInstance input : inputs) {
 			IOResponse resp = procInstance.addInput(TestDTOProcesses.JIRA_IN, input);
 			assert(resp.getError() == null);
@@ -126,11 +129,13 @@ class InstanceTests extends DefinitionWrapperTests {
 				.filter(step -> step.getDefinition().getName().equals(TestDTOProcesses.SD2) )
 				.allMatch(step -> (step.getInput(TestDTOProcesses.JIRA_IN).size() == 2) && step.getActualLifecycleState().equals(State.ACTIVE) ) );
 		
+		instanceRepository.startWriteTransaction();
 		artifactFactory.removeJiraFromReqs(jiraA, jiraC);		
 		artifactFactory.setStateToJiraInstance(jiraB, JiraStates.Closed);
 		// we close, thus keep SD1 in active state, thus no output propagation yet, 
 		instanceRepository.concludeTransaction();		
 		
+		instanceRepository.startWriteTransaction();
 		artifactFactory.setStateToJiraInstance(jiraB, JiraStates.Open);
 		//now that we open again the jira issue, we fulfill SD1, and the output should be mapped, removing jiraC from SD2 input, and subsequently also from its output
 		instanceRepository.concludeTransaction();
@@ -167,6 +172,7 @@ class InstanceTests extends DefinitionWrapperTests {
 		proc.printProcessToConsole(" ");			
 		assert(proc.getExpectedLifecycleState().equals(State.ACTIVE)); 
 		
+		instanceRepository.startWriteTransaction();
 		proc.addInput("jiraIn", jiraD);
 		proc.removeInput("jiraIn", jiraA);		
 		assert(proc.getProcessSteps().stream()
@@ -180,6 +186,7 @@ class InstanceTests extends DefinitionWrapperTests {
 			.filter(step -> step.getDefinition().getName().equals(TestDTOProcesses.SD1) )
 			.allMatch(step -> step.getOutput("jiraOut").size() == 0));		
 		
+		instanceRepository.startWriteTransaction();
 		artifactFactory.addJiraToRequirements(jiraD, jiraB);		
 		instanceRepository.concludeTransaction();
 		proc.printProcessToConsole(" ");					
@@ -188,6 +195,7 @@ class InstanceTests extends DefinitionWrapperTests {
 				.filter(step -> step.getDefinition().getName().equals(TestDTOProcesses.SD2) )
 				.allMatch(step -> (step.getOutput(TestDTOProcesses.JIRA_OUT).stream().findAny().get().getName().equals("jiraB"))) );
 		
+		instanceRepository.startWriteTransaction();
 		artifactFactory.removeJiraFromReqs(jiraD, jiraB);
 		artifactFactory.addJiraToRequirements(jiraD, jiraC);		
 		instanceRepository.concludeTransaction();		

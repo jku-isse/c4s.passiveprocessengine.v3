@@ -11,7 +11,7 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefiniti
 
 public class ProcessDefinitionScopeType  implements TypeProvider {
 
-	public static enum CoreProperties {process, orderIndex};
+	public static enum CoreProperties {processDefinition, orderIndex};
 	private SchemaRegistry schemaRegistry;
 	public static final String typeId = ProcessDefinitionScopeType.class.getSimpleName();
 	private final PPEInstanceType type;
@@ -33,7 +33,7 @@ public class ProcessDefinitionScopeType  implements TypeProvider {
 	public void produceTypeProperties() {
 		
 			//schemaRegistry.registerType(ProcessDefinitionScopedElement.class, type);
-			type.createSinglePropertyType(ProcessDefinitionScopeType.CoreProperties.process.toString(), schemaRegistry.getTypeByName(ProcessDefinitionType.typeId));
+			type.createSinglePropertyType(ProcessDefinitionScopeType.CoreProperties.processDefinition.toString(), schemaRegistry.getTypeByName(ProcessDefinitionType.typeId));
 			type.createSinglePropertyType((ProcessDefinitionScopeType.CoreProperties.orderIndex.toString()), BuildInType.INTEGER);
 			
 		

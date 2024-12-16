@@ -86,9 +86,8 @@ public class InterStepDataMapper {
 			case outToIn: //fallthrough
 			case outToOut: //for output from task
 				// we checked for completed task earlier when adding it to the template
-				return templateEM.getFromStep().getOutput(templateEM.getFromParam())
-															.stream()
-															.map(art -> RuntimeMapping.copyFrom(templateEM).fluentSetArtifact(art));
+				var output = templateEM.getFromStep().getOutput(templateEM.getFromParam()).stream().toList();
+				return output.stream().map(art -> RuntimeMapping.copyFrom(templateEM).fluentSetArtifact(art));
 			default:
 				return Stream.empty();
 			}

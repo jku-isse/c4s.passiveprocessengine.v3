@@ -20,7 +20,7 @@ import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeType;
 public class InstanceWrapperTests extends DefinitionWrapperTests {
 	 
 	@BeforeEach
-	public void setup() throws Exception {
+	public void setup() {
 		super.setup();	
 	}	
 	

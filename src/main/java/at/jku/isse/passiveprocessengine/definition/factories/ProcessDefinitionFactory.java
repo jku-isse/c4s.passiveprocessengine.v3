@@ -88,7 +88,7 @@ public class ProcessDefinitionFactory extends DomainFactory {
 			}
 		});
 		errors.addAll(checkProcessStructure(processDef));
-		getContext().getInstanceRepository().concludeTransaction();
+		//getContext().getInstanceRepository().concludeTransaction();
 		//				List<String> augmentationErrors = new LinkedList<>();
 		errors.addAll(new RuleAugmentation(processDef, processInstanceType, getContext().getFactoryIndex().getRuleDefinitionFactory(), ruleService).augmentAndCreateConditions());
 		processDef.getStepDefinitions().stream().forEach(stepDef -> {
@@ -120,7 +120,7 @@ public class ProcessDefinitionFactory extends DomainFactory {
 			log.info("Blocking newly added process due to constraint errors: "+processDef.getName());
 			processDef.setIsWithoutBlockingErrors(false);
 		}
-		getContext().getInstanceRepository().concludeTransaction(); // persisting the blocking errors flag
+		//getContext().getInstanceRepository().concludeTransaction(); // persisting the blocking errors flag
 		return errors;
 	}
 
