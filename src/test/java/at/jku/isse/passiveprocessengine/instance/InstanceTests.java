@@ -1,5 +1,7 @@
 package at.jku.isse.passiveprocessengine.instance;
 
+import static org.junit.Assert.assertTrue;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,18 +65,20 @@ class InstanceTests extends DefinitionWrapperTests {
 		//ruleServiceWrapper.register(repairListener);					
 	}
 	
-	protected ProcessDefinition getDefinition(DTOs.Process procDTO) {
+	protected ProcessDefinition getDefinition(DTOs.Process procDTO) {		
 		procDTO.calculateDecisionNodeDepthIndex(1);
 		DefinitionTransformer transformer = new DefinitionTransformer(procDTO, configBuilder.getContext().getFactoryIndex(), schemaReg);
 		ProcessDefinition procDef = transformer.fromDTO(false);
 		assert(procDef != null);
 		transformer.getErrors().stream().forEach(err -> System.out.println(err.toString()));		
-		assert(transformer.getErrors().isEmpty());
+		assert(transformer.getErrors().isEmpty());		
 		return procDef;
 	}
 	
 	protected ProcessInstance instantiateDefaultProcess(DTOs.Process procDTO, PPEInstance... inputs) {
 		ProcessDefinition procDef = getDefinition(procDTO);				
+		super.instanceRepository.concludeTransaction();
+		super.instanceRepository.startWriteTransaction();
 		ProcessInstance procInstance = configBuilder.getContext().getFactoryIndex().getProcessInstanceFactory().getInstance(procDef, "TEST");
 		assert(procInstance != null);
 		for (PPEInstance input : inputs) {
@@ -95,7 +99,7 @@ class InstanceTests extends DefinitionWrapperTests {
 	}
 
 	@Test
-	void testComplexDataMapping() throws ProcessException {
+	void testComplexDataMapping() throws ProcessException {		
 		PPEInstance jiraB =  artifactFactory.getJiraInstance("jiraB");
 		PPEInstance jiraC = artifactFactory.getJiraInstance("jiraC");		
 		PPEInstance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
@@ -103,13 +107,14 @@ class InstanceTests extends DefinitionWrapperTests {
 		ProcessInstance proc =  instantiateDefaultProcess(procFactory.getSimple2StepProcessDefinition(), jiraA);		
 		super.instanceRepository.concludeTransaction();
 		proc.printProcessToConsole(" ");
-		assert(proc.getProcessSteps().stream()
+		assertTrue(proc.getProcessSteps().stream()
 				.filter(step -> step.getDefinition().getName().equals(TestDTOProcesses.SD1) )
 				.allMatch(step -> step.getOutput(TestDTOProcesses.JIRA_OUT).size() == 2));
 	}
 	
 	@Test
 	void testComplexDataMappingUpdateToProperty() throws ProcessException {
+		
 		PPEInstance jiraB =  artifactFactory.getJiraInstance("jiraB");
 		PPEInstance jiraC = artifactFactory.getJiraInstance("jiraC");
 		PPEInstance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
