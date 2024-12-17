@@ -64,8 +64,10 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 	private boolean isOfStepType(PPEInstance instance) {
 		if (instance == null) 
 			return false;
-		else
-			return instance.getInstanceType().isOfTypeOrAnySubtype(stepType);		
+		else {
+			var type = instance.getInstanceType();
+			return type != null && type.isOfTypeOrAnySubtype(stepType);		
+		}
 	}
 
 	private boolean isOfCRDType(PPEInstance instance) {
@@ -120,10 +122,10 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 					String.valueOf(op.getValue())
 					));
 			}
-		} else if (op.getName().equals("ruleHasConsistentResult") && isOfCRDType(element)) {
-			RuleResult cr = (RuleResult)element;
+		} else if (op.getName().equals("ruleHasConsistentResult") && element instanceof RuleResult cr) {
+			//RuleResult cr = (RuleResult)element;
 			PPEInstance ruleContext = cr.getContextInstance();
-			if (isOfStepType(ruleContext)) { // rule belonging to a step, or TODO: process!				
+			if (isOfStepType(ruleContext)) { // rule belonging to a step, or TODO: process!	
 				ProcessStep step = getAsStepOrClass(ruleContext);
 				stats.incrementRuleUpdateEventCount();
 				ProcessScopedCmd effect = step.prepareRuleEvaluationChange(cr, op);
@@ -260,7 +262,7 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 			cmdQueue.clear();
 			if (distributor  != null)
 				distributor.handleEvents(cmdEvents); //do something with the change events from command based effects, if needed, e.g., for LTE-based checking
-			context.getInstanceRepository().concludeTransaction();
+	//		context.getInstanceRepository().concludeTransaction();
 			return procs;
 		} else
 			return Collections.emptySet();

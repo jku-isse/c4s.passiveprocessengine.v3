@@ -12,7 +12,7 @@ public abstract class ProcessDefinitionScopedElement extends InstanceWrapper {
 	}
 
 	public void setProcess(ProcessDefinition pi) {
-		instance.setSingleProperty(ProcessDefinitionScopeType.CoreProperties.process.toString(), pi.getInstance());
+		instance.setSingleProperty(ProcessDefinitionScopeType.CoreProperties.processDefinition.toString(), pi.getInstance());
 	}
 
 	public void setProcOrderIndex(int index) {
@@ -24,7 +24,7 @@ public abstract class ProcessDefinitionScopedElement extends InstanceWrapper {
 	}
 
 	public ProcessDefinition getProcess() {
-		PPEInstance pi = instance.getTypedProperty(ProcessDefinitionScopeType.CoreProperties.process.toString(), PPEInstance.class);
+		PPEInstance pi = instance.getTypedProperty(ProcessDefinitionScopeType.CoreProperties.processDefinition.toString(), PPEInstance.class);
 		if (pi != null)
 			return context.getWrappedInstance(ProcessDefinition.class, pi);
 		else return null;
