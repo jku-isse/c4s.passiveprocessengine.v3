@@ -1,6 +1,7 @@
 package at.jku.isse.passiveprocessengine.instance;
 
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -46,10 +47,13 @@ public class InputToOutputMapper {
 			// check if there is a rule error, print that, hence later retry needed
 			return Collections.emptyList();
 		} else {
+			var events = new LinkedList<Events.ProcessChangedEvent>();
+			
 			repairs.stream().findAny().ifPresentOrElse(repair -> {
 				log.debug("Executing Datamapping: "+repair);
 				try {
 					repair.execute();
+					events.addAll(step.getOutDNI().signalPrevTaskDataChanged(step));
 				} catch (ChangeExecutionException e) {
 					log.error("Error executing repair "+repair);
 					e.printStackTrace();
@@ -60,8 +64,8 @@ public class InputToOutputMapper {
 				//TODO: THIS NEEDS TO BE FIXED:		throw new RuntimeException("Datamapping could not be repaired");
 			}
 					);
-
-			return Collections.emptyList(); //FIXME: somehow determine from repairs what was added and removed.
+			return events;
+			//return Collections.emptyList(); //FIXME: somehow determine from repairs what was added and removed.
 		}
 	}
 

@@ -124,7 +124,7 @@ public class Commands {
 
 		@Override
 		public String toString() {
-			return "IOMappingInconsistentCmd [" + step.getDefinition().getName() + " " + crule.getInstanceType().getName() + "]";
+			return "IOMappingConsistencyCmd [" + step.getDefinition().getName() + " " + crule.getInstanceType().getName() + "]";
 		}
 
 		@Override
@@ -134,7 +134,7 @@ public class Commands {
 
 		@Override
 		public String getId() {
-			return "IOMappingInconsistentCmd [" +step.getName()+crule.getInstanceType().getName();
+			return "IOMappingConsistencyCmd [" +step.getName()+crule.getInstanceType().getName();
 		}
 	}
 

@@ -98,13 +98,13 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 
 	private Optional<ProcessScopedCmd> processPropertyUpdateRemove(PropertyChange.Remove op) {
 		PPEInstance element = op.getInstance();
-			if(!op.getName().contains("/@")  // ignore special properties  (e.g., usage in consistency rules, etc)
-				&& (op.getName().startsWith("in_") || op.getName().startsWith("out_"))
+			if(//!op.getName().contains("/@")  // ignore special properties  (e.g., usage in consistency rules, etc)
+				(op.getName().startsWith("in_") || op.getName().startsWith("out_"))
 				&& isOfStepType(element) ) {
 				ProcessStep step = context.getWrappedInstance(ProcessStep.class, element);
-				log.info(String.format("%s %s removed something", step.getName(),
-																op.getName()
-															//	,op.indexOrKey()
+				log.info(String.format("%s %s removed %s", step.getName(),
+																op.getName(),
+																op.getValue()
 																));
 				stats.incrementIoRemoveEventCount();
 				return Optional.ofNullable(step.prepareIORemoveEvent(op));

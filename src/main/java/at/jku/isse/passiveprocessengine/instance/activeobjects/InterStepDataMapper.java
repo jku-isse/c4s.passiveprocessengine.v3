@@ -60,15 +60,15 @@ public class InterStepDataMapper {
 		//       								.collect(Collectors.toSet());
 		List<Events.ProcessChangedEvent> events = new LinkedList<>();
 		keepM.forEach(em -> {
-			log.debug("Keep: "+em.toString());
+			log.debug(this.definition.getName()+" Keep: "+em.toString());
 		});
 		newM.forEach(em -> {
-			log.debug("Add: "+em.toString());
+			log.debug(this.definition.getName()+" Add: "+em.toString());
 			execute(em);
 			events.add(new DataMappingChangedEvent(process)); //TODO: put meaningful data into event
 		});
 		delFinallyM.forEach(em -> {
-			log.debug("Del: "+em.toString());
+			log.debug(this.definition.getName()+" Del: "+em.toString());
 			undo(em);
 			events.add(new DataMappingChangedEvent(process));//TODO: put meaningful data into event
 		});

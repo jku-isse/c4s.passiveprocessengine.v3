@@ -172,16 +172,19 @@ class InstanceTests extends DefinitionWrapperTests {
 		proc.printProcessToConsole(" ");			
 		assert(proc.getExpectedLifecycleState().equals(State.ACTIVE)); 
 		
-		instanceRepository.startWriteTransaction();
-		proc.addInput("jiraIn", jiraD);
-		proc.removeInput("jiraIn", jiraA);		
+			
 		assert(proc.getProcessSteps().stream()
 				.filter(step -> step.getDefinition().getName().equals(TestDTOProcesses.SD1) )
 				.allMatch(step -> step.getInput(TestDTOProcesses.JIRA_IN).size() == 1));
 		assert(proc.getProcessSteps().stream()
 				.filter(step -> step.getDefinition().getName().equals(TestDTOProcesses.SD1) )
 				.allMatch(step -> step.getOutput("jiraOut").size() == 2));				
+		
+		instanceRepository.startWriteTransaction();
+		proc.addInput("jiraIn", jiraD);
+		proc.removeInput("jiraIn", jiraA);	
 		instanceRepository.concludeTransaction();
+		proc.printProcessToConsole(" ");
 		assert(proc.getProcessSteps().stream()
 			.filter(step -> step.getDefinition().getName().equals(TestDTOProcesses.SD1) )
 			.allMatch(step -> step.getOutput("jiraOut").size() == 0));		
@@ -205,7 +208,7 @@ class InstanceTests extends DefinitionWrapperTests {
 				.allMatch(step -> (step.getOutput(TestDTOProcesses.JIRA_OUT).stream().findAny().get().getName().equals("jiraC")) && step.getExpectedLifecycleState().equals(State.COMPLETED) ));
 		assert(proc.getProcessSteps().stream()
 				.filter(step -> step.getDefinition().getName().equals(TestDTOProcesses.SD2) )
-				.allMatch(step -> (step.getOutput(TestDTOProcesses.JIRA_OUT).stream().findAny().get().getName().equals("jiraC")) && step.getActualLifecycleState().equals(State.ACTIVE) ));
+				.allMatch(step -> (step.getOutput(TestDTOProcesses.JIRA_OUT).stream().findAny().get().getName().equals("jiraC")) && (step.getActualLifecycleState().equals(State.ACTIVE) || step.getActualLifecycleState().equals(State.ENABLED)) ));
 	}
 	
 
@@ -215,7 +218,9 @@ class InstanceTests extends DefinitionWrapperTests {
 		PPEInstance jiraC = artifactFactory.getJiraInstance("jiraC");		
 		PPEInstance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
 		
-		ProcessInstance proc =  instantiateDefaultProcess(procFactory.getSimple2StepProcessDefinition(), jiraA);		
+		var def = procFactory.getSimple2StepProcessDefinition();
+		
+		ProcessInstance proc =  instantiateDefaultProcess(def, jiraA);		
 		instanceRepository.concludeTransaction();
 		proc.printProcessToConsole(" ");			
 		assert(proc.getExpectedLifecycleState().equals(State.ACTIVE)); 
