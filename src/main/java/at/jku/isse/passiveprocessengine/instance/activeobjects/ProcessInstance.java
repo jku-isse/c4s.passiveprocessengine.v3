@@ -40,7 +40,9 @@ public class ProcessInstance extends ProcessStep {
 
 	public ProcessInstance(PPEInstance instance, ProcessContext context) {
 		super(instance, context);
-		setCreatedAt(getCurrentTimestamp());
+		if (getCreatedAt() == null) { // truely null, otherwise just loading from persistance layer
+			setCreatedAt(getCurrentTimestamp());
+		}
 	}
 
 	// only to be used by factory
@@ -56,7 +58,11 @@ public class ProcessInstance extends ProcessStep {
 	public ZonedDateTime getCreatedAt() {
 		if (createdAt == null) { // load from DS
 			String last = instance.getTypedProperty(SpecificProcessInstanceType.CoreProperties.createdAt.toString(), String.class);
-			createdAt = ZonedDateTime.parse(last);
+			if (last != null && last.length() > 0 ) {
+				createdAt = ZonedDateTime.parse(last);
+			} else {
+				return null;
+			}
 		}
 		return createdAt;
 	}
@@ -107,7 +113,8 @@ public class ProcessInstance extends ProcessStep {
 
 	@Override
 	public ProcessDefinition getDefinition() {
-		return  context.getWrappedInstance(ProcessDefinition.class, instance.getTypedProperty(SpecificProcessInstanceType.CoreProperties.processDefinition.toString(), PPEInstance.class));
+		var inst = instance.getTypedProperty(SpecificProcessInstanceType.CoreProperties.processDefinition.toString(), PPEInstance.class);
+		return  context.getWrappedInstance(ProcessDefinition.class, inst);
 	}
 
 	@Override

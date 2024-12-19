@@ -1,6 +1,7 @@
 package at.jku.isse.passiveprocessengine.core;
 
 import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,6 +28,9 @@ public class ProcessContext extends Context{
 			T t = (T) clazz.getConstructor(PPEInstance.class, ProcessContext.class).newInstance(instance, this);
 			//t.ws = instance.workspace;
 			cache.put(instance.getId(), t);
+			if (ProcessInstance.class.isAssignableFrom(clazz)) {
+				((ProcessInstance)t).inject(this.getFactoryIndex().getProcessStepFactory(), this.getFactoryIndex().getDecisionNodeInstanceFactory());
+			}
 			return t;
 		} catch (Exception e) {
 			e.printStackTrace();

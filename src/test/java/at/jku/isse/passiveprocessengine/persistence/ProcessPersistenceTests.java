@@ -167,8 +167,9 @@ class ProcessPersistenceTests {
 		assertNotNull(procRDF);
 		var optProc = instanceRepository.findInstanceById(procRDF.getURI());
 		assertTrue(optProc.isPresent());
-		var process = configBuilder.getContext().getWrappedInstance(ProcessInstance.class, optProc.get());
+		var process = (ProcessInstance)configBuilder.getContext().getWrappedInstance(ProcessInstance.class, optProc.get());
 		assertNotNull(process);
+		process.printProcessToConsole(" ");
 		instanceRepository.concludeTransaction();
 		
 		
