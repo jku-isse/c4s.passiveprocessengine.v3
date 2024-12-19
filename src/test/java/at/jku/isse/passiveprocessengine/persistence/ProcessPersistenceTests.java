@@ -1,6 +1,7 @@
 package at.jku.isse.passiveprocessengine.persistence;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.jena.rdf.model.Model;
@@ -59,6 +60,7 @@ class ProcessPersistenceTests {
 	void setup() throws Exception {
 		dsSetup = new RDFWrapperSetup();
 		dsSetup.setupPersistedBranch();
+		branch = dsSetup.getBranch();
 		this.schemaReg = dsSetup.getSchemaRegistry();
 		this.instanceRepository = dsSetup.getInstanceRepository();
 		this.ruleServiceWrapper = dsSetup.getRepairTreeProvider();			
@@ -71,19 +73,20 @@ class ProcessPersistenceTests {
 				, ruleEvaluationFactory
 				, dsSetup.getCoreTypeFactory()
 				, (RuleAnalysisService) ruleServiceWrapper);
+		System.out.println("Size after process engine build: "+branch.getModel().size());
 		EventDistributor eventDistrib = new EventDistributor();
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
 		eventDistrib.registerHandler(monitor);
 		ProcessInstanceChangeListener picp = new ProcessInstanceChangeProcessor(configBuilder.getContext(), eventDistrib);
 		ChangeEventTransformer picpWrapper = dsSetup.getChangeEventTransformer();
 		picpWrapper.registerWithWorkspace(picp);
-		
+		System.out.println("Size after process engine listeners build: "+branch.getModel().size());
 		artifactFactory = new TestArtifacts(instanceRepository, schemaReg);
 		procFactory = new TestDTOProcesses(artifactFactory);
 		typeJira = artifactFactory.getJiraInstanceType();
 		
 		
-		branch = dsSetup.getBranch();
+		System.out.println("Size after test artifacts build: "+branch.getModel().size());
 		branch.getDataset().commit(); // just to store all default created elements that we dont want to see in a commit FIXME: see if that works
 		var stateKeeper = branch.getStateKeeper();
 		var unfinishedCommit = ((BranchStateUpdater) stateKeeper).loadState();
@@ -131,7 +134,7 @@ class ProcessPersistenceTests {
 
 	@Test
 	void testCreatingProcess() throws Exception {		
-		RDFWrapperSetup.resetPersistence();
+		RDFWrapperSetup.resetPersistence(); // also ensure to delete model from filesystem
 		setup(); // manual as we otherwise cant reset data
 		instanceRepository.startWriteTransaction();
 		PPEInstance jiraB =  artifactFactory.getJiraInstance("jiraB");
@@ -154,12 +157,21 @@ class ProcessPersistenceTests {
 		instanceRepository.startReadTransaction();
 		var types = configBuilder.getSchemaRegistry().getAllNonDeletedInstanceTypes();
 		//types.forEach(type -> System.out.println(type.getName()));
-		assertFalse(types.isEmpty());
-		System.out.println("BranchModel has size: "+branch.getModel().size());
+		assertFalse(types.isEmpty());		
 		
 		Model diff = branch.getModel().difference(dsSetup.getLoadedModel());
 		RDFDataMgr.write(System.out, diff, Lang.TURTLE) ;
+		System.out.println("BranchModel has size: "+branch.getModel().size());
+		//RDFDataMgr.write(System.out, branch.getModel(), Lang.TURTLE) ;
+		var procRDF = branch.getModel().getIndividual("http://isse.jku.at/artifactstreaming/rdfwrapper#SimpleProc_TEST");
+		assertNotNull(procRDF);
+		var optProc = instanceRepository.findInstanceById(procRDF.getURI());
+		assertTrue(optProc.isPresent());
+		var process = configBuilder.getContext().getWrappedInstance(ProcessInstance.class, optProc.get());
+		assertNotNull(process);
 		instanceRepository.concludeTransaction();
+		
+		
 	}
 	
 

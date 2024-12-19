@@ -513,7 +513,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 
 	public List<Events.ProcessChangedEvent> processPostConditionsChange(RuleResult cr, boolean isfulfilled) {
 		String id = cr.getName();
-		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (PPEInstance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.postconditions.toString(), Map.class).get(id));
+		var inst = (PPEInstance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.postconditions.toString(), Map.class).get(id);
+		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, inst);
 		cw.setRuleResultIfEmpty(cr);
 		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.postconditions.toString());
@@ -548,7 +549,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 
 	public List<Events.ProcessChangedEvent> processPreConditionsChange(RuleResult cr, boolean isfulfilled) {
 		String id = cr.getName();
-		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (PPEInstance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.preconditions.toString(), Map.class).get(id));
+		var inst = (PPEInstance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.preconditions.toString(), Map.class).get(id);
+		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, inst);
 		cw.setRuleResultIfEmpty(cr);
 		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.preconditions.toString());
