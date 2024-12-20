@@ -36,6 +36,7 @@ import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
 import at.jku.isse.passiveprocessengine.monitoring.CurrentSystemTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.rdfwrapper.AbstractionMapper;
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFWrapperSetup;
 import lombok.NonNull;
 
@@ -171,11 +172,38 @@ class ProcessPersistenceTests {
 		assertNotNull(process);
 		process.printProcessToConsole(" ");
 		instanceRepository.concludeTransaction();
-		
-		
 	}
 	
-
+	@Test
+	void testLoadingAndChangeProcess() throws Exception {
+		setup(); // manual as we otherwise cant reset data
+		instanceRepository.startWriteTransaction();
+		var types = configBuilder.getSchemaRegistry().getAllNonDeletedInstanceTypes();
+		//types.forEach(type -> System.out.println(type.getName()));
+		assertFalse(types.isEmpty());		
+		
+		Model diff = branch.getModel().difference(dsSetup.getLoadedModel());
+		RDFDataMgr.write(System.out, diff, Lang.TURTLE) ;
+		System.out.println("BranchModel has size: "+branch.getModel().size());
+		//RDFDataMgr.write(System.out, branch.getModel(), Lang.TURTLE) ;
+		var procRDF = branch.getModel().getIndividual(NodeToDomainResolver.BASE_NS+"SimpleProc_TEST");
+		assertNotNull(procRDF);
+		var optProc = instanceRepository.findInstanceById(procRDF.getURI());
+		assertTrue(optProc.isPresent());
+		var process = (ProcessInstance)configBuilder.getContext().getWrappedInstance(ProcessInstance.class, optProc.get());
+		assertNotNull(process);
+		process.printProcessToConsole(" ");
+		var jiraARDF = branch.getModel().getIndividual(NodeToDomainResolver.BASE_NS+"jiraA");
+		var jiraA = instanceRepository.findInstanceById(jiraARDF.getURI()).get();
+		var jiraBRDF = branch.getModel().getIndividual(NodeToDomainResolver.BASE_NS+"jiraB");
+		var jiraB = instanceRepository.findInstanceById(jiraBRDF.getURI()).get();
+		process.addInput("jiraIn", jiraB);
+		process.removeInput("jiraIn", jiraA);	
+		instanceRepository.concludeTransaction();
+		instanceRepository.startReadTransaction();
+		process.printProcessToConsole(" ");
+		
+	}
 	
 	
 	
