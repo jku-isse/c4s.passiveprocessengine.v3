@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine.definition;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -31,6 +32,7 @@ class DefinitionTests extends InstanceWrapperTests {
 	DefinitionTransformer transformer;
 	static JsonDefinitionSerializer json = new JsonDefinitionSerializer();
 	
+	@Override
 	@BeforeEach
 	public
 	void setup() {
@@ -114,6 +116,7 @@ class DefinitionTests extends InstanceWrapperTests {
 		
 		String jsonFromDirectDTO = json.toJson(procDTO);
 		DTOs.Process procDTOfromJson = json.fromJson(jsonFromDirectDTO);
+		procDef.deleteCascading();
 		transformer = new DefinitionTransformer(procDTOfromJson, configBuilder.getContext().getFactoryIndex(), schemaReg);
 		procDef = transformer.fromDTO(false);
 		
@@ -142,8 +145,8 @@ class DefinitionTests extends InstanceWrapperTests {
 		assertTrue(sd2.getOutDND().equals(dnd2));
 		assertTrue(sd1.getInputToOutputMappingRules().containsKey("jiraOut"));
 		
-		assertTrue(dnd1.getMappings().size() == 2);
-		assertTrue(dnd2.getMappings().size() == 1);
+		assertEquals(2, dnd1.getMappings().size());
+		assertEquals(1, dnd2.getMappings().size());
 	}
 	
 	@Test

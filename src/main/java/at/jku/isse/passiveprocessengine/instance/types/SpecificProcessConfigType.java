@@ -14,6 +14,7 @@ import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import lombok.Data;
 
 
@@ -38,6 +39,7 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 		String subtypeName = getSubtypeName();
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(subtypeName);
 		if (thisType.isPresent()) {
+			((RDFInstanceType) type).cacheSuperProperties();
 			//schemaRegistry.registerTypeByName(thisType.get());
 			this.type = thisType.get();
 		} else {
@@ -48,6 +50,7 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 			// augment config
 			Map<PropertySchemaDTO, Boolean> result = new HashMap<>();
 			props.forEach(prop -> result.put(prop, prop.addPropertyToType(type, schemaRegistry, schemaRegistry, ruleFactory)));
+			
 		}									
 	}
 

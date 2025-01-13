@@ -10,6 +10,7 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDef
 import at.jku.isse.passiveprocessengine.definition.activeobjects.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 public class DecisionNodeDefinitionType implements TypeProvider {
 
@@ -33,13 +34,14 @@ public class DecisionNodeDefinitionType implements TypeProvider {
 	
 	@Override
 	public void produceTypeProperties() {
+		((RDFInstanceType) type).cacheSuperProperties();
 		type.createSinglePropertyType(DecisionNodeDefinitionType.CoreProperties.inFlowType.toString(), BuildInType.STRING);
 		type.createSetPropertyType(DecisionNodeDefinitionType.CoreProperties.inSteps.toString(), schemaRegistry.getTypeByName(ProcessStepDefinitionType.typeId));
 		type.createSetPropertyType(DecisionNodeDefinitionType.CoreProperties.outSteps.toString(),  schemaRegistry.getTypeByName(ProcessStepDefinitionType.typeId));
 		type.createSetPropertyType(DecisionNodeDefinitionType.CoreProperties.dataMappingDefinitions.toString(),  schemaRegistry.getTypeByName(MappingDefinitionType.typeId));
 		type.createSinglePropertyType((DecisionNodeDefinitionType.CoreProperties.hierarchyDepth.toString()),  BuildInType.INTEGER);
 		type.createSinglePropertyType(DecisionNodeDefinitionType.CoreProperties.closingDN.toString(), type);
-
+		
 	}	
 
 }

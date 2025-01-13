@@ -11,6 +11,7 @@ import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultW
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 public class AbstractProcessInstanceType extends TypeProviderBase {
 
@@ -31,5 +32,6 @@ public class AbstractProcessInstanceType extends TypeProviderBase {
 	@Override
 	public void produceTypeProperties() {
 		// none to create, we just need to have a base process instance type
+		((RDFInstanceType) type).cacheSuperProperties();
 	}
 }

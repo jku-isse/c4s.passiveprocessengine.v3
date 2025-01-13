@@ -9,6 +9,7 @@ import at.jku.isse.passiveprocessengine.core.TypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 public class ProcessDefinitionType implements TypeProvider{
 
@@ -35,12 +36,14 @@ public class ProcessDefinitionType implements TypeProvider{
 	
 	@Override
 	public void produceTypeProperties() {
+		((RDFInstanceType) type).cacheSuperProperties();
 			type.createListPropertyType(CoreProperties.stepDefinitions.toString(), schemaRegistry.getTypeByName(ProcessStepDefinitionType.typeId));
 			type.createSetPropertyType(CoreProperties.decisionNodeDefinitions.toString(),  schemaRegistry.getTypeByName(DecisionNodeDefinitionType.typeId));
 			type.createMapPropertyType(CoreProperties.prematureTriggers.toString(),  BuildInType.STRING, BuildInType.STRING);
 			type.createMapPropertyType(CoreProperties.prematureTriggerMappings.toString(),  BuildInType.STRING, BuildInType.STRING);
 			type.createSinglePropertyType(CoreProperties.isImmediateDataPropagationEnabled.toString(),  BuildInType.BOOLEAN);
 			type.createSinglePropertyType(CoreProperties.isImmediateInstantiateAllSteps.toString(),  BuildInType.BOOLEAN);
-			type.createSinglePropertyType(CoreProperties.isWithoutBlockingErrors.toString(),  BuildInType.BOOLEAN);			
+			type.createSinglePropertyType(CoreProperties.isWithoutBlockingErrors.toString(),  BuildInType.BOOLEAN);		
+			
 	}
 }

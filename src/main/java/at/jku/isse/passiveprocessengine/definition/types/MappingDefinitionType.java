@@ -8,6 +8,7 @@ import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.MappingDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 public class MappingDefinitionType  implements TypeProvider {
 
@@ -31,10 +32,12 @@ public class MappingDefinitionType  implements TypeProvider {
 	
 	@Override
 	public void produceTypeProperties() {
+		((RDFInstanceType) type).cacheSuperProperties();
 		type.createSinglePropertyType(MappingDefinitionType.CoreProperties.fromStepType.toString(), BuildInType.STRING);
 		type.createSinglePropertyType(MappingDefinitionType.CoreProperties.fromParameter.toString(), BuildInType.STRING);
 		type.createSinglePropertyType(MappingDefinitionType.CoreProperties.toStepType.toString(), BuildInType.STRING);
 		type.createSinglePropertyType(MappingDefinitionType.CoreProperties.toParameter.toString(), BuildInType.STRING);
 		type.createSinglePropertyType(MappingDefinitionType.CoreProperties.flowDir.toString(), BuildInType.STRING);
+		
 	}
 }

@@ -7,6 +7,7 @@ import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 
 public class ProcessConfigBaseElementType extends TypeProviderBase {
@@ -28,7 +29,9 @@ public class ProcessConfigBaseElementType extends TypeProviderBase {
 
 	@Override
 	public void produceTypeProperties() {
-			type.createSinglePropertyType(CoreProperties.description.toString(), BuildInType.STRING);		
+		((RDFInstanceType) type).cacheSuperProperties();	
+		type.createSinglePropertyType(CoreProperties.description.toString(), BuildInType.STRING);		
 			ProcessInstanceScopeType.addGenericProcessProperty(type, schemaRegistry);
+			
 	}
 }

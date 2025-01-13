@@ -13,6 +13,7 @@ import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 public class SpecificProcessInstanceType extends TypeProviderBase {
 
@@ -35,12 +36,12 @@ public class SpecificProcessInstanceType extends TypeProviderBase {
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(processName);
 		if (thisType.isPresent()) {
 			//schemaRegistry.registerTypeByName(thisType.get());	
+			((RDFInstanceType) type).cacheSuperProperties();
 			this.type = thisType.get();
 		} else {
 			String processAsTaskName = SpecificProcessStepType.getProcessStepName(procDef);
 			type = schemaRegistry.createNewInstanceType(processName, schemaRegistry.getTypeByName(processAsTaskName));
 			//schemaRegistry.registerTypeByName(type);		
-
 			type.createSinglePropertyType(SpecificProcessInstanceType.CoreProperties.processDefinition.toString(), schemaRegistry.getTypeByName(ProcessDefinitionType.typeId));
 			type.createSetPropertyType(SpecificProcessInstanceType.CoreProperties.stepInstances.toString(), schemaRegistry.getTypeByName(AbstractProcessStepType.typeId));
 			type.createSetPropertyType(SpecificProcessInstanceType.CoreProperties.decisionNodeInstances.toString(), schemaRegistry.getTypeByName(DecisionNodeInstanceType.typeId));

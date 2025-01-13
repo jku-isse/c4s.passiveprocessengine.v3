@@ -61,28 +61,39 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 		return stats;
 	}
 
-	private boolean isOfStepType(PPEInstance instance) {
-		if (instance == null) 
-			return false;
-		else {
-			var type = instance.getInstanceType();
-			return type != null && type.isOfTypeOrAnySubtype(stepType);		
-		}
+	@Override
+	public void handleUpdates(Collection<Update> operations) {
+		processProcessUpdates(operations);
 	}
 
-	private boolean isOfCRDType(PPEInstance instance) {
-		if (instance == null) 
-			return false;
-		else
-			return (instance.getName().startsWith(ProcessDefinitionFactory.CRD_PREFIX) && instance instanceof RuleResult);
-		//FIXME better approach than naming
-	}
+	protected Set<ProcessInstance> processProcessUpdates(Collection<Update> operations) {
+		@SuppressWarnings("unchecked")
 
+		List<ProcessScopedCmd> queuedEffects = (List<ProcessScopedCmd>) operations.stream()
+		 .map(operation -> { 			
+				if (operation instanceof PropertyChange.Add op) {
+					 return processPropertyUpdateAdd(op);
+				} else
+					if (operation instanceof PropertyChange.Remove op) {
+						 return processPropertyUpdateRemove(op);
+					} else
+						if (operation instanceof PropertyChange.Set op) {
+							return processPropertyUpdateSet(op);
+						}
+			return Optional.empty();
+		})
+		.filter(Optional::isPresent)
+		.map(Optional::get)
+		.toList();
+
+		prepareQueueExecution(queuedEffects); // here we can subclass and manage commands, lazy loading etc (no longer is use at the moment)
+		// we process this in a service loop, if there is lazy loading then we would need to ensure there are no more changes to rule outcomes before executing commands
+		return executeCommands(); // here we execute, or in subclass, when we are still lazy loading, skip execution until later
+	}
 
 	private Optional<ProcessScopedCmd> processPropertyUpdateAdd(PropertyChange.Add op) {		
 		PPEInstance element = op.getInstance();
-		if(!op.getName().contains("/@")
-				&& (op.getName().startsWith("in_") || op.getName().startsWith("out_"))
+		if(	(op.getName().startsWith("in_") || op.getName().startsWith("out_"))
 				&& isOfStepType(op.getInstance()) ) {
 			ProcessStep step = context.getWrappedInstance(ProcessStep.class, element);	
 			PPEInstance added = (PPEInstance) op.getValue();
@@ -98,8 +109,7 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 
 	private Optional<ProcessScopedCmd> processPropertyUpdateRemove(PropertyChange.Remove op) {
 		PPEInstance element = op.getInstance();
-			if(//!op.getName().contains("/@")  // ignore special properties  (e.g., usage in consistency rules, etc)
-				(op.getName().startsWith("in_") || op.getName().startsWith("out_"))
+			if(	(op.getName().startsWith("in_") || op.getName().startsWith("out_"))
 				&& isOfStepType(element) ) {
 				ProcessStep step = context.getWrappedInstance(ProcessStep.class, element);
 				log.info(String.format("%s %s removed %s", step.getName(),
@@ -109,23 +119,22 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 				stats.incrementIoRemoveEventCount();
 				return Optional.ofNullable(step.prepareIORemoveEvent(op));
 			}
-	//	}
 		return Optional.empty();
 	}
 
 	private Optional<ProcessScopedCmd> processPropertyUpdateSet(PropertyChange.Set op) {
 		PPEInstance element = op.getInstance();
-		if (isOfStepType(element)) {
-			if (!op.getName().startsWith("@")) {
-				log.info(String.format("Step %s updated %s to %s", element.getName(),
-					op.getName(),
-					String.valueOf(op.getValue())
-					));
-			}
-		} else if (op.getName().equals("ruleHasConsistentResult") && element instanceof RuleResult cr) {
-			//RuleResult cr = (RuleResult)element;
+//		if (isOfStepType(element)) {
+//			if (!op.getName().startsWith("@")) {
+//				log.info(String.format("Step %s updated %s to %s", element.getName(),
+//					op.getName(),
+//					String.valueOf(op.getValue())
+//					));
+//			}
+//		} else 
+		if (op.getName().equals("ruleHasConsistentResult") && element instanceof RuleResult cr) {
 			PPEInstance ruleContext = cr.getContextInstance();
-			if (isOfStepType(ruleContext)) { // rule belonging to a step, or TODO: process!	
+			if (isOfStepType(ruleContext)) { // rule belonging to a step, or process
 				ProcessStep step = getAsStepOrClass(ruleContext);
 				stats.incrementRuleUpdateEventCount();
 				ProcessScopedCmd effect = step.prepareRuleEvaluationChange(cr, op);
@@ -135,6 +144,15 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 		return Optional.empty();
 	}
 
+	private boolean isOfStepType(PPEInstance instance) {
+		if (instance == null) 
+			return false;
+		else {
+			var type = instance.getInstanceType();
+			return type != null && type.isOfTypeOrAnySubtype(stepType);		
+		}
+	}
+	
 	private ProcessStep getAsStepOrClass(PPEInstance instance) {
 		if (instance.getInstanceType().hasPropertyType(SpecificProcessInstanceType.CoreProperties.processDefinition.toString())) 
 			return context.getWrappedInstance(ProcessInstance.class, instance);
@@ -142,38 +160,14 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 			return context.getWrappedInstance(ProcessStep.class, instance);
 	}
 
-	@Override
-	public void handleUpdates(Collection<Update> operations) {
-		processProcessUpdates(operations);
-	}
-
-	protected Set<ProcessInstance> processProcessUpdates(Collection<Update> operations) {
-		@SuppressWarnings("unchecked")
-
-		List<ProcessScopedCmd> queuedEffects = (List<ProcessScopedCmd>) operations.stream()
-		 .map(operation -> { 			
-				if (operation instanceof PropertyChange.Add) {
-					 return processPropertyUpdateAdd((PropertyChange.Add) operation);
-				} else
-					if (operation instanceof PropertyChange.Remove) {
-						 return processPropertyUpdateRemove((PropertyChange.Remove) operation);
-					} else
-						if (operation instanceof PropertyChange.Set) {
-							return processPropertyUpdateSet((PropertyChange.Set) operation);
-						}
-			return Optional.empty();
-		})
-		.filter(Optional::isPresent)
-		.map(opt -> opt.get())
-		.collect(Collectors.toList());
-
-		prepareQueueExecution(queuedEffects); // here we can subclass and manage commands, lazy loading etc
-		return executeCommands(); // here we execute, or in subclass, when we are still lazy loading, skip execution until later
-	}
 	
 	protected void prepareQueueExecution(List<ProcessScopedCmd> mostRecentQueuedEffects) {
+		// check for each queued effect if it undos a previous one: e.g., a constraint fufillment now is unfulfilled, datamapping fulfilled is no unfulfilled
 		mostRecentQueuedEffects.forEach(cmd -> {
-			cmdQueue.put(cmd.getId(), cmd);
+			ProcessScopedCmd overriddenCmd = cmdQueue.put(cmd.getId(), cmd);
+			if (overriddenCmd != null) {
+				log.trace("Overridden Command: "+overriddenCmd.toString());
+			}
 		});
 
 	}
@@ -182,7 +176,7 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 		Collection<ProcessScopedCmd> relevantEffects = cmdQueue.values();
 		// now lets just execute all commands
 		// but first we should check if we need to load lazy fetched artifacts that might override/undo the queuedEffects
-		if (relevantEffects.size() > 0) {
+		if (!relevantEffects.isEmpty()) {
 			List<Events.ProcessChangedEvent> cmdEvents = new LinkedList<>();
 			// qa not fulfilled
 			cmdEvents.addAll(relevantEffects.stream()

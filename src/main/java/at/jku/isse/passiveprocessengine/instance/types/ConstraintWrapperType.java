@@ -11,6 +11,7 @@ import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 public class ConstraintWrapperType extends TypeProviderBase {
 	
@@ -32,7 +33,7 @@ public class ConstraintWrapperType extends TypeProviderBase {
 
 	@Override
 	public void produceTypeProperties() {
-		
+		((RDFInstanceType) type).cacheSuperProperties();
 			// so ugly:
 			ProcessInstanceScopeType.addGenericProcessProperty(type, schemaRegistry);
 			type.createSinglePropertyType(ConstraintWrapperType.CoreProperties.qaSpec.toString(), schemaRegistry.getTypeByName(ConstraintSpecType.typeId));
@@ -42,6 +43,7 @@ public class ConstraintWrapperType extends TypeProviderBase {
 			type.createSinglePropertyType(ConstraintWrapperType.CoreProperties.isOverriden.toString(),  BuildInType.BOOLEAN);
 			type.createSinglePropertyType(ConstraintWrapperType.CoreProperties.overrideValue.toString(),  BuildInType.BOOLEAN);
 			type.createSinglePropertyType(ConstraintWrapperType.CoreProperties.overrideReason.toString(), BuildInType.STRING);
+			
 	}
 
 

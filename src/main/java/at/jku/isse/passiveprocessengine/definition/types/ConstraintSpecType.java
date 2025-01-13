@@ -8,6 +8,7 @@ import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 public class ConstraintSpecType implements TypeProvider {
 
@@ -33,6 +34,7 @@ public class ConstraintSpecType implements TypeProvider {
 	
 	@Override
 	public void produceTypeProperties() {
+		((RDFInstanceType) type).cacheSuperProperties();
 		// constraintId maps to Instance name property
 		type.createSinglePropertyType(CoreProperties.constraintSpec.toString(), BuildInType.STRING);
 		type.createSinglePropertyType(CoreProperties.augmentedSpec.toString(),  BuildInType.STRING);
@@ -41,6 +43,7 @@ public class ConstraintSpecType implements TypeProvider {
 		type.createSinglePropertyType(CoreProperties.isOverridable.toString(),  BuildInType.BOOLEAN);
 		type.createSinglePropertyType(CoreProperties.ruleType.toString(),  BuildInType.RULE);
 		type.createSinglePropertyType(CoreProperties.conditionsType.toString(),  BuildInType.STRING);
+		
 	}
 
 }

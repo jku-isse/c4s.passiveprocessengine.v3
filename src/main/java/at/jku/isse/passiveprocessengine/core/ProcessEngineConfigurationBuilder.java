@@ -58,8 +58,9 @@ public class ProcessEngineConfigurationBuilder {
 		specTypeProvider.produceTypeProperties();
 		mapTypeProvider.produceTypeProperties();
 		dndTypeProvider.produceTypeProperties();
+		stepTypeProvider.produceTypeProperties();
 		processTypeProvider.produceTypeProperties();
-		stepTypeProvider.produceTypeProperties();		
+				
 		coreTypeFactory.getBaseArtifactType(); // ensure base type exists
 	}
 	

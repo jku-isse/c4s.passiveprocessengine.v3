@@ -11,6 +11,7 @@ import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionT
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 public class DecisionNodeInstanceType extends TypeProviderBase {
 
@@ -33,6 +34,7 @@ public class DecisionNodeInstanceType extends TypeProviderBase {
 
 	@Override
 	public void produceTypeProperties() {
+		((RDFInstanceType) type).cacheSuperProperties();
 		ProcessInstanceScopeType.addGenericProcessProperty(type, schemaRegistry);
 			type.createSinglePropertyType(CoreProperties.isInflowFulfilled.toString(),  BuildInType.BOOLEAN);
 			type.createSinglePropertyType(CoreProperties.hasPropagated.toString(), BuildInType.BOOLEAN);
@@ -40,5 +42,7 @@ public class DecisionNodeInstanceType extends TypeProviderBase {
 			type.createSetPropertyType(CoreProperties.inSteps.toString(), schemaRegistry.getTypeByName(AbstractProcessStepType.typeId));
 			type.createSetPropertyType(CoreProperties.outSteps.toString(), schemaRegistry.getTypeByName(AbstractProcessStepType.typeId));
 			type.createSinglePropertyType(CoreProperties.closingDN.toString(), type);
+			
+			
 	}	
 }

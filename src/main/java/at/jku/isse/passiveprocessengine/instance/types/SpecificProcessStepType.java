@@ -8,6 +8,7 @@ import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import lombok.NonNull;
 
 public class SpecificProcessStepType extends TypeProviderBase {
@@ -40,7 +41,8 @@ public class SpecificProcessStepType extends TypeProviderBase {
 		String stepName = SpecificProcessStepType.getProcessStepName(stepDef);
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(stepName);
 		if (thisType.isPresent())
-			;//schemaRegistry.registerTypeByName(thisType.get());	
+			((RDFInstanceType) type).cacheSuperProperties();
+			//schemaRegistry.registerTypeByName(thisType.get());	
 		else {
 			PPEInstanceType type = processType == null ? 
 				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getTypeByName(AbstractProcessInstanceType.typeId)) :			
@@ -73,6 +75,7 @@ public class SpecificProcessStepType extends TypeProviderBase {
 			} else {
 				ProcessInstanceScopeType.addGenericProcessProperty(type, schemaRegistry);
 			}
+			
 		}
 
 	}

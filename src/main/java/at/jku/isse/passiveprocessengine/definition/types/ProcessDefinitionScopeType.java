@@ -8,6 +8,7 @@ import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 public class ProcessDefinitionScopeType  implements TypeProvider {
 
@@ -31,7 +32,7 @@ public class ProcessDefinitionScopeType  implements TypeProvider {
 	
 	@Override
 	public void produceTypeProperties() {
-		
+		((RDFInstanceType) type).cacheSuperProperties();
 			//schemaRegistry.registerType(ProcessDefinitionScopedElement.class, type);
 			type.createSinglePropertyType(ProcessDefinitionScopeType.CoreProperties.processDefinition.toString(), schemaRegistry.getTypeByName(ProcessDefinitionType.typeId));
 			type.createSinglePropertyType((ProcessDefinitionScopeType.CoreProperties.orderIndex.toString()), BuildInType.INTEGER);

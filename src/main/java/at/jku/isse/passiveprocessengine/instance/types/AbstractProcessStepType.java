@@ -12,6 +12,7 @@ import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultW
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 public class AbstractProcessStepType extends TypeProviderBase {
 
@@ -35,6 +36,7 @@ public class AbstractProcessStepType extends TypeProviderBase {
 
 	@Override
 	public void produceTypeProperties() {
+		((RDFInstanceType) type).cacheSuperProperties();
 		type.createSinglePropertyType(CoreProperties.stepDefinition.toString(),schemaRegistry.getTypeByName(ProcessStepDefinitionType.typeId));
 		type.createSinglePropertyType(CoreProperties.inDNI.toString(),  schemaRegistry.getTypeByName(DecisionNodeInstanceType.typeId));
 		type.createSinglePropertyType(CoreProperties.outDNI.toString(),  schemaRegistry.getTypeByName(DecisionNodeInstanceType.typeId));
@@ -54,5 +56,6 @@ public class AbstractProcessStepType extends TypeProviderBase {
 		type.createMapPropertyType(CoreProperties.postconditions.toString(),BuildInType.STRING, schemaRegistry.getTypeByName(ConstraintWrapperType.typeId));
 		type.createMapPropertyType(CoreProperties.cancelconditions.toString(), BuildInType.STRING, schemaRegistry.getTypeByName(ConstraintWrapperType.typeId));
 		type.createMapPropertyType(CoreProperties.activationconditions.toString(), BuildInType.STRING, schemaRegistry.getTypeByName(ConstraintWrapperType.typeId));
+		
 	}
 }

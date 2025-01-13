@@ -9,6 +9,7 @@ import at.jku.isse.passiveprocessengine.core.TypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 public class ProcessStepDefinitionType implements TypeProvider {
 
@@ -38,7 +39,7 @@ public class ProcessStepDefinitionType implements TypeProvider {
 	
 	@Override
 	public void produceTypeProperties() {
-		
+		((RDFInstanceType) type).cacheSuperProperties();
 				type.createSetPropertyType(ProcessStepDefinitionType.CoreProperties.qaConstraints.toString(), schemaRegistry.getTypeByName(ConstraintSpecType.typeId));
 				type.createMapPropertyType(ProcessStepDefinitionType.CoreProperties.expectedInput.toString(), BuildInType.STRING, BuildInType.METATYPE);
 				type.createMapPropertyType(ProcessStepDefinitionType.CoreProperties.expectedOutput.toString(), BuildInType.STRING, BuildInType.METATYPE);
@@ -53,6 +54,7 @@ public class ProcessStepDefinitionType implements TypeProvider {
 				type.createSinglePropertyType((ProcessStepDefinitionType.CoreProperties.stepHierarchyDepth.toString()), BuildInType.INTEGER);
 				type.createSinglePropertyType((ProcessStepDefinitionType.CoreProperties.html_url.toString()), BuildInType.STRING);
 				type.createSinglePropertyType((ProcessStepDefinitionType.CoreProperties.description.toString()), BuildInType.STRING);
+				
 	}
 
 }

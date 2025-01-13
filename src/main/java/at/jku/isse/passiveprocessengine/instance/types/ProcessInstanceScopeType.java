@@ -8,6 +8,7 @@ import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 public class ProcessInstanceScopeType extends TypeProviderBase {
 
@@ -33,8 +34,10 @@ public class ProcessInstanceScopeType extends TypeProviderBase {
 	}
 	
 	public static void addGenericProcessProperty(PPEInstanceType instType, DomainTypesRegistry schemaRegistry) {
+		((RDFInstanceType) instType).cacheSuperProperties();
 		if (instType.getPropertyType(ProcessInstanceScopeType.CoreProperties.process.toString()) == null) {
 			instType.createSinglePropertyType(ProcessInstanceScopeType.CoreProperties.process.toString(), schemaRegistry.getTypeByName(AbstractProcessStepType.typeId));
+			
 		}
 	}
 }
