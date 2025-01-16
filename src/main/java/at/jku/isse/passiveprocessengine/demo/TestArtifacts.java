@@ -48,6 +48,7 @@ public class TestArtifacts {
 		jira.setSingleProperty(CoreTypeFactory.URL,"http://localhost:7171/home");
 		jira.setSingleProperty(CoreTypeFactory.EXTERNAL_TYPE,"none");
 		jira.setSingleProperty(CoreTypeFactory.EXTERNAL_DEFAULT_ID, name);
+		jira.setSingleProperty(PPEInstance.IS_FULLYFETCHED, true);
 		setStateToJiraInstance(jira, JiraStates.Open);
 		for(PPEInstance inst : reqs) {
 			jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).add(inst);
