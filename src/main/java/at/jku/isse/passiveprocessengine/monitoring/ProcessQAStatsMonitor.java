@@ -28,9 +28,9 @@ public class ProcessQAStatsMonitor implements IProcessEventHandler {
 
 	ITimeStampProvider timeStampProvider;
 
-	public Map<ProcessInstance, ProcessStats> stats = new HashMap<>();
+	public final Map<ProcessInstance, ProcessStats> stats = new HashMap<>();
 
-	public ProcessQAStatsMonitor() {}
+	//public ProcessQAStatsMonitor() {}
 
 	public ProcessQAStatsMonitor(ITimeStampProvider tsProvider) {
 		this.timeStampProvider = tsProvider;

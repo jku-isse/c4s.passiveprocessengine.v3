@@ -7,7 +7,7 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import at.jku.isse.designspace.artifactconnector.core.monitoring.IProgressObserver;
 import at.jku.isse.designspace.artifactconnector.core.monitoring.ProgressEntry;
 import at.jku.isse.passiveprocessengine.core.DesignspaceTestSetup;
-import at.jku.isse.passiveprocessengine.rdfwrapper.RDFWrapperSetup;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFWrapperTestSetup;
 
 
 @Configuration
@@ -39,7 +39,7 @@ public class WrapperTestSpringConfig {
                
         @Bean
         public DesignspaceTestSetup getDesignSpaceTestSetup() {
-        	return new RDFWrapperSetup();
+        	return new RDFWrapperTestSetup();
         }
        
 }

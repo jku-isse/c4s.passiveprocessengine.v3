@@ -33,7 +33,7 @@ import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessStepDefinitionType;
 import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.AbstractionMapper;
-import at.jku.isse.passiveprocessengine.rdfwrapper.RDFWrapperSetup;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFWrapperTestSetup;
 
 //@ExtendWith(SpringExtension.class)
 //@SpringBootTest
@@ -50,7 +50,7 @@ public class DefinitionWrapperTests {
 	
 	@BeforeEach
 	public void setup() {
-		dsSetup = new RDFWrapperSetup();
+		dsSetup = new RDFWrapperTestSetup();
 		dsSetup.setup();
 		this.schemaReg = dsSetup.getSchemaRegistry();
 		this.instanceRepository = dsSetup.getInstanceRepository();
@@ -60,7 +60,7 @@ public class DefinitionWrapperTests {
 		configBuilder = new ProcessEngineConfigurationBuilder(schemaReg
 				, instanceRepository
 				, ruleServiceWrapper
-				, new RewriterFactory(designspaceAbstractionMapper, false, ((RDFWrapperSetup) dsSetup).getRuleSchemaProvider())
+				, new RewriterFactory(designspaceAbstractionMapper, false, ((RDFWrapperTestSetup) dsSetup).getRuleSchemaProvider())
 				, ruleEvaluationFactory
 				, dsSetup.getCoreTypeFactory()
 				, (RuleAnalysisService) ruleServiceWrapper);

@@ -234,7 +234,11 @@ public class DefinitionTransformer {
 		// search in types folder and below for type
 		// InstanceType iType = // this returns also deleted types ws.debugInstanceTypeFindByName(type);
 		//InstanceType iType = searchInFolderAndBelow(type, ws.TYPES_FOLDER); // we no longer search in folders, we expect exact name
-		Optional<PPEInstanceType> iType = schemaRegistry.findNonDeletedInstanceTypeByFQN(type);
+		if (!type.startsWith("http")) {				
+			int pos = type.lastIndexOf('/');
+			type = pos > -1 ? type.substring(pos+1) : type;
+		}
+		Optional<PPEInstanceType> iType = Optional.ofNullable(schemaRegistry.getTypeByName(type));
 		if (iType.isEmpty()) {
 			errors.add(new ProcessDefinitionError(el, "Unknown Instance Type", "Input/Output definition "+param+" uses unknown instance type: "+type , ProcessDefinitionError.Severity.ERROR));
 			//throw new ProcessException("Process Description uses unknown instance type: "+type);

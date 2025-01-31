@@ -37,13 +37,13 @@ import at.jku.isse.passiveprocessengine.monitoring.CurrentSystemTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.rdfwrapper.AbstractionMapper;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
-import at.jku.isse.passiveprocessengine.rdfwrapper.RDFWrapperSetup;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFWrapperTestSetup;
 import lombok.NonNull;
 
 public
 class ProcessPersistenceTests {
 
-	protected RDFWrapperSetup dsSetup;
+	protected RDFWrapperTestSetup dsSetup;
 	protected InstanceRepository instanceRepository;
 	protected SchemaRegistry schemaReg;
 	protected RepairTreeProvider ruleServiceWrapper;
@@ -59,7 +59,7 @@ class ProcessPersistenceTests {
 	
 	public
 	void setup() throws Exception {
-		dsSetup = new RDFWrapperSetup();
+		dsSetup = new RDFWrapperTestSetup();
 		dsSetup.setupPersistedBranch();
 		branch = dsSetup.getBranch();
 		this.schemaReg = dsSetup.getSchemaRegistry();
@@ -70,7 +70,7 @@ class ProcessPersistenceTests {
 		configBuilder = new ProcessEngineConfigurationBuilder(schemaReg
 				, instanceRepository
 				, ruleServiceWrapper
-				, new RewriterFactory(designspaceAbstractionMapper, false, ((RDFWrapperSetup) dsSetup).getRuleSchemaProvider())
+				, new RewriterFactory(designspaceAbstractionMapper, false, ((RDFWrapperTestSetup) dsSetup).getRuleSchemaProvider())
 				, ruleEvaluationFactory
 				, dsSetup.getCoreTypeFactory()
 				, (RuleAnalysisService) ruleServiceWrapper);
@@ -135,7 +135,7 @@ class ProcessPersistenceTests {
 
 	@Test
 	void testCreatingProcess() throws Exception {		
-		RDFWrapperSetup.resetPersistence(); // also ensure to delete model from filesystem
+		RDFWrapperTestSetup.resetPersistence(); // also ensure to delete model from filesystem
 		setup(); // manual as we otherwise cant reset data
 		instanceRepository.startWriteTransaction();
 		PPEInstance jiraB =  artifactFactory.getJiraInstance("jiraB");

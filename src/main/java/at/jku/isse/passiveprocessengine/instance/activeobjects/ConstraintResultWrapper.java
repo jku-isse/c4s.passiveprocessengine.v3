@@ -86,7 +86,7 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 	}
 
 	public boolean getIsOverriden() {
-		return instance.getTypedProperty(ConstraintWrapperType.CoreProperties.isOverriden.toString(), Boolean.class);
+		return instance.getTypedProperty(ConstraintWrapperType.CoreProperties.isOverriden.toString(), Boolean.class, Boolean.FALSE);
 	}
 
 	public boolean getOverrideValue() {

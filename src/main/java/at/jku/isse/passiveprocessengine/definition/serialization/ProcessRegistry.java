@@ -69,7 +69,8 @@ public class ProcessRegistry {
 
 
 	public Optional<ProcessDefinition> getProcessDefinition(String stringId, Boolean onlyValid) {
-		List<ProcessDefinition> defs = context.getInstanceRepository().getAllInstancesOfTypeOrSubtype(processDefinitionType).stream()
+		var allProcDefs = context.getInstanceRepository().getAllInstancesOfTypeOrSubtype(processDefinitionType);
+		List<ProcessDefinition> defs = allProcDefs.stream()
 				.filter(inst -> !inst.isMarkedAsDeleted())
 				.filter(inst -> (Boolean)inst.getTypedProperty((ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString()), Boolean.class, false) || !onlyValid)
 				.filter(inst -> inst.getName().equals(stringId))
@@ -106,7 +107,7 @@ public class ProcessRegistry {
 		// we remove the staging one and replace the original
 		if (stagedProc.getKey() != null) {
 			stagedProc.getKey().deleteCascading();
-			context.getInstanceRepository().concludeTransaction();
+			//context.getInstanceRepository().concludeTransaction();
 		}
 		// now remove the original if exists, and store as new
 		DefinitionTransformer.replaceStepNamesInMappings(process, tempCode, originalCode);
@@ -141,7 +142,7 @@ public class ProcessRegistry {
 				log.debug("Removing old staged process: "+process.getCode()+" before staging new version");
 				ProcessDefinition pdef = optPD.get();
 				pdef.deleteCascading();
-				context.getInstanceRepository().concludeTransaction();
+				//context.getInstanceRepository().concludeTransaction();
 			} else {
 				log.debug("Reusing process: "+process.getCode());
 				return new SimpleEntry<>(optPD.get(), Collections.emptyList());
@@ -189,7 +190,7 @@ public class ProcessRegistry {
 	public void removeProcessDefinition(String name) {
 		getProcessDefinition(name, true).ifPresent(pdef -> {
 			pdef.deleteCascading();
-			context.getInstanceRepository().concludeTransaction();
+			//context.getInstanceRepository().concludeTransaction();
 		});
 	}
 
@@ -224,11 +225,11 @@ public class ProcessRegistry {
 		}
 		if (errors.isEmpty()) {
 			processInstances.put(pInst.getName(), pInst);
-			context.getInstanceRepository().concludeTransaction();
+			//context.getInstanceRepository().concludeTransaction();
 			return new SimpleEntry<>(pInst, errors);
 		} else {
 			pInst.deleteCascading();
-			context.getInstanceRepository().concludeTransaction();
+			//context.getInstanceRepository().concludeTransaction();
 			return new SimpleEntry<>(pInst, errors);
 		}
 	}
@@ -241,7 +242,7 @@ public class ProcessRegistry {
 		ProcessInstance pi = processInstances.remove(name);
 		if (pi != null) {
 			pi.deleteCascading();
-			context.getInstanceRepository().concludeTransaction();
+			//context.getInstanceRepository().concludeTransaction();
 			this.removedInstances.add(pi);
 			return true;
 		}
