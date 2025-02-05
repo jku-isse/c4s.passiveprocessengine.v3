@@ -18,9 +18,16 @@ public class ConstraintResultWrapperFactory extends DomainFactory {
 		super(context);		
 	}
 
+	/**
+	 * assuming that process has unique name across all processes and qaSpec has unique name within that process' definition
+	 * */
+	public static String generateId(ConstraintSpec qaSpec, ProcessInstance proc) {
+		return qaSpec.getName()+"-"+proc.getName(); 
+	}
+	
 	public ConstraintResultWrapper createInstance(ConstraintSpec qaSpec, ZonedDateTime lastChanged, ProcessStep owningStep, ProcessInstance proc) {
-		PPEInstance inst = getContext().getInstanceRepository().createInstance(qaSpec.getName()+proc.getName()+"_"+UUID.randomUUID()
-			, getContext().getSchemaRegistry().getTypeByName(ConstraintWrapperType.typeId));
+		var id = generateId(qaSpec, proc);
+		PPEInstance inst = getContext().getInstanceRepository().createInstance(id, getContext().getSchemaRegistry().getTypeByName(ConstraintWrapperType.typeId));
 		ConstraintResultWrapper cw = getContext().getWrappedInstance(ConstraintResultWrapper.class, inst);
 		cw.getInstance().setSingleProperty(ConstraintWrapperType.CoreProperties.parentStep.toString(), owningStep.getInstance());
 		cw.setSpec(qaSpec);

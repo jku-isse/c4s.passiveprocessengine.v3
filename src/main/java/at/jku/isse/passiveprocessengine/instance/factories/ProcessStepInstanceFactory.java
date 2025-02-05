@@ -34,7 +34,7 @@ public class ProcessStepInstanceFactory extends DomainFactory {
 			return getContext().getFactoryIndex().getProcessInstanceFactory().getSubprocessInstance((ProcessDefinition) stepDef, inDNI, outDNI, scope);
 		} else {
 			String specificStepType = SpecificProcessStepType.getProcessStepName(stepDef);
-			PPEInstance instance = getContext().getInstanceRepository().createInstance( stepDef.getName()+"_"+UUID.randomUUID()
+			PPEInstance instance = getContext().getInstanceRepository().createInstance( stepDef.getName()+"-"+UUID.randomUUID()
 				, getContext().getSchemaRegistry().getTypeByName(specificStepType));
 			ProcessStep step = getContext().getWrappedInstance(ProcessStep.class, instance);
 			step.setProcess(scope);

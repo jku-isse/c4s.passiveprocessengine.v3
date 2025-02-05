@@ -17,9 +17,13 @@ public class ProcessInstanceFactory extends DomainFactory {
 		super(context);		
 	}
 	
+	public static String generateId(ProcessDefinition processDef, String namePostfix) {
+		return processDef.getName()+"-"+namePostfix;
+	}
+	
 	public ProcessInstance getInstance(ProcessDefinition processDef, String namePostfix) {
-		//TODO: not to create duplicate process instances somehow		
-		PPEInstance instance = getContext().getInstanceRepository().createInstance(processDef.getName()+"_"+namePostfix
+		//TODO: not to create duplicate process instances somehow	
+		PPEInstance instance = getContext().getInstanceRepository().createInstance(generateId(processDef, namePostfix)
 				, getContext().getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(processDef)));
 		ProcessInstance process = getContext().getWrappedInstance(ProcessInstance.class, instance);
 		process.inject(getContext().getFactoryIndex().getProcessStepFactory(), getContext().getFactoryIndex().getDecisionNodeInstanceFactory());
@@ -28,7 +32,7 @@ public class ProcessInstanceFactory extends DomainFactory {
 	}
 
 	public ProcessInstance getSubprocessInstance(ProcessDefinition subprocessDef, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, ProcessInstance scope) {
-		PPEInstance instance = getContext().getInstanceRepository().createInstance(subprocessDef.getName()+"_"+UUID.randomUUID()
+		PPEInstance instance = getContext().getInstanceRepository().createInstance(generateId(subprocessDef, UUID.randomUUID().toString())
 			, getContext().getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(subprocessDef)));
 		ProcessInstance process = getContext().getWrappedInstance(ProcessInstance.class, instance);
 		process.setProcess(scope);

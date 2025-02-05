@@ -21,6 +21,7 @@ import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
 import at.jku.isse.passiveprocessengine.designspace.ProcessOverridingAnalysis;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceError;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
+import at.jku.isse.passiveprocessengine.instance.factories.ProcessInstanceFactory;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import lombok.Data;
@@ -40,7 +41,7 @@ public class ProcessRegistry {
 	protected Map<String, ProcessInstance> processInstances = new HashMap<>();
 	protected List<ProcessInstance> removedInstances = new LinkedList<>();
 
-	public static final String STAGINGPOSTFIX = "_STAGING";
+	public static final String STAGINGPOSTFIX = "-STAGING";
 
 	public ProcessRegistry(ProcessContext context) {
 		this.context = context;
@@ -208,6 +209,12 @@ public class ProcessRegistry {
 				.collect(Collectors.toSet());
 	}
 
+	public boolean existsProcess(ProcessDefinition processDef, Map<String, Set<PPEInstance>> input) {
+		var namePostfix = generateProcessNamePostfix(input);
+		var id = ProcessInstanceFactory.generateId(processDef, namePostfix);
+		return this.getProcessByName(id) != null;
+	}
+	
 	public SimpleEntry<ProcessInstance, List<ProcessInstanceError>> instantiateProcess(ProcessDefinition processDef, Map<String, Set<PPEInstance>> input) {
 		// check if all inputs available:
 		List<ProcessInstanceError> errors = new LinkedList<>();
@@ -285,7 +292,7 @@ public class ProcessRegistry {
 	public static String generateProcessNamePostfix(Map<String, Set<PPEInstance>> procInput) {
 		return procInput.entrySet().stream()
 				.flatMap(entry -> entry.getValue().stream())
-				.map(inst -> inst.getName()).collect(Collectors.joining(",", "[", "]"));
+				.map(inst -> inst.getName()).collect(Collectors.joining("-"));
 	}
 
 	@Data

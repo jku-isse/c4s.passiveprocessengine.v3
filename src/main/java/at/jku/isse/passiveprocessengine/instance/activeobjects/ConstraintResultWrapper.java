@@ -146,7 +146,12 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 
 	@Override
 	public void deleteCascading() {
+		var ruleResult = this.getRuleResult();
+		if (ruleResult != null) {
+			ruleResult.markAsDeleted();
+		}
 		super.deleteCascading();
+		
 	}
 
 //	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws){
