@@ -87,7 +87,7 @@ public class ProcessRegistry {
 
 	public ProcessDeployResult createProcessDefinitionIfNotExisting(DTOs.Process process) {
 	//	if (!isInit) { tempStorePD.add(process); return null;} // may occur upon bootup 
-		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> newPD = storeProcessDefinition(process, false);
+		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> newPD = storeProcessDefinition(process, true);
 		return new ProcessDeployResult(newPD.getKey(), newPD.getValue(), Collections.emptyList());
 	}
 
@@ -202,7 +202,8 @@ public class ProcessRegistry {
 	}
 
 	public Set<ProcessDefinition> getAllDefinitions(Boolean onlyValid) {
-		return context.getInstanceRepository().getAllInstancesOfTypeOrSubtype(processDefinitionType).stream() 
+		var allDefs =  context.getInstanceRepository().getAllInstancesOfTypeOrSubtype(processDefinitionType);
+		return allDefs.stream() 
 				.filter(inst -> !inst.isMarkedAsDeleted())
 				.filter(inst -> (Boolean)inst.getTypedProperty(ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString(), Boolean.class, false) || !onlyValid)
 				.map(inst -> (ProcessDefinition)context.getWrappedInstance(ProcessDefinition.class, inst))

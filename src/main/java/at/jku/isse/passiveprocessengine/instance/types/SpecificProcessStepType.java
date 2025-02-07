@@ -40,14 +40,13 @@ public class SpecificProcessStepType extends TypeProviderBase {
 	public void produceTypeProperties() {
 		String stepName = SpecificProcessStepType.getProcessStepName(stepDef);
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(stepName);
-		if (thisType.isPresent())
-			((RDFInstanceType) type).cacheSuperProperties();
-			//schemaRegistry.registerTypeByName(thisType.get());	
-		else {
+		if (thisType.isPresent()) {
+			((RDFInstanceType) thisType.get()).cacheSuperProperties();
+			type = thisType.get();	
+		} else {
 			PPEInstanceType type = processType == null ? 
 				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getTypeByName(AbstractProcessInstanceType.typeId)) :			
 				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getTypeByName(AbstractProcessStepType.typeId));			
-			//schemaRegistry.registerTypeByName(type);		
 
 			stepDef.getExpectedInput().entrySet().stream()
 			.forEach(entry -> {
@@ -75,13 +74,13 @@ public class SpecificProcessStepType extends TypeProviderBase {
 			} else {
 				ProcessInstanceScopeType.addGenericProcessProperty(type, schemaRegistry);
 			}
-			
+			this.type = type;
 		}
 
 	}
 	
 	public static String getProcessStepName(StepDefinition sd) {
 		String procName = sd.getProcess() != null ? sd.getProcess().getName() : "ROOTPROCESS";
-		return AbstractProcessStepType.typeId+"_"+sd.getName()+"_"+procName;
+		return AbstractProcessStepType.typeId+"-"+sd.getName()+"-"+procName;
 	}
 }

@@ -412,7 +412,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 
 	@Override
 	public void deleteCascading() {
-		// wring instanceType: we need to get the dynamically generate Instance (the one that is used for the ProcessStep)
+		// wring instanceType: we need to get the dynamically generate InstanceType (the one that is used for the ProcessStep)
 		String stepDefName = SpecificProcessStepType.getProcessStepName(this);
 		PPEInstanceType instType = this.context.getSchemaRegistry().getTypeByName(stepDefName);
 		if (instType != null) { 

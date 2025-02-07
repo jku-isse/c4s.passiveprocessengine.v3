@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.ProcessEngineConfigurationBuilder;
 import at.jku.isse.passiveprocessengine.core.ProcessInstanceChangeListener;
 import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
@@ -40,8 +41,7 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFWrapperTestSetup;
 import lombok.NonNull;
 
-public
-class ProcessPersistenceTests {
+public class ProcessPersistenceTests {
 
 	protected RDFWrapperTestSetup dsSetup;
 	protected InstanceRepository instanceRepository;
@@ -55,10 +55,21 @@ class ProcessPersistenceTests {
 	ProcessInstanceChangeListener picp;
 	ProcessQAStatsMonitor monitor;
 	Branch branch;
+	protected ProcessContext context;
 	
+	protected void startRead() {
+		instanceRepository.startReadTransaction();
+	}
 	
-	public
-	void setup() throws Exception {
+	protected void startWrite() {
+		instanceRepository.startWriteTransaction();
+	}
+	
+	protected void conclude() {
+		instanceRepository.concludeTransaction();
+	}
+	
+	public void setup() throws Exception {
 		dsSetup = new RDFWrapperTestSetup();
 		dsSetup.setupPersistedBranch();
 		branch = dsSetup.getBranch();
@@ -74,11 +85,12 @@ class ProcessPersistenceTests {
 				, ruleEvaluationFactory
 				, dsSetup.getCoreTypeFactory()
 				, (RuleAnalysisService) ruleServiceWrapper);
-		System.out.println("Size after process engine build: "+branch.getModel().size());
+		System.out.println("Size after process engine configurator build: "+branch.getModel().size());
 		EventDistributor eventDistrib = new EventDistributor();
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
 		eventDistrib.registerHandler(monitor);
-		ProcessInstanceChangeListener picp = new ProcessInstanceChangeProcessor(configBuilder.getContext(), eventDistrib);
+		context = configBuilder.getContext();
+		ProcessInstanceChangeListener picp = new ProcessInstanceChangeProcessor(context, eventDistrib);
 		ChangeEventTransformer picpWrapper = dsSetup.getChangeEventTransformer();
 		picpWrapper.registerWithWorkspace(picp);
 		System.out.println("Size after process engine listeners build: "+branch.getModel().size());
