@@ -1,6 +1,7 @@
 package at.jku.isse.passiveprocessengine.definition.serialization;
 
 import java.util.AbstractMap.SimpleEntry;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -86,7 +87,11 @@ public class ProcessRegistry {
 	}
 
 	public ProcessDeployResult createProcessDefinitionIfNotExisting(DTOs.Process process) {
-	//	if (!isInit) { tempStorePD.add(process); return null;} // may occur upon bootup 
+		Optional<ProcessDefinition> optPD = getProcessDefinition(process.getCode(), true);
+		if (optPD.isPresent()) {
+			return new ProcessDeployResult(optPD.get(), Collections.emptyList(), Collections.emptyList());
+		}
+		
 		SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> newPD = storeProcessDefinition(process, true);
 		return new ProcessDeployResult(newPD.getKey(), newPD.getValue(), Collections.emptyList());
 	}
@@ -205,7 +210,7 @@ public class ProcessRegistry {
 		var allDefs =  context.getInstanceRepository().getAllInstancesOfTypeOrSubtype(processDefinitionType);
 		return allDefs.stream() 
 				.filter(inst -> !inst.isMarkedAsDeleted())
-				.filter(inst -> (Boolean)inst.getTypedProperty(ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString(), Boolean.class, false) || !onlyValid)
+				.filter(inst -> inst.getTypedProperty(ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString(), Boolean.class, false) || !onlyValid)
 				.map(inst -> (ProcessDefinition)context.getWrappedInstance(ProcessDefinition.class, inst))
 				.collect(Collectors.toSet());
 	}
@@ -262,10 +267,15 @@ public class ProcessRegistry {
 		return all;
 	}
 	
+	@Deprecated
 	public List<ProcessInstance> getExistingAndPriorInstances() {
 		List<ProcessInstance> all = new LinkedList<>(processInstances.values());
 		all.addAll(removedInstances);
 		return all;
+	}
+	
+	public Collection<ProcessInstance> getProcessInstances() {
+		return processInstances.values();
 	}
 
 	protected Set<ProcessInstance> loadPersistedProcesses() {
@@ -280,15 +290,6 @@ public class ProcessRegistry {
 		existingProcessInstances.stream().forEach(pi -> processInstances.put(pi.getName(), pi));
 		return existingProcessInstances;
 	}
-
-//	//TODO move into instancetype
-//	private Set<InstanceType> getAllSubtypesRecursively(InstanceType type) {
-//		Set<InstanceType> subTypes = type.subTypes();
-//		for (InstanceType subType : Set.copyOf(subTypes)) {
-//			subTypes.addAll( getAllSubtypesRecursively(subType));
-//		}
-//		return subTypes;
-//	}
 
 	public static String generateProcessNamePostfix(Map<String, Set<PPEInstance>> procInput) {
 		return procInput.entrySet().stream()
