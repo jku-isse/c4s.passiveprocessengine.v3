@@ -5,6 +5,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import org.apache.jena.ontapi.OntModelFactory;
+import org.apache.jena.ontapi.OntSpecification;
+import org.apache.jena.ontapi.model.OntModel;
+import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
@@ -56,7 +60,7 @@ public class ProcessRegistryTests extends ProcessPersistenceTests {
 	
 	@Test
 	void testCreatingAndRegisterProcessDefinition() throws Exception {		
-		RDFWrapperTestSetup.resetPersistence(); // also ensure to delete model from filesystem
+		RDFWrapperTestSetup.resetPersistence(); //
 		setup(); // manual as we otherwise cant reset data
 		instanceRepository.startWriteTransaction();
 								
@@ -73,7 +77,7 @@ public class ProcessRegistryTests extends ProcessPersistenceTests {
 	
 	@Test
 	void testLoadingAndRetrieveProcessDefinition() throws Exception {
-		RDFWrapperTestSetup.resetPersistence(); // also ensure to delete model from filesystem
+		RDFWrapperTestSetup.resetPersistence(); 
 		setup(); // manual as we otherwise cant reset data
 		startWrite();
 		System.out.println("Size before registration: "+branch.getModel().size());			
@@ -91,12 +95,86 @@ public class ProcessRegistryTests extends ProcessPersistenceTests {
 		
 	}
 	
+	@Test
+	void testCreatingAndRegisterAndDeleteProcessDefinition() throws Exception {		
+		RDFWrapperTestSetup.resetPersistence(); //
+		setup(); // manual as we otherwise cant reset data
+		startWrite();
+		var modelBegin = OntModelFactory.createModel( OntSpecification.OWL2_DL_MEM_BUILTIN_RDFS_INF );
+		modelBegin.add(branch.getModel());
+		var sizeBegin = branch.getModel().size();
+		//deploy						
+		var process = procFactory.getSimple2StepProcessDefinition();
+		var deployResult = procReg.createProcessDefinitionIfNotExisting(process);
+		conclude();
+		
+		startWrite();
+		System.out.println("BranchModel has size: "+branch.getModel().size());
+		assertEquals(0, deployResult.getDefinitionErrors().size());
+		assertEquals(0, deployResult.getInstanceErrors().size());
+		// remove
+		var procDef = procReg.getProcessDefinition(process.getCode(), true);
+		assertNotNull(procDef);
+		
+		procReg.removeProcessDefinition(process.getCode());
+		var sizeEnd = branch.getModel().size();
+		conclude();
+		if (sizeEnd != sizeBegin) {
+			printDiff(branch.getModel(), modelBegin);
+		}
+		assertEquals(sizeBegin, sizeEnd);
+	}
+	
+	@Test
+	void testCreatingAndRegisterAndDeleteProcessDefinitionWithNewInstances() throws Exception {		
+		RDFWrapperTestSetup.resetPersistence(); //
+		setup(); // manual as we otherwise cant reset data
+		startWrite();
+		var modelBegin = OntModelFactory.createModel( OntSpecification.OWL2_DL_MEM_BUILTIN_RDFS_INF );
+		modelBegin.add(branch.getModel());
+		var sizeBegin = branch.getModel().size();
+		//deploy						
+		var process = procFactory.getSimple2StepProcessDefinition();
+		var deployResult = procReg.createProcessDefinitionIfNotExisting(process);
+		var sizeMiddle = branch.getModel().size();
+		var modelMiddle = OntModelFactory.createModel( OntSpecification.OWL2_DL_MEM_BUILTIN_RDFS_INF );
+		modelMiddle.add(branch.getModel());
+		conclude();
+		
+		RDFWrapperTestSetup.prepareForPersistedReloadWithoutDataRemoval();
+		setup();
+		startWrite();
+		var sizeMiddleReloaded = branch.getModel().size();
+		if (sizeMiddleReloaded != sizeMiddle) {
+			printDiff(branch.getModel(), modelMiddle);
+		}
+		assertEquals(sizeMiddle, sizeMiddleReloaded);
+		var defList = procReg.getAllDefinitionIDs(true);
+		assertEquals(1, defList.size());
+		
+		var procDef = procReg.getProcessDefinition(process.getCode(), true);
+		assertNotNull(procDef);
+		
+
+		
+		procReg.removeProcessDefinition(process.getCode());
+		var sizeEnd = branch.getModel().size();
+		conclude();
+		if (sizeEnd != sizeBegin) {
+			printDiff(branch.getModel(), modelBegin);
+		}
+		assertEquals(sizeBegin, sizeEnd);
+	}
 	
 	
-	
-	
-	
-	
+	private void printDiff(OntModel modelBegin, OntModel model) {
+		startRead();
+		var modelDiff = model.size() > modelBegin.size() 
+				? model.difference(modelBegin) 
+				: modelBegin.difference(model);
+		RDFDataMgr.write(System.out, modelDiff, Lang.TURTLE) ;
+		conclude();
+	}
 	
 	
 }

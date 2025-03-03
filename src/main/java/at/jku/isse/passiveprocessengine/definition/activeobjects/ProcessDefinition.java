@@ -13,9 +13,12 @@ import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
+import at.jku.isse.passiveprocessengine.definition.factories.ProcessDefinitionFactory;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
+import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 
 public class ProcessDefinition extends StepDefinition{
 
@@ -128,7 +131,32 @@ public class ProcessDefinition extends StepDefinition{
 			});			
 			thisType.markAsDeleted();
 		}
+		// some code duplication with StepDefiniton.deleteCascading() due to awkward naming, needs major engine overhaul
+		String overrideName = SpecificProcessInstanceType.getProcessName(this);
+		String stepDefName = SpecificProcessStepType.getProcessStepName(this);
+		PPEInstanceType instType = this.context.getSchemaRegistry().getTypeByName(stepDefName);
+		if (instType != null) {	
+			this.getActivationconditions().stream().forEach(spec -> { 
+				deleteRuleIfExists(instType, spec, Conditions.ACTIVATION, overrideName); //delete the rule 
+			});
+			this.getCancelconditions().stream().forEach(spec -> { 
+				deleteRuleIfExists(instType, spec, Conditions.CANCELATION, overrideName); //delete the rule 
+			});
+			this.getPostconditions().stream().forEach(spec -> { 
+				deleteRuleIfExists(instType, spec, Conditions.POSTCONDITION, overrideName); //delete the rule 
+			});
+			this.getPreconditions().stream().forEach(spec -> { 
+				deleteRuleIfExists(instType, spec, Conditions.PRECONDITION, overrideName); //delete the rule 
+			});
+		}	
 		super.deleteCascading();
+	}
+	
+	protected void deleteRuleIfExists(PPEInstanceType instType, ConstraintSpec spec, Conditions condition, String overrideName ) {
+		String name = ProcessDefinitionFactory.CRD_PREFIX+condition+spec.getOrderIndex()+"_"+overrideName;
+		RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
+		if (crt != null) 
+			crt.markAsDeleted();
 	}
 
 	

@@ -5,6 +5,7 @@ import java.util.Optional;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
@@ -80,6 +81,9 @@ public class SpecificProcessStepType extends TypeProviderBase {
 	}
 	
 	public static String getProcessStepName(StepDefinition sd) {
+//		if (sd instanceof ProcessDefinition procDef) {
+//			return SpecificProcessInstanceType.getProcessName(procDef);
+//		}
 		String procName = sd.getProcess() != null ? sd.getProcess().getName() : "ROOTPROCESS";
 		return AbstractProcessStepType.typeId+"-"+sd.getName()+"-"+procName;
 	}

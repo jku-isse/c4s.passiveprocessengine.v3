@@ -16,6 +16,7 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDef
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Constraint;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Process;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessConfigType;
@@ -189,9 +190,11 @@ public class DefinitionTransformer {
 		//step.getConditions().entrySet().stream().forEach(entry -> pStep.setCondition(entry.getKey(), entry.getValue()));
 		stepDTO.getConditions().entrySet().stream().forEach(entry -> {
 			entry.getValue().stream().forEach(constraint -> {
-				ConstraintSpec spec = factories.getConstraintFactory().createInstance(entry.getKey(), constraint.getCode(), constraint.getArlRule(), constraint.getDescription(), constraint.getSpecOrderIndex(), constraint.isOverridable());
-				if (step instanceof ProcessDefinition) {
-					spec.setProcess((ProcessDefinition)step);
+				// constraint code cannot be used as id here, as usually unique only local per DTO.Process
+				var specId = createSpecId(entry.getKey(), constraint, step);
+				ConstraintSpec spec = factories.getConstraintFactory().createInstance(entry.getKey(), specId, constraint.getArlRule(), constraint.getDescription(), constraint.getSpecOrderIndex(), constraint.isOverridable());
+				if (step instanceof ProcessDefinition procDef) {
+					spec.setProcess(procDef);
 				} else if (step.getProcess() != null) {
 					spec.setProcess(step.getProcess());
 				}
@@ -218,9 +221,10 @@ public class DefinitionTransformer {
 		});
 		stepDTO.getIoMapping().entrySet().stream().forEach(entry -> step.addInputToOutputMappingRule(entry.getKey(),  trimLegacyIOMappingRule(entry.getValue())));
 		stepDTO.getQaConstraints().stream().forEach(constraint -> {
-			ConstraintSpec spec = factories.getConstraintFactory().createInstance(Conditions.QA, constraint.getCode(), constraint.getArlRule(), constraint.getDescription(), constraint.getSpecOrderIndex(), constraint.isOverridable());
-			if (step instanceof ProcessDefinition) {
-				spec.setProcess((ProcessDefinition)step);
+			var specId = createSpecId(Conditions.QA, constraint, step);
+			ConstraintSpec spec = factories.getConstraintFactory().createInstance(Conditions.QA, specId, constraint.getArlRule(), constraint.getDescription(), constraint.getSpecOrderIndex(), constraint.isOverridable());
+			if (step instanceof ProcessDefinition procDef) {
+				spec.setProcess(procDef);
 			} else if (step.getProcess() != null) {
 				spec.setProcess(step.getProcess());
 			}
@@ -230,6 +234,11 @@ public class DefinitionTransformer {
 		step.setDescription(stepDTO.getDescription());
 	}
 
+	private String createSpecId(Conditions conditions, Constraint constraint, StepDefinition step) {
+		var procId = step.getProcess() != null ? step.getProcess().getName() : "ROOT";
+		return conditions + constraint.getCode() + step.getName() + procId;
+	}
+	
 	private PPEInstanceType resolveInstanceType(String type, ProcessDefinitionScopedElement el, String param) {
 		// search in types folder and below for type
 		// InstanceType iType = // this returns also deleted types ws.debugInstanceTypeFindByName(type);

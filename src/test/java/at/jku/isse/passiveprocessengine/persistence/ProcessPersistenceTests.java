@@ -147,7 +147,7 @@ public class ProcessPersistenceTests {
 
 	@Test
 	void testCreatingProcess() throws Exception {		
-		RDFWrapperTestSetup.resetPersistence(); // also ensure to delete model from filesystem
+		RDFWrapperTestSetup.resetPersistence(); 
 		setup(); // manual as we otherwise cant reset data
 		instanceRepository.startWriteTransaction();
 		PPEInstance jiraB =  artifactFactory.getJiraInstance("jiraB");

@@ -416,10 +416,18 @@ public class StepDefinition extends ProcessDefinitionScopedElement implements IS
 		String stepDefName = SpecificProcessStepType.getProcessStepName(this);
 		PPEInstanceType instType = this.context.getSchemaRegistry().getTypeByName(stepDefName);
 		if (instType != null) { 
-			this.getActivationconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.ACTIVATION));
-			this.getCancelconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.CANCELATION));
-			this.getPostconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.POSTCONDITION));
-			this.getPreconditions().stream().forEach(spec -> deleteRuleIfExists(instType, spec, Conditions.PRECONDITION));
+			this.getActivationconditions().stream().forEach(spec -> { deleteRuleIfExists(instType, spec, Conditions.ACTIVATION); //delete the rule 
+				spec.deleteCascading(); // delete the rule spec!
+			});
+			this.getCancelconditions().stream().forEach(spec -> { deleteRuleIfExists(instType, spec, Conditions.CANCELATION); //delete the rule 
+				spec.deleteCascading(); // delete the rule spec!
+			});
+			this.getPostconditions().stream().forEach(spec -> { deleteRuleIfExists(instType, spec, Conditions.POSTCONDITION); //delete the rule 
+				spec.deleteCascading(); // delete the rule spec!
+			});
+			this.getPreconditions().stream().forEach(spec -> { deleteRuleIfExists(instType, spec, Conditions.PRECONDITION); //delete the rule 
+				spec.deleteCascading(); // delete the rule spec!
+			});
 
 			this.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {

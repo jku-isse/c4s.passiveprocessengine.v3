@@ -14,14 +14,14 @@ public class ConstraintSpecFactory extends DomainFactory{
 		super(context);
 	}
 	
-	public ConstraintSpec createInstance(Conditions condition, DTOs.Constraint constraintSpec) {
-		return createInstance(condition, constraintSpec.getCode(), constraintSpec.getArlRule(), constraintSpec.getDescription(), constraintSpec.getSpecOrderIndex(), constraintSpec.isOverridable());
-	}
+//	public ConstraintSpec createInstance(Conditions condition, DTOs.Constraint constraintSpec) {
+//		return createInstance(condition, constraintSpec.getCode(), constraintSpec.getArlRule(), constraintSpec.getDescription(), constraintSpec.getSpecOrderIndex(), constraintSpec.isOverridable());
+//	}
 
-	@Deprecated
-	public ConstraintSpec createInstance(Conditions condition, String constraintId, String constraintSpec, String humanReadableDescription, int specOrderIndex) {
-		return createInstance(condition, constraintId, constraintSpec, humanReadableDescription, specOrderIndex, false);
-	}
+//	@Deprecated
+//	public ConstraintSpec createInstance(Conditions condition, String constraintId, String constraintSpec, String humanReadableDescription, int specOrderIndex) {
+//		return createInstance(condition, constraintId, constraintSpec, humanReadableDescription, specOrderIndex, false);
+//	}
 	
 	public ConstraintSpec createInstance(Conditions condition, String constraintId, String constraintSpec, String humanReadableDescription, int specOrderIndex, boolean isOverridable) {
 		return createInstance(condition, constraintId, constraintSpec, constraintSpec, humanReadableDescription, specOrderIndex, isOverridable);

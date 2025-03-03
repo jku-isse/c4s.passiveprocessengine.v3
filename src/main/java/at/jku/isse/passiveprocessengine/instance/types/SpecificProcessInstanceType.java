@@ -36,8 +36,8 @@ public class SpecificProcessInstanceType extends TypeProviderBase {
 		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(processName);
 		if (thisType.isPresent()) {
 			//schemaRegistry.registerTypeByName(thisType.get());	
-			((RDFInstanceType) type).cacheSuperProperties();
 			this.type = thisType.get();
+			((RDFInstanceType) type).cacheSuperProperties();
 		} else {
 			String processAsTaskName = SpecificProcessStepType.getProcessStepName(procDef);
 			type = schemaRegistry.createNewInstanceType(processName, schemaRegistry.getTypeByName(processAsTaskName));

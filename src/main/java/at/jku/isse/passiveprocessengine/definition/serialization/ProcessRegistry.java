@@ -76,7 +76,7 @@ public class ProcessRegistry {
 				.filter(inst -> (Boolean)inst.getTypedProperty((ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString()), Boolean.class, false) || !onlyValid)
 				.filter(inst -> inst.getName().equals(stringId))
 				.map(inst -> (ProcessDefinition)context.getWrappedInstance(ProcessDefinition.class, inst))
-				.collect(Collectors.toList());
+				.toList();
 		if (defs.isEmpty())
 			return Optional.empty();
 		if (defs.size() > 1)
