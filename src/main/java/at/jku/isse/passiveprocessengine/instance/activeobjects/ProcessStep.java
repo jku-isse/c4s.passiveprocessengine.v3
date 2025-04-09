@@ -13,7 +13,6 @@ import com.github.oxo42.stateless4j.StateMachine;
 
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
-import at.jku.isse.passiveprocessengine.core.PropertyChange;
 import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
@@ -33,6 +32,7 @@ import at.jku.isse.passiveprocessengine.instance.messages.Responses;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.events.PropertyChange;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

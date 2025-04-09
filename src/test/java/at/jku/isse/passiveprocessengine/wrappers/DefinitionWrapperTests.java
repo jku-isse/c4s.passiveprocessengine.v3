@@ -23,7 +23,6 @@ import at.jku.isse.passiveprocessengine.core.PPEInstanceType.CARDINALITIES;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType.PPEPropertyType;
 import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
 import at.jku.isse.passiveprocessengine.core.RuleAnalysisService;
-import at.jku.isse.passiveprocessengine.core.RuleEvaluationService;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
 import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
@@ -34,6 +33,7 @@ import at.jku.isse.passiveprocessengine.definition.types.ProcessStepDefinitionTy
 import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.AbstractionMapper;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFWrapperTestSetup;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEvaluationService;
 
 //@ExtendWith(SpringExtension.class)
 //@SpringBootTest

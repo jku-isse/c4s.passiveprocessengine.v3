@@ -14,11 +14,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.ProcessInstanceChangeListener;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
-import at.jku.isse.passiveprocessengine.core.PropertyChange;
-import at.jku.isse.passiveprocessengine.core.PropertyChange.Update;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.definition.factories.ProcessDefinitionFactory;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
@@ -33,13 +30,16 @@ import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScoped
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.QAConstraintChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.events.ChangeListener;
+import at.jku.isse.passiveprocessengine.rdfwrapper.events.PropertyChange;
+import at.jku.isse.passiveprocessengine.rdfwrapper.events.PropertyChange.Update;
 import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeListener {
+public class ProcessInstanceChangeProcessor implements ChangeListener {
 
 	final EventDistributor distributor;
 	final ProcessContext context;

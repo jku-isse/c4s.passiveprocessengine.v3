@@ -11,6 +11,7 @@ import at.jku.isse.passiveprocessengine.instance.factories.DecisionNodeInstanceF
 import at.jku.isse.passiveprocessengine.instance.factories.ProcessConfigFactory;
 import at.jku.isse.passiveprocessengine.instance.factories.ProcessInstanceFactory;
 import at.jku.isse.passiveprocessengine.instance.factories.ProcessStepInstanceFactory;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleDefinitionService;
 import lombok.Data;
 
 @Data

@@ -14,14 +14,11 @@ import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.ProcessEngineConfigurationBuilder;
-import at.jku.isse.passiveprocessengine.core.ProcessInstanceChangeListener;
 import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
 import at.jku.isse.passiveprocessengine.core.RuleAnalysisService;
-import at.jku.isse.passiveprocessengine.core.RuleEvaluationService;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.artifacteventstreaming.api.Branch;
 import at.jku.isse.artifacteventstreaming.api.BranchStateUpdater;
-import at.jku.isse.passiveprocessengine.core.ChangeEventTransformer;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
@@ -39,6 +36,9 @@ import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.rdfwrapper.AbstractionMapper;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFWrapperTestSetup;
+import at.jku.isse.passiveprocessengine.rdfwrapper.events.ChangeEventTransformer;
+import at.jku.isse.passiveprocessengine.rdfwrapper.events.ChangeListener;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEvaluationService;
 import lombok.NonNull;
 
 public class ProcessPersistenceTests {
@@ -52,7 +52,7 @@ public class ProcessPersistenceTests {
 	TestArtifacts artifactFactory;
 		
 	PPEInstanceType typeJira;
-	ProcessInstanceChangeListener picp;
+	ChangeListener picp;
 	ProcessQAStatsMonitor monitor;
 	Branch branch;
 	protected ProcessContext context;
@@ -90,9 +90,9 @@ public class ProcessPersistenceTests {
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
 		eventDistrib.registerHandler(monitor);
 		context = configBuilder.getContext();
-		ProcessInstanceChangeListener picp = new ProcessInstanceChangeProcessor(context, eventDistrib);
+		ChangeListener picp = new ProcessInstanceChangeProcessor(context, eventDistrib);
 		ChangeEventTransformer picpWrapper = dsSetup.getChangeEventTransformer();
-		picpWrapper.registerWithWorkspace(picp);
+		picpWrapper.registerWithBranch(picp);
 		System.out.println("Size after process engine listeners build: "+branch.getModel().size());
 		artifactFactory = new TestArtifacts(instanceRepository, schemaReg);
 		procFactory = new TestDTOProcesses(artifactFactory);

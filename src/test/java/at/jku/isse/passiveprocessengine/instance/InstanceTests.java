@@ -6,8 +6,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessInstanceChangeListener;
-import at.jku.isse.passiveprocessengine.core.ChangeEventTransformer;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
@@ -23,6 +21,8 @@ import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
 import at.jku.isse.passiveprocessengine.monitoring.CurrentSystemTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessStats;
+import at.jku.isse.passiveprocessengine.rdfwrapper.events.ChangeEventTransformer;
+import at.jku.isse.passiveprocessengine.rdfwrapper.events.ChangeListener;
 import at.jku.isse.passiveprocessengine.wrappers.DefinitionWrapperTests;
 import lombok.NonNull;
 
@@ -36,7 +36,7 @@ class InstanceTests extends DefinitionWrapperTests {
 	TestArtifacts artifactFactory;
 		
 	PPEInstanceType typeJira;
-	ProcessInstanceChangeListener picp;
+	ChangeListener picp;
 	ProcessQAStatsMonitor monitor;
 	
 	
@@ -48,9 +48,9 @@ class InstanceTests extends DefinitionWrapperTests {
 		EventDistributor eventDistrib = new EventDistributor();
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
 		eventDistrib.registerHandler(monitor);
-		ProcessInstanceChangeListener picp = new ProcessInstanceChangeProcessor(configBuilder.getContext(), eventDistrib);
+		ChangeListener picp = new ProcessInstanceChangeProcessor(configBuilder.getContext(), eventDistrib);
 		ChangeEventTransformer picpWrapper = super.dsSetup.getChangeEventTransformer();
-		picpWrapper.registerWithWorkspace(picp);
+		picpWrapper.registerWithBranch(picp);
 		
 		artifactFactory = new TestArtifacts(super.instanceRepository, schemaReg);
 		procFactory = new TestDTOProcesses(artifactFactory);

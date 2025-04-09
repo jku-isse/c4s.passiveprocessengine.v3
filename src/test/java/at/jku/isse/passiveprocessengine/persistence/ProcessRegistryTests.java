@@ -18,14 +18,11 @@ import org.junit.jupiter.api.Test;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.ProcessEngineConfigurationBuilder;
-import at.jku.isse.passiveprocessengine.core.ProcessInstanceChangeListener;
 import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
 import at.jku.isse.passiveprocessengine.core.RuleAnalysisService;
-import at.jku.isse.passiveprocessengine.core.RuleEvaluationService;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.artifacteventstreaming.api.Branch;
 import at.jku.isse.artifacteventstreaming.api.BranchStateUpdater;
-import at.jku.isse.passiveprocessengine.core.ChangeEventTransformer;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
@@ -44,6 +41,9 @@ import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.rdfwrapper.AbstractionMapper;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFWrapperTestSetup;
+import at.jku.isse.passiveprocessengine.rdfwrapper.events.ChangeEventTransformer;
+import at.jku.isse.passiveprocessengine.rdfwrapper.events.ChangeListener;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEvaluationService;
 import lombok.NonNull;
 
 public class ProcessRegistryTests extends ProcessPersistenceTests {

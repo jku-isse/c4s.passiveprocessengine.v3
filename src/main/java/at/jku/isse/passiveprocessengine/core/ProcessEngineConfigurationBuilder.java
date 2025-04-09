@@ -15,6 +15,7 @@ import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType;
 import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleDefinitionService;
 import lombok.Getter;
 
 @Getter
