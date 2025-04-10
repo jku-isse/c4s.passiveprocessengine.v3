@@ -1,10 +1,9 @@
 package at.jku.isse.passiveprocessengine.definition.factories;
 
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
@@ -28,7 +27,7 @@ public class ConstraintSpecFactory extends DomainFactory{
 	}
 
 	public ConstraintSpec createInstance(Conditions condition, String constraintId, String augmentedSpec, String constraintSpec, String humanReadableDescription, int specOrderIndex, boolean isOverridable) {
-		PPEInstance instance = getContext().getInstanceRepository().createInstance(constraintId, getContext().getSchemaRegistry().getTypeByName(ConstraintSpecType.typeId));
+		RDFInstance instance = getContext().getInstanceRepository().createInstance(constraintId, getContext().getSchemaRegistry().getTypeByName(ConstraintSpecType.typeId));
 		instance.setSingleProperty(ConstraintSpecType.CoreProperties.constraintSpec.toString(),constraintSpec);
 		instance.setSingleProperty(ConstraintSpecType.CoreProperties.augmentedSpec.toString(),augmentedSpec);
 		instance.setSingleProperty(ConstraintSpecType.CoreProperties.humanReadableDescription.toString(), humanReadableDescription == null ? "" : humanReadableDescription);

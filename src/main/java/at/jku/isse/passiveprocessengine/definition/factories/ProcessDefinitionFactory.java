@@ -4,11 +4,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import at.jku.isse.designspace.rule.arl.evaluator.RuleDefinition;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
-import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
@@ -40,7 +40,7 @@ public class ProcessDefinitionFactory extends DomainFactory {
 	 * @return Basic, empty process definition structure. Creation of rules and specific process instance types requires calling 'initializeInstanceTypes'
 	 */
 	public ProcessDefinition createInstance(String processId) {
-		PPEInstance instance = getContext().getInstanceRepository().createInstance(processId, getContext().getSchemaRegistry().getTypeByName(ProcessDefinitionType.typeId));
+		RDFInstance instance = getContext().getInstanceRepository().createInstance(processId, getContext().getSchemaRegistry().getTypeByName(ProcessDefinitionType.typeId));
 		instance.setSingleProperty(ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString(), false);
 		return getContext().getWrappedInstance(ProcessDefinition.class, instance);				
 	}
@@ -58,7 +58,7 @@ public class ProcessDefinitionFactory extends DomainFactory {
 		processAsStepTypeProvider.produceTypeProperties();
 		SpecificProcessInstanceType typeProvider = new SpecificProcessInstanceType(getContext().getSchemaRegistry(), processDef);
 		typeProvider.produceTypeProperties();				
-		PPEInstanceType processInstanceType = getContext().getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(processDef)); //) ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
+		RDFInstanceType processInstanceType = getContext().getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(processDef)); //) ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
 		//DecisionNodeInstance.getOrCreateCoreType(instance.workspace);
 		//List<ProcessException> subProcessExceptions = new ArrayList<>();
 		processDef.getStepDefinitions().stream().forEach(stepDef -> {
@@ -69,7 +69,7 @@ public class ProcessDefinitionFactory extends DomainFactory {
 				// create the specific step type
 				SpecificProcessStepType stepTypeProvider = new SpecificProcessStepType(getContext().getSchemaRegistry(), stepDef, processInstanceType);
 				stepTypeProvider.produceTypeProperties();	
-				PPEInstanceType stepInstanceType = getContext().getSchemaRegistry().getTypeByName(SpecificProcessStepType.getProcessStepName(stepDef));
+				RDFInstanceType stepInstanceType = getContext().getSchemaRegistry().getTypeByName(SpecificProcessStepType.getProcessStepName(stepDef));
 				stepDef.getInputToOutputMappingRules().entrySet().stream()
 				.forEach(entry -> {
 					if (entry.getValue() != null) {
@@ -124,7 +124,7 @@ public class ProcessDefinitionFactory extends DomainFactory {
 		return errors;
 	}
 
-	public List<ProcessDefinitionError> checkConstraintValidity(ProcessDefinition processDef, PPEInstanceType processInstanceType) {
+	public List<ProcessDefinitionError> checkConstraintValidity(ProcessDefinition processDef, RDFInstanceType processInstanceType) {
 		List<ProcessDefinitionError> overallStatus = new LinkedList<>();				
 		//premature constraints:
 		processDef.getPrematureTriggers().entrySet().stream()
@@ -182,11 +182,11 @@ public class ProcessDefinitionFactory extends DomainFactory {
 	}
 
 
-	public static String getConstraintName(Conditions condition, PPEInstanceType stepType) {
+	public static String getConstraintName(Conditions condition, RDFInstanceType stepType) {
 		return getConstraintName(condition, 0, stepType);
 	}
 
-	public static String getConstraintName(Conditions condition, int specOrderIndex, PPEInstanceType stepType) {
+	public static String getConstraintName(Conditions condition, int specOrderIndex, RDFInstanceType stepType) {
 		return CRD_PREFIX+condition+specOrderIndex+"_"+stepType.getName();
 	}
 

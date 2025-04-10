@@ -17,10 +17,10 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.DesignspaceTestSetup;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType.CARDINALITIES;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType.Cardinalities;
 import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
 
 @ExtendWith(SpringExtension.class)
@@ -59,18 +59,18 @@ class DesignspaceInterfaceTests  {
 	@Test
 	void testBasicSchema() {
 		createBaseType();
-		PPEInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
+		RDFInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
 		assertTrue(baseType != null);
-		assertTrue(baseType.getPropertyType(LIST_PROP).getCardinality().equals(CARDINALITIES.LIST));
+		assertTrue(baseType.getPropertyType(LIST_PROP).getCardinality().equals(Cardinalities.LIST));
 		assertTrue(baseType.getPropertyType(LIST_PROP).getInstanceType().getName().equals(TEST_BASE_TYPE));
 		
-		assertTrue(baseType.getPropertyType(SET_PROP).getCardinality().equals(CARDINALITIES.SET));
+		assertTrue(baseType.getPropertyType(SET_PROP).getCardinality().equals(Cardinalities.SET));
 		assertTrue(baseType.getPropertyType(SET_PROP).getInstanceType().equals(BuildInType.BOOLEAN));
 		
-		assertTrue(baseType.getPropertyType(MAP_PROP).getCardinality().equals(CARDINALITIES.MAP));
+		assertTrue(baseType.getPropertyType(MAP_PROP).getCardinality().equals(Cardinalities.MAP));
 		assertTrue(baseType.getPropertyType(MAP_PROP).getInstanceType().equals(BuildInType.INTEGER));
 		
-		assertTrue(baseType.getPropertyType(SINGLE_PROP).getCardinality().equals(CARDINALITIES.SINGLE));
+		assertTrue(baseType.getPropertyType(SINGLE_PROP).getCardinality().equals(Cardinalities.SINGLE));
 		assertTrue(baseType.getPropertyType(SINGLE_PROP).getInstanceType().equals(BuildInType.STRING));
 	}
 	
@@ -78,12 +78,12 @@ class DesignspaceInterfaceTests  {
 	void testSubclassSchema() {
 		createBaseType();
 		createChildType();
-		PPEInstanceType childType = schemaRegistry.getTypeByName(TEST_CHILD_TYPE);
+		RDFInstanceType childType = schemaRegistry.getTypeByName(TEST_CHILD_TYPE);
 		assertTrue(childType != null);
-		PPEInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
+		RDFInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
 		assertTrue(baseType != null);
 		assertTrue(childType.getPropertyType(PARENT_PROP).getInstanceType().equals(baseType));
-		assertTrue(childType.getPropertyType(PARENT_PROP).getCardinality().equals(CARDINALITIES.SINGLE));
+		assertTrue(childType.getPropertyType(PARENT_PROP).getCardinality().equals(Cardinalities.SINGLE));
 		
 	}
 	
@@ -91,10 +91,10 @@ class DesignspaceInterfaceTests  {
 	@Test
 	void testInstanceCreation() {
 		createBaseType();
-		PPEInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
-		PPEInstance inst1 = instanceRepository.createInstance("Inst1", baseType);
-		PPEInstance inst2 = instanceRepository.createInstance("Inst2", baseType);
-		PPEInstance inst3 = instanceRepository.createInstance("Inst3", baseType);
+		RDFInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
+		RDFInstance inst1 = instanceRepository.createInstance("Inst1", baseType);
+		RDFInstance inst2 = instanceRepository.createInstance("Inst2", baseType);
+		RDFInstance inst3 = instanceRepository.createInstance("Inst3", baseType);
 		inst1.setSingleProperty(SINGLE_PROP, ENTRY1);
 		inst1.getTypedProperty(LIST_PROP, List.class).add(inst2);
 		inst1.getTypedProperty(SET_PROP, Set.class).add(Boolean.TRUE);
@@ -110,16 +110,16 @@ class DesignspaceInterfaceTests  {
 	void testInstanceSubclassing() {
 		createBaseType();
 		createChildType();
-		PPEInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
-		PPEInstance inst1 = instanceRepository.createInstance("Inst1", baseType);
-		PPEInstance inst2 = instanceRepository.createInstance("Inst2", baseType);
-		PPEInstance inst3 = instanceRepository.createInstance("Inst3", baseType);
+		RDFInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
+		RDFInstance inst1 = instanceRepository.createInstance("Inst1", baseType);
+		RDFInstance inst2 = instanceRepository.createInstance("Inst2", baseType);
+		RDFInstance inst3 = instanceRepository.createInstance("Inst3", baseType);
 		inst1.setSingleProperty(SINGLE_PROP, ENTRY1);
 		inst1.getTypedProperty(LIST_PROP, List.class).add(inst2);
 		inst1.getTypedProperty(SET_PROP, Set.class).add(Boolean.TRUE);
 		inst1.getTypedProperty(MAP_PROP, Map.class).put(ENTRY1, 3);
 		
-		PPEInstanceType childType = schemaRegistry.getTypeByName(TEST_CHILD_TYPE);
+		RDFInstanceType childType = schemaRegistry.getTypeByName(TEST_CHILD_TYPE);
 		assertTrue(childType != null);
 		inst2.setInstanceType(childType);
 		inst3.setInstanceType(childType);
@@ -127,12 +127,12 @@ class DesignspaceInterfaceTests  {
 		
 		inst2.setSingleProperty(PARENT_PROP, inst3);
 		
-		PPEInstance parent = (PPEInstance) inst1.getTypedProperty(LIST_PROP, List.class).get(0);
-		assertTrue(parent.getTypedProperty(PARENT_PROP, PPEInstance.class).equals(inst3));
+		RDFInstance parent = (RDFInstance) inst1.getTypedProperty(LIST_PROP, List.class).get(0);
+		assertTrue(parent.getTypedProperty(PARENT_PROP, RDFInstance.class).equals(inst3));
 	}
 	
 	protected void createBaseType() {
-		PPEInstanceType testType = schemaRegistry.createNewInstanceType(TEST_BASE_TYPE);
+		RDFInstanceType testType = schemaRegistry.createNewInstanceType(TEST_BASE_TYPE);
 		testType.createSinglePropertyType(SINGLE_PROP, BuildInType.STRING);
 		testType.createListPropertyType(LIST_PROP, testType);
 		testType.createSetPropertyType(SET_PROP, BuildInType.BOOLEAN);
@@ -142,7 +142,7 @@ class DesignspaceInterfaceTests  {
 	
 	protected void createChildType() {
 		
-		PPEInstanceType childType = schemaRegistry.createNewInstanceType(TEST_CHILD_TYPE, schemaRegistry.getTypeByName(TEST_BASE_TYPE));
+		RDFInstanceType childType = schemaRegistry.createNewInstanceType(TEST_CHILD_TYPE, schemaRegistry.getTypeByName(TEST_BASE_TYPE));
 		childType.createSinglePropertyType(PARENT_PROP, schemaRegistry.getTypeByName(TEST_BASE_TYPE));
 		//schemaRegistry.registerTypeByName(childType);
 	}

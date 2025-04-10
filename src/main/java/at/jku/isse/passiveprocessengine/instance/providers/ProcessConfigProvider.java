@@ -7,16 +7,16 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import at.jku.isse.designspace.artifactconnector.core.repository.ArtifactIdentifier;
-import at.jku.isse.designspace.artifactconnector.core.repository.FetchResponse;
-import at.jku.isse.designspace.artifactconnector.core.repository.FetchResponse.ErrorResponse;
-import at.jku.isse.designspace.artifactconnector.core.repository.FetchResponse.SuccessResponse;
-import at.jku.isse.designspace.artifactconnector.core.repository.IArtifactProvider;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.artifactprovider.ArtifactIdentifier;
+import at.jku.isse.passiveprocessengine.rdfwrapper.artifactprovider.FetchResponse;
+import at.jku.isse.passiveprocessengine.rdfwrapper.artifactprovider.FetchResponse.ErrorResponse;
+import at.jku.isse.passiveprocessengine.rdfwrapper.artifactprovider.FetchResponse.SuccessResponse;
+import at.jku.isse.passiveprocessengine.rdfwrapper.artifactprovider.IArtifactProvider;
 
 public class ProcessConfigProvider implements IArtifactProvider {
 
@@ -29,17 +29,17 @@ public class ProcessConfigProvider implements IArtifactProvider {
 	}
 	
 	@Override
-	public Map<PPEInstanceType, List<String>> getSupportedIdentifiers() {
+	public Map<RDFInstanceType, List<String>> getSupportedIdentifiers() {
 		return Map.of(getDefaultArtifactInstanceType(), List.of("Designspace Id"));
 	}
 	
 	@Override
-	public PPEInstanceType getDefaultArtifactInstanceType() {
+	public RDFInstanceType getDefaultArtifactInstanceType() {
 		return schemaReg.getTypeByName(ProcessConfigBaseElementType.typeId);
 	}
 
 	@Override
-	public Set<PPEInstanceType> getProvidedArtifactInstanceTypes() {
+	public Set<RDFInstanceType> getProvidedArtifactInstanceTypes() {
 		return Set.of(schemaReg.getTypeByName(ProcessConfigBaseElementType.typeId));				
 	}
 
@@ -47,7 +47,7 @@ public class ProcessConfigProvider implements IArtifactProvider {
 	public Set<FetchResponse> fetchArtifact(Set<ArtifactIdentifier> artifactIdentifiers) {
 		return artifactIdentifiers.stream()
 			.map(id -> {
-				Optional<PPEInstance> optInst = ws.findInstanceById(id.getId());
+				Optional<RDFInstance> optInst = ws.findInstanceById(id.getId());
 				if (optInst.isEmpty()) {
 					return new ErrorResponse("No ProcessConfig found for id: "+Objects.toString(id));
 				} else {

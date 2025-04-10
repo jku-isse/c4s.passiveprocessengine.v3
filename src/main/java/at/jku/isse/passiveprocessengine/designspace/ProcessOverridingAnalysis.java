@@ -1,26 +1,15 @@
 package at.jku.isse.passiveprocessengine.designspace;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import at.jku.isse.designspace.rule.arl.expressions.Expression;
-import at.jku.isse.designspace.rule.arl.expressions.RootExpression;
-import at.jku.isse.designspace.rule.arl.parser.ArlParser;
-import at.jku.isse.designspace.rule.arl.parser.ArlType;
-import at.jku.isse.designspace.rule.overriding.ConstraintContext;
-import at.jku.isse.designspace.rule.overriding.OverridingConstraintData;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.designspace.rule.overriding.OverrideAnalysisSession;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.RuleAnalysisService.OverrideAnalysisSession;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
-import at.jku.isse.passiveprocessengine.definition.factories.ProcessDefinitionFactory;
-import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
-import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 
 
 public class ProcessOverridingAnalysis {
@@ -46,7 +35,7 @@ public class ProcessOverridingAnalysis {
 		throw new RuntimeException("Not implemented completely");
 		
 //		process.getStepDefinitions().stream().forEach(sd->{
-//			PPEInstanceType stepType = context.getSchemaRegistry().getTypeByName(SpecificProcessStepType.getProcessStepName(sd));
+//			RDFInstanceType stepType = context.getSchemaRegistry().getTypeByName(SpecificProcessStepType.getProcessStepName(sd));
 //			if(sd instanceof ProcessDefinition) // process inside process?? 
 //			{// Might have to circle back to this if we get nested processes.//TODO: Sol:nested call to the beginAnalysis
 //			}
@@ -101,7 +90,7 @@ public class ProcessOverridingAnalysis {
 //		return warnings;
 	}		
 	
-	public void inferImpact(OverrideAnalysisSession oas, PPEInstanceType stepType,String specId,String arl,ConstraintSpec rule,List<ProcessDefinitionError> warnings)
+	public void inferImpact(OverrideAnalysisSession oas, RDFInstanceType stepType,String specId,String arl,ConstraintSpec rule,List<ProcessDefinitionError> warnings)
 	{
 		Map<String, Integer> impactResult = oas.inferImpact(stepType, specId, arl);						
 		impactResult.entrySet().stream().forEach( entry -> {								
@@ -125,7 +114,7 @@ public class ProcessOverridingAnalysis {
 		});
 	}
 	
-	/*public void checkImpact(PPEInstanceType stepType, String specId, String arl, ConstraintSpec rule, List<ProcessDefinitionError> warnings)
+	/*public void checkImpact(RDFInstanceType stepType, String specId, String arl, ConstraintSpec rule, List<ProcessDefinitionError> warnings)
 	{
 		InstanceType type = (InstanceType) abstractionMapper.mapProcessDomainInstanceTypeToDesignspaceInstanceType(stepType);
 		Expression syntaxTree=generateSyntaxTree(type,specId,arl);

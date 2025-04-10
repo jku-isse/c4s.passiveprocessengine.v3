@@ -18,9 +18,9 @@ import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.ProcessEngineConfigurationBuilder;
 import at.jku.isse.passiveprocessengine.core.DesignspaceTestSetup;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType.CARDINALITIES;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType.PPEPropertyType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType.Cardinalities;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType.PPEPropertyType;
 import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
 import at.jku.isse.passiveprocessengine.core.RuleAnalysisService;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
@@ -32,7 +32,7 @@ import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessStepDefinitionType;
 import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.AbstractionMapper;
-import at.jku.isse.passiveprocessengine.rdfwrapper.RDFWrapperTestSetup;
+import at.jku.isse.passiveprocessengine.rdfwrapper.config.RDFWrapperTestSetup;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEvaluationService;
 
 //@ExtendWith(SpringExtension.class)
@@ -78,9 +78,9 @@ public class DefinitionWrapperTests {
 	
 	@Test
 	void testSuperType() {
-		PPEInstanceType scopeType = schemaReg.getTypeByName(ProcessDefinitionScopeType.typeId);
-		PPEInstanceType specType = schemaReg.getTypeByName(ConstraintSpecType.typeId);
-		Set<PPEInstanceType> subtypes = scopeType.getAllSubtypesRecursively();
+		RDFInstanceType scopeType = schemaReg.getTypeByName(ProcessDefinitionScopeType.typeId);
+		RDFInstanceType specType = schemaReg.getTypeByName(ConstraintSpecType.typeId);
+		Set<RDFInstanceType> subtypes = scopeType.getAllSubtypesRecursively();
 		assertTrue(subtypes != null);
 		assertTrue(subtypes.contains(specType));
 		assertTrue(specType.isOfTypeOrAnySubtype(scopeType));
@@ -103,74 +103,74 @@ public class DefinitionWrapperTests {
 	
 	@Test
 	void testSingleTypePropertyGeneration() {				
-		PPEInstanceType type = schemaReg.getTypeByName(ConstraintSpecType.typeId);
+		RDFInstanceType type = schemaReg.getTypeByName(ConstraintSpecType.typeId);
 		PPEPropertyType propType = type.getPropertyType(ConstraintSpecType.CoreProperties.isOverridable.toString());
 		assertTrue(propType != null);
-		assertTrue(propType.getCardinality().equals(CARDINALITIES.SINGLE));
+		assertTrue(propType.getCardinality().equals(Cardinalities.SINGLE));
 		assertTrue(propType.getInstanceType().equals(BuildInType.BOOLEAN));
 		
 		PPEPropertyType propType2 = type.getPropertyType(ConstraintSpecType.CoreProperties.humanReadableDescription.toString());
 		assertTrue(propType2 != null);
-		assertTrue(propType2.getCardinality().equals(CARDINALITIES.SINGLE));
+		assertTrue(propType2.getCardinality().equals(Cardinalities.SINGLE));
 		assertTrue(propType2.getInstanceType().equals(BuildInType.STRING));
 		
 		PPEPropertyType propType3 = type.getPropertyType(ConstraintSpecType.CoreProperties.ruleType.toString());
 		assertTrue(propType3 != null);
-		assertTrue(propType3.getCardinality().equals(CARDINALITIES.SINGLE));
+		assertTrue(propType3.getCardinality().equals(Cardinalities.SINGLE));
 		assertTrue(propType3.getInstanceType().equals(BuildInType.RULE));	
 	}
 	
 	@Test
 	void testDataMappingTypePropertyGeneration() {
-		PPEInstanceType type = schemaReg.getTypeByName(MappingDefinitionType.typeId);
+		RDFInstanceType type = schemaReg.getTypeByName(MappingDefinitionType.typeId);
 		List.of(MappingDefinitionType.CoreProperties.values()).stream().forEach(prop -> {
 			PPEPropertyType propType = type.getPropertyType(prop.toString());
 			assertTrue(propType != null);
-			assertTrue(propType.getCardinality().equals(CARDINALITIES.SINGLE));
+			assertTrue(propType.getCardinality().equals(Cardinalities.SINGLE));
 			assertTrue(propType.getInstanceType().equals(BuildInType.STRING));
 		});
 	}		
 	
 	@Test
 	void testNonRegisteredType() {
-		PPEInstanceType nonExistingType = schemaReg.getTypeByName("nonono");
+		RDFInstanceType nonExistingType = schemaReg.getTypeByName("nonono");
 		Assertions.assertNull(nonExistingType);
 	}
 	
 	@Test
 	void testMapListSetPropertyGeneration() {
 			
-		PPEInstanceType type = schemaReg.getTypeByName(DecisionNodeDefinitionType.typeId);
-		PPEInstanceType mappingType = schemaReg.getTypeByName(MappingDefinitionType.typeId);
-		PPEInstanceType dndType = schemaReg.getTypeByName(DecisionNodeDefinitionType.typeId);
-		PPEInstanceType stepType = schemaReg.getTypeByName(ProcessStepDefinitionType.typeId);
-		PPEInstanceType processType = schemaReg.getTypeByName(ProcessDefinitionType.typeId);
+		RDFInstanceType type = schemaReg.getTypeByName(DecisionNodeDefinitionType.typeId);
+		RDFInstanceType mappingType = schemaReg.getTypeByName(MappingDefinitionType.typeId);
+		RDFInstanceType dndType = schemaReg.getTypeByName(DecisionNodeDefinitionType.typeId);
+		RDFInstanceType stepType = schemaReg.getTypeByName(ProcessStepDefinitionType.typeId);
+		RDFInstanceType processType = schemaReg.getTypeByName(ProcessDefinitionType.typeId);
 		
 		PPEPropertyType propType = type.getPropertyType(DecisionNodeDefinitionType.CoreProperties.dataMappingDefinitions.toString());
 		assertTrue(propType != null);
-		assertTrue(propType.getCardinality().equals(CARDINALITIES.SET));
+		assertTrue(propType.getCardinality().equals(Cardinalities.SET));
 		assertTrue(propType.getInstanceType().equals(mappingType));
 				
 		PPEPropertyType inType = type.getPropertyType(DecisionNodeDefinitionType.CoreProperties.inSteps.toString());
 		assertTrue(inType != null);
-		assertTrue(inType.getCardinality().equals(CARDINALITIES.SET));
+		assertTrue(inType.getCardinality().equals(Cardinalities.SET));
 		assertTrue(inType.getInstanceType().equals(stepType));
 		
 		PPEPropertyType procType = type.getPropertyType(ProcessDefinitionScopeType.CoreProperties.processDefinition.toString());
 		assertTrue(procType != null);
-		assertTrue(procType.getCardinality().equals(CARDINALITIES.SINGLE));
-		PPEInstanceType procInstanceType = procType.getInstanceType(); 
+		assertTrue(procType.getCardinality().equals(Cardinalities.SINGLE));
+		RDFInstanceType procInstanceType = procType.getInstanceType(); 
 		assertTrue(procInstanceType.equals(processType));
 		
 		
 		PPEPropertyType dndPropType = processType.getPropertyType(ProcessDefinitionType.CoreProperties.stepDefinitions.toString());
 		assertTrue(dndPropType != null);
-		assertTrue(dndPropType.getCardinality().equals(CARDINALITIES.LIST));
+		assertTrue(dndPropType.getCardinality().equals(Cardinalities.LIST));
 		assertTrue(dndPropType.getInstanceType().equals(stepType));
 		
 		PPEPropertyType premPropType = processType.getPropertyType(ProcessDefinitionType.CoreProperties.prematureTriggers.toString());
 		assertTrue(premPropType != null);
-		assertTrue(premPropType.getCardinality().equals(CARDINALITIES.MAP));
+		assertTrue(premPropType.getCardinality().equals(Cardinalities.MAP));
 		assertTrue(premPropType.getInstanceType().equals(BuildInType.STRING));
 		
 		

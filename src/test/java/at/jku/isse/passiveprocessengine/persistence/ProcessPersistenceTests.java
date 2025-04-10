@@ -10,8 +10,8 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.ProcessEngineConfigurationBuilder;
 import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
@@ -35,7 +35,7 @@ import at.jku.isse.passiveprocessengine.monitoring.CurrentSystemTimeProvider;
 import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
 import at.jku.isse.passiveprocessengine.rdfwrapper.AbstractionMapper;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
-import at.jku.isse.passiveprocessengine.rdfwrapper.RDFWrapperTestSetup;
+import at.jku.isse.passiveprocessengine.rdfwrapper.config.RDFWrapperTestSetup;
 import at.jku.isse.passiveprocessengine.rdfwrapper.events.ChangeEventTransformer;
 import at.jku.isse.passiveprocessengine.rdfwrapper.events.ChangeListener;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEvaluationService;
@@ -51,7 +51,7 @@ public class ProcessPersistenceTests {
 	TestDTOProcesses procFactory;	
 	TestArtifacts artifactFactory;
 		
-	PPEInstanceType typeJira;
+	RDFInstanceType typeJira;
 	ChangeListener picp;
 	ProcessQAStatsMonitor monitor;
 	Branch branch;
@@ -119,7 +119,7 @@ public class ProcessPersistenceTests {
 		return procDef;
 	}
 	
-	protected ProcessInstance instantiateDefaultProcess(DTOs.Process procDTO, PPEInstance... inputs) {
+	protected ProcessInstance instantiateDefaultProcess(DTOs.Process procDTO, RDFInstance... inputs) {
 		ProcessDefinition procDef = getDefinition(procDTO);				
 		instanceRepository.concludeTransaction();
 		instanceRepository.startWriteTransaction();
@@ -128,17 +128,17 @@ public class ProcessPersistenceTests {
 		assert(procInstance != null);
 		configBuilder.getContext().getInstanceRepository().concludeTransaction();
 		configBuilder.getContext().getInstanceRepository().startWriteTransaction();
-		for (PPEInstance input : inputs) {
+		for (RDFInstance input : inputs) {
 			IOResponse resp = procInstance.addInput(TestDTOProcesses.JIRA_IN, input);
 			assert(resp.getError() == null);
 		}
 		return procInstance;
 	}
 	
-	protected ProcessInstance instantiateDefaultProcess(@NonNull ProcessDefinition procDef,  PPEInstance... inputs) {		
+	protected ProcessInstance instantiateDefaultProcess(@NonNull ProcessDefinition procDef,  RDFInstance... inputs) {		
 		ProcessInstance procInstance = configBuilder.getContext().getFactoryIndex().getProcessInstanceFactory().getInstance(procDef, "TEST");
 		assert(procInstance != null);
-		for (PPEInstance input : inputs) {
+		for (RDFInstance input : inputs) {
 			IOResponse resp = procInstance.addInput(TestDTOProcesses.JIRA_IN, input);
 			assert(resp.getError() == null);
 		}
@@ -150,9 +150,9 @@ public class ProcessPersistenceTests {
 		RDFWrapperTestSetup.resetPersistence(); 
 		setup(); // manual as we otherwise cant reset data
 		instanceRepository.startWriteTransaction();
-		PPEInstance jiraB =  artifactFactory.getJiraInstance("jiraB");
-		PPEInstance jiraC = artifactFactory.getJiraInstance("jiraC");		
-		PPEInstance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
+		RDFInstance jiraB =  artifactFactory.getJiraInstance("jiraB");
+		RDFInstance jiraC = artifactFactory.getJiraInstance("jiraC");		
+		RDFInstance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
 						
 		ProcessInstance proc =  instantiateDefaultProcess(procFactory.getSimple2StepProcessDefinition(), jiraA);		
 		instanceRepository.concludeTransaction();

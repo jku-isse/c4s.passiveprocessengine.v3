@@ -2,8 +2,8 @@ package at.jku.isse.passiveprocessengine.instance.activeobjects;
 
 import java.time.ZonedDateTime;
 
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
@@ -15,7 +15,7 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 
 	private volatile ZonedDateTime lastChanged;
 
-	public ConstraintResultWrapper(PPEInstance instance, ProcessContext context) {
+	public ConstraintResultWrapper(RDFInstance instance, ProcessContext context) {
 		super(instance, context);
 
 	}
@@ -63,7 +63,7 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 	}
 
 	public ConstraintSpec getConstraintSpec() {
-		PPEInstance qainst = instance.getTypedProperty(ConstraintWrapperType.CoreProperties.qaSpec.toString(), PPEInstance.class);
+		RDFInstance qainst = instance.getTypedProperty(ConstraintWrapperType.CoreProperties.qaSpec.toString(), RDFInstance.class);
 		return context.getWrappedInstance(ConstraintSpec.class, qainst);
 	}
 
@@ -73,7 +73,7 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 	}
 
 	public ProcessStep getParentStep() {
-		PPEInstance step = instance.getTypedProperty(ConstraintWrapperType.CoreProperties.parentStep.toString(), PPEInstance.class);
+		RDFInstance step = instance.getTypedProperty(ConstraintWrapperType.CoreProperties.parentStep.toString(), RDFInstance.class);
 		if (step != null)
 			return context.getWrappedInstance(ProcessStep.class, step);
 		else
@@ -148,7 +148,7 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 	public void deleteCascading() {
 		var ruleResult = this.getRuleResult();
 		if (ruleResult != null) {
-			ruleResult.markAsDeleted();
+			ruleResult.delete();
 		}
 		super.deleteCascading();
 		

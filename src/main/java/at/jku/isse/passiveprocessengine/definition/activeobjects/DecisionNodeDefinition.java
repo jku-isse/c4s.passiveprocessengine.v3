@@ -7,15 +7,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
-import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 
 public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 
-	public DecisionNodeDefinition(PPEInstance instance, ProcessContext context) {
+	public DecisionNodeDefinition(RDFInstance instance, ProcessContext context) {
 		super(instance, context);
 	}
 
@@ -32,7 +31,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 		if (this.getOutSteps().isEmpty())
 			return null;
 		else {
-			PPEInstance dnd = instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.closingDN.toString(), PPEInstance.class);
+			RDFInstance dnd = instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.closingDN.toString(), RDFInstance.class);
 			if (dnd != null)
 				return context.getWrappedInstance(DecisionNodeDefinition.class, dnd);
 			else {
@@ -85,7 +84,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 		Set mdSet = instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.dataMappingDefinitions.toString(), Set.class);
 		if (mdSet != null ) {
 			return (Set<MappingDefinition>) mdSet.stream()
-					.map(inst -> context.getWrappedInstance(MappingDefinition.class, (PPEInstance) inst))
+					.map(inst -> context.getWrappedInstance(MappingDefinition.class, (RDFInstance) inst))
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
 	}
@@ -93,18 +92,18 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 	@SuppressWarnings("unchecked")
 	public Set<StepDefinition> getInSteps() {
 		return (Set<StepDefinition>) instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.inSteps.toString(), Set.class).stream()
-			.filter(PPEInstance.class::isInstance)
-			.map(PPEInstance.class::cast)
-			.map(inst -> context.getWrappedInstance(ProcessDefinition.getMostSpecializedClass((PPEInstance) inst), (PPEInstance) inst))
+			.filter(RDFInstance.class::isInstance)
+			.map(RDFInstance.class::cast)
+			.map(inst -> context.getWrappedInstance(ProcessDefinition.getMostSpecializedClass((RDFInstance) inst), (RDFInstance) inst))
 			.collect(Collectors.toSet());
 	}
 
 	@SuppressWarnings("unchecked")
 	public Set<StepDefinition> getOutSteps() {
 		return (Set<StepDefinition>) instance.getTypedProperty(DecisionNodeDefinitionType.CoreProperties.outSteps.toString(), Set.class).stream()
-			.filter(PPEInstance.class::isInstance)
-			.map(PPEInstance.class::cast)
-			.map(inst -> context.getWrappedInstance(ProcessDefinition.getMostSpecializedClass((PPEInstance) inst), (PPEInstance) inst))
+			.filter(RDFInstance.class::isInstance)
+			.map(RDFInstance.class::cast)
+			.map(inst -> context.getWrappedInstance(ProcessDefinition.getMostSpecializedClass((RDFInstance) inst), (RDFInstance) inst))
 			.collect(Collectors.toSet());
 	}
 

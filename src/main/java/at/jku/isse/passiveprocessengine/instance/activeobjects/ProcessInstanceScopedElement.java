@@ -1,14 +1,14 @@
 package at.jku.isse.passiveprocessengine.instance.activeobjects;
 
 import at.jku.isse.passiveprocessengine.core.InstanceWrapper;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeType;
 
 public abstract class ProcessInstanceScopedElement extends InstanceWrapper {
 
-	public ProcessInstanceScopedElement(PPEInstance instance, ProcessContext context) {
+	public ProcessInstanceScopedElement(RDFInstance instance, ProcessContext context) {
 		super(instance, context);
 	}
 
@@ -17,7 +17,7 @@ public abstract class ProcessInstanceScopedElement extends InstanceWrapper {
 	}
 
 	public ProcessInstance getProcess() {
-		PPEInstance pi = instance.getTypedProperty(ProcessInstanceScopeType.CoreProperties.process.toString(), PPEInstance.class);
+		RDFInstance pi = instance.getTypedProperty(ProcessInstanceScopeType.CoreProperties.process.toString(), RDFInstance.class);
 		if (pi != null)
 			return context.getWrappedInstance(ProcessInstance.class, pi);
 		else return null;

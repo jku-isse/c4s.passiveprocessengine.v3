@@ -3,8 +3,8 @@ package at.jku.isse.passiveprocessengine.instance.factories;
 import java.util.UUID;
 
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
@@ -23,7 +23,7 @@ public class ProcessInstanceFactory extends DomainFactory {
 	
 	public ProcessInstance getInstance(ProcessDefinition processDef, String namePostfix) {
 		//TODO: not to create duplicate process instances somehow	
-		PPEInstance instance = getContext().getInstanceRepository().createInstance(generateId(processDef, namePostfix)
+		RDFInstance instance = getContext().getInstanceRepository().createInstance(generateId(processDef, namePostfix)
 				, getContext().getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(processDef)));
 		ProcessInstance process = getContext().getWrappedInstance(ProcessInstance.class, instance);
 		process.inject(getContext().getFactoryIndex().getProcessStepFactory(), getContext().getFactoryIndex().getDecisionNodeInstanceFactory());
@@ -32,7 +32,7 @@ public class ProcessInstanceFactory extends DomainFactory {
 	}
 
 	public ProcessInstance getSubprocessInstance(ProcessDefinition subprocessDef, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, ProcessInstance scope) {
-		PPEInstance instance = getContext().getInstanceRepository().createInstance(generateId(subprocessDef, UUID.randomUUID().toString())
+		RDFInstance instance = getContext().getInstanceRepository().createInstance(generateId(subprocessDef, UUID.randomUUID().toString())
 			, getContext().getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(subprocessDef)));
 		ProcessInstance process = getContext().getWrappedInstance(ProcessInstance.class, instance);
 		process.setProcess(scope);

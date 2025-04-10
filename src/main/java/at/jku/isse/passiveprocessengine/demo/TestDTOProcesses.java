@@ -3,14 +3,13 @@ package at.jku.isse.passiveprocessengine.demo;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Constraint;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.DecisionNode;
 import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Step;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
-import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 
 public class TestDTOProcesses {
 
@@ -22,7 +21,7 @@ public class TestDTOProcesses {
 	public static final String DND_SUB_END = "dndSubEnd";
 	public static final String DND_SUB_START = "dndSubStart";
 	final TestArtifacts artifactFactory;
-	final PPEInstanceType typeJira;
+	final RDFInstanceType typeJira;
 	final String jiraFQN;
 	
 	private static final AtomicInteger conditionCounter = new AtomicInteger(0);

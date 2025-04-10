@@ -20,12 +20,12 @@ public class ProcessContext extends Context{
 	}
 	
 	@Override
-	protected <T extends InstanceWrapper> T instantiateWithSpecificContext(Class<? extends InstanceWrapper> clazz, PPEInstance instance) {
+	protected <T extends InstanceWrapper> T instantiateWithSpecificContext(Class<? extends InstanceWrapper> clazz, RDFInstance instance) {
 		try {
 			// otherwise we take the constructor of that class that takes an Instance object as parameter
 			// and create it, passing it the instance object
 			// assumption: every managed class implements such an constructor, (otherwise will fail fast here anyway)
-			T t = (T) clazz.getConstructor(PPEInstance.class, ProcessContext.class).newInstance(instance, this);
+			T t = (T) clazz.getConstructor(RDFInstance.class, ProcessContext.class).newInstance(instance, this);
 			//t.ws = instance.workspace;
 			cache.put(instance.getId(), t);
 			if (ProcessInstance.class.isAssignableFrom(clazz)) {

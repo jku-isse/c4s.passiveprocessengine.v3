@@ -2,13 +2,10 @@ package at.jku.isse.passiveprocessengine.instance.types;
 
 import java.util.Optional;
 
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
-import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import lombok.NonNull;
 
@@ -19,13 +16,13 @@ public class SpecificProcessStepType extends TypeProviderBase {
 //	processedPreCondFulfilled, processedPostCondFulfilled, processedCancelCondFulfilled, processedActivationCondFulfilled, isWorkExpected}
 
 	private final StepDefinition stepDef;
-	private final PPEInstanceType processType;
+	private final RDFInstanceType processType;
 
 	public static final String PREFIX_OUT = "out_";
 	public static final String PREFIX_IN = "in_";
 
 		
-	public SpecificProcessStepType(SchemaRegistry schemaRegistry, StepDefinition stepDef, @NonNull PPEInstanceType processType) {
+	public SpecificProcessStepType(SchemaRegistry schemaRegistry, StepDefinition stepDef, @NonNull RDFInstanceType processType) {
 		super(schemaRegistry);
 		this.stepDef = stepDef;
 		this.processType = processType;
@@ -40,12 +37,12 @@ public class SpecificProcessStepType extends TypeProviderBase {
 	@Override
 	public void produceTypeProperties() {
 		String stepName = SpecificProcessStepType.getProcessStepName(stepDef);
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(stepName);
+		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(stepName);
 		if (thisType.isPresent()) {
 			((RDFInstanceType) thisType.get()).cacheSuperProperties();
 			type = thisType.get();	
 		} else {
-			PPEInstanceType type = processType == null ? 
+			RDFInstanceType type = processType == null ? 
 				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getTypeByName(AbstractProcessInstanceType.typeId)) :			
 				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getTypeByName(AbstractProcessStepType.typeId));			
 

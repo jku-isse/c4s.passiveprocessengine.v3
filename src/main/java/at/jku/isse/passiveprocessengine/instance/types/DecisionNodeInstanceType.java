@@ -3,14 +3,11 @@ package at.jku.isse.passiveprocessengine.instance.types;
 import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
-import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 public class DecisionNodeInstanceType extends TypeProviderBase {
@@ -22,7 +19,7 @@ public class DecisionNodeInstanceType extends TypeProviderBase {
 	
 	public DecisionNodeInstanceType(SchemaRegistry schemaRegistry) {
 		super(schemaRegistry);
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
+		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
 			//schemaRegistry.registerType(DecisionNodeInstance.class, thisType.get());
 			this.type = thisType.get();

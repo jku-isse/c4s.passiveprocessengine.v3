@@ -1,29 +1,24 @@
 package at.jku.isse.passiveprocessengine.instance.serialization;
 
-import java.util.Set;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.concat;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Set;
 
-import at.jku.isse.designspace.artifactconnector.core.repository.CoreTypeFactory;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.serialization.ConfigurablePropertyTypeAdapter;
 import at.jku.isse.passiveprocessengine.core.serialization.TypeAdapterRegistry;
-import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
 import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType;
 import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.CoreTypeFactory;
 
 public class ProcessInstanceTypeAdapterRegistryFactory {
 
@@ -150,9 +145,9 @@ public class ProcessInstanceTypeAdapterRegistryFactory {
 	}
 	
 	private static Set<String> getShallowArtifactProperties() {
-		return Set.of(CoreTypeFactory.EXTERNAL_DEFAULT_ID
-				, CoreTypeFactory.EXTERNAL_TYPE
-				, CoreTypeFactory.URL
-				, CoreTypeFactory.LAST_UPDATE);
+		return Set.of(CoreTypeFactory.EXTERNAL_DEFAULT_ID_URI
+				, CoreTypeFactory.EXTERNAL_TYPE_URI
+				, CoreTypeFactory.URL_URI
+				, CoreTypeFactory.LAST_UPDATE_URI);
 	}
 }

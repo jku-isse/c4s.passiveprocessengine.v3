@@ -2,11 +2,11 @@ package at.jku.isse.passiveprocessengine.definition.activeobjects;
 
 import java.util.Comparator;
 
+
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
-import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import lombok.NonNull;
 
 public class ConstraintSpec extends  ProcessDefinitionScopedElement{
@@ -14,7 +14,7 @@ public class ConstraintSpec extends  ProcessDefinitionScopedElement{
 
 
 
-	public ConstraintSpec(PPEInstance instance, ProcessContext context) {
+	public ConstraintSpec(RDFInstance instance, ProcessContext context) {
 		super(instance, context);
 	}
 

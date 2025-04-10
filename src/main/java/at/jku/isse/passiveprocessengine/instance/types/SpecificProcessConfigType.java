@@ -5,10 +5,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import at.jku.isse.artifacteventstreaming.schemasupport.Cardinalities;
 import at.jku.isse.passiveprocessengine.core.BuildInType;
 import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType.CARDINALITIES;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
@@ -37,7 +37,7 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 	@Override
 	public void produceTypeProperties() {
 		String subtypeName = getSubtypeName();
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(subtypeName);
+		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(subtypeName);
 		if (thisType.isPresent()) {
 			((RDFInstanceType) type).cacheSuperProperties();
 			//schemaRegistry.registerTypeByName(thisType.get());
@@ -66,7 +66,7 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 		Object defaultValue; // not supported yet
 		boolean isRepairable = true; // not supported yet
 
-		public PPEInstanceType getInstanceType(SchemaRegistry schemaRegistry) {
+		public RDFInstanceType getInstanceType(SchemaRegistry schemaRegistry) {
 			switch (instanceType) {
 				case("STRING"): return BuildInType.STRING;
 				case("BOOLEAN"): return BuildInType.BOOLEAN;
@@ -79,9 +79,9 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 			}
 		}
 
-		public CARDINALITIES getCardinality() {
+		public Cardinalities getCardinality() {
 			try {
-				return CARDINALITIES.valueOf(cardinality);
+				return Cardinalities.valueOf(cardinality);
 			} catch (Exception e) {
 				return null;
 			}
@@ -91,8 +91,8 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 			return (getInstanceType(schemaRegistry) != null && getCardinality() != null);
 		}
 
-		public boolean addPropertyToType(PPEInstanceType processConfig, DomainTypesRegistry factory, SchemaRegistry schemaRegistry, RuleDefinitionService ruleFactory) {
-			PPEInstanceType baseType = factory.getTypeByName(ProcessConfigBaseElementType.typeId);
+		public boolean addPropertyToType(RDFInstanceType processConfig, DomainTypesRegistry factory, SchemaRegistry schemaRegistry, RuleDefinitionService ruleFactory) {
+			RDFInstanceType baseType = factory.getTypeByName(ProcessConfigBaseElementType.typeId);
 			
 			if (processConfig != null
 					&& factory != null

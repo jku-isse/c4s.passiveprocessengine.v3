@@ -46,19 +46,19 @@
 	</repositories>
 
 	<dependencies>
-        <dependency>
+      <!--  <dependency>
             <groupId>at.jku.isse.designspace</groupId>
             <artifactId>artifact-connector.core</artifactId>
             <version>3.0.0</version>
             <scope>compile</scope>
-        </dependency>
+        </dependency>-->
 
-        <dependency>
+<!--        <dependency>
 			<groupId>org.apache.jena</groupId>
 			<artifactId>apache-jena-libs</artifactId>
 			<type>pom</type>
 			<version>5.1.0</version>
-		</dependency>
+		</dependency>-->
         <dependency>
   			<groupId>at.jku.isse</groupId>
   			<artifactId>artifacteventstreaming</artifactId>

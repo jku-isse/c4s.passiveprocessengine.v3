@@ -9,8 +9,8 @@ import java.util.stream.Stream;
 
 import com.google.gson.stream.JsonWriter;
 
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.serialization.ConfigurablePropertyTypeAdapter;
 import at.jku.isse.passiveprocessengine.core.serialization.TypeAdapterRegistry;
@@ -22,7 +22,7 @@ import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 public class StepTypeAdapter extends ConfigurablePropertyTypeAdapter {
 	
 	protected final ProcessContext context;
-	protected final PPEInstanceType baseStepType;
+	protected final RDFInstanceType baseStepType;
 	
 	public StepTypeAdapter(TypeAdapterRegistry registry, 
 			Set<String> propertiesToSerializeShallow,
@@ -35,10 +35,10 @@ public class StepTypeAdapter extends ConfigurablePropertyTypeAdapter {
 	}
 	
 	@Override
-	public void write(JsonWriter out, PPEInstance value) throws IOException {
+	public void write(JsonWriter out, RDFInstance value) throws IOException {
 		out.beginObject();
 		writeThisInstance(value, out);
-		PPEInstanceType type = value.getInstanceType();
+		RDFInstanceType type = value.getInstanceType();
 		
 		Set<String> propertiesToSerializeDeepExtended = extendWithInputOutput(type, value);
 		
@@ -60,7 +60,7 @@ public class StepTypeAdapter extends ConfigurablePropertyTypeAdapter {
 		out.endObject();
 	}
 
-	private Set<String> extendWithInputOutput(PPEInstanceType type, PPEInstance instance) {
+	private Set<String> extendWithInputOutput(RDFInstanceType type, RDFInstance instance) {
 		if (type.isOfTypeOrAnySubtype(baseStepType)) {
 			ProcessStep step = context.getWrappedInstance(ProcessStep.class, instance);
 			StepDefinition stepDef = step.getDefinition();

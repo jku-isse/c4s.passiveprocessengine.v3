@@ -3,11 +3,10 @@ package at.jku.isse.passiveprocessengine.instance.types;
 import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 public class ProcessInstanceScopeType extends TypeProviderBase {
@@ -17,7 +16,7 @@ public class ProcessInstanceScopeType extends TypeProviderBase {
 
 	public ProcessInstanceScopeType(SchemaRegistry schemaRegistry) {
 		super(schemaRegistry);
-		Optional<PPEInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
+		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
 			//schemaRegistry.registerType(ProcessInstanceScopedElement.class, thisType.get());
 			this.type = thisType.get();
@@ -33,7 +32,7 @@ public class ProcessInstanceScopeType extends TypeProviderBase {
 		//type.createPropertyType(CoreProperties.process.toString(), Cardinality.SINGLE, typeStep); needs to be add in individual subclasses in order to be able to refine it					
 	}
 	
-	public static void addGenericProcessProperty(PPEInstanceType instType, DomainTypesRegistry schemaRegistry) {
+	public static void addGenericProcessProperty(RDFInstanceType instType, DomainTypesRegistry schemaRegistry) {
 		((RDFInstanceType) instType).cacheSuperProperties();
 		if (instType.getPropertyType(ProcessInstanceScopeType.CoreProperties.process.toString()) == null) {
 			instType.createSinglePropertyType(ProcessInstanceScopeType.CoreProperties.process.toString(), schemaRegistry.getTypeByName(AbstractProcessStepType.typeId));

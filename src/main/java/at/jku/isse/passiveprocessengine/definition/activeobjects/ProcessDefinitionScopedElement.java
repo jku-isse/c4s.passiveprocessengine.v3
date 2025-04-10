@@ -1,41 +1,47 @@
 package at.jku.isse.passiveprocessengine.definition.activeobjects;
 
-import at.jku.isse.passiveprocessengine.core.InstanceWrapper;
+
+import org.apache.jena.ontapi.model.OntIndividual;
+
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionScopeType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import lombok.NonNull;
 
-public abstract class ProcessDefinitionScopedElement extends InstanceWrapper {
+public abstract class ProcessDefinitionScopedElement extends RDFInstance {
 
-	public ProcessDefinitionScopedElement(PPEInstance instance, ProcessContext context) {
-		super(instance, context);
+	protected ProcessDefinitionScopedElement(@NonNull OntIndividual element, RDFInstanceType type, @NonNull NodeToDomainResolver resolver) {
+		super(element, type, resolver);
 	}
 
 	public void setProcess(ProcessDefinition pi) {
-		instance.setSingleProperty(ProcessDefinitionScopeType.CoreProperties.processDefinition.toString(), pi.getInstance());
+		setSingleProperty(ProcessDefinitionScopeType.CoreProperties.processDefinition.toString(), pi.getInstance());
 	}
 
 	public void setProcOrderIndex(int index) {
-		instance.setSingleProperty(ProcessDefinitionScopeType.CoreProperties.orderIndex.toString(), index);
+		setSingleProperty(ProcessDefinitionScopeType.CoreProperties.orderIndex.toString(), index);
 	}
 
 	public Integer getProcOrderIndex() {
-		return instance.getTypedProperty(ProcessDefinitionScopeType.CoreProperties.orderIndex.toString(), Integer.class, -1);
+		return getTypedProperty(ProcessDefinitionScopeType.CoreProperties.orderIndex.toString(), Integer.class, -1);
 	}
 
 	public ProcessDefinition getProcess() {
-		PPEInstance pi = instance.getTypedProperty(ProcessDefinitionScopeType.CoreProperties.processDefinition.toString(), PPEInstance.class);
-		if (pi != null)
-			return context.getWrappedInstance(ProcessDefinition.class, pi);
-		else return null;
+		return getTypedProperty(ProcessDefinitionScopeType.CoreProperties.processDefinition.toString(), ProcessDefinition.class);		
 	}
 	
-	protected ProcessContext getProcessContext() {
-		return (ProcessContext) context;
-	}
+//	protected ProcessContext getProcessContext() {
+//		return (ProcessContext) context;
+//	}
 
 	@Override
 	public String toString() {
-		return instance.getName();
+		return getName();
+	}
+	
+	public void deleteCascading() {
+		super.delete();
 	}
 }

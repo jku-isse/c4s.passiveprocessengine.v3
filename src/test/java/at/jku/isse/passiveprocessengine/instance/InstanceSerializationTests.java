@@ -9,7 +9,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.serialization.TypeAdapterRegistry;
 import at.jku.isse.passiveprocessengine.core.serialization.TypeAdapterRouter;
@@ -39,7 +39,7 @@ class InstanceSerializationTests extends InstanceTests {
 	public Gson getGson(TypeAdapterRegistry typeAdapterRegistry) {
 		TypeAdapterRouter router = new TypeAdapterRouter(typeAdapterRegistry);
 		Gson gson = new GsonBuilder()
-				 .registerTypeHierarchyAdapter(PPEInstance.class, router)
+				 .registerTypeHierarchyAdapter(RDFInstance.class, router)
 				 .setPrettyPrinting()
 				 .create();
 		return gson;
@@ -48,9 +48,9 @@ class InstanceSerializationTests extends InstanceTests {
 
 	@Test
 	void testComplexDataMappingSerialization() throws ProcessException {
-		PPEInstance jiraB =  artifactFactory.getJiraInstance("jiraB");
-		PPEInstance jiraC = artifactFactory.getJiraInstance("jiraC");		
-		PPEInstance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
+		RDFInstance jiraB =  artifactFactory.getJiraInstance("jiraB");
+		RDFInstance jiraC = artifactFactory.getJiraInstance("jiraC");		
+		RDFInstance jiraA = artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
 						
 		ProcessInstance proc =  instantiateDefaultProcess(procFactory.getSimple2StepProcessDefinition(), jiraA);		
 		super.instanceRepository.concludeTransaction();

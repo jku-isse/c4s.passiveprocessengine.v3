@@ -9,8 +9,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
@@ -27,13 +27,13 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	private boolean isInternalPropagationDone = false;
 	private InterStepDataMapper mapper = null;
 
-	public DecisionNodeInstance(PPEInstance instance, ProcessContext context) {
+	public DecisionNodeInstance(RDFInstance instance, ProcessContext context) {
 		super(instance, context);
 	}
 
 	@Override
 	public DecisionNodeDefinition getDefinition() {
-		return  context.getWrappedInstance(DecisionNodeDefinition.class, instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.dnd.toString(), PPEInstance.class));
+		return  context.getWrappedInstance(DecisionNodeDefinition.class, instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.dnd.toString(), RDFInstance.class));
 	}
 
 	private void setInflowFulfilled(boolean isFulfilled) {
@@ -62,7 +62,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getOutSteps() {
 		return (Set<ProcessStep>) instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.outSteps.toString(), Set.class).stream()
-			.map(inst -> getProcessContext().getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((PPEInstance) inst), (PPEInstance)inst))
+			.map(inst -> getProcessContext().getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((RDFInstance) inst), (RDFInstance)inst))
 			.collect(Collectors.toSet());
 	}
 
@@ -74,7 +74,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getInSteps() {
 		return (Set<ProcessStep>) instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.inSteps.toString(), Set.class).stream()
-			.map(inst -> getProcessContext().getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((PPEInstance) inst), (PPEInstance)inst))
+			.map(inst -> getProcessContext().getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((RDFInstance) inst), (RDFInstance)inst))
 			.collect(Collectors.toSet());
 	}
 
@@ -368,7 +368,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		if (this.getOutSteps().isEmpty())
 			return null;
 		else {
-			PPEInstance dnd = instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.closingDN.toString(), PPEInstance.class);
+			RDFInstance dnd = instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.closingDN.toString(), RDFInstance.class);
 			if (dnd != null)
 				return context.getWrappedInstance(DecisionNodeInstance.class, dnd);
 			else {

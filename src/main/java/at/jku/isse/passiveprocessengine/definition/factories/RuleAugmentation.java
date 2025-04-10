@@ -3,15 +3,15 @@ package at.jku.isse.passiveprocessengine.definition.factories;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
-import at.jku.isse.passiveprocessengine.core.RuleDefinition;
+import at.jku.isse.designspace.rule.arl.evaluator.RuleDefinition;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.factories.RuleAugmentation.StepParameter;
 import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleDefinitionService;
@@ -26,12 +26,12 @@ public class RuleAugmentation {
 	private static final String INSTANCETYPE_PROPERTY_METADATA = "propertyMetadata";
 	
 	private StepDefinition stepDef;
-	private PPEInstanceType stepType;
+	private RDFInstanceType stepType;
 	
 	private RuleDefinitionService ruleFactory;
 	private RewriterFactory ruleRewriter;
 
-	public RuleAugmentation(StepDefinition sd, PPEInstanceType stepType, RuleDefinitionService ruleFactory, RewriterFactory ruleRewriter) {		
+	public RuleAugmentation(StepDefinition sd, RDFInstanceType stepType, RuleDefinitionService ruleFactory, RewriterFactory ruleRewriter) {		
 		this.stepDef = sd;
 		this.stepType = stepType;
 		this.ruleFactory = ruleFactory;

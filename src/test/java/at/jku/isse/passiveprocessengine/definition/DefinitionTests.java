@@ -10,7 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
@@ -55,7 +55,7 @@ class DefinitionTests extends InstanceWrapperTests {
 	
 	@Test
 	void testSimpleProcContent() {
-		PPEInstanceType typeJira = artifactFactory.getJiraInstanceType();
+		RDFInstanceType typeJira = artifactFactory.getJiraInstanceType();
 						
 		assert(typeJira != null);
 		assert(procDef.getExpectedInput().get("jiraIn").equals(typeJira));
@@ -104,7 +104,7 @@ class DefinitionTests extends InstanceWrapperTests {
 	
 	@Test
 	void testSimpleProcContentFromJson() {
-		PPEInstanceType typeJira = artifactFactory.getJiraInstanceType();
+		RDFInstanceType typeJira = artifactFactory.getJiraInstanceType();
 		procDTO.setCode("ProcToJson");		
 		DTOs.DecisionNode dn1 = procDTO.getDecisionNodeByCode("dndSubStart");
 		dn1.getMapping().clear();		

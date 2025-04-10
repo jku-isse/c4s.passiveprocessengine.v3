@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import at.jku.isse.designspace.rule.arl.evaluator.RuleDefinition;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
-import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
@@ -38,7 +38,7 @@ public class ProcessInstance extends ProcessStep {
 	private transient ProcessStepInstanceFactory stepFactory;
 	private transient DecisionNodeInstanceFactory decisionNodeFactory;
 
-	public ProcessInstance(PPEInstance instance, ProcessContext context) {
+	public ProcessInstance(RDFInstance instance, ProcessContext context) {
 		super(instance, context);
 		if (getCreatedAt() == null) { // truely null, otherwise just loading from persistance layer
 			setCreatedAt(getCurrentTimestamp());
@@ -113,13 +113,13 @@ public class ProcessInstance extends ProcessStep {
 
 	@Override
 	public ProcessDefinition getDefinition() {
-		var inst = instance.getTypedProperty(SpecificProcessInstanceType.CoreProperties.processDefinition.toString(), PPEInstance.class);
+		var inst = instance.getTypedProperty(SpecificProcessInstanceType.CoreProperties.processDefinition.toString(), RDFInstance.class);
 		return  context.getWrappedInstance(ProcessDefinition.class, inst);
 	}
 
 	@Override
 	public DecisionNodeInstance getInDNI() {
-			PPEInstance inst = instance.getTypedProperty(AbstractProcessStepType.CoreProperties.inDNI.toString(), PPEInstance.class);
+			RDFInstance inst = instance.getTypedProperty(AbstractProcessStepType.CoreProperties.inDNI.toString(), RDFInstance.class);
 			if (inst != null)
 				return context.getWrappedInstance(DecisionNodeInstance.class, inst);
 			else
@@ -128,7 +128,7 @@ public class ProcessInstance extends ProcessStep {
 
 	@Override
 	public DecisionNodeInstance getOutDNI() {
-		PPEInstance inst = instance.getTypedProperty(AbstractProcessStepType.CoreProperties.outDNI.toString(), PPEInstance.class);
+		RDFInstance inst = instance.getTypedProperty(AbstractProcessStepType.CoreProperties.outDNI.toString(), RDFInstance.class);
 		if (inst != null)
 			return context.getWrappedInstance(DecisionNodeInstance.class, inst);
 		else
@@ -136,7 +136,7 @@ public class ProcessInstance extends ProcessStep {
 	}
 
 	@Override
-	public Responses.IOResponse removeInput(String inParam, PPEInstance artifact) {
+	public Responses.IOResponse removeInput(String inParam, RDFInstance artifact) {
 		IOResponse isOk = super.removeInput(inParam, artifact);
 		if (isOk.getError() == null) {
 			// now see if we need to map this to first DNI - we assume all went well
@@ -150,7 +150,7 @@ public class ProcessInstance extends ProcessStep {
 	}
 
 	@Override
-	public Responses.IOResponse addInput(String inParam, PPEInstance artifact) {
+	public Responses.IOResponse addInput(String inParam, RDFInstance artifact) {
 		IOResponse isOk = super.addInput(inParam, artifact);
 		if (isOk.getError() == null) {
 			// now see if we need to map this to first DNI - we assume all went well
@@ -266,7 +266,7 @@ public class ProcessInstance extends ProcessStep {
 		Set<?> stepList = instance.getTypedProperty(SpecificProcessInstanceType.CoreProperties.stepInstances.toString(), Set.class);
 		if (stepList != null) {
 			return (Set<ProcessStep>) stepList.stream()
-					.map(inst -> getProcessContext().getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((PPEInstance) inst), (PPEInstance) inst))
+					.map(inst -> getProcessContext().getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((RDFInstance) inst), (RDFInstance) inst))
 					.map(obj -> (ProcessStep)obj)
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
@@ -278,7 +278,7 @@ public class ProcessInstance extends ProcessStep {
 		Set<?> dniSet = instance.getTypedProperty(SpecificProcessInstanceType.CoreProperties.decisionNodeInstances.toString(), Set.class);
 		if (dniSet != null ) {
 			return (Set<DecisionNodeInstance>) dniSet.stream()
-					.map(inst -> context.getWrappedInstance(DecisionNodeInstance.class, (PPEInstance) inst))
+					.map(inst -> context.getWrappedInstance(DecisionNodeInstance.class, (RDFInstance) inst))
 					.map(obj -> (DecisionNodeInstance)obj)
 					.collect(Collectors.toSet());
 		} else 

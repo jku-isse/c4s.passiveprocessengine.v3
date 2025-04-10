@@ -1,11 +1,10 @@
 package at.jku.isse.passiveprocessengine.instance.factories;
 
 import java.time.ZonedDateTime;
-import java.util.UUID;
 
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
@@ -27,7 +26,7 @@ public class ConstraintResultWrapperFactory extends DomainFactory {
 	
 	public ConstraintResultWrapper createInstance(ConstraintSpec qaSpec, ZonedDateTime lastChanged, ProcessStep owningStep, ProcessInstance proc) {
 		var id = generateId(qaSpec, proc);
-		PPEInstance inst = getContext().getInstanceRepository().createInstance(id, getContext().getSchemaRegistry().getTypeByName(ConstraintWrapperType.typeId));
+		RDFInstance inst = getContext().getInstanceRepository().createInstance(id, getContext().getSchemaRegistry().getTypeByName(ConstraintWrapperType.typeId));
 		ConstraintResultWrapper cw = getContext().getWrappedInstance(ConstraintResultWrapper.class, inst);
 		cw.getInstance().setSingleProperty(ConstraintWrapperType.CoreProperties.parentStep.toString(), owningStep.getInstance());
 		cw.setSpec(qaSpec);

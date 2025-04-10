@@ -3,18 +3,16 @@ package at.jku.isse.passiveprocessengine.demo;
 import java.util.Optional;
 import java.util.Set;
 
-import at.jku.isse.designspace.artifactconnector.core.repository.CoreTypeFactory;
-import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
-import at.jku.isse.passiveprocessengine.core.InstanceRepository;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
-import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
+
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.CoreTypeFactory;
 
 public class TestArtifacts {
 
 	public static final String DEMOISSUETYPE = "http://isse.jku.at/demo#DemoIssue";
-	public static enum CoreProperties { state, requirements, bugs, parent, html_url, upstream, downstream }
-	public static enum JiraStates { Open, InProgress, Closed, ReadyForReview, Released}
+	public enum CoreProperties { state, requirements, bugs, parent, html_url, upstream, downstream }
+	public enum JiraStates { Open, InProgress, Closed, ReadyForReview, Released}
 
 	InstanceRepository repository;
 	SchemaRegistry schemaRegistry;
@@ -24,12 +22,12 @@ public class TestArtifacts {
 		this.schemaRegistry = schemaRegistry;		
 	}
 	
-	public PPEInstanceType getJiraInstanceType() {
-		Optional<PPEInstanceType> thisType = Optional.ofNullable(schemaRegistry.getTypeByName(DEMOISSUETYPE));
+	public RDFInstanceType getJiraInstanceType() {
+		Optional<RDFInstanceType> thisType = Optional.ofNullable(schemaRegistry.getTypeByName(DEMOISSUETYPE));
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
-				PPEInstanceType typeJira = schemaRegistry.createNewInstanceType(DEMOISSUETYPE, schemaRegistry.getTypeByName(CoreTypeFactory.BASE_TYPE_URI));				
+				RDFInstanceType typeJira = schemaRegistry.createNewInstanceType(DEMOISSUETYPE, schemaRegistry.getTypeByName(CoreTypeFactory.BASE_TYPE_URI));				
 				//schemaRegistry.registerTypeByName(typeJira);
 				typeJira.createSinglePropertyType(CoreProperties.state.toString(), BuildInType.STRING);
 				typeJira.createSetPropertyType(CoreProperties.requirements.toString(), typeJira);
@@ -43,74 +41,74 @@ public class TestArtifacts {
 			}
 	}
 
-	public PPEInstance getJiraInstance(String name, PPEInstance... reqs) {
-		PPEInstance jira = repository.createInstance(name, getJiraInstanceType());
-		jira.setSingleProperty(CoreTypeFactory.URL,"http://localhost:7171/home");
-		jira.setSingleProperty(CoreTypeFactory.EXTERNAL_TYPE,"none");
-		jira.setSingleProperty(CoreTypeFactory.EXTERNAL_DEFAULT_ID, name);
-		jira.setSingleProperty(PPEInstance.IS_FULLYFETCHED, true);
+	public RDFInstance getJiraInstance(String name, RDFInstance... reqs) {
+		RDFInstance jira = repository.createInstance(name, getJiraInstanceType());
+		jira.setSingleProperty(CoreTypeFactory.URL_URI,"http://localhost:7171/home");
+		jira.setSingleProperty(CoreTypeFactory.EXTERNAL_TYPE_URI,"none");
+		jira.setSingleProperty(CoreTypeFactory.EXTERNAL_DEFAULT_ID_URI, name);
+		jira.setSingleProperty(RDFInstanceType.propertyIsFullyFetchedPredicate, true);
 		setStateToJiraInstance(jira, JiraStates.Open);
-		for(PPEInstance inst : reqs) {
+		for(RDFInstance inst : reqs) {
 			jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).add(inst);
 		}
 		return jira;
 	}
 
-	public void addReqsToJira(PPEInstance jira, PPEInstance... reqs) {
-		for(PPEInstance inst : reqs) {
+	public void addReqsToJira(RDFInstance jira, RDFInstance... reqs) {
+		for(RDFInstance inst : reqs) {
 			jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).add(inst);
 		}
 	}
 
-	public void addJiraToRequirements(PPEInstance issue, PPEInstance reqToAdd) {
+	public void addJiraToRequirements(RDFInstance issue, RDFInstance reqToAdd) {
 		issue.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).add(reqToAdd);
 	}
 	
-	public void removeJiraFromReqs(PPEInstance jira, PPEInstance reqToRemove) {
+	public void removeJiraFromReqs(RDFInstance jira, RDFInstance reqToRemove) {
 		jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class).remove(reqToRemove);
 	}
 
-	public void setStateToJiraInstance(PPEInstance inst, JiraStates state) {
+	public void setStateToJiraInstance(RDFInstance inst, JiraStates state) {
 		inst.setSingleProperty(CoreProperties.state.toString(), state.toString());
 	}
 
-	public void addJiraToJiraBug(PPEInstance jira, PPEInstance bugToAdd) {
+	public void addJiraToJiraBug(RDFInstance jira, RDFInstance bugToAdd) {
 		jira.getTypedProperty(TestArtifacts.CoreProperties.bugs.toString(), Set.class).add(bugToAdd);
 	}
 
-	public void removeJiraFromJiraBug(PPEInstance jira, PPEInstance bugToRemove) {
+	public void removeJiraFromJiraBug(RDFInstance jira, RDFInstance bugToRemove) {
 		jira.getTypedProperty(TestArtifacts.CoreProperties.bugs.toString(), Set.class).remove(bugToRemove);
 	}
 
-	public void addParentToJira(PPEInstance inst, PPEInstance parent) {
+	public void addParentToJira(RDFInstance inst, RDFInstance parent) {
 		inst.setSingleProperty(CoreProperties.parent.toString(),parent);
 	}
 
-	public void addUpstream(PPEInstance inst, PPEInstance toAdd) {
+	public void addUpstream(RDFInstance inst, RDFInstance toAdd) {
 		inst.getTypedProperty(TestArtifacts.CoreProperties.upstream.toString(), Set.class).add(toAdd);
 	}
 
-	public void addDownstream(PPEInstance inst, PPEInstance toAdd) {
+	public void addDownstream(RDFInstance inst, RDFInstance toAdd) {
 		inst.getTypedProperty(TestArtifacts.CoreProperties.downstream.toString(), Set.class).add(toAdd);
 	}
 
-	public void removeUpstream(PPEInstance inst, PPEInstance toRemove) {
+	public void removeUpstream(RDFInstance inst, RDFInstance toRemove) {
 		inst.getTypedProperty(TestArtifacts.CoreProperties.upstream.toString(), Set.class).remove(toRemove);
 	}
 
-	public void removeDownstream(PPEInstance inst, PPEInstance toRemove) {
+	public void removeDownstream(RDFInstance inst, RDFInstance toRemove) {
 		inst.getTypedProperty(TestArtifacts.CoreProperties.downstream.toString(), Set.class).remove(toRemove);
 	}
 
-	public static JiraStates getState(PPEInstance inst) {
+	public static JiraStates getState(RDFInstance inst) {
 		String state= (String) inst.getTypedProperty(CoreProperties.state.toString(), String.class, JiraStates.Open.toString());
 		return JiraStates.valueOf(state);
 	}
 
-	public static String printProperties(PPEInstance jira) {
-		PPEInstance parent = jira.getTypedProperty(TestArtifacts.CoreProperties.parent.toString(), PPEInstance.class);				
+	public static String printProperties(RDFInstance jira) {
+		RDFInstance parent = jira.getTypedProperty(TestArtifacts.CoreProperties.parent.toString(), RDFInstance.class);				
 		String state = jira.getTypedProperty(TestArtifacts.CoreProperties.state.toString(), String.class);
-		Set<PPEInstance> requirements = jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class);
+		Set<RDFInstance> requirements = jira.getTypedProperty(TestArtifacts.CoreProperties.requirements.toString(), Set.class);
 		
 		StringBuffer sb = new StringBuffer("Issue:"+jira.getName()+"::"+getState(jira)+"\r\n");
 		if (parent != null)
@@ -119,8 +117,8 @@ public class TestArtifacts {
 		return sb.toString();
 	}
 	
-	public PPEInstanceType getDemoGitIssueType() {
-		PPEInstanceType typeGitDemo = schemaRegistry.createNewInstanceType("git_issue");
+	public RDFInstanceType getDemoGitIssueType() {
+		RDFInstanceType typeGitDemo = schemaRegistry.createNewInstanceType("git_issue");
 		typeGitDemo.createSetPropertyType("linkedIssues", typeGitDemo);
 		typeGitDemo.createSetPropertyType("labels", BuildInType.STRING);
 		typeGitDemo.createSinglePropertyType("state", BuildInType.STRING);
@@ -128,11 +126,11 @@ public class TestArtifacts {
 		return typeGitDemo;
 	}
 
-	public PPEInstanceType getTestAzureIssueType() {
-		PPEInstanceType typeAzureTest = schemaRegistry.createNewInstanceType("azure_workitem");
-		PPEInstanceType typeAzureStateTest = schemaRegistry.createNewInstanceType("azure_workitemstate");
-		PPEInstanceType typeAzureTypeTest = schemaRegistry.createNewInstanceType("azure_workitemtype");
-		PPEInstanceType typeAzureLinkTypeTest = schemaRegistry.createNewInstanceType("workitem_link");
+	public RDFInstanceType getTestAzureIssueType() {
+		RDFInstanceType typeAzureTest = schemaRegistry.createNewInstanceType("azure_workitem");
+		RDFInstanceType typeAzureStateTest = schemaRegistry.createNewInstanceType("azure_workitemstate");
+		RDFInstanceType typeAzureTypeTest = schemaRegistry.createNewInstanceType("azure_workitemtype");
+		RDFInstanceType typeAzureLinkTypeTest = schemaRegistry.createNewInstanceType("workitem_link");
 
 		typeAzureTest.createSetPropertyType("relatedItems", typeAzureLinkTypeTest);
 		typeAzureTest.createSinglePropertyType("state", typeAzureStateTest);

@@ -4,7 +4,6 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -13,13 +12,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
-import at.jku.isse.passiveprocessengine.designspace.ProcessOverridingAnalysis;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceError;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.factories.ProcessInstanceFactory;
@@ -34,8 +32,8 @@ public class ProcessRegistry {
 	private final ProcessContext context;
 
 
-	protected PPEInstanceType processDefinitionType;
-	protected PPEInstanceType processInstanceType;
+	protected RDFInstanceType processDefinitionType;
+	protected RDFInstanceType processInstanceType;
 
 	//protected Set<DTOs.Process> tempStorePD = new HashSet<>();
 	//protected boolean isInit = false;
@@ -119,7 +117,7 @@ public class ProcessRegistry {
 		DefinitionTransformer.replaceStepNamesInMappings(process, tempCode, originalCode);
 		process.setCode(originalCode);
 		Optional<ProcessDefinition> prevPD = getProcessDefinition(process.getCode(), true);
-		Map<String, Map<String, Set<PPEInstance>>> prevProcInput = new HashMap<>() ;
+		Map<String, Map<String, Set<RDFInstance>>> prevProcInput = new HashMap<>() ;
 		if (prevPD.isPresent()) {
 			log.debug("Removing existing process definition and instances thereof: "+process.getCode());
 			prevProcInput = removeAllProcessInstancesOfProcessDefinition(prevPD.get());
@@ -170,13 +168,13 @@ public class ProcessRegistry {
 	 * @param pDef 
 	 * @return the map of inputs of all prior existing process instances by key of prior process id
 	 */
-	public Map<String, Map<String, Set<PPEInstance>>> removeAllProcessInstancesOfProcessDefinition(ProcessDefinition pDef) {
+	public Map<String, Map<String, Set<RDFInstance>>> removeAllProcessInstancesOfProcessDefinition(ProcessDefinition pDef) {
 		// to be called before removing the process definition,
 		// get the process definition instance type, get all instances thereof, then use the wrapper cache to obtain the process instance
-		Map<String, Map<String, Set<PPEInstance>>> prevProcInput = new HashMap<>();
+		Map<String, Map<String, Set<RDFInstance>>> prevProcInput = new HashMap<>();
 
 		// we actually dont need to find the process definition type, but the specific process instance type declaration
-		PPEInstanceType specProcDefType = context.getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(pDef)); 
+		RDFInstanceType specProcDefType = context.getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(pDef)); 
 		context.getInstanceRepository().getAllInstancesOfTypeOrSubtype(specProcDefType).stream()
 		.filter(inst -> !inst.isMarkedAsDeleted())
 		.map(inst -> context.getWrappedInstance(ProcessInstance.class, inst))
@@ -184,7 +182,7 @@ public class ProcessRegistry {
 		.map(ProcessInstance.class::cast)
 		.forEach(procInst -> {
 			processInstances.remove(procInst.getName());
-			Map<String, Set<PPEInstance>> inputSet = new HashMap<>();
+			Map<String, Set<RDFInstance>> inputSet = new HashMap<>();
 			procInst.getDefinition().getExpectedInput().keySet().stream()
 			.forEach(input -> inputSet.put(input, procInst.getInput(input)));
 			prevProcInput.put(procInst.getName(), inputSet);
@@ -215,13 +213,13 @@ public class ProcessRegistry {
 				.collect(Collectors.toSet());
 	}
 
-	public boolean existsProcess(ProcessDefinition processDef, Map<String, Set<PPEInstance>> input) {
+	public boolean existsProcess(ProcessDefinition processDef, Map<String, Set<RDFInstance>> input) {
 		var namePostfix = generateProcessNamePostfix(input);
 		var id = ProcessInstanceFactory.generateId(processDef, namePostfix);
 		return this.getProcessByName(id) != null;
 	}
 	
-	public SimpleEntry<ProcessInstance, List<ProcessInstanceError>> instantiateProcess(ProcessDefinition processDef, Map<String, Set<PPEInstance>> input) {
+	public SimpleEntry<ProcessInstance, List<ProcessInstanceError>> instantiateProcess(ProcessDefinition processDef, Map<String, Set<RDFInstance>> input) {
 		// check if all inputs available:
 		List<ProcessInstanceError> errors = new LinkedList<>();
 		String namePostfix = generateProcessNamePostfix(input);
@@ -291,7 +289,7 @@ public class ProcessRegistry {
 		return existingProcessInstances;
 	}
 
-	public static String generateProcessNamePostfix(Map<String, Set<PPEInstance>> procInput) {
+	public static String generateProcessNamePostfix(Map<String, Set<RDFInstance>> procInput) {
 		return procInput.entrySet().stream()
 				.flatMap(entry -> entry.getValue().stream())
 				.map(inst -> inst.getName()).collect(Collectors.joining("-"));

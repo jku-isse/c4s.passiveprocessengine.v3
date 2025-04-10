@@ -1,6 +1,5 @@
 package at.jku.isse.passiveprocessengine.core;
 
-import at.jku.isse.designspace.artifactconnector.core.repository.CoreTypeFactory;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
 import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
 import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionType;
@@ -15,6 +14,7 @@ import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType;
 import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.CoreTypeFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleDefinitionService;
 import lombok.Getter;
 

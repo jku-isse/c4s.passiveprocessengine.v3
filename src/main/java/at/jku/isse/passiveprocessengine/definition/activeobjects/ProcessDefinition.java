@@ -4,15 +4,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import at.jku.isse.designspace.rule.arl.evaluator.RuleDefinition;
 import at.jku.isse.passiveprocessengine.core.InstanceWrapper;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
-import at.jku.isse.passiveprocessengine.core.RuleDefinition;
 import at.jku.isse.passiveprocessengine.definition.factories.ProcessDefinitionFactory;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
@@ -22,7 +21,7 @@ import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 
 public class ProcessDefinition extends StepDefinition{
 
-	public ProcessDefinition(PPEInstance instance, ProcessContext context) {
+	public ProcessDefinition(RDFInstance instance, ProcessContext context) {
 		super(instance, context);
 	}
 
@@ -30,7 +29,7 @@ public class ProcessDefinition extends StepDefinition{
 		List<?> stepList = instance.getTypedProperty(ProcessDefinitionType.CoreProperties.stepDefinitions.toString(), List.class);
 		if (stepList != null) {
 			return stepList.stream()
-					.map(inst -> context.getWrappedInstance(getMostSpecializedClass((PPEInstance)inst), (PPEInstance) inst))
+					.map(inst -> context.getWrappedInstance(getMostSpecializedClass((RDFInstance)inst), (RDFInstance) inst))
 					.filter(StepDefinition.class::isInstance)
 					.map(StepDefinition.class::cast)
 					.collect(Collectors.toList());
@@ -47,7 +46,7 @@ public class ProcessDefinition extends StepDefinition{
 		Set<?> dnSet = instance.getTypedProperty(ProcessDefinitionType.CoreProperties.decisionNodeDefinitions.toString(), Set.class);
 		if (dnSet != null) {
 			return dnSet.stream()
-					.map(inst -> context.getWrappedInstance(DecisionNodeDefinition.class, (PPEInstance) inst))
+					.map(inst -> context.getWrappedInstance(DecisionNodeDefinition.class, (RDFInstance) inst))
 					.map(obj ->(DecisionNodeDefinition)obj)
 					.collect(Collectors.toSet());
 		} else return Collections.emptySet();
@@ -115,26 +114,26 @@ public class ProcessDefinition extends StepDefinition{
 		this.getExpectedInput().entrySet().stream()
 		.filter(entry -> entry.getValue().isOfTypeOrAnySubtype(context.getSchemaRegistry().getTypeByName(ProcessConfigBaseElementType.typeId)))
 		.forEach(configEntry -> {
-			PPEInstanceType procConfig = configEntry.getValue().getInstanceType(); // context.getConfigFactory().getOrCreateProcessSpecificSubtype(configEntry.getKey(), this);
-			procConfig.markAsDeleted();
+			RDFInstanceType procConfig = configEntry.getValue().getInstanceType(); // context.getConfigFactory().getOrCreateProcessSpecificSubtype(configEntry.getKey(), this);
+			procConfig.delete();
 		});
 		// wring instanceType: we need to get the dynamically generate Instance (the one that is used for the ProcessInstance)
 		String processDefName = SpecificProcessInstanceType.getProcessName(this);
-		PPEInstanceType thisType = this.context.getSchemaRegistry().getTypeByName(processDefName);
+		RDFInstanceType thisType = this.context.getSchemaRegistry().getTypeByName(processDefName);
 		if (thisType != null) {
 			this.getPrematureTriggers().entrySet().stream()
 			.forEach(entry -> {
 				String name = SpecificProcessInstanceType.generatePrematureRuleName(entry.getKey(), this);
 				RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, thisType);//RuleDefinition.consistencyRuleTypeExists(ws,  name, thisType, entry.getValue());
 				if (crt != null) 
-					crt.markAsDeleted();
+					crt.delete();
 			});			
-			thisType.markAsDeleted();
+			thisType.delete();
 		}
 		// some code duplication with StepDefiniton.deleteCascading() due to awkward naming, needs major engine overhaul
 		String overrideName = SpecificProcessInstanceType.getProcessName(this);
 		String stepDefName = SpecificProcessStepType.getProcessStepName(this);
-		PPEInstanceType instType = this.context.getSchemaRegistry().getTypeByName(stepDefName);
+		RDFInstanceType instType = this.context.getSchemaRegistry().getTypeByName(stepDefName);
 		if (instType != null) {	
 			this.getActivationconditions().stream().forEach(spec -> { 
 				deleteRuleIfExists(instType, spec, Conditions.ACTIVATION, overrideName); //delete the rule 
@@ -152,17 +151,17 @@ public class ProcessDefinition extends StepDefinition{
 		super.deleteCascading();
 	}
 	
-	protected void deleteRuleIfExists(PPEInstanceType instType, ConstraintSpec spec, Conditions condition, String overrideName ) {
+	protected void deleteRuleIfExists(RDFInstanceType instType, ConstraintSpec spec, Conditions condition, String overrideName ) {
 		String name = ProcessDefinitionFactory.CRD_PREFIX+condition+spec.getOrderIndex()+"_"+overrideName;
 		RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
 		if (crt != null) 
-			crt.markAsDeleted();
+			crt.delete();
 	}
 
 	
 	
 
-	protected static Class<? extends InstanceWrapper> getMostSpecializedClass(PPEInstance inst) {
+	protected static Class<? extends InstanceWrapper> getMostSpecializedClass(RDFInstance inst) {
 		// we have the problem, that the WrapperCache will only return a type we ask for (which might be a general type) rather than the most specialized one, hence we need to obtain that type here
 		// we assume that this is used only in here within, and thus that inst is only ProcessDefinition or StepDefinition
 		if (inst.getInstanceType().getId().startsWith(ProcessDefinitionType.typeId)) // its a process

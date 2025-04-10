@@ -8,7 +8,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 
@@ -18,7 +18,7 @@ public class TransformationResultAdapterFactory extends DTOMultiTypeAdapterFacto
 	public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
 		if (type.getRawType() == ProcessDefinition.class) {
             return (TypeAdapter<T>) wrapDefinition(gson);
-        } else if (type.getRawType() == PPEInstance.class) {
+        } else if (type.getRawType() == RDFInstance.class) {
             return (TypeAdapter<T>) wrapInstance(gson);
         } else if (type.getRawType() == ProcessDefinitionScopedElement.class) {
             return (TypeAdapter<T>) wrapProcessDefinitionScopedElement(gson);
@@ -29,17 +29,17 @@ public class TransformationResultAdapterFactory extends DTOMultiTypeAdapterFacto
 
 
 
-	private TypeAdapter<PPEInstance> wrapInstance(Gson gson) {
+	private TypeAdapter<RDFInstance> wrapInstance(Gson gson) {
 		final TypeAdapter<String> instanceDelegate = gson.getDelegateAdapter(this, new TypeToken<String>() {});
 
 		return new TypeAdapter<>() {
 			@Override
-			public void write(JsonWriter out, PPEInstance value) throws IOException {
+			public void write(JsonWriter out, RDFInstance value) throws IOException {
 				instanceDelegate.write(out, value.getName());
 			}
 
 			@Override
-			public PPEInstance read(JsonReader in) throws IOException {
+			public RDFInstance read(JsonReader in) throws IOException {
 				// TODO Auto-generated method stub
 				return null;
 			}
