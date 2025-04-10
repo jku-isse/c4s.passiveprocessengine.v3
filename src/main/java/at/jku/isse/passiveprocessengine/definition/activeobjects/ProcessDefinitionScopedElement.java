@@ -11,7 +11,7 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import lombok.NonNull;
 
 public abstract class ProcessDefinitionScopedElement extends RDFInstance {
-
+	
 	protected ProcessDefinitionScopedElement(@NonNull OntIndividual element, RDFInstanceType type, @NonNull NodeToDomainResolver resolver) {
 		super(element, type, resolver);
 	}
@@ -31,10 +31,6 @@ public abstract class ProcessDefinitionScopedElement extends RDFInstance {
 	public ProcessDefinition getProcess() {
 		return getTypedProperty(ProcessDefinitionScopeType.CoreProperties.processDefinition.toString(), ProcessDefinition.class);		
 	}
-	
-//	protected ProcessContext getProcessContext() {
-//		return (ProcessContext) context;
-//	}
 
 	@Override
 	public String toString() {

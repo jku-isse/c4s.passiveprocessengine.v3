@@ -2,15 +2,18 @@ package at.jku.isse.passiveprocessengine.definition.types;
 
 import java.util.Optional;
 
+import at.jku.isse.passiveprocessengine.core.BaseNamespace;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 public class ProcessDefinitionScopeType {
 
+	public static final String NS = BaseNamespace.NS+"/types";
+	
 	public enum CoreProperties {processDefinition, orderIndex}
 	
 	private NodeToDomainResolver schemaRegistry;
-	public static final String typeId = ProcessDefinitionScopeType.class.getSimpleName();
+	public static final String typeId = NS+"#"+ProcessDefinitionScopeType.class.getSimpleName();
 	private final RDFInstanceType type;
 	
 	public ProcessDefinitionScopeType(NodeToDomainResolver schemaRegistry) {
