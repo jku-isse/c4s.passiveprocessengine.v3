@@ -10,7 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
+import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.core.serialization.TypeAdapterRegistry;
 import at.jku.isse.passiveprocessengine.core.serialization.TypeAdapterRouter;
 import at.jku.isse.passiveprocessengine.demo.TestDTOProcesses;
@@ -32,7 +32,7 @@ class InstanceSerializationTests extends InstanceTests {
 	}
 
 
-	public TypeAdapterRegistry getTypeAdapterRegistry(ProcessContext context) {
+	public TypeAdapterRegistry getTypeAdapterRegistry(RuleEnabledResolver context) {
 		return ProcessInstanceTypeAdapterRegistryFactory.buildRegistry(context);
 	}
 	

@@ -6,7 +6,7 @@ import java.util.List;
 
 import at.jku.isse.artifacteventstreaming.rule.RuleSchemaProvider;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
+import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
@@ -26,7 +26,7 @@ public class RewriterFactory {
 		return rewriter.rewriteConstraint(constraint, singleUsage, stepDef);
 	}
 
-	public List<ProcessDefinitionError> checkOverriding(ProcessDefinition processDefinition, ProcessContext context) {
+	public List<ProcessDefinitionError> checkOverriding(ProcessDefinition processDefinition, RuleEnabledResolver context) {
 		if (doOverridingAnalysis) {
 			ProcessOverridingAnalysis poa = new ProcessOverridingAnalysis(context);
 			return poa.beginAnalysis(processDefinition, new ArrayList<>());

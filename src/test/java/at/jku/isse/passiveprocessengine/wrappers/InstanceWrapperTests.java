@@ -26,10 +26,10 @@ public class InstanceWrapperTests extends DefinitionWrapperTests {
 	
 	@Test
 	void testAllBaseInstanceTypeRegistration() {				
-		assert(schemaReg.getTypeByName(ProcessInstanceScopeType.typeId) != null);
-		assert(schemaReg.getTypeByName(ConstraintWrapperType.typeId) != null);
-		assert(schemaReg.getTypeByName(DecisionNodeInstanceType.typeId) != null);
-		assert(schemaReg.getTypeByName(AbstractProcessStepType.typeId) != null);	
+		assert(schemaReg.findNonDeletedInstanceTypeByFQN(ProcessInstanceScopeType.typeId) != null);
+		assert(schemaReg.findNonDeletedInstanceTypeByFQN(ConstraintWrapperType.typeId) != null);
+		assert(schemaReg.findNonDeletedInstanceTypeByFQN(DecisionNodeInstanceType.typeId) != null);
+		assert(schemaReg.findNonDeletedInstanceTypeByFQN(AbstractProcessStepType.typeId) != null);	
 	}
 	
 

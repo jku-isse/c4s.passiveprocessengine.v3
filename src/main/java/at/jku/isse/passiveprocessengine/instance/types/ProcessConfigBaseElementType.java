@@ -2,35 +2,42 @@ package at.jku.isse.passiveprocessengine.instance.types;
 
 import java.util.Optional;
 
-import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
-import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
+import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
 
-public class ProcessConfigBaseElementType extends TypeProviderBase {
+public class ProcessConfigBaseElementType extends AbstractTypeProvider {
 
-	public static enum CoreProperties {description}; 
-	public static final String typeId = "process_config_base";
+	private static final String NS = ProcessInstanceScopeType.NS+"/config";
 	
-	public ProcessConfigBaseElementType(SchemaRegistry schemaRegistry) {
+	public  enum CoreProperties {description;
+		
+		@Override
+		public String toString() {
+			return NS+name();
+		}
+		
+		public String getURI() {
+			return NS+name();
+		}	
+	} 
+	public static final String typeId = NS+"#"+"base";
+	
+	public ProcessConfigBaseElementType(NodeToDomainResolver schemaRegistry) {
 		super(schemaRegistry);
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
-			//schemaRegistry.registerTypeByName(thisType.get());
 			this.type = thisType.get();
 		} else {
-			type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getTypeByName(ProcessInstanceScopeType.typeId));
-		//	schemaRegistry.registerTypeByName(type);			
+			this.type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessInstanceScopeType.typeId).orElse(null));		
 		}
 	}
 
-	@Override
-	public void produceTypeProperties() {
-		((RDFInstanceType) type).cacheSuperProperties();	
-		type.createSinglePropertyType(CoreProperties.description.toString(), BuildInType.STRING);		
-			ProcessInstanceScopeType.addGenericProcessProperty(type, schemaRegistry);
-			
+	public void produceTypeProperties(ProcessInstanceScopeType processInstanceScopeType) {
+		type.cacheSuperProperties();	
+		type.createSinglePropertyType(CoreProperties.description.toString(), primitives.getStringType());		
+		
+		processInstanceScopeType.addGenericProcessProperty(type);
 	}
 }

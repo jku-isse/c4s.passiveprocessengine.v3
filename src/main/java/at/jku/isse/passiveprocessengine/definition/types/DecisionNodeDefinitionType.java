@@ -2,43 +2,69 @@ package at.jku.isse.passiveprocessengine.definition.types;
 
 import java.util.Optional;
 
-import at.jku.isse.passiveprocessengine.core.BuildInType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
-import at.jku.isse.passiveprocessengine.core.TypeProvider;
+import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
-import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 
-public class DecisionNodeDefinitionType implements TypeProvider {
+public class DecisionNodeDefinitionType extends AbstractTypeProvider {
 
-	public static enum CoreProperties {inFlowType, dataMappingDefinitions, inSteps, outSteps, hierarchyDepth, closingDN}
-	public static final String typeId = DecisionNodeDefinition.class.getSimpleName();
-	private SchemaRegistry schemaRegistry;
-	private final RDFInstanceType type;
-
-	public DecisionNodeDefinitionType(SchemaRegistry schemaRegistry) {
-		this.schemaRegistry = schemaRegistry;
-		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
-		if (thisType.isPresent()) {
-			//schemaRegistry.registerType(DecisionNodeDefinition.class, thisType.get());
-			this.type = thisType.get();
-		} else {
-			type = schemaRegistry.createNewInstanceType(typeId,  schemaRegistry.getTypeByName(ProcessDefinitionScopeType.typeId));
-		//	schemaRegistry.registerType(DecisionNodeDefinition.class, type);
+	private static final String NS = ProcessDefinitionScopeType.NS+"/decisionnodedefinition#";
+	
+	public enum CoreProperties {inFlowType, dataMappingDefinitions, inSteps, outSteps, hierarchyDepth, closingDN
+		;
+		
+		@Override
+		public String toString() {
+			return NS+name();
 		}
+		
+		public String getURI() {
+			return NS+name();
+		}	
 	}
 	
+	public static final String typeId = ProcessDefinitionScopeType.NS+"#"+DecisionNodeDefinition.class.getSimpleName();
+
+	public DecisionNodeDefinitionType(NodeToDomainResolver schemaRegistry) {
+		super(schemaRegistry);
+		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
+		if (thisType.isPresent()) {
+			this.type = thisType.get();
+		} else {
+			this.type = schemaRegistry.createNewInstanceType(typeId,  schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessDefinitionScopeType.typeId).orElse(null));
+		}
+		metaElements.registerInstanceSpecificClass(typeId, DecisionNodeDefinition.class);
+	}
 	
-	@Override
 	public void produceTypeProperties() {
-		((RDFInstanceType) type).cacheSuperProperties();
-		type.createSinglePropertyType(DecisionNodeDefinitionType.CoreProperties.inFlowType.toString(), BuildInType.STRING);
-		type.createSetPropertyType(DecisionNodeDefinitionType.CoreProperties.inSteps.toString(), schemaRegistry.getTypeByName(ProcessStepDefinitionType.typeId));
-		type.createSetPropertyType(DecisionNodeDefinitionType.CoreProperties.outSteps.toString(),  schemaRegistry.getTypeByName(ProcessStepDefinitionType.typeId));
-		type.createSetPropertyType(DecisionNodeDefinitionType.CoreProperties.dataMappingDefinitions.toString(),  schemaRegistry.getTypeByName(MappingDefinitionType.typeId));
-		type.createSinglePropertyType((DecisionNodeDefinitionType.CoreProperties.hierarchyDepth.toString()),  BuildInType.INTEGER);
-		type.createSinglePropertyType(DecisionNodeDefinitionType.CoreProperties.closingDN.toString(), type);
+		type.cacheSuperProperties();
+		
+		type.createSinglePropertyType(CoreProperties.inFlowType.toString(), primitives.getStringType());
+		type.createSetPropertyType(CoreProperties.inSteps.toString(), 
+				schemaRegistry.findNonDeletedInstanceTypeByFQN(StepDefinitionTypeFactory.typeId)
+				.map(vtype->vtype.getAsPropertyType())
+				.orElse(null));
+		type.createSetPropertyType(CoreProperties.outSteps.toString(),  
+				schemaRegistry.findNonDeletedInstanceTypeByFQN(StepDefinitionTypeFactory.typeId)
+				.map(vtype->vtype.getAsPropertyType())
+				.orElse(null));
+		type.createSetPropertyType(CoreProperties.dataMappingDefinitions.toString(),  
+				schemaRegistry.findNonDeletedInstanceTypeByFQN(MappingDefinitionTypeFactory.typeId)
+				.map(vtype->vtype.getAsPropertyType())
+				.orElse(null));
+		type.createSinglePropertyType((CoreProperties.hierarchyDepth.toString()),  primitives.getIntType());
+		type.createSinglePropertyType(CoreProperties.closingDN.toString(), type.getAsPropertyType());
 		
 	}	
 
+	public DecisionNodeDefinition createInstance(String dndId) {
+		DecisionNodeDefinition instance = (DecisionNodeDefinition) schemaRegistry.createInstance(dndId, type);
+		// default SEQ
+		instance.setSingleProperty(CoreProperties.inFlowType.toString(), InFlowType.SEQ.toString());
+		instance.setSingleProperty(CoreProperties.hierarchyDepth.toString(), -1);
+		return instance;
+	}
 }

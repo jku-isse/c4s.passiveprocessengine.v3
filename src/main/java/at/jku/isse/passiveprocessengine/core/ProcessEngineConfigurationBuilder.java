@@ -1,11 +1,11 @@
 package at.jku.isse.passiveprocessengine.core;
 
-import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
+import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecTypeFactory;
 import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
-import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionType;
+import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionScopeType;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessStepDefinitionType;
+import at.jku.isse.passiveprocessengine.definition.types.StepDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessInstanceType;
@@ -16,19 +16,20 @@ import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementT
 import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.CoreTypeFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleDefinitionService;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import lombok.Getter;
 
 @Getter
 public class ProcessEngineConfigurationBuilder {
 
 	final InstanceRepository instanceRepository;
-	final SchemaRegistry schemaRegistry;
+	final RuleEnabledResolver schemaRegistry;
 	final CoreTypeFactory coreTypeFactory;
 	
-	protected ProcessContext context;
+	protected RuleEnabledResolver context;
 	protected InputToOutputMapper ioMapper;
 	
-	public ProcessEngineConfigurationBuilder(SchemaRegistry schemaRegistry
+	public ProcessEngineConfigurationBuilder(RuleEnabledResolver schemaRegistry
 			, InstanceRepository instanceRepository
 			, RepairTreeProvider ruleService
 			, RewriterFactory rewriterFactory
@@ -50,10 +51,10 @@ public class ProcessEngineConfigurationBuilder {
 	
 	private void registerAllDefinitionTypes() {
 		ProcessDefinitionScopeType scopeTypeProvider = new ProcessDefinitionScopeType(schemaRegistry);		
-		ConstraintSpecType specTypeProvider = new ConstraintSpecType(schemaRegistry);		
-		MappingDefinitionType mapTypeProvider = new MappingDefinitionType(schemaRegistry);		
+		ConstraintSpecTypeFactory specTypeProvider = new ConstraintSpecTypeFactory(schemaRegistry);		
+		MappingDefinitionTypeFactory mapTypeProvider = new MappingDefinitionTypeFactory(schemaRegistry);		
 		DecisionNodeDefinitionType dndTypeProvider = new DecisionNodeDefinitionType(schemaRegistry);		
-		ProcessStepDefinitionType stepTypeProvider = new ProcessStepDefinitionType(schemaRegistry);		
+		StepDefinitionTypeFactory stepTypeProvider = new StepDefinitionTypeFactory(schemaRegistry);		
 		ProcessDefinitionType processTypeProvider = new ProcessDefinitionType(schemaRegistry);
 		scopeTypeProvider.produceTypeProperties();
 		specTypeProvider.produceTypeProperties();
@@ -81,7 +82,7 @@ public class ProcessEngineConfigurationBuilder {
 	}
 	
 	private void initContext(RewriterFactory rewriterFactory, RuleDefinitionService ruleFactory, RepairTreeProvider repairTreeProvider, RuleAnalysisService ruleAnalysisService) {
-		context = new ProcessContext(instanceRepository, schemaRegistry, ioMapper, repairTreeProvider, ruleAnalysisService);
+		context = new RuleEnabledResolver(instanceRepository, schemaRegistry, ioMapper, repairTreeProvider, ruleAnalysisService);
 		context.inject(FactoryIndex.build(context, rewriterFactory, ruleFactory));
 	}
 	

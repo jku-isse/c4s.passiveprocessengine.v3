@@ -5,11 +5,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
-import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex;
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
@@ -29,12 +27,12 @@ public class DefinitionTransformer {
 	public static final String CONFIG_KEY_doImmediateInstantiateAllSteps = "doImmediateInstantiateAllSteps";
 	
 	private final FactoryIndex factories;	
-	private final SchemaRegistry schemaRegistry;
+	private final NodeToDomainResolver schemaRegistry;
 	private final List<ProcessDefinitionError> errors = new LinkedList<>();
 	private final DTOs.Process rootProcDTO;		
 	private final DomainTypesRegistry typesFactory;
 	
-	public DefinitionTransformer(DTOs.Process procDTO, FactoryIndex factories, SchemaRegistry schemaRegistry) {
+	public DefinitionTransformer(DTOs.Process procDTO, FactoryIndex factories, NodeToDomainResolver schemaRegistry) {
 		this.rootProcDTO = procDTO;	
 		this.factories = factories;
 		this.schemaRegistry = schemaRegistry;
@@ -123,7 +121,7 @@ public class DefinitionTransformer {
 			// then add the properties if they dont exist yet
 			configProvider.produceTypeProperties();
 			
-			RDFInstanceType procConfig = typesFactory.getTypeByName(configProvider.getSubtypeName()); 
+			RDFInstanceType procConfig = typesFactory.findNonDeletedInstanceTypeByFQN(configProvider.getSubtypeName()); 
 					//factories.getProcessConfigFactory().getOrCreateProcessSpecificSubtype(configName, processDefinition);
 			
 			//factories.getProcessConfigFactory().augmentConfig(entry.getValue(), procConfig);
@@ -247,7 +245,7 @@ public class DefinitionTransformer {
 			int pos = type.lastIndexOf('/');
 			type = pos > -1 ? type.substring(pos+1) : type;
 		}
-		Optional<RDFInstanceType> iType = Optional.ofNullable(schemaRegistry.getTypeByName(type));
+		Optional<RDFInstanceType> iType = Optional.ofNullable(schemaRegistry.findNonDeletedInstanceTypeByFQN(type));
 		if (iType.isEmpty()) {
 			errors.add(new ProcessDefinitionError(el, "Unknown Instance Type", "Input/Output definition "+param+" uses unknown instance type: "+type , ProcessDefinitionError.Severity.ERROR));
 			//throw new ProcessException("Process Description uses unknown instance type: "+type);

@@ -7,11 +7,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
+import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
+import at.jku.isse.passiveprocessengine.core.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.core.serialization.ConfigurablePropertyTypeAdapter;
 import at.jku.isse.passiveprocessengine.core.serialization.TypeAdapterRegistry;
-import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
+import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecTypeFactory;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
 import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType;
@@ -23,9 +23,9 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.CoreTypeFactory;
 public class ProcessInstanceTypeAdapterRegistryFactory {
 
 	
-	public static TypeAdapterRegistry buildRegistry(ProcessContext context) {
+	public static TypeAdapterRegistry buildRegistry(RuleEnabledResolver context) {
 		// we need the context as only then can we be sure to have the process definition and instance base types initialized
-		SchemaRegistry schemaReg = context.getSchemaRegistry();
+		NodeToDomainResolver schemaReg = context.getSchemaRegistry();
 		
 		TypeAdapterRegistry typeAdapterRegistry = new TypeAdapterRegistry();
 		
@@ -35,38 +35,38 @@ public class ProcessInstanceTypeAdapterRegistryFactory {
 						, concat(getShallowProcessInstanceProperties().stream(), getShallowProcessStepProperties().stream()).collect(toSet())
 						, concat(getDeepProcessInstanceProperties().stream(), getDeepProcessStepProperties().stream()).collect(toSet())
 						, context)
-				, schemaReg.getTypeByName(AbstractProcessInstanceType.typeId));
+				, schemaReg.findNonDeletedInstanceTypeByFQN(AbstractProcessInstanceType.typeId));
 		// process step
 		typeAdapterRegistry.registerTypeAdapter(
 				new StepTypeAdapter(typeAdapterRegistry 
 						, getShallowProcessStepProperties()
 						, getDeepProcessStepProperties()
 						, context)
-				, schemaReg.getTypeByName(AbstractProcessStepType.typeId));
+				, schemaReg.findNonDeletedInstanceTypeByFQN(AbstractProcessStepType.typeId));
 		// decision node - only shallow
 		typeAdapterRegistry.registerTypeAdapter(
 				new ConfigurablePropertyTypeAdapter(typeAdapterRegistry 
 						, getShallowDecisionNodeProperties()
 						, Collections.emptySet())
-				, schemaReg.getTypeByName(DecisionNodeInstanceType.typeId));
+				, schemaReg.findNonDeletedInstanceTypeByFQN(DecisionNodeInstanceType.typeId));
 		// constraint wrapper - only deep
 		typeAdapterRegistry.registerTypeAdapter(
 				new ConfigurablePropertyTypeAdapter(typeAdapterRegistry 
 						, Collections.emptySet()
 						, getDeepProcessWrapperProperties() )
-				, schemaReg.getTypeByName(ConstraintWrapperType.typeId));
+				, schemaReg.findNonDeletedInstanceTypeByFQN(ConstraintWrapperType.typeId));
 		// constraint spec, wrapper needs spec as there the actual constraint is described, wrapper could be also shallow
 		typeAdapterRegistry.registerTypeAdapter(
 				new ConfigurablePropertyTypeAdapter(typeAdapterRegistry 
 						, getShallowConstraintSpecProperties()
 						, Collections.emptySet())
-				, schemaReg.getTypeByName(ConstraintSpecType.typeId));
+				, schemaReg.findNonDeletedInstanceTypeByFQN(ConstraintSpecTypeFactory.typeId));
 		// Artifacts minimal info - only shallow
 		typeAdapterRegistry.registerTypeAdapter(
 				new ConfigurablePropertyTypeAdapter(typeAdapterRegistry 
 						, getShallowArtifactProperties()
 						, Collections.emptySet())
-				, schemaReg.getTypeByName(CoreTypeFactory.BASE_TYPE_URI));
+				, schemaReg.findNonDeletedInstanceTypeByFQN(CoreTypeFactory.BASE_TYPE_URI));
 		
 		return typeAdapterRegistry;
 	}
@@ -135,12 +135,12 @@ public class ProcessInstanceTypeAdapterRegistryFactory {
 	}
 	
 	private static Set<String> getShallowConstraintSpecProperties() {
-		return Set.of(ConstraintSpecType.CoreProperties.constraintSpec.toString()
-				, ConstraintSpecType.CoreProperties.humanReadableDescription.toString()
-				, ConstraintSpecType.CoreProperties.constraintSpecOrderIndex.toString()
-				, ConstraintSpecType.CoreProperties.isOverridable.toString()
-				, ConstraintSpecType.CoreProperties.ruleType.toString()
-				, ConstraintSpecType.CoreProperties.conditionsType.toString()
+		return Set.of(ConstraintSpecTypeFactory.CoreProperties.constraintSpec.toString()
+				, ConstraintSpecTypeFactory.CoreProperties.humanReadableDescription.toString()
+				, ConstraintSpecTypeFactory.CoreProperties.constraintSpecOrderIndex.toString()
+				, ConstraintSpecTypeFactory.CoreProperties.isOverridable.toString()
+				, ConstraintSpecTypeFactory.CoreProperties.ruleType.toString()
+				, ConstraintSpecTypeFactory.CoreProperties.conditionsType.toString()
 				);
 	}
 	

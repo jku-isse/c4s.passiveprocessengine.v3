@@ -3,7 +3,7 @@ package at.jku.isse.passiveprocessengine.instance.types;
 import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
+import at.jku.isse.passiveprocessengine.core.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
@@ -22,13 +22,13 @@ public class SpecificProcessStepType extends TypeProviderBase {
 	public static final String PREFIX_IN = "in_";
 
 		
-	public SpecificProcessStepType(SchemaRegistry schemaRegistry, StepDefinition stepDef, @NonNull RDFInstanceType processType) {
+	public SpecificProcessStepType(NodeToDomainResolver schemaRegistry, StepDefinition stepDef, @NonNull RDFInstanceType processType) {
 		super(schemaRegistry);
 		this.stepDef = stepDef;
 		this.processType = processType;
 	}
 	
-	public SpecificProcessStepType(SchemaRegistry schemaRegistry, StepDefinition stepDef) {
+	public SpecificProcessStepType(NodeToDomainResolver schemaRegistry, StepDefinition stepDef) {
 		super(schemaRegistry);
 		this.stepDef = stepDef;	
 		this.processType = null;
@@ -43,8 +43,8 @@ public class SpecificProcessStepType extends TypeProviderBase {
 			type = thisType.get();	
 		} else {
 			RDFInstanceType type = processType == null ? 
-				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getTypeByName(AbstractProcessInstanceType.typeId)) :			
-				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.getTypeByName(AbstractProcessStepType.typeId));			
+				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.findNonDeletedInstanceTypeByFQN(AbstractProcessInstanceType.typeId)) :			
+				schemaRegistry.createNewInstanceType(stepName, schemaRegistry.findNonDeletedInstanceTypeByFQN(AbstractProcessStepType.typeId));			
 
 			stepDef.getExpectedInput().entrySet().stream()
 			.forEach(entry -> {

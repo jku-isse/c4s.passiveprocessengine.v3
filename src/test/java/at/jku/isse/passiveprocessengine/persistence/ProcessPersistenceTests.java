@@ -12,11 +12,11 @@ import org.junit.jupiter.api.Test;
 
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
+import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.core.ProcessEngineConfigurationBuilder;
 import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
 import at.jku.isse.passiveprocessengine.core.RuleAnalysisService;
-import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
+import at.jku.isse.passiveprocessengine.core.NodeToDomainResolver;
 import at.jku.isse.artifacteventstreaming.api.Branch;
 import at.jku.isse.artifacteventstreaming.api.BranchStateUpdater;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
@@ -45,7 +45,7 @@ public class ProcessPersistenceTests {
 
 	protected RDFWrapperTestSetup dsSetup;
 	protected InstanceRepository instanceRepository;
-	protected SchemaRegistry schemaReg;
+	protected NodeToDomainResolver schemaReg;
 	protected RepairTreeProvider ruleServiceWrapper;
 	protected ProcessEngineConfigurationBuilder configBuilder;
 	TestDTOProcesses procFactory;	
@@ -55,7 +55,7 @@ public class ProcessPersistenceTests {
 	ChangeListener picp;
 	ProcessQAStatsMonitor monitor;
 	Branch branch;
-	protected ProcessContext context;
+	protected RuleEnabledResolver context;
 	
 	protected void startRead() {
 		instanceRepository.startReadTransaction();

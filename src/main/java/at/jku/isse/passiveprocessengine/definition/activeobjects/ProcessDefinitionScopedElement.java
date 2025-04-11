@@ -3,7 +3,6 @@ package at.jku.isse.passiveprocessengine.definition.activeobjects;
 
 import org.apache.jena.ontapi.model.OntIndividual;
 
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionScopeType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;

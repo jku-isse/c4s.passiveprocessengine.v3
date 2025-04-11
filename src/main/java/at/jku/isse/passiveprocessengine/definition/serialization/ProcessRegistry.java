@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProcessRegistry {
 
-	private final ProcessContext context;
+	private final RuleEnabledResolver context;
 
 
 	protected RDFInstanceType processDefinitionType;
@@ -42,13 +42,13 @@ public class ProcessRegistry {
 
 	public static final String STAGINGPOSTFIX = "-STAGING";
 
-	public ProcessRegistry(ProcessContext context) {
+	public ProcessRegistry(RuleEnabledResolver context) {
 		this.context = context;
-		processDefinitionType = context.getSchemaRegistry().getTypeByName(ProcessDefinitionType.typeId); // ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);
+		processDefinitionType = context.findNonDeletedInstanceTypeByFQN(ProcessDefinitionType.typeId); // ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);
 		assert(processDefinitionType != null);
-		processInstanceType = context.getSchemaRegistry().getTypeByName(AbstractProcessInstanceType.typeId); 
+		processInstanceType = context.findNonDeletedInstanceTypeByFQN(AbstractProcessInstanceType.typeId); 
 		assert(processInstanceType != null);
-		context.getSchemaRegistry().getAllNonDeletedInstanceTypes().stream().forEach(itype -> log.debug(String.format("Available instance type %s ", itype.getName())));
+		context.getAllNonDeletedInstanceTypes().stream().forEach(itype -> log.debug(String.format("Available instance type %s ", itype.getName())));
 		loadPersistedProcesses();
 	}
 	
@@ -69,7 +69,7 @@ public class ProcessRegistry {
 
 
 	public Optional<ProcessDefinition> getProcessDefinition(String stringId, Boolean onlyValid) {
-		var allProcDefs = context.getInstanceRepository().getAllInstancesOfTypeOrSubtype(processDefinitionType);
+		var allProcDefs = context.getAllInstancesOfTypeOrSubtype(processDefinitionType);
 		List<ProcessDefinition> defs = allProcDefs.stream()
 				.filter(inst -> !inst.isMarkedAsDeleted())
 				.filter(inst -> (Boolean)inst.getTypedProperty((ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString()), Boolean.class, false) || !onlyValid)
@@ -111,7 +111,7 @@ public class ProcessRegistry {
 		// we remove the staging one and replace the original
 		if (stagedProc.getKey() != null) {
 			stagedProc.getKey().deleteCascading();
-			//context.getInstanceRepository().concludeTransaction();
+			//context.concludeTransaction();
 		}
 		// now remove the original if exists, and store as new
 		DefinitionTransformer.replaceStepNamesInMappings(process, tempCode, originalCode);
@@ -146,7 +146,7 @@ public class ProcessRegistry {
 				log.debug("Removing old staged process: "+process.getCode()+" before staging new version");
 				ProcessDefinition pdef = optPD.get();
 				pdef.deleteCascading();
-				//context.getInstanceRepository().concludeTransaction();
+				//context.concludeTransaction();
 			} else {
 				log.debug("Reusing process: "+process.getCode());
 				return new SimpleEntry<>(optPD.get(), Collections.emptyList());
@@ -174,8 +174,8 @@ public class ProcessRegistry {
 		Map<String, Map<String, Set<RDFInstance>>> prevProcInput = new HashMap<>();
 
 		// we actually dont need to find the process definition type, but the specific process instance type declaration
-		RDFInstanceType specProcDefType = context.getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(pDef)); 
-		context.getInstanceRepository().getAllInstancesOfTypeOrSubtype(specProcDefType).stream()
+		RDFInstanceType specProcDefType = context.findNonDeletedInstanceTypeByFQN(SpecificProcessInstanceType.getProcessName(pDef)); 
+		context.getAllInstancesOfTypeOrSubtype(specProcDefType).stream()
 		.filter(inst -> !inst.isMarkedAsDeleted())
 		.map(inst -> context.getWrappedInstance(ProcessInstance.class, inst))
 		.filter(Objects::nonNull)
@@ -194,7 +194,7 @@ public class ProcessRegistry {
 	public void removeProcessDefinition(String name) {
 		getProcessDefinition(name, true).ifPresent(pdef -> {
 			pdef.deleteCascading();
-			//context.getInstanceRepository().concludeTransaction();
+			//context.concludeTransaction();
 		});
 	}
 
@@ -205,7 +205,7 @@ public class ProcessRegistry {
 	}
 
 	public Set<ProcessDefinition> getAllDefinitions(Boolean onlyValid) {
-		var allDefs =  context.getInstanceRepository().getAllInstancesOfTypeOrSubtype(processDefinitionType);
+		var allDefs =  context.getAllInstancesOfTypeOrSubtype(processDefinitionType);
 		return allDefs.stream() 
 				.filter(inst -> !inst.isMarkedAsDeleted())
 				.filter(inst -> inst.getTypedProperty(ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString(), Boolean.class, false) || !onlyValid)
@@ -236,11 +236,11 @@ public class ProcessRegistry {
 		}
 		if (errors.isEmpty()) {
 			processInstances.put(pInst.getName(), pInst);
-			//context.getInstanceRepository().concludeTransaction();
+			//context.concludeTransaction();
 			return new SimpleEntry<>(pInst, errors);
 		} else {
 			pInst.deleteCascading();
-			//context.getInstanceRepository().concludeTransaction();
+			//context.concludeTransaction();
 			return new SimpleEntry<>(pInst, errors);
 		}
 	}
@@ -253,7 +253,7 @@ public class ProcessRegistry {
 		ProcessInstance pi = processInstances.remove(name);
 		if (pi != null) {
 			pi.deleteCascading();
-			//context.getInstanceRepository().concludeTransaction();
+			//context.concludeTransaction();
 			this.removedInstances.add(pi);
 			return true;
 		}
@@ -277,7 +277,7 @@ public class ProcessRegistry {
 	}
 
 	protected Set<ProcessInstance> loadPersistedProcesses() {
-		Set<ProcessInstance> existingProcessInstances = context.getInstanceRepository().getAllInstancesOfTypeOrSubtype(processInstanceType) //  context.getAllSubtypesRecursively(ProcessStep.getOrCreateDesignSpaceCoreSchema(ws))
+		Set<ProcessInstance> existingProcessInstances = context.getAllInstancesOfTypeOrSubtype(processInstanceType) //  context.getAllSubtypesRecursively(ProcessStep.getOrCreateDesignSpaceCoreSchema(ws))
 				.stream()
 				//.stream().filter(stepType -> stepType.name().startsWith(ProcessInstance.designspaceTypeId)) //everthing that is a process type
 				//.flatMap(procType -> procType.instancesIncludingThoseOfSubtypes()) // everything that is a process instance

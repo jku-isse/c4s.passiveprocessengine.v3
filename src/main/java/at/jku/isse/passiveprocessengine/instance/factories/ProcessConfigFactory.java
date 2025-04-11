@@ -3,12 +3,12 @@ package at.jku.isse.passiveprocessengine.instance.factories;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
+import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.instance.ProcessException;
 
 public class ProcessConfigFactory extends DomainFactory {
 		
-	public ProcessConfigFactory(ProcessContext context) {
+	public ProcessConfigFactory(RuleEnabledResolver context) {
 		super(context);		
 	}
 
@@ -18,7 +18,7 @@ public class ProcessConfigFactory extends DomainFactory {
 	}
 
 	public RDFInstance createConfigInstance(String name, String subtypeName) throws ProcessException{
-		RDFInstanceType subType =  getContext().getSchemaRegistry().getTypeByName(subtypeName);		
+		RDFInstanceType subType =  getContext().getSchemaRegistry().findNonDeletedInstanceTypeByFQN(subtypeName);		
 		if (subType == null) {
 			throw new ProcessException("Configuration Subtyp "+subtypeName+" does not exist");
 		} else {

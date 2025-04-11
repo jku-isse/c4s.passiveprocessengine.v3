@@ -9,15 +9,17 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
+import org.apache.jena.ontapi.model.OntIndividual;
+
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
 import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
-import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -27,55 +29,57 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	private boolean isInternalPropagationDone = false;
 	private InterStepDataMapper mapper = null;
 
-	public DecisionNodeInstance(RDFInstance instance, ProcessContext context) {
-		super(instance, context);
+	public DecisionNodeInstance(@NonNull OntIndividual element, RDFInstanceType type, @NonNull NodeToDomainResolver resolver) {
+		super(element, type, resolver);
 	}
 
 	@Override
 	public DecisionNodeDefinition getDefinition() {
-		return  context.getWrappedInstance(DecisionNodeDefinition.class, instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.dnd.toString(), RDFInstance.class));
+		return getTypedProperty(DecisionNodeInstanceType.CoreProperties.dnd.toString(), DecisionNodeDefinition.class);
 	}
 
 	private void setInflowFulfilled(boolean isFulfilled) {
 		//if (isInflowFulfilled() != isFulfilled) // a change -> not necessary, is done internally anyway
-		instance.setSingleProperty(DecisionNodeInstanceType.CoreProperties.isInflowFulfilled.toString(), isFulfilled);
+		setSingleProperty(DecisionNodeInstanceType.CoreProperties.isInflowFulfilled.toString(), isFulfilled);
 	}
 
 	public boolean isInflowFulfilled() {
-		return instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.isInflowFulfilled.toString(), Boolean.class,  false);
+		return getTypedProperty(DecisionNodeInstanceType.CoreProperties.isInflowFulfilled.toString(), Boolean.class,  false);
 	}
 
 	private void setHasPropagated() {
-		instance.setSingleProperty(DecisionNodeInstanceType.CoreProperties.hasPropagated.toString(), true);
+		setSingleProperty(DecisionNodeInstanceType.CoreProperties.hasPropagated.toString(), true);
 	}
 
 	public boolean hasPropagated() {
-		return instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.hasPropagated.toString(), Boolean.class, false);
+		return getTypedProperty(DecisionNodeInstanceType.CoreProperties.hasPropagated.toString(), Boolean.class, false);
 	}
 
 	// not to be used outside of ProcessStepInstanceFactory
 	@SuppressWarnings("unchecked")
 	public void addOutStep(ProcessStep step) {
-		instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.outSteps.toString(), Set.class).add(step.getInstance());
+		getTypedProperty(DecisionNodeInstanceType.CoreProperties.outSteps.toString(), Set.class).add(step.getInstance());
 	}
 
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getOutSteps() {
-		return (Set<ProcessStep>) instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.outSteps.toString(), Set.class).stream()
-			.map(inst -> getProcessContext().getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((RDFInstance) inst), (RDFInstance)inst))
-			.collect(Collectors.toSet());
+		return getTypedProperty(DecisionNodeInstanceType.CoreProperties.outSteps.toString(), Set.class);
+//				.stream()
+//			.map(inst -> getProcessContext().getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((RDFInstance) inst), (RDFInstance)inst))
+//			.collect(Collectors.toSet());
 	}
 
 	@SuppressWarnings("unchecked")
 	public void addInStep(ProcessStep step) {
-		instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.inSteps.toString(), Set.class).add(step.getInstance());
+		getTypedProperty(DecisionNodeInstanceType.CoreProperties.inSteps.toString(), Set.class).add(step.getInstance());
 	}
 
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getInSteps() {
-		return (Set<ProcessStep>) instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.inSteps.toString(), Set.class).stream()
-			.map(inst -> getProcessContext().getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((RDFInstance) inst), (RDFInstance)inst))
-			.collect(Collectors.toSet());
+		return getTypedProperty(DecisionNodeInstanceType.CoreProperties.inSteps.toString(), Set.class);
+//				.stream()
+//			.map(inst -> getProcessContext().getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((RDFInstance) inst), (RDFInstance)inst))
+//			.collect(Collectors.toSet());
 	}
 
 	// only use within package or factory
@@ -95,7 +99,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 						events.addAll(releaseChosenXORStep(step));
 					}
 				} else // releaseChoesenXORStep will result in reevaluation and reentry in this method
-					if (this.hasPropagated() && this.getDefinition().getOutSteps().size() == 0) {
+					if (this.hasPropagated() && this.getDefinition().getOutSteps().isEmpty()){
 					// just make sure that the process is not complete anymore (may be called several times)
 						events.addAll(this.getProcess().signalDNIChanged(this));
 					}
@@ -109,7 +113,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			}
 			// if a now completed step (that is not essential in an OR dni) has data propagation delayed until completion, then we wont trigger datapropagation so far and need to do it here
 			if (!isImmediateDataPropagationEnabled() && step.getActualLifecycleState().equals(State.COMPLETED)) {
-				checkAndExecuteDataMappings(this.getDefinition().getOutSteps().size() == 0, false);
+				checkAndExecuteDataMappings(this.getDefinition().getOutSteps().isEmpty(), false);
 			}
 		}
 		return events;
@@ -119,7 +123,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		if (isImmediateDataPropagationEnabled() || prevTask.getActualLifecycleState().equals(State.COMPLETED)) {
 			//should we propagate now?
 			boolean isEndOfProcess = false;
-			if (this.getDefinition().getOutSteps().size() == 0 ) {
+			if (this.getDefinition().getOutSteps().isEmpty() ) {
 				// then we are done with this workflow and execute any final mappings into the workflows output
 				isEndOfProcess = true;
 			}
@@ -131,8 +135,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	private boolean updateInConditionsFullfilledAndCheckIfHasChanged() {
 		boolean prioCond = this.isInflowFulfilled();
 		switch(this.getDefinition().getInFlowType()) {
-		case SEQ: //fallthrough as treated just like and
-		case AND:
+		case SEQ, AND: //SEQ fallthrough as treated just like and		
 			// we ignore Expected Canceled and no work expected
 			// we expect other to be E: COMPLETED, thus for a deviation we still propagate all inputs once we progated in the past,
 			//thus once a prior expected step get cancelled, we remove its mapping
@@ -159,7 +162,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			.filter(step -> !step.getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED) )
 			.filter(step -> !step.getExpectedLifecycleState().equals(State.CANCELED) )
 			.filter(step -> step.getExpectedLifecycleState().equals(State.COMPLETED) && step.getActualLifecycleState().equals(State.COMPLETED) )
-			.collect(Collectors.toList());
+			.toList();
 			boolean inFlowXORok = steps.size() == 1;
 			setInflowFulfilled(inFlowXORok);
 			return inFlowXORok!=prioCond;
@@ -176,7 +179,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 				.filter(step -> !step.getExpectedLifecycleState().equals(State.NO_WORK_EXPECTED) )
 				.filter(step -> !step.getExpectedLifecycleState().equals(State.CANCELED) )
 				.filter(step -> step.getExpectedLifecycleState().equals(State.COMPLETED) && step.getActualLifecycleState().equals(State.COMPLETED) )
-				.collect(Collectors.toList());
+				.toList();
 		// now if fulfilled, and not yet propagated: need to 'disable' other branches
 		ProcessStep chosenStep = steps.get(0);
 		getInSteps().stream()
@@ -221,18 +224,16 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 
 	public static List<DecisionNodeInstance> findCorrespondingOutFlowPath(DecisionNodeInstance dni, ProcessStep priorityIfPresent) { // finds for this decision node inFlow the corresponding outFlow of a prior DNI, if exists
 	if (dni == null)
-		return null;
+		return Collections.emptyList();
 	else {
 		List<DecisionNodeInstance> path = new LinkedList<>();
 		// get any one (existing) predecessor DNIs,
 		DecisionNodeInstance predDNI = null;
 		do {
 			Optional<DecisionNodeInstance> optPred = dni.getInSteps().stream()
-					.filter(task -> {
-						return (priorityIfPresent != null) ? task.getName().equals(priorityIfPresent.getName()) : true;
-					})
-					.map(task -> task.getInDNI()).findAny();
-			if (optPred.isEmpty()) return null; // there is no predecessor, can happen only for start node
+					.filter(task -> priorityIfPresent == null || task.getName().equals(priorityIfPresent.getName()))
+					.map(ProcessStep::getInDNI).findAny();
+			if (optPred.isEmpty()) return Collections.emptyList(); // there is no predecessor, can happen only for start node
 			// now check if this is the outflow
 			predDNI = optPred.get();
 			if (predDNI.getDefinition().getOutSteps().size() > 1) {
@@ -241,7 +242,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			}else if (predDNI.getDefinition().getInSteps().size() > 1) {// skip substructure
 				List<DecisionNodeInstance> subPath = findCorrespondingOutFlowPath(predDNI, null);
 				if (subPath == null) // should not happen, but just in case
-					return null;
+					return Collections.emptyList();
 				else {
 					path.addAll(subPath);
 					dni = subPath.get(subPath.size()-1);
@@ -293,7 +294,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		}
 
 		boolean isEndOfProcess = false;
-		if (this.getDefinition().getOutSteps().size() == 0 ) {
+		if (this.getDefinition().getOutSteps().isEmpty() ) {
 			// is this the final DNI?
 			 isEndOfProcess = true;
 		}
@@ -336,8 +337,6 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		return checkAndExecuteDataMappings(false, true);
 	}
 
-
-
 	@Override
 	public void deleteCascading() {
 		// remove any lower-level instances this step is managing, which is none
@@ -368,12 +367,12 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		if (this.getOutSteps().isEmpty())
 			return null;
 		else {
-			RDFInstance dnd = instance.getTypedProperty(DecisionNodeInstanceType.CoreProperties.closingDN.toString(), RDFInstance.class);
+			DecisionNodeInstance dnd = getTypedProperty(DecisionNodeInstanceType.CoreProperties.closingDN.toString(), DecisionNodeInstance.class);
 			if (dnd != null)
-				return context.getWrappedInstance(DecisionNodeInstance.class, dnd);
+				return dnd;
 			else {
 				DecisionNodeInstance closingDnd = determineScopeClosingDN();
-				instance.setSingleProperty(DecisionNodeInstanceType.CoreProperties.closingDN.toString(), closingDnd.getInstance());
+				setSingleProperty(DecisionNodeInstanceType.CoreProperties.closingDN.toString(), closingDnd.getInstance());
 				return closingDnd;
 			}
 		}
@@ -389,40 +388,17 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		} else {
 			Set<DecisionNodeInstance> sameDepthNodes = new HashSet<>();
 			while (sameDepthNodes.size() != 1) {
-				sameDepthNodes = nextStepOutDNs.stream().filter(nextDN -> nextDN.getDefinition().getDepthIndex() == this.getDefinition().getDepthIndex()).collect(Collectors.toSet());
+				sameDepthNodes = nextStepOutDNs.stream().filter(nextDN -> nextDN.getDefinition().getDepthIndex().equals(this.getDefinition().getDepthIndex())).collect(Collectors.toSet());
 				assert(sameDepthNodes.size() <= 1); //closing next nodes can only be on same level or deeper (i.e., larger values)
 				if (sameDepthNodes.size() != 1) {
 					Set<DecisionNodeInstance> nextNextStepOutDNs = nextStepOutDNs.stream().map(nextDN -> nextDN.getScopeClosingDecisionNodeOrNull()).collect(Collectors.toSet());
 					nextStepOutDNs = nextNextStepOutDNs;
 				}
-				assert(nextStepOutDNs.size() > 0);
+				assert(!nextStepOutDNs.isEmpty());
 			}
 			return sameDepthNodes.iterator().next();
 		}
 	}
-
-//	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
-//		Optional<InstanceType> thisTypeOpt = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId));
-////		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
-////			.filter(it -> !it.isDeleted)
-////			.filter(it -> it.name().equals(designspaceTypeId))
-////			.findAny();
-//		if (thisTypeOpt.isPresent())
-//			return thisTypeOpt.get();
-//		else {
-//			InstanceType thisType = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessInstanceScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
-//			ProcessInstanceScopedElement.addGenericProcessProperty(thisType);
-//			thisType.createPropertyType(CoreProperties.isInflowFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
-//			thisType.createPropertyType(CoreProperties.hasPropagated.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
-//			thisType.createPropertyType(CoreProperties.dnd.toString(), Cardinality.SINGLE, DecisionNodeDefinition.getOrCreateDesignSpaceCoreSchema(ws));
-//			thisType.createPropertyType(CoreProperties.inSteps.toString(), Cardinality.SET, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
-//			thisType.createPropertyType(CoreProperties.outSteps.toString(), Cardinality.SET, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
-//			thisType.createPropertyType(CoreProperties.closingDN.toString(), Cardinality.SINGLE, thisType);
-//			return thisType;
-//		}
-//	}
-
-
 
 	@Override
 	public String toString() {

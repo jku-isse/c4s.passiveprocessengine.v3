@@ -1,47 +1,32 @@
 package at.jku.isse.passiveprocessengine.instance.activeobjects;
 
-import at.jku.isse.passiveprocessengine.core.InstanceWrapper;
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import lombok.NonNull;
+
+import org.apache.jena.ontapi.model.OntIndividual;
+
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeType;
 
-public abstract class ProcessInstanceScopedElement extends InstanceWrapper {
+public abstract class ProcessInstanceScopedElement extends RDFInstance {
 
-	public ProcessInstanceScopedElement(RDFInstance instance, ProcessContext context) {
-		super(instance, context);
+	protected ProcessInstanceScopedElement(@NonNull OntIndividual element, RDFInstanceType type, @NonNull NodeToDomainResolver resolver) {
+		super(element, type, resolver);
 	}
 
 	public void setProcess(ProcessInstance pi) {
-		instance.setSingleProperty(ProcessInstanceScopeType.CoreProperties.process.toString(), pi.getInstance());
+		setSingleProperty(ProcessInstanceScopeType.CoreProperties.process.toString(), pi.getInstance());
 	}
 
 	public ProcessInstance getProcess() {
-		RDFInstance pi = instance.getTypedProperty(ProcessInstanceScopeType.CoreProperties.process.toString(), RDFInstance.class);
-		if (pi != null)
-			return context.getWrappedInstance(ProcessInstance.class, pi);
-		else return null;
+		return (ProcessInstance) getTypedProperty(ProcessInstanceScopeType.CoreProperties.process.toString(), RDFInstance.class);		
 	}
-
-	protected ProcessContext getProcessContext() {
-		return (ProcessContext) context;
+	
+	public void deleteCascading() {
+		super.delete();
 	}
 	
 	public abstract ProcessDefinitionScopedElement getDefinition();
-
-//	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
-////		Optional<InstanceType> thisType = ws.debugInstanceTypes().stream()
-////			.filter(it -> it.name().equals(designspaceTypeId))
-////			.findAny();
-//		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(ProcessInstanceScopeType.designspaceTypeId));
-//		if (thisType.isPresent())
-//			return thisType.get();
-//		else {
-//			InstanceType typeStep = ws.createInstanceType(ProcessInstanceScopeType.designspaceTypeId, ws.TYPES_FOLDER);
-//			//typeStep.createPropertyType(CoreProperties.process.toString(), Cardinality.SINGLE, typeStep); needs to be add in individual subclasses in order to be able to refine it
-//			return typeStep;
-//		}
-//	}
-
-
 }

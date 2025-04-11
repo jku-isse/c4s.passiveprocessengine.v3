@@ -7,54 +7,55 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.jena.ontapi.model.OntIndividual;
+
 import at.jku.isse.designspace.rule.arl.evaluator.RuleDefinition;
-import at.jku.isse.passiveprocessengine.core.InstanceWrapper;
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.definition.factories.ProcessDefinitionFactory;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
-import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
-import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
-import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
-import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
+import lombok.NonNull;
+import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
+import at.jku.isse.passiveprocessengine.definition.factories.SpecificProcessInstanceTypesFactory;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType.CoreProperties;
+import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;;
 
 public class ProcessDefinition extends StepDefinition{
 
-	public ProcessDefinition(RDFInstance instance, ProcessContext context) {
-		super(instance, context);
+	public ProcessDefinition(@NonNull OntIndividual element, RDFInstanceType type, @NonNull NodeToDomainResolver resolver) {
+		super(element, type, resolver);
 	}
 
+	@SuppressWarnings("unchecked")
 	public List<StepDefinition> getStepDefinitions() {
-		List<?> stepList = instance.getTypedProperty(ProcessDefinitionType.CoreProperties.stepDefinitions.toString(), List.class);
-		if (stepList != null) {
-			return stepList.stream()
-					.map(inst -> context.getWrappedInstance(getMostSpecializedClass((RDFInstance)inst), (RDFInstance) inst))
-					.filter(StepDefinition.class::isInstance)
-					.map(StepDefinition.class::cast)
-					.collect(Collectors.toList());
-		} else return Collections.emptyList();
+		return getTypedProperty(CoreProperties.stepDefinitions.toString(), List.class);
+//		if (stepList != null) {
+//			return stepList.stream()
+//					.map(inst -> context.getWrappedInstance(getMostSpecializedClass((RDFInstance)inst), (RDFInstance) inst))
+//					.filter(StepDefinition.class::isInstance)
+//					.map(StepDefinition.class::cast)
+//					.collect(Collectors.toList());
+//		} else return Collections.emptyList();
 	}
 
 	@SuppressWarnings("unchecked")
 	public void addStepDefinition(StepDefinition step) {
-		instance.getTypedProperty(ProcessDefinitionType.CoreProperties.stepDefinitions.toString(), List.class).add(step.getInstance());
+		getTypedProperty(CoreProperties.stepDefinitions.toString(), List.class).add(step.getInstance());
 	}
 
 	@SuppressWarnings("unchecked")
 	public Set<DecisionNodeDefinition> getDecisionNodeDefinitions() {
-		Set<?> dnSet = instance.getTypedProperty(ProcessDefinitionType.CoreProperties.decisionNodeDefinitions.toString(), Set.class);
-		if (dnSet != null) {
-			return dnSet.stream()
-					.map(inst -> context.getWrappedInstance(DecisionNodeDefinition.class, (RDFInstance) inst))
-					.map(obj ->(DecisionNodeDefinition)obj)
-					.collect(Collectors.toSet());
-		} else return Collections.emptySet();
+		return getTypedProperty(CoreProperties.decisionNodeDefinitions.toString(), Set.class);
+//		if (dnSet != null) {
+//			return dnSet.stream()
+//					.map(inst -> context.getWrappedInstance(DecisionNodeDefinition.class, (RDFInstance) inst))
+//					.map(obj ->(DecisionNodeDefinition)obj)
+//					.collect(Collectors.toSet());
+//		} else return Collections.emptySet();
 	}
 
 	@SuppressWarnings("unchecked")
 	public void addDecisionNodeDefinition(DecisionNodeDefinition dnd) {
-		instance.getTypedProperty(ProcessDefinitionType.CoreProperties.decisionNodeDefinitions.toString(), Set.class).add(dnd.getInstance());
+		getTypedProperty(CoreProperties.decisionNodeDefinitions.toString(), Set.class).add(dnd.getInstance());
 	}
 
 	public DecisionNodeDefinition getDecisionNodeDefinitionByName(String name) {
@@ -71,19 +72,19 @@ public class ProcessDefinition extends StepDefinition{
 
 	@SuppressWarnings("unchecked")
 	public void addPrematureTrigger(String stepName, String trigger) {
-		instance.getTypedProperty(ProcessDefinitionType.CoreProperties.prematureTriggers.toString(), Map.class).put(stepName, trigger);
+		getTypedProperty(CoreProperties.prematureTriggers.toString(), Map.class).put(stepName, trigger);
 	}
 
 	@SuppressWarnings("unchecked")
 	public Map<String, String> getPrematureTriggers() {
-		Map<?,?> triggers = instance.getTypedProperty(ProcessDefinitionType.CoreProperties.prematureTriggers.toString(), Map.class);
-		if (triggers != null) {
-			return (Map<String,String>)triggers;
-		} else return Collections.emptyMap();
+		return getTypedProperty(CoreProperties.prematureTriggers.toString(), Map.class);
+//		if (triggers != null) {
+//			return (Map<String,String>)triggers;
+//		} else return Collections.emptyMap();
 	}
 
 	public StepDefinition getStepDefinitionForPrematureConstraint(String constraintName) {
-		Map<?,?> triggers = instance.getTypedProperty(ProcessDefinitionType.CoreProperties.prematureTriggerMappings.toString(), Map.class);
+		Map<?,?> triggers = getTypedProperty(CoreProperties.prematureTriggerMappings.toString(), Map.class);
 		if (triggers != null) {
 			@SuppressWarnings("unchecked")
 			String stepDefName =  (( Map<String, String>) triggers).get(constraintName);
@@ -93,7 +94,7 @@ public class ProcessDefinition extends StepDefinition{
 
 	@SuppressWarnings("unchecked")
 	public void setPrematureConstraintNameStepDefinition(String constraintName, String stepDefinitionName) {
-		instance.getTypedProperty(ProcessDefinitionType.CoreProperties.prematureTriggerMappings.toString(), Map.class).put(constraintName, stepDefinitionName);
+		getTypedProperty(CoreProperties.prematureTriggerMappings.toString(), Map.class).put(constraintName, stepDefinitionName);
 	}
 
 	@Override
@@ -112,28 +113,28 @@ public class ProcessDefinition extends StepDefinition{
 		
 		// delete configtype
 		this.getExpectedInput().entrySet().stream()
-		.filter(entry -> entry.getValue().isOfTypeOrAnySubtype(context.getSchemaRegistry().getTypeByName(ProcessConfigBaseElementType.typeId)))
+		.filter(entry -> entry.getValue().isOfTypeOrAnySubtype(resolver.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementType.typeId)))
 		.forEach(configEntry -> {
 			RDFInstanceType procConfig = configEntry.getValue().getInstanceType(); // context.getConfigFactory().getOrCreateProcessSpecificSubtype(configEntry.getKey(), this);
 			procConfig.delete();
 		});
 		// wring instanceType: we need to get the dynamically generate Instance (the one that is used for the ProcessInstance)
 		String processDefName = SpecificProcessInstanceType.getProcessName(this);
-		RDFInstanceType thisType = this.context.getSchemaRegistry().getTypeByName(processDefName);
-		if (thisType != null) {
+		var optThisType = this.resolver.findNonDeletedInstanceTypeByFQN(processDefName);
+		if (optThisType.isPresent()) {
 			this.getPrematureTriggers().entrySet().stream()
 			.forEach(entry -> {
 				String name = SpecificProcessInstanceType.generatePrematureRuleName(entry.getKey(), this);
-				RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, thisType);//RuleDefinition.consistencyRuleTypeExists(ws,  name, thisType, entry.getValue());
+				RuleDefinition crt = resolver.getRuleByNameAndContext(name, optThisType.get());//RuleDefinition.consistencyRuleTypeExists(ws,  name, thisType, entry.getValue());
 				if (crt != null) 
 					crt.delete();
 			});			
-			thisType.delete();
+			optThisType.get().delete();
 		}
 		// some code duplication with StepDefiniton.deleteCascading() due to awkward naming, needs major engine overhaul
 		String overrideName = SpecificProcessInstanceType.getProcessName(this);
 		String stepDefName = SpecificProcessStepType.getProcessStepName(this);
-		RDFInstanceType instType = this.context.getSchemaRegistry().getTypeByName(stepDefName);
+		RDFInstanceType instType = this.resolver.findNonDeletedInstanceTypeByFQN(stepDefName);
 		if (instType != null) {	
 			this.getActivationconditions().stream().forEach(spec -> { 
 				deleteRuleIfExists(instType, spec, Conditions.ACTIVATION, overrideName); //delete the rule 
@@ -152,8 +153,8 @@ public class ProcessDefinition extends StepDefinition{
 	}
 	
 	protected void deleteRuleIfExists(RDFInstanceType instType, ConstraintSpec spec, Conditions condition, String overrideName ) {
-		String name = ProcessDefinitionFactory.CRD_PREFIX+condition+spec.getOrderIndex()+"_"+overrideName;
-		RuleDefinition crt = context.getSchemaRegistry().getRuleByNameAndContext(name, instType);
+		String name = SpecificProcessInstanceTypesFactory.CRD_PREFIX+condition+spec.getOrderIndex()+"_"+overrideName;
+		var crt = resolver.getRuleByNameAndContext(name, instType);
 		if (crt != null) 
 			crt.delete();
 	}
@@ -161,14 +162,14 @@ public class ProcessDefinition extends StepDefinition{
 	
 	
 
-	protected static Class<? extends InstanceWrapper> getMostSpecializedClass(RDFInstance inst) {
-		// we have the problem, that the WrapperCache will only return a type we ask for (which might be a general type) rather than the most specialized one, hence we need to obtain that type here
-		// we assume that this is used only in here within, and thus that inst is only ProcessDefinition or StepDefinition
-		if (inst.getInstanceType().getId().startsWith(ProcessDefinitionType.typeId)) // its a process
-			return ProcessDefinition.class;
-		else
-			return StepDefinition.class; // for now only those two types
-	}
+//	protected static Class<? extends InstanceWrapper> getMostSpecializedClass(RDFInstance inst) {
+//		// we have the problem, that the WrapperCache will only return a type we ask for (which might be a general type) rather than the most specialized one, hence we need to obtain that type here
+//		// we assume that this is used only in here within, and thus that inst is only ProcessDefinition or StepDefinition
+//		if (inst.getInstanceType().getId().startsWith(ProcessDefinitionType.typeId)) // its a process
+//			return ProcessDefinition.class;
+//		else
+//			return StepDefinition.class; // for now only those two types
+//	}
 
 
 
@@ -188,23 +189,23 @@ public class ProcessDefinition extends StepDefinition{
 	}
 
 	public boolean isImmediateInstantiateAllStepsEnabled() {
-		return instance.getTypedProperty(ProcessDefinitionType.CoreProperties.isImmediateInstantiateAllSteps.toString(), Boolean.class, false);		
+		return getTypedProperty(CoreProperties.isImmediateInstantiateAllSteps.toString(), Boolean.class, false);		
 	}
 
 	public void isImmediateInstantiateAllStepsEnabled(boolean isImmediateInstantiateAllStepsEnabled) {
-		instance.setSingleProperty(ProcessDefinitionType.CoreProperties.isImmediateInstantiateAllSteps.toString(), isImmediateInstantiateAllStepsEnabled);
+		setSingleProperty(CoreProperties.isImmediateInstantiateAllSteps.toString(), isImmediateInstantiateAllStepsEnabled);
 	}
 
 	public boolean isImmediateDataPropagationEnabled() {
-		return instance.getTypedProperty(ProcessDefinitionType.CoreProperties.isImmediateDataPropagationEnabled.toString(), Boolean.class, false);		
+		return getTypedProperty(CoreProperties.isImmediateDataPropagationEnabled.toString(), Boolean.class, false);		
 	}
 
 	public void setImmediateDataPropagationEnabled(boolean isImmediateDataPropagationEnabled) {
-		instance.setSingleProperty(ProcessDefinitionType.CoreProperties.isImmediateDataPropagationEnabled.toString(), isImmediateDataPropagationEnabled);
+		setSingleProperty(CoreProperties.isImmediateDataPropagationEnabled.toString(), isImmediateDataPropagationEnabled);
 	}
 
 	public void setIsWithoutBlockingErrors(boolean isWithoutBlockingErrors) {
-		instance.setSingleProperty(ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString(), isWithoutBlockingErrors);
+		setSingleProperty(CoreProperties.isWithoutBlockingErrors.toString(), isWithoutBlockingErrors);
 	}
 
 	@Override

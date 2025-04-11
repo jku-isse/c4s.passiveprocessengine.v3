@@ -2,60 +2,55 @@ package at.jku.isse.passiveprocessengine.definition.activeobjects;
 
 import java.util.Comparator;
 
+import org.apache.jena.ontapi.model.OntIndividual;
 
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecType;
+import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecTypeFactory.CoreProperties;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
-import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import lombok.NonNull;
 
 public class ConstraintSpec extends  ProcessDefinitionScopedElement{
 
 
-
-
-	public ConstraintSpec(RDFInstance instance, ProcessContext context) {
-		super(instance, context);
+	public ConstraintSpec(@NonNull OntIndividual element, RDFInstanceType type, @NonNull NodeToDomainResolver resolver) {
+		super(element, type, resolver);
 	}
 
 	public String getConstraintId() {
-		return instance.getName();
+		return getName();
 	}
 
 	public String getConstraintSpec() {
-		return instance.getTypedProperty(ConstraintSpecType.CoreProperties.constraintSpec.toString(), String.class);
+		return getTypedProperty(CoreProperties.constraintSpec.toString(), String.class);
 	}
 	
 	public String getAugmentedConstraintSpec() {
-		return instance.getTypedProperty(ConstraintSpecType.CoreProperties.augmentedSpec.toString(), String.class);
+		return getTypedProperty(CoreProperties.augmentedSpec.toString(), String.class);
 	}
 
 	public void setAugmentedConstraintSpec(@NonNull String augmentedArl) {
-		instance.setSingleProperty(ConstraintSpecType.CoreProperties.augmentedSpec.toString(), augmentedArl);
+		setSingleProperty(CoreProperties.augmentedSpec.toString(), augmentedArl);
 	}
 	
 	public String getHumanReadableDescription() {
-		return instance.getTypedProperty(ConstraintSpecType.CoreProperties.humanReadableDescription.toString(), String.class);
+		return getTypedProperty(CoreProperties.humanReadableDescription.toString(), String.class);
 	}
 
 	public Integer getOrderIndex() {
-		return instance.getTypedProperty(ConstraintSpecType.CoreProperties.constraintSpecOrderIndex.toString(), Integer.class);
+		return getTypedProperty(CoreProperties.constraintSpecOrderIndex.toString(), Integer.class);
 	}
 
 	public boolean isOverridable() {
-		return instance.getTypedProperty(ConstraintSpecType.CoreProperties.isOverridable.toString(), Boolean.class);
+		return getTypedProperty(CoreProperties.isOverridable.toString(), Boolean.class);
 	}
 
 	public Conditions getConditionType() {
-		return Conditions.valueOf(instance.getTypedProperty(ConstraintSpecType.CoreProperties.conditionsType.toString(), String.class));
+		return Conditions.valueOf(getTypedProperty(CoreProperties.conditionsType.toString(), String.class));
 	}
 
-	@Override
-	public void deleteCascading() {
-		super.deleteCascading();
-	}
 	
-	public static Comparator<ConstraintSpec> COMPARATOR_BY_ORDERINDEX = new Comparator<>() {
+	public static final Comparator<ConstraintSpec> COMPARATOR_BY_ORDERINDEX = new Comparator<>() {
 	@Override
 	public int compare(ConstraintSpec o1, ConstraintSpec o2) {
 		return o1.getOrderIndex().compareTo(o2.getOrderIndex()) ;

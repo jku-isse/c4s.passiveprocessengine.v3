@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
+import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
@@ -41,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ProcessInstanceChangeProcessor implements ChangeListener {
 
 	final EventDistributor distributor;
-	final ProcessContext context;
+	final RuleEnabledResolver context;
 	final RDFInstanceType stepType;
 	
 	//we queue commands and remove some that are undone when lazy fetching of artifacts results in different outcome
@@ -49,10 +49,10 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 
 	private EventStats stats = new EventStats();
 
-	public ProcessInstanceChangeProcessor(ProcessContext context, EventDistributor distributor) {		
+	public ProcessInstanceChangeProcessor(RuleEnabledResolver context, EventDistributor distributor) {		
 		this.distributor = distributor;
 		this.context = context;
-		stepType = context.getSchemaRegistry().getTypeByName(AbstractProcessStepType.typeId);
+		stepType = context.getSchemaRegistry().findNonDeletedInstanceTypeByFQN(AbstractProcessStepType.typeId);
 		assert(stepType != null);
 	}
 

@@ -6,7 +6,7 @@ import java.util.Map;
 
 import at.jku.isse.designspace.rule.overriding.OverrideAnalysisSession;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
+import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
@@ -15,13 +15,13 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefiniti
 public class ProcessOverridingAnalysis {
 	private static final String CONSTRAINT_OVERRIDING_WARNING = "ConstraintOverridingWarning";
 
-	private final ProcessContext context;
+	private final RuleEnabledResolver context;
 
 	
 	private Map<String,String> mappingFromConstraintToItemType=new HashMap<>();
 
 
-	public ProcessOverridingAnalysis(ProcessContext context) {
+	public ProcessOverridingAnalysis(RuleEnabledResolver context) {
 		this.context = context;
 	}
 //	public String getConstraintName(Conditions condition, int specOrderIndex, InstanceType stepType) {
@@ -35,7 +35,7 @@ public class ProcessOverridingAnalysis {
 		throw new RuntimeException("Not implemented completely");
 		
 //		process.getStepDefinitions().stream().forEach(sd->{
-//			RDFInstanceType stepType = context.getSchemaRegistry().getTypeByName(SpecificProcessStepType.getProcessStepName(sd));
+//			RDFInstanceType stepType = context.getSchemaRegistry().findNonDeletedInstanceTypeByFQN(SpecificProcessStepType.getProcessStepName(sd));
 //			if(sd instanceof ProcessDefinition) // process inside process?? 
 //			{// Might have to circle back to this if we get nested processes.//TODO: Sol:nested call to the beginAnalysis
 //			}

@@ -1,51 +1,49 @@
 package at.jku.isse.passiveprocessengine.definition.activeobjects;
 
-import at.jku.isse.passiveprocessengine.core.InstanceWrapper;
-import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import lombok.NonNull;
 
-public class MappingDefinition extends InstanceWrapper{
+import org.apache.jena.ontapi.model.OntIndividual;
 
-	public MappingDefinition(RDFInstance instance, ProcessContext wrapperCache) {
-		super(instance, wrapperCache);
+import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionTypeFactory;
+
+public class MappingDefinition extends ProcessDefinitionScopedElement {
+
+	public MappingDefinition(@NonNull OntIndividual element, RDFInstanceType type, @NonNull NodeToDomainResolver resolver) {
+		super(element, type, resolver);
 	}
 
 	public String getFromStepType() {
-		return instance.getTypedProperty(MappingDefinitionType.CoreProperties.fromStepType.toString(), String.class);
+		return getTypedProperty(MappingDefinitionTypeFactory.CoreProperties.fromStepType.toString(), String.class);
 	}
 
 	public void setFromStepType(String fromStepType) {
-		instance.setSingleProperty(MappingDefinitionType.CoreProperties.fromStepType.toString(), fromStepType);
+		setSingleProperty(MappingDefinitionTypeFactory.CoreProperties.fromStepType.toString(), fromStepType);
 	}
 
 	public String getFromParameter() {
-		return instance.getTypedProperty(MappingDefinitionType.CoreProperties.fromParameter.toString(), String.class);
+		return getTypedProperty(MappingDefinitionTypeFactory.CoreProperties.fromParameter.toString(), String.class);
 	}
 
 	public void setFromParameter(String fromParameter) {
-		instance.setSingleProperty(MappingDefinitionType.CoreProperties.fromParameter.toString(), fromParameter);
+		setSingleProperty(MappingDefinitionTypeFactory.CoreProperties.fromParameter.toString(), fromParameter);
 	}
 
 	public String getToStepType() {
-		return instance.getTypedProperty(MappingDefinitionType.CoreProperties.toStepType.toString(), String.class);
+		return getTypedProperty(MappingDefinitionTypeFactory.CoreProperties.toStepType.toString(), String.class);
 	}
 
 	public void setToStepType(String toStepType) {
-		instance.setSingleProperty(MappingDefinitionType.CoreProperties.toStepType.toString(), toStepType);
+		setSingleProperty(MappingDefinitionTypeFactory.CoreProperties.toStepType.toString(), toStepType);
 	}
 
 	public String getToParameter() {
-		return instance.getTypedProperty(MappingDefinitionType.CoreProperties.toParameter.toString(), String.class);
+		return getTypedProperty(MappingDefinitionTypeFactory.CoreProperties.toParameter.toString(), String.class);
 	}
 
 	public void setToParameter(String toParameter) {
-		instance.setSingleProperty(MappingDefinitionType.CoreProperties.toParameter.toString(), toParameter);
-	}
-
-	@Override
-	public void deleteCascading() {
-		super.deleteCascading();
+		setSingleProperty(MappingDefinitionTypeFactory.CoreProperties.toParameter.toString(), toParameter);
 	}
 
 	@Override

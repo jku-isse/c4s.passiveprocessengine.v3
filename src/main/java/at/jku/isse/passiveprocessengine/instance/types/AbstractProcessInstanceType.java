@@ -2,31 +2,29 @@ package at.jku.isse.passiveprocessengine.instance.types;
 
 import java.util.Optional;
 
-import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
-import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
+import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
-public class AbstractProcessInstanceType extends TypeProviderBase {
+public class AbstractProcessInstanceType extends AbstractTypeProvider {
 
-	public static final String typeId = ProcessInstance.class.getSimpleName();
+	private static final String NS = ProcessInstanceScopeType.NS+"/abstractprocess";
+		
+	public static final String typeId = NS+"#"+ProcessInstance.class.getSimpleName();
 
-	public AbstractProcessInstanceType(SchemaRegistry schemaRegistry) {
+	public AbstractProcessInstanceType(NodeToDomainResolver schemaRegistry) {
 		super(schemaRegistry);
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
-			//schemaRegistry.registerType(ProcessStep.class, thisType.get());
 			this.type = thisType.get();
 		} else {
-			type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.getTypeByName(AbstractProcessStepType.typeId));
-			//schemaRegistry.registerType(ProcessInstance.class, type);	
+			this.type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.findNonDeletedInstanceTypeByFQN(AbstractProcessStepType.typeId).orElse(null));
 		}
 	}
 
-	@Override
 	public void produceTypeProperties() {
 		// none to create, we just need to have a base process instance type
-		((RDFInstanceType) type).cacheSuperProperties();
+		type.cacheSuperProperties();
 	}
 }

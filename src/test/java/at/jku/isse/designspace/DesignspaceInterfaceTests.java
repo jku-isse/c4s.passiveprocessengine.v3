@@ -19,7 +19,7 @@ import at.jku.isse.passiveprocessengine.core.DesignspaceTestSetup;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.SchemaRegistry;
+import at.jku.isse.passiveprocessengine.core.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType.Cardinalities;
 import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
 
@@ -31,7 +31,7 @@ class DesignspaceInterfaceTests  {
 	protected DesignspaceTestSetup dsSetup;
 	
 	protected InstanceRepository instanceRepository;
-	protected SchemaRegistry schemaRegistry;
+	protected NodeToDomainResolver schemaRegistry;
 	protected RepairTreeProvider ruleServiceWrapper;
 
 	private static final String ENTRY1 = "Entry1";
@@ -59,7 +59,7 @@ class DesignspaceInterfaceTests  {
 	@Test
 	void testBasicSchema() {
 		createBaseType();
-		RDFInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
+		RDFInstanceType baseType = schemaRegistry.findNonDeletedInstanceTypeByFQN(TEST_BASE_TYPE);
 		assertTrue(baseType != null);
 		assertTrue(baseType.getPropertyType(LIST_PROP).getCardinality().equals(Cardinalities.LIST));
 		assertTrue(baseType.getPropertyType(LIST_PROP).getInstanceType().getName().equals(TEST_BASE_TYPE));
@@ -78,9 +78,9 @@ class DesignspaceInterfaceTests  {
 	void testSubclassSchema() {
 		createBaseType();
 		createChildType();
-		RDFInstanceType childType = schemaRegistry.getTypeByName(TEST_CHILD_TYPE);
+		RDFInstanceType childType = schemaRegistry.findNonDeletedInstanceTypeByFQN(TEST_CHILD_TYPE);
 		assertTrue(childType != null);
-		RDFInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
+		RDFInstanceType baseType = schemaRegistry.findNonDeletedInstanceTypeByFQN(TEST_BASE_TYPE);
 		assertTrue(baseType != null);
 		assertTrue(childType.getPropertyType(PARENT_PROP).getInstanceType().equals(baseType));
 		assertTrue(childType.getPropertyType(PARENT_PROP).getCardinality().equals(Cardinalities.SINGLE));
@@ -91,7 +91,7 @@ class DesignspaceInterfaceTests  {
 	@Test
 	void testInstanceCreation() {
 		createBaseType();
-		RDFInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
+		RDFInstanceType baseType = schemaRegistry.findNonDeletedInstanceTypeByFQN(TEST_BASE_TYPE);
 		RDFInstance inst1 = instanceRepository.createInstance("Inst1", baseType);
 		RDFInstance inst2 = instanceRepository.createInstance("Inst2", baseType);
 		RDFInstance inst3 = instanceRepository.createInstance("Inst3", baseType);
@@ -110,7 +110,7 @@ class DesignspaceInterfaceTests  {
 	void testInstanceSubclassing() {
 		createBaseType();
 		createChildType();
-		RDFInstanceType baseType = schemaRegistry.getTypeByName(TEST_BASE_TYPE);
+		RDFInstanceType baseType = schemaRegistry.findNonDeletedInstanceTypeByFQN(TEST_BASE_TYPE);
 		RDFInstance inst1 = instanceRepository.createInstance("Inst1", baseType);
 		RDFInstance inst2 = instanceRepository.createInstance("Inst2", baseType);
 		RDFInstance inst3 = instanceRepository.createInstance("Inst3", baseType);
@@ -119,7 +119,7 @@ class DesignspaceInterfaceTests  {
 		inst1.getTypedProperty(SET_PROP, Set.class).add(Boolean.TRUE);
 		inst1.getTypedProperty(MAP_PROP, Map.class).put(ENTRY1, 3);
 		
-		RDFInstanceType childType = schemaRegistry.getTypeByName(TEST_CHILD_TYPE);
+		RDFInstanceType childType = schemaRegistry.findNonDeletedInstanceTypeByFQN(TEST_CHILD_TYPE);
 		assertTrue(childType != null);
 		inst2.setInstanceType(childType);
 		inst3.setInstanceType(childType);
@@ -142,8 +142,8 @@ class DesignspaceInterfaceTests  {
 	
 	protected void createChildType() {
 		
-		RDFInstanceType childType = schemaRegistry.createNewInstanceType(TEST_CHILD_TYPE, schemaRegistry.getTypeByName(TEST_BASE_TYPE));
-		childType.createSinglePropertyType(PARENT_PROP, schemaRegistry.getTypeByName(TEST_BASE_TYPE));
+		RDFInstanceType childType = schemaRegistry.createNewInstanceType(TEST_CHILD_TYPE, schemaRegistry.findNonDeletedInstanceTypeByFQN(TEST_BASE_TYPE));
+		childType.createSinglePropertyType(PARENT_PROP, schemaRegistry.findNonDeletedInstanceTypeByFQN(TEST_BASE_TYPE));
 		//schemaRegistry.registerTypeByName(childType);
 	}
 	

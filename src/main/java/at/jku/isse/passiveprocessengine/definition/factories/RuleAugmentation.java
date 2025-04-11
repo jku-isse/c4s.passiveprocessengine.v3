@@ -51,7 +51,7 @@ public class RuleAugmentation {
 		stepDef.getPreconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = ProcessDefinitionFactory.getConstraintName(Conditions.PRECONDITION, spec.getOrderIndex(), stepType);
+			String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.PRECONDITION, spec.getOrderIndex(), stepType);
 			if (spec.getConstraintSpec() != null) {
 				String arl = spec.getConstraintSpec();
 				try {
@@ -62,14 +62,14 @@ public class RuleAugmentation {
 				} catch(Exception e) {
 					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage(), ProcessDefinitionError.Severity.ERROR));
 				}
-				RuleDefinition crt =  ruleFactory.createInstance(stepType, specId, arl);
+				var crt =  ruleFactory.createInstance(stepType, specId, arl);
 				//TODO check if that needs to be stored, references anywhere
 			}
 		});
 		stepDef.getPostconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = ProcessDefinitionFactory.getConstraintName(Conditions.POSTCONDITION, spec.getOrderIndex(), stepType);
+			String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.POSTCONDITION, spec.getOrderIndex(), stepType);
 			if (spec.getConstraintSpec() != null) {
 				String arl = spec.getConstraintSpec();
 				try {
@@ -86,7 +86,7 @@ public class RuleAugmentation {
 		stepDef.getCancelconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = ProcessDefinitionFactory.getConstraintName(Conditions.CANCELATION, spec.getOrderIndex(), stepType);
+			String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.CANCELATION, spec.getOrderIndex(), stepType);
 			if (spec.getConstraintSpec() != null) {
 				String arl = spec.getConstraintSpec();
 				try {
@@ -103,7 +103,7 @@ public class RuleAugmentation {
 		stepDef.getActivationconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = ProcessDefinitionFactory.getConstraintName(Conditions.ACTIVATION, spec.getOrderIndex(), stepType);
+			String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.ACTIVATION, spec.getOrderIndex(), stepType);
 			if (spec.getConstraintSpec() != null) {
 				String arl = spec.getConstraintSpec();
 				try {
@@ -123,7 +123,7 @@ public class RuleAugmentation {
 		stepDef.getQAConstraints().stream()
 			.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 			.forEach(spec -> {
-				String specId = ProcessDefinitionFactory.getQASpecId(spec, pd);
+				String specId = SpecificProcessInstanceTypesFactory.getQASpecId(spec, pd);
 				if (spec.getConstraintSpec() != null) {
 					String arl = spec.getConstraintSpec();
 					try {

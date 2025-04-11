@@ -2,12 +2,15 @@ package at.jku.isse.passiveprocessengine.instance.activeobjects;
 
 import java.time.ZonedDateTime;
 
-import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
-import at.jku.isse.passiveprocessengine.core.RuleResult;
+import org.apache.jena.ontapi.model.OntIndividual;
+
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RDFRuleResultWrapper;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
-import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType;
+import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType.CoreProperties;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -15,19 +18,18 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 
 	private volatile ZonedDateTime lastChanged;
 
-	public ConstraintResultWrapper(RDFInstance instance, ProcessContext context) {
-		super(instance, context);
-
+	public ConstraintResultWrapper(@NonNull OntIndividual element, RDFInstanceType type, @NonNull NodeToDomainResolver resolver) {
+		super(element, type, resolver);
 	}
 
-	public RuleResult getRuleResult() {
-		return (RuleResult) instance.getTypedProperty(ConstraintWrapperType.CoreProperties.crule.toString(), RuleResult.class);
+	public  RDFRuleResultWrapper getRuleResult() {
+		return getTypedProperty(CoreProperties.crule.toString(), RDFRuleResultWrapper.class);
 	}
 
-	protected void setRuleResultIfEmpty(RuleResult cr) {
-		Object prevRuleResult = instance.getTypedProperty(ConstraintWrapperType.CoreProperties.crule.toString(), RuleResult.class);
+	protected void setRuleResultIfEmpty(RDFRuleResultWrapper cr) {
+		var prevRuleResult = getRuleResult();
 		if (prevRuleResult == null) {
-			instance.setSingleProperty(ConstraintWrapperType.CoreProperties.crule.toString(), cr);
+			setSingleProperty(CoreProperties.crule.toString(), cr);
 		}
 	}
 
@@ -40,7 +42,7 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 	}
 
 	private Boolean getTrueResult() {
-		RuleResult cr = getRuleResult();
+		var cr = getRuleResult();
 		if (cr == null)
 			return false;
 		else {
@@ -50,7 +52,7 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 
 	public ZonedDateTime getLastChanged() {
 		if (lastChanged == null) { // then load
-			String last = instance.getTypedProperty(ConstraintWrapperType.CoreProperties.lastChanged.toString(), String.class);
+			String last = getTypedProperty(CoreProperties.lastChanged.toString(), String.class);
 			lastChanged = ZonedDateTime.parse(last);
 		}
 		return lastChanged;
@@ -58,26 +60,21 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 
 	//Not to be called directly, only public for factory access
 	public void setLastChanged(ZonedDateTime lastChanged) {
-		instance.setSingleProperty(ConstraintWrapperType.CoreProperties.lastChanged.toString(), lastChanged.toString());
+		setSingleProperty(CoreProperties.lastChanged.toString(), lastChanged.toString());
 		this.lastChanged = lastChanged;
 	}
 
 	public ConstraintSpec getConstraintSpec() {
-		RDFInstance qainst = instance.getTypedProperty(ConstraintWrapperType.CoreProperties.qaSpec.toString(), RDFInstance.class);
-		return context.getWrappedInstance(ConstraintSpec.class, qainst);
+		return getTypedProperty(CoreProperties.qaSpec.toString(), ConstraintSpec.class);		
 	}
 
 	//Not to be called directly, only public for factory access
 	public void setSpec(ConstraintSpec qaSpec) {
-		instance.setSingleProperty(ConstraintWrapperType.CoreProperties.qaSpec.toString(), qaSpec.getInstance());
+		setSingleProperty(CoreProperties.qaSpec.toString(), qaSpec.getInstance());
 	}
 
 	public ProcessStep getParentStep() {
-		RDFInstance step = instance.getTypedProperty(ConstraintWrapperType.CoreProperties.parentStep.toString(), RDFInstance.class);
-		if (step != null)
-			return context.getWrappedInstance(ProcessStep.class, step);
-		else
-			return null;
+		return getTypedProperty(CoreProperties.parentStep.toString(), ProcessStep.class);		
 	}
 
 	@Override
@@ -86,11 +83,11 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 	}
 
 	public boolean getIsOverriden() {
-		return instance.getTypedProperty(ConstraintWrapperType.CoreProperties.isOverriden.toString(), Boolean.class, Boolean.FALSE);
+		return getTypedProperty(CoreProperties.isOverriden.toString(), Boolean.class, Boolean.FALSE);
 	}
 
 	public boolean getOverrideValue() {
-		return instance.getTypedProperty(ConstraintWrapperType.CoreProperties.overrideValue.toString(), Boolean.class);
+		return getTypedProperty(CoreProperties.overrideValue.toString(), Boolean.class);
 	}
 
 	public boolean isOverrideDiffFromConstraintResult() {
@@ -101,13 +98,12 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 	}
 
 	public String getOverrideReasonOrNull() {
-		return instance.getTypedProperty(ConstraintWrapperType.CoreProperties.overrideReason.toString(), String.class);
+		return getTypedProperty(CoreProperties.overrideReason.toString(), String.class);
 	}
 
 	public void removeOverride() {
 		setIsOverriden(false);
 		setOverrideReason("");
-		context.getInstanceRepository().concludeTransaction();
 	}
 
 	public String setOverrideWithReason(String reason) {
@@ -119,8 +115,7 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 			} else {
 				setIsOverriden(true);
 				setOverrideReason(reason);
-				setOverrideValue(!getTrueResult());
-				context.getInstanceRepository().concludeTransaction();				
+				setOverrideValue(!getTrueResult());			
 				return "";
 			}
 		} else {
@@ -132,16 +127,16 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 
 	//Not to be called directly, only public for factory access
 	public void setIsOverriden(boolean isOverriden) {
-		instance.setSingleProperty(ConstraintWrapperType.CoreProperties.isOverriden.toString(), isOverriden);
+		setSingleProperty(CoreProperties.isOverriden.toString(), isOverriden);
 	}
 
 	private void setOverrideValue(boolean overrideTo) {
-		instance.setSingleProperty(ConstraintWrapperType.CoreProperties.overrideValue.toString(), overrideTo);
+		setSingleProperty(CoreProperties.overrideValue.toString(), overrideTo);
 	}
 
 	//Not to be called directly, only public for factory access
 	public void setOverrideReason(String reason) {
-		instance.setSingleProperty(ConstraintWrapperType.CoreProperties.overrideReason.toString(), reason);
+		setSingleProperty(CoreProperties.overrideReason.toString(), reason);
 	}
 
 	@Override
@@ -155,19 +150,19 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 	}
 
 //	public static InstanceType getOrCreateDesignSpaceInstanceType(Workspace ws){
-//		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(ConstraintWrapperType.designspaceTypeId));
+//		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId));
 //			if (thisType.isPresent())
 //				return thisType.get();
 //			else {
-//				InstanceType typeStep = ws.createInstanceType(ConstraintWrapperType.designspaceTypeId, ws.TYPES_FOLDER, ProcessInstanceScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
+//				InstanceType typeStep = ws.createInstanceType(designspaceTypeId, ws.TYPES_FOLDER, ProcessInstanceScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
 //				ProcessInstanceScopedElement.addGenericProcessProperty(typeStep);
-//				typeStep.createPropertyType(ConstraintWrapperType.CoreProperties.qaSpec.toString(), Cardinality.SINGLE, ConstraintSpec.getOrCreateDesignSpaceCoreSchema(ws));
-//				typeStep.createPropertyType(ConstraintWrapperType.CoreProperties.parentStep.toString(), Cardinality.SINGLE, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
-//				typeStep.createPropertyType(ConstraintWrapperType.CoreProperties.lastChanged.toString(), Cardinality.SINGLE, Workspace.STRING);
-//				typeStep.createPropertyType(ConstraintWrapperType.CoreProperties.crule.toString(), Cardinality.SINGLE, ws.its(ConsistencyRuleType.CONSISTENCY_RULE_TYPE));
-//				typeStep.createPropertyType(ConstraintWrapperType.CoreProperties.isOverriden.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
-//				typeStep.createPropertyType(ConstraintWrapperType.CoreProperties.overrideValue.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
-//				typeStep.createPropertyType(ConstraintWrapperType.CoreProperties.overrideReason.toString(), Cardinality.SINGLE, Workspace.STRING);
+//				typeStep.createPropertyType(CoreProperties.qaSpec.toString(), Cardinality.SINGLE, ConstraintSpec.getOrCreateDesignSpaceCoreSchema(ws));
+//				typeStep.createPropertyType(CoreProperties.parentStep.toString(), Cardinality.SINGLE, ProcessStep.getOrCreateDesignSpaceCoreSchema(ws));
+//				typeStep.createPropertyType(CoreProperties.lastChanged.toString(), Cardinality.SINGLE, Workspace.STRING);
+//				typeStep.createPropertyType(CoreProperties.crule.toString(), Cardinality.SINGLE, ws.its(ConsistencyRuleType.CONSISTENCY_RULE_TYPE));
+//				typeStep.createPropertyType(CoreProperties.isOverriden.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
+//				typeStep.createPropertyType(CoreProperties.overrideValue.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
+//				typeStep.createPropertyType(CoreProperties.overrideReason.toString(), Cardinality.SINGLE, Workspace.STRING);
 //				return typeStep;
 //			}
 //	}
@@ -175,7 +170,7 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 //	public static ConstraintWrapper getInstance(Workspace ws, ConstraintSpec qaSpec, ZonedDateTime lastChanged, ProcessStep owningStep, ProcessInstance proc) {
 //		Instance inst = ws.createInstance(getOrCreateDesignSpaceInstanceType(ws), qaSpec.getName()+proc.getName()+"_"+UUID.randomUUID());
 //		ConstraintWrapper cw = context.getWrappedInstance(ConstraintWrapper.class, inst);
-//		cw.instance.setSingleProperty(ConstraintWrapperType.CoreProperties.parentStep.toString(), owningStep.getInstance());
+//		cw.setSingleProperty(CoreProperties.parentStep.toString(), owningStep.getInstance());
 //		cw.setSpec(qaSpec);
 //		cw.setLastChanged(lastChanged);
 //		cw.setProcess(proc);

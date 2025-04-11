@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import at.jku.isse.designspace.rule.arl.evaluator.RuleDefinition;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
+import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
@@ -38,7 +38,7 @@ public class ProcessInstance extends ProcessStep {
 	private transient ProcessStepInstanceFactory stepFactory;
 	private transient DecisionNodeInstanceFactory decisionNodeFactory;
 
-	public ProcessInstance(RDFInstance instance, ProcessContext context) {
+	public ProcessInstance(RDFInstance instance, RuleEnabledResolver context) {
 		super(instance, context);
 		if (getCreatedAt() == null) { // truely null, otherwise just loading from persistance layer
 			setCreatedAt(getCurrentTimestamp());

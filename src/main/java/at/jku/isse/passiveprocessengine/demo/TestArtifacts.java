@@ -7,42 +7,50 @@ import java.util.Set;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.CoreTypeFactory;
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 
 public class TestArtifacts {
 
-	public static final String DEMOISSUETYPE = "http://isse.jku.at/demo#DemoIssue";
-	public enum CoreProperties { state, requirements, bugs, parent, html_url, upstream, downstream }
+	static final String NS = "http://isse.jku.at/demo#";
+	public static final String DEMOISSUETYPE = NS+"DemoIssue";
+	public enum CoreProperties { state, requirements, bugs, parent, html_url, upstream, downstream		
+		;
+		
+		@Override
+		public String toString() {
+			return NS+name();
+		}
+		
+		public String getURI() {
+			return NS+name();
+		}
+	}
 	public enum JiraStates { Open, InProgress, Closed, ReadyForReview, Released}
 
-	InstanceRepository repository;
-	SchemaRegistry schemaRegistry;
+	NodeToDomainResolver schemaRegistry;
 	
-	public TestArtifacts(InstanceRepository repository, SchemaRegistry schemaRegistry) {
-		this.repository = repository;
+	public TestArtifacts( NodeToDomainResolver schemaRegistry) {
 		this.schemaRegistry = schemaRegistry;		
 	}
 	
 	public RDFInstanceType getJiraInstanceType() {
-		Optional<RDFInstanceType> thisType = Optional.ofNullable(schemaRegistry.getTypeByName(DEMOISSUETYPE));
+		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(DEMOISSUETYPE);
 			if (thisType.isPresent())
 				return thisType.get();
 			else {
-				RDFInstanceType typeJira = schemaRegistry.createNewInstanceType(DEMOISSUETYPE, schemaRegistry.getTypeByName(CoreTypeFactory.BASE_TYPE_URI));				
-				//schemaRegistry.registerTypeByName(typeJira);
-				typeJira.createSinglePropertyType(CoreProperties.state.toString(), BuildInType.STRING);
-				typeJira.createSetPropertyType(CoreProperties.requirements.toString(), typeJira);
-				typeJira.createSetPropertyType(CoreProperties.bugs.toString(),  typeJira);
-				typeJira.createSinglePropertyType(CoreProperties.parent.toString(),  typeJira);
-				typeJira.createSetPropertyType(CoreProperties.upstream.toString(),  typeJira);
-				typeJira.createSetPropertyType(CoreProperties.downstream.toString(),  typeJira);
-				//typeJira.createOpposablePropertyType(CoreProperties.upstream.toString(), Cardinality.SET, typeJira, CoreProperties.downstream.toString(), Cardinality.SET);				
-				//typeJira.createSinglePropertyType(CoreProperties.html_url.toString(), BuildInType.STRING);
+				RDFInstanceType typeJira = schemaRegistry.createNewInstanceType(DEMOISSUETYPE, schemaRegistry.findNonDeletedInstanceTypeByFQN(CoreTypeFactory.BASE_TYPE_URI).orElse(null));				
+				typeJira.createSinglePropertyType(CoreProperties.state.toString(), schemaRegistry.getMetaschemata().getPrimitiveTypesFactory().getStringType());
+				typeJira.createSetPropertyType(CoreProperties.requirements.toString(), typeJira.getAsPropertyType());
+				typeJira.createSetPropertyType(CoreProperties.bugs.toString(),  typeJira.getAsPropertyType());
+				typeJira.createSinglePropertyType(CoreProperties.parent.toString(),  typeJira.getAsPropertyType());
+				typeJira.createSetPropertyType(CoreProperties.upstream.toString(),  typeJira.getAsPropertyType());
+				typeJira.createSetPropertyType(CoreProperties.downstream.toString(),  typeJira.getAsPropertyType());
 				return typeJira;
 			}
 	}
 
 	public RDFInstance getJiraInstance(String name, RDFInstance... reqs) {
-		RDFInstance jira = repository.createInstance(name, getJiraInstanceType());
+		RDFInstance jira = schemaRegistry.createInstance(name, getJiraInstanceType());
 		jira.setSingleProperty(CoreTypeFactory.URL_URI,"http://localhost:7171/home");
 		jira.setSingleProperty(CoreTypeFactory.EXTERNAL_TYPE_URI,"none");
 		jira.setSingleProperty(CoreTypeFactory.EXTERNAL_DEFAULT_ID_URI, name);
@@ -119,10 +127,10 @@ public class TestArtifacts {
 	
 	public RDFInstanceType getDemoGitIssueType() {
 		RDFInstanceType typeGitDemo = schemaRegistry.createNewInstanceType("git_issue");
-		typeGitDemo.createSetPropertyType("linkedIssues", typeGitDemo);
-		typeGitDemo.createSetPropertyType("labels", BuildInType.STRING);
-		typeGitDemo.createSinglePropertyType("state", BuildInType.STRING);
-		typeGitDemo.createSinglePropertyType("title",  BuildInType.STRING);
+		typeGitDemo.createSetPropertyType("linkedIssues", typeGitDemo.getAsPropertyType());
+		typeGitDemo.createSetPropertyType("labels", schemaRegistry.getMetaschemata().getPrimitiveTypesFactory().getStringType());
+		typeGitDemo.createSinglePropertyType("state", schemaRegistry.getMetaschemata().getPrimitiveTypesFactory().getStringType());
+		typeGitDemo.createSinglePropertyType("title", schemaRegistry.getMetaschemata().getPrimitiveTypesFactory().getStringType());
 		return typeGitDemo;
 	}
 
@@ -132,12 +140,12 @@ public class TestArtifacts {
 		RDFInstanceType typeAzureTypeTest = schemaRegistry.createNewInstanceType("azure_workitemtype");
 		RDFInstanceType typeAzureLinkTypeTest = schemaRegistry.createNewInstanceType("workitem_link");
 
-		typeAzureTest.createSetPropertyType("relatedItems", typeAzureLinkTypeTest);
-		typeAzureTest.createSinglePropertyType("state", typeAzureStateTest);
-		typeAzureTest.createSinglePropertyType("workItemType", typeAzureTypeTest);
+		typeAzureTest.createSetPropertyType("relatedItems", typeAzureLinkTypeTest.getAsPropertyType());
+		typeAzureTest.createSinglePropertyType("state", typeAzureStateTest.getAsPropertyType());
+		typeAzureTest.createSinglePropertyType("workItemType", typeAzureTypeTest.getAsPropertyType());
 
-		typeAzureLinkTypeTest.createSinglePropertyType("linkTo", typeAzureTest);
-		typeAzureLinkTypeTest.createSinglePropertyType("linkType", typeAzureTypeTest);
+		typeAzureLinkTypeTest.createSinglePropertyType("linkTo", typeAzureTest.getAsPropertyType());
+		typeAzureLinkTypeTest.createSinglePropertyType("linkType", typeAzureTypeTest.getAsPropertyType());
 
 
 		return typeAzureTest;

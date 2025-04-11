@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
+import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
@@ -12,13 +12,13 @@ import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
 public class DecisionNodeInstanceFactory extends DomainFactory {
 
 	
-	public DecisionNodeInstanceFactory(ProcessContext context) {
+	public DecisionNodeInstanceFactory(RuleEnabledResolver context) {
 		super(context);		
 	}
 
 	public DecisionNodeInstance getInstance(DecisionNodeDefinition dnd) {				
 		RDFInstance instance = getContext().getInstanceRepository().createInstance(dnd.getName()+"_"+UUID.randomUUID()
-			, getContext().getSchemaRegistry().getTypeByName(DecisionNodeInstanceType.typeId));
+			, getContext().getSchemaRegistry().findNonDeletedInstanceTypeByFQN(DecisionNodeInstanceType.typeId));
 		DecisionNodeInstance dni = getContext().getWrappedInstance(DecisionNodeInstance.class, instance);
 		//dni.init(dnd);
 		instance.setSingleProperty(DecisionNodeInstanceType.CoreProperties.dnd.toString(),dnd.getInstance());

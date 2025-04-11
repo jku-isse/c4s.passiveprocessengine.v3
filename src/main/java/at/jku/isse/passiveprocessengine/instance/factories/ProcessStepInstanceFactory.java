@@ -6,11 +6,11 @@ import java.util.UUID;
 
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
+import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
-import at.jku.isse.passiveprocessengine.definition.factories.ProcessDefinitionFactory;
+import at.jku.isse.passiveprocessengine.definition.factories.SpecificProcessInstanceTypesFactory;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultWrapper;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
@@ -23,7 +23,7 @@ import lombok.NonNull;
 public class ProcessStepInstanceFactory extends DomainFactory {
 			
 	
-	public ProcessStepInstanceFactory(ProcessContext context) {
+	public ProcessStepInstanceFactory(RuleEnabledResolver context) {
 		super(context);		
 	}
 
@@ -35,7 +35,7 @@ public class ProcessStepInstanceFactory extends DomainFactory {
 		} else {
 			String specificStepType = SpecificProcessStepType.getProcessStepName(stepDef);
 			RDFInstance instance = getContext().getInstanceRepository().createInstance( stepDef.getName()+"-"+UUID.randomUUID()
-				, getContext().getSchemaRegistry().getTypeByName(specificStepType));
+				, getContext().getSchemaRegistry().findNonDeletedInstanceTypeByFQN(specificStepType));
 			ProcessStep step = getContext().getWrappedInstance(ProcessStep.class, instance);
 			step.setProcess(scope);
 			init(step, stepDef, inDNI, outDNI);
@@ -77,7 +77,7 @@ public class ProcessStepInstanceFactory extends DomainFactory {
 		ProcessDefinition pd = sd.getProcess() !=null ? sd.getProcess() : (ProcessDefinition)sd;
 		sd.getQAConstraints().stream()
 		.forEach(spec -> {
-			String qid = ProcessDefinitionFactory.getQASpecId(spec, pd);
+			String qid = SpecificProcessInstanceTypesFactory.getQASpecId(spec, pd);
 			ConstraintResultWrapper cw = getContext().getFactoryIndex().getConstraintResultFactory().createInstance(spec, ZonedDateTime.now(), step, getParentProcessOrThisIfProcessElseNull(step));			
 			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).put(qid, cw.getInstance());
 		});
@@ -85,28 +85,28 @@ public class ProcessStepInstanceFactory extends DomainFactory {
 		sd.getPostconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = ProcessDefinitionFactory.getConstraintName(Conditions.POSTCONDITION, spec.getOrderIndex(), step.getInstance().getInstanceType());
+			String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.POSTCONDITION, spec.getOrderIndex(), step.getInstance().getInstanceType());
 			ConstraintResultWrapper cw = getContext().getFactoryIndex().getConstraintResultFactory().createInstance(spec, ZonedDateTime.now(), step, getParentProcessOrThisIfProcessElseNull(step));
 			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.postconditions.toString(), Map.class).put(specId, cw.getInstance());
 		});
 		sd.getPreconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = ProcessDefinitionFactory.getConstraintName(Conditions.PRECONDITION, spec.getOrderIndex(), step.getInstance().getInstanceType());
+			String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.PRECONDITION, spec.getOrderIndex(), step.getInstance().getInstanceType());
 			ConstraintResultWrapper cw = getContext().getFactoryIndex().getConstraintResultFactory().createInstance(spec, ZonedDateTime.now(), step, getParentProcessOrThisIfProcessElseNull(step));
 			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.preconditions.toString(), Map.class).put(specId, cw.getInstance());
 		});
 		sd.getCancelconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = ProcessDefinitionFactory.getConstraintName(Conditions.CANCELATION, spec.getOrderIndex(), step.getInstance().getInstanceType());
+			String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.CANCELATION, spec.getOrderIndex(), step.getInstance().getInstanceType());
 			ConstraintResultWrapper cw = getContext().getFactoryIndex().getConstraintResultFactory().createInstance(spec, ZonedDateTime.now(), step, getParentProcessOrThisIfProcessElseNull(step));
 			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.cancelconditions.toString(), Map.class).put(specId, cw.getInstance());
 		});
 		sd.getActivationconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = ProcessDefinitionFactory.getConstraintName(Conditions.ACTIVATION, spec.getOrderIndex(), step.getInstance().getInstanceType());
+			String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.ACTIVATION, spec.getOrderIndex(), step.getInstance().getInstanceType());
 			ConstraintResultWrapper cw = getContext().getFactoryIndex().getConstraintResultFactory().createInstance(spec, ZonedDateTime.now(), step, getParentProcessOrThisIfProcessElseNull(step));
 			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.activationconditions.toString(), Map.class).put(specId, cw.getInstance());
 		});

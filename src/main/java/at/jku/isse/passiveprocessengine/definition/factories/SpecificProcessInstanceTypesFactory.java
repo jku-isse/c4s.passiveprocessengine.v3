@@ -8,7 +8,7 @@ import at.jku.isse.designspace.rule.arl.evaluator.RuleDefinition;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
@@ -18,58 +18,54 @@ import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Creates for a process definition the specific instance types, i.e., process step and dni subtypes 
+ * that are specific for this process definition, so that we can execute rules over them
+ */
 @Slf4j
-public class ProcessDefinitionFactory extends DomainFactory {
+public class SpecificProcessInstanceTypesFactory {
 
 	public static final String CRD_PREFIX = "crd_";
 	public static final String CRD_DATAMAPPING_PREFIX = "crd_datamapping_";
 	public static final String CRD_QASPEC_PREFIX = "crd_qaspec_";
 
 	final RewriterFactory ruleService;
+	final RDFInstanceType procDefType;
+	final RuleEnabledResolver context;
 
-	public ProcessDefinitionFactory(ProcessContext context, RewriterFactory ruleService) {
-		super(context);
+	public SpecificProcessInstanceTypesFactory(@NonNull RuleEnabledResolver context, @NonNull RewriterFactory ruleService, @NonNull RDFInstanceType procDefType ) {
+		this.context = context;
 		this.ruleService = ruleService;
+		this.procDefType = procDefType;
 	}
-
-	/**
-	 * 
-	 * @param processId
-	 * @return Basic, empty process definition structure. Creation of rules and specific process instance types requires calling 'initializeInstanceTypes'
-	 */
-	public ProcessDefinition createInstance(String processId) {
-		RDFInstance instance = getContext().getInstanceRepository().createInstance(processId, getContext().getSchemaRegistry().getTypeByName(ProcessDefinitionType.typeId));
-		instance.setSingleProperty(ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString(), false);
-		return getContext().getWrappedInstance(ProcessDefinition.class, instance);				
-	}
-
+		
 	/**
 	 * 
 	 * @param processDef
-	 * @param doGeneratePrematureDetectionConstraints (ignored for now)
 	 * @return any errors that occurred while instantiating all specific StepTypes and their respective RuleDefinitions, includes rule augmentation
 	 * includes checking of process wellformedness constraints
 	 */
-	public List<ProcessDefinitionError> initializeInstanceTypes(ProcessDefinition processDef, boolean doGeneratePrematureDetectionConstraints) {
+	public List<ProcessDefinitionError> initializeInstanceTypes(ProcessDefinition processDef) {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
-		SpecificProcessStepType processAsStepTypeProvider = new SpecificProcessStepType(getContext().getSchemaRegistry(), processDef);
+		SpecificProcessStepType processAsStepTypeProvider = new SpecificProcessStepType(getContext(), processDef);
 		processAsStepTypeProvider.produceTypeProperties();
-		SpecificProcessInstanceType typeProvider = new SpecificProcessInstanceType(getContext().getSchemaRegistry(), processDef);
+		SpecificProcessInstanceType typeProvider = new SpecificProcessInstanceType(getContext(), processDef);
 		typeProvider.produceTypeProperties();				
-		RDFInstanceType processInstanceType = getContext().getSchemaRegistry().getTypeByName(SpecificProcessInstanceType.getProcessName(processDef)); //) ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
+		RDFInstanceType processInstanceType = getContext().findNonDeletedInstanceTypeByFQN(SpecificProcessInstanceType.getProcessName(processDef)); //) ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
 		//DecisionNodeInstance.getOrCreateCoreType(instance.workspace);
 		//List<ProcessException> subProcessExceptions = new ArrayList<>();
 		processDef.getStepDefinitions().stream().forEach(stepDef -> {
-			if (stepDef instanceof ProcessDefinition) {
+			if (stepDef instanceof ProcessDefinition procDef) {
 				log.debug("Skipping creation of Datamapping Rule for Subprocess Step: "+stepDef.getName());
-				errors.addAll(initializeInstanceTypes((ProcessDefinition)stepDef, doGeneratePrematureDetectionConstraints));
+				errors.addAll(initializeInstanceTypes(procDef));
 			} else {
 				// create the specific step type
-				SpecificProcessStepType stepTypeProvider = new SpecificProcessStepType(getContext().getSchemaRegistry(), stepDef, processInstanceType);
+				SpecificProcessStepType stepTypeProvider = new SpecificProcessStepType(getContext(), stepDef, processInstanceType);
 				stepTypeProvider.produceTypeProperties();	
-				RDFInstanceType stepInstanceType = getContext().getSchemaRegistry().getTypeByName(SpecificProcessStepType.getProcessStepName(stepDef));
+				RDFInstanceType stepInstanceType = getContext().findNonDeletedInstanceTypeByFQN(SpecificProcessStepType.getProcessStepName(stepDef));
 				stepDef.getInputToOutputMappingRules().entrySet().stream()
 				.forEach(entry -> {
 					if (entry.getValue() != null) {
@@ -93,7 +89,7 @@ public class ProcessDefinitionFactory extends DomainFactory {
 		errors.addAll(new RuleAugmentation(processDef, processInstanceType, getContext().getFactoryIndex().getRuleDefinitionFactory(), ruleService).augmentAndCreateConditions());
 		processDef.getStepDefinitions().stream().forEach(stepDef -> {
 			errors.addAll(new RuleAugmentation(stepDef, 
-												getContext().getSchemaRegistry().getTypeByName(SpecificProcessStepType.getProcessStepName(stepDef)), 
+												getContext().findNonDeletedInstanceTypeByFQN(SpecificProcessStepType.getProcessStepName(stepDef)), 
 												getContext().getFactoryIndex().getRuleDefinitionFactory(), 
 												ruleService)
 								.augmentAndCreateConditions());
@@ -130,7 +126,7 @@ public class ProcessDefinitionFactory extends DomainFactory {
 		processDef.getPrematureTriggers().entrySet().stream()
 		.forEach(entry -> {
 			String ruleId = SpecificProcessInstanceType.generatePrematureRuleName(entry.getKey(), processDef);
-			RuleDefinition crt = getContext().getSchemaRegistry().getRuleByNameAndContext(ruleId, processInstanceType); //.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
+			var crt = getContext().getRuleByNameAndContext(ruleId, processInstanceType); //.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
 			if (crt == null) {
 				log.error("Expected Rule for existing process not found: "+ruleId);
 				overallStatus.add(new ProcessDefinitionError(processDef, "Expected Premature Trigger Rule Not Found - Internal Data Corruption", ruleId, ProcessDefinitionError.Severity.ERROR));

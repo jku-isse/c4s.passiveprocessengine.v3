@@ -11,7 +11,7 @@ import com.google.gson.stream.JsonWriter;
 
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessContext;
+import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.core.serialization.ConfigurablePropertyTypeAdapter;
 import at.jku.isse.passiveprocessengine.core.serialization.TypeAdapterRegistry;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
@@ -21,16 +21,16 @@ import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 
 public class StepTypeAdapter extends ConfigurablePropertyTypeAdapter {
 	
-	protected final ProcessContext context;
+	protected final RuleEnabledResolver context;
 	protected final RDFInstanceType baseStepType;
 	
 	public StepTypeAdapter(TypeAdapterRegistry registry, 
 			Set<String> propertiesToSerializeShallow,
 			Set<String> propertiesToSerializeDeep,
-			ProcessContext context) {
+			RuleEnabledResolver context) {
 		super(registry, propertiesToSerializeShallow, propertiesToSerializeDeep);
 		this.context = context;
-		baseStepType = context.getSchemaRegistry().getTypeByName(AbstractProcessStepType.typeId);
+		baseStepType = context.getSchemaRegistry().findNonDeletedInstanceTypeByFQN(AbstractProcessStepType.typeId);
 		assert(baseStepType != null);
 	}
 	
