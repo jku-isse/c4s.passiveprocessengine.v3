@@ -9,7 +9,7 @@ import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
 
-public class DecisionNodeDefinitionType extends AbstractTypeProvider {
+public class DecisionNodeDefinitionTypeFactory extends AbstractTypeProvider {
 
 	private static final String NS = ProcessDefinitionScopeType.NS+"/decisionnodedefinition#";
 	
@@ -28,7 +28,7 @@ public class DecisionNodeDefinitionType extends AbstractTypeProvider {
 	
 	public static final String typeId = ProcessDefinitionScopeType.NS+"#"+DecisionNodeDefinition.class.getSimpleName();
 
-	public DecisionNodeDefinitionType(NodeToDomainResolver schemaRegistry) {
+	public DecisionNodeDefinitionTypeFactory(NodeToDomainResolver schemaRegistry) {
 		super(schemaRegistry);
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {

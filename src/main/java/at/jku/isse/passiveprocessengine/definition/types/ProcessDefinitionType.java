@@ -45,7 +45,7 @@ public class ProcessDefinitionType extends AbstractTypeProvider {
 				.map(vtype->vtype.getAsPropertyType())
 				.orElse(null));
 		type.createSetPropertyType(CoreProperties.decisionNodeDefinitions.toString(),  
-				schemaRegistry.findNonDeletedInstanceTypeByFQN(DecisionNodeDefinitionType.typeId)
+				schemaRegistry.findNonDeletedInstanceTypeByFQN(DecisionNodeDefinitionTypeFactory.typeId)
 				.map(vtype->vtype.getAsPropertyType())
 				.orElse(null));
 		type.createMapPropertyType(CoreProperties.prematureTriggers.toString(), primitives.getStringType());

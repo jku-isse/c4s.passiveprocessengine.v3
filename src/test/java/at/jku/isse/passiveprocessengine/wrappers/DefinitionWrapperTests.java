@@ -25,7 +25,7 @@ import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
 import at.jku.isse.passiveprocessengine.core.RuleAnalysisService;
 import at.jku.isse.passiveprocessengine.core.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecTypeFactory;
-import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
+import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionScopeType;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
@@ -92,8 +92,8 @@ public class DefinitionWrapperTests {
 		System.out.println(schemaReg.findNonDeletedInstanceTypeByFQN(ConstraintSpecTypeFactory.typeId).getName());
 		assertTrue(schemaReg.findNonDeletedInstanceTypeByFQN(MappingDefinitionTypeFactory.typeId) != null);
 		System.out.println(schemaReg.findNonDeletedInstanceTypeByFQN(MappingDefinitionTypeFactory.typeId).getName());
-		assertTrue(schemaReg.findNonDeletedInstanceTypeByFQN(DecisionNodeDefinitionType.typeId) != null);
-		System.out.println(schemaReg.findNonDeletedInstanceTypeByFQN(DecisionNodeDefinitionType.typeId).getName());
+		assertTrue(schemaReg.findNonDeletedInstanceTypeByFQN(DecisionNodeDefinitionTypeFactory.typeId) != null);
+		System.out.println(schemaReg.findNonDeletedInstanceTypeByFQN(DecisionNodeDefinitionTypeFactory.typeId).getName());
 		assertTrue(schemaReg.findNonDeletedInstanceTypeByFQN(StepDefinitionTypeFactory.typeId) != null);
 		System.out.println(schemaReg.findNonDeletedInstanceTypeByFQN(StepDefinitionTypeFactory.typeId).getName());
 		assertTrue(schemaReg.findNonDeletedInstanceTypeByFQN(ProcessDefinitionType.typeId) != null);
@@ -140,18 +140,18 @@ public class DefinitionWrapperTests {
 	@Test
 	void testMapListSetPropertyGeneration() {
 			
-		RDFInstanceType type = schemaReg.findNonDeletedInstanceTypeByFQN(DecisionNodeDefinitionType.typeId);
+		RDFInstanceType type = schemaReg.findNonDeletedInstanceTypeByFQN(DecisionNodeDefinitionTypeFactory.typeId);
 		RDFInstanceType mappingType = schemaReg.findNonDeletedInstanceTypeByFQN(MappingDefinitionTypeFactory.typeId);
-		RDFInstanceType dndType = schemaReg.findNonDeletedInstanceTypeByFQN(DecisionNodeDefinitionType.typeId);
+		RDFInstanceType dndType = schemaReg.findNonDeletedInstanceTypeByFQN(DecisionNodeDefinitionTypeFactory.typeId);
 		RDFInstanceType stepType = schemaReg.findNonDeletedInstanceTypeByFQN(StepDefinitionTypeFactory.typeId);
 		RDFInstanceType processType = schemaReg.findNonDeletedInstanceTypeByFQN(ProcessDefinitionType.typeId);
 		
-		PPEPropertyType propType = type.getPropertyType(DecisionNodeDefinitionType.CoreProperties.dataMappingDefinitions.toString());
+		PPEPropertyType propType = type.getPropertyType(DecisionNodeDefinitionTypeFactory.CoreProperties.dataMappingDefinitions.toString());
 		assertTrue(propType != null);
 		assertTrue(propType.getCardinality().equals(Cardinalities.SET));
 		assertTrue(propType.getInstanceType().equals(mappingType));
 				
-		PPEPropertyType inType = type.getPropertyType(DecisionNodeDefinitionType.CoreProperties.inSteps.toString());
+		PPEPropertyType inType = type.getPropertyType(DecisionNodeDefinitionTypeFactory.CoreProperties.inSteps.toString());
 		assertTrue(inType != null);
 		assertTrue(inType.getCardinality().equals(Cardinalities.SET));
 		assertTrue(inType.getInstanceType().equals(stepType));

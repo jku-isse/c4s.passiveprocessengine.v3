@@ -30,13 +30,11 @@ public class DefinitionTransformer {
 	private final NodeToDomainResolver schemaRegistry;
 	private final List<ProcessDefinitionError> errors = new LinkedList<>();
 	private final DTOs.Process rootProcDTO;		
-	private final DomainTypesRegistry typesFactory;
 	
 	public DefinitionTransformer(DTOs.Process procDTO, FactoryIndex factories, NodeToDomainResolver schemaRegistry) {
 		this.rootProcDTO = procDTO;	
 		this.factories = factories;
 		this.schemaRegistry = schemaRegistry;
-		this.typesFactory = schemaRegistry;
 	}
 	
 	public List<ProcessDefinitionError> getErrors() {
@@ -102,7 +100,7 @@ public class DefinitionTransformer {
 				DecisionNodeDefinition dnd = processDefinition.getDecisionNodeDefinitionByName(dn.getCode());
 				dn.getMapping().stream().forEach(m ->
 					dnd.addDataMappingDefinition(
-						factories.getMappingDefinitionFactory().getInstance(m.getFromStep(), m.getFromParam(), m.getToStep(), m.getToParam())) );
+						factories.getMappingDefinitionFactory().getStepInstance(m.getFromStep(), m.getFromParam(), m.getToStep(), m.getToParam())) );
 		});
 		// then process itself
 		initStepFromDTO(procDTO, processDefinition);

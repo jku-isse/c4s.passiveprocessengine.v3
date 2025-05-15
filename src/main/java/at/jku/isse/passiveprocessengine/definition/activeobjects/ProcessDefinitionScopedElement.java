@@ -11,6 +11,8 @@ import lombok.NonNull;
 
 public abstract class ProcessDefinitionScopedElement extends RDFInstance {
 	
+
+	
 	protected ProcessDefinitionScopedElement(@NonNull OntIndividual element, RDFInstanceType type, @NonNull NodeToDomainResolver resolver) {
 		super(element, type, resolver);
 	}
@@ -39,4 +41,5 @@ public abstract class ProcessDefinitionScopedElement extends RDFInstance {
 	public void deleteCascading() {
 		super.delete();
 	}
+
 }

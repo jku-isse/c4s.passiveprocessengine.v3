@@ -12,7 +12,7 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import lombok.NonNull;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
-import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType.CoreProperties;;
+import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionTypeFactory.CoreProperties;;
 
 public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 

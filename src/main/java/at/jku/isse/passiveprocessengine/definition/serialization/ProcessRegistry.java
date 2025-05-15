@@ -12,9 +12,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFElement;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
+import at.jku.isse.passiveprocessengine.core.FactoryIndex;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
@@ -30,51 +32,41 @@ import lombok.extern.slf4j.Slf4j;
 public class ProcessRegistry {
 
 	private final RuleEnabledResolver context;
-
+	private final FactoryIndex factoryIndex;
 
 	protected RDFInstanceType processDefinitionType;
 	protected RDFInstanceType processInstanceType;
 
-	//protected Set<DTOs.Process> tempStorePD = new HashSet<>();
-	//protected boolean isInit = false;
 	protected Map<String, ProcessInstance> processInstances = new HashMap<>();
 	protected List<ProcessInstance> removedInstances = new LinkedList<>();
 
 	public static final String STAGINGPOSTFIX = "-STAGING";
 
-	public ProcessRegistry(RuleEnabledResolver context) {
+	public ProcessRegistry(RuleEnabledResolver context, FactoryIndex factoryIndex) {
 		this.context = context;
-		processDefinitionType = context.findNonDeletedInstanceTypeByFQN(ProcessDefinitionType.typeId); // ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);
-		assert(processDefinitionType != null);
-		processInstanceType = context.findNonDeletedInstanceTypeByFQN(AbstractProcessInstanceType.typeId); 
-		assert(processInstanceType != null);
+		this.factoryIndex = factoryIndex;
+		var processDefinitionTypeOpt = context.findNonDeletedInstanceTypeByFQN(ProcessDefinitionType.typeId); // ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);				
+		var processInstanceTypeOpt = context.findNonDeletedInstanceTypeByFQN(AbstractProcessInstanceType.typeId); 		
+		if (processDefinitionTypeOpt.isEmpty() || processInstanceTypeOpt.isEmpty()) {
+			var msg = "Expected Basic Types for ProcessDefinition and/or ProcessInstance are null";
+			log.error(msg);
+			throw new RuntimeException(msg);
+		} else {
+			processDefinitionType = processDefinitionTypeOpt.get();
+			processInstanceType = processDefinitionTypeOpt.get();
+		}		
 		context.getAllNonDeletedInstanceTypes().stream().forEach(itype -> log.debug(String.format("Available instance type %s ", itype.getName())));
 		loadPersistedProcesses();
 	}
 	
-
-
-//	public void initProcessDefinitions() {		
-//		// TODO: restructure designspace so that process type is available upon constructor call
-//		context.getSchemaRegistry().getAllNonDeletedInstanceTypes().stream().forEach(itype -> log.debug(String.format("Available instance type %s ", itype.getName())));
-//		isInit = true;
-//		tempStorePD.forEach(pd -> {
-//			SimpleEntry<ProcessDefinition, List<ProcessDefinitionError>> result = storeProcessDefinition(pd, false); // if process already exists do nothing, if not exists and has errors log error, else create process
-//			if (!result.getValue().isEmpty()) {
-//				log.warn("Error loading process definition from file system: "+result.getKey().getName()+"\r\n"+result.getValue());
-//			}
-//		});
-//		tempStorePD.clear();		
-//	}
-
-
 	public Optional<ProcessDefinition> getProcessDefinition(String stringId, Boolean onlyValid) {
 		var allProcDefs = context.getAllInstancesOfTypeOrSubtype(processDefinitionType);
 		List<ProcessDefinition> defs = allProcDefs.stream()
 				.filter(inst -> !inst.isMarkedAsDeleted())
-				.filter(inst -> (Boolean)inst.getTypedProperty((ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString()), Boolean.class, false) || !onlyValid)
+				.filter(inst -> inst.getTypedProperty((ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString()), Boolean.class, false) || !onlyValid)
 				.filter(inst -> inst.getName().equals(stringId))
-				.map(inst -> (ProcessDefinition)context.getWrappedInstance(ProcessDefinition.class, inst))
+				.map(ProcessDefinition.class::cast) // the NodeToDomainResolver already creates the most specific java class type, here ProcessDefinition
+				.map(procDef -> { procDef.injectFactoryIndex(factoryIndex); return procDef; })
 				.toList();
 		if (defs.isEmpty())
 			return Optional.empty();
@@ -95,7 +87,6 @@ public class ProcessRegistry {
 	}
 
 	public ProcessDeployResult createOrReplaceProcessDefinition(DTOs.Process process, boolean doReinstantiateExistingProcessInstances) {
-	//	if (!isInit) { tempStorePD.add(process); return null;} // may occur upon bootup where we dont expect replacement to happen and resort to standard behavior or creating only but not replacing
 		String originalCode = process.getCode();
 		String tempCode = originalCode+STAGINGPOSTFIX;
 		process.setCode(tempCode);
@@ -111,7 +102,6 @@ public class ProcessRegistry {
 		// we remove the staging one and replace the original
 		if (stagedProc.getKey() != null) {
 			stagedProc.getKey().deleteCascading();
-			//context.concludeTransaction();
 		}
 		// now remove the original if exists, and store as new
 		DefinitionTransformer.replaceStepNamesInMappings(process, tempCode, originalCode);
@@ -154,7 +144,7 @@ public class ProcessRegistry {
 		} 
 		// no else as if in staging, we continue here in any case
 		log.debug("Storing new process: "+process.getCode());
-		DefinitionTransformer transformer = new DefinitionTransformer(process, context.getFactoryIndex(), context.getSchemaRegistry());			
+		DefinitionTransformer transformer = new DefinitionTransformer(process, factoryIndex, context);			
 		ProcessDefinition pd = transformer.fromDTO(isInStaging);
 		List<ProcessDefinitionError> errors = transformer.getErrors();
 		/*ProcessOverridingAnalysis poa=new ProcessOverridingAnalysis();
@@ -174,27 +164,28 @@ public class ProcessRegistry {
 		Map<String, Map<String, Set<RDFInstance>>> prevProcInput = new HashMap<>();
 
 		// we actually dont need to find the process definition type, but the specific process instance type declaration
-		RDFInstanceType specProcDefType = context.findNonDeletedInstanceTypeByFQN(SpecificProcessInstanceType.getProcessName(pDef)); 
-		context.getAllInstancesOfTypeOrSubtype(specProcDefType).stream()
-		.filter(inst -> !inst.isMarkedAsDeleted())
-		.map(inst -> context.getWrappedInstance(ProcessInstance.class, inst))
-		.filter(Objects::nonNull)
-		.map(ProcessInstance.class::cast)
-		.forEach(procInst -> {
-			processInstances.remove(procInst.getName());
-			Map<String, Set<RDFInstance>> inputSet = new HashMap<>();
-			procInst.getDefinition().getExpectedInput().keySet().stream()
-			.forEach(input -> inputSet.put(input, procInst.getInput(input)));
-			prevProcInput.put(procInst.getName(), inputSet);
-			procInst.deleteCascading();
+		var specProcDefTypeOpt = context.findNonDeletedInstanceTypeByFQN(SpecificProcessInstanceType.getProcessName(pDef));
+		if (specProcDefTypeOpt.isPresent()) {					
+			context.getAllInstancesOfTypeOrSubtype(specProcDefTypeOpt.get()).stream()
+			.filter(inst -> !inst.isMarkedAsDeleted())
+			.map(ProcessInstance.class::cast)
+			.filter(Objects::nonNull)
+			.map(ProcessInstance.class::cast)
+			.forEach(procInst -> {
+				processInstances.remove(procInst.getName());
+				Map<String, Set<RDFInstance>> inputSet = new HashMap<>();
+				procInst.getDefinition().getExpectedInput().keySet().stream()
+				.forEach(input -> inputSet.put(input, procInst.getInput(input)));
+				prevProcInput.put(procInst.getName(), inputSet);
+				procInst.deleteCascading();
 		});
+		}
 		return prevProcInput;
 	}
 
 	public void removeProcessDefinition(String name) {
 		getProcessDefinition(name, true).ifPresent(pdef -> {
 			pdef.deleteCascading();
-			//context.concludeTransaction();
 		});
 	}
 
@@ -209,7 +200,7 @@ public class ProcessRegistry {
 		return allDefs.stream() 
 				.filter(inst -> !inst.isMarkedAsDeleted())
 				.filter(inst -> inst.getTypedProperty(ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString(), Boolean.class, false) || !onlyValid)
-				.map(inst -> (ProcessDefinition)context.getWrappedInstance(ProcessDefinition.class, inst))
+				.map(ProcessDefinition.class::cast)
 				.collect(Collectors.toSet());
 	}
 
@@ -223,8 +214,8 @@ public class ProcessRegistry {
 		// check if all inputs available:
 		List<ProcessInstanceError> errors = new LinkedList<>();
 		String namePostfix = generateProcessNamePostfix(input);
-		ProcessInstance pInst = context.getFactoryIndex().getProcessInstanceFactory().getInstance(processDef, namePostfix);
-		boolean allInputAvail = processDef.getExpectedInput().keySet().stream().allMatch(expextedInput -> input.containsKey(expextedInput));
+		ProcessInstance pInst = factoryIndex.getProcessInstanceFactory().getInstance(processDef, namePostfix);
+		boolean allInputAvail = processDef.getExpectedInput().keySet().stream().allMatch(input::containsKey);
 		if (!allInputAvail)
 			errors.add(new ProcessInstanceError(pInst, "Input Invalid",  "Unable to instantiate process due to missing input"));
 		else {
@@ -232,15 +223,13 @@ public class ProcessRegistry {
 					.flatMap(entry ->  entry.getValue().stream().map(inputV -> pInst.addInput(entry.getKey(), inputV)))
 					.filter(resp -> resp.getError() != null)
 					.map(resp -> new ProcessInstanceError(pInst, "Input Invalid", resp.getError()))
-					.collect(Collectors.toList()));
+					.toList());
 		}
 		if (errors.isEmpty()) {
 			processInstances.put(pInst.getName(), pInst);
-			//context.concludeTransaction();
 			return new SimpleEntry<>(pInst, errors);
 		} else {
 			pInst.deleteCascading();
-			//context.concludeTransaction();
 			return new SimpleEntry<>(pInst, errors);
 		}
 	}
@@ -253,7 +242,6 @@ public class ProcessRegistry {
 		ProcessInstance pi = processInstances.remove(name);
 		if (pi != null) {
 			pi.deleteCascading();
-			//context.concludeTransaction();
 			this.removedInstances.add(pi);
 			return true;
 		}
@@ -281,8 +269,7 @@ public class ProcessRegistry {
 				.stream()
 				//.stream().filter(stepType -> stepType.name().startsWith(ProcessInstance.designspaceTypeId)) //everthing that is a process type
 				//.flatMap(procType -> procType.instancesIncludingThoseOfSubtypes()) // everything that is a process instance
-				.map(procInst -> context.getWrappedInstance(ProcessInstance.class, procInst)) // wrap instance
-				.map(procInst -> (ProcessInstance)procInst)
+				.map(ProcessInstance.class::cast) // wrap instance				
 				.collect(Collectors.toSet());
 		log.info(String.format("Loaded %s preexisting process instances", existingProcessInstances.size()));
 		existingProcessInstances.stream().forEach(pi -> processInstances.put(pi.getName(), pi));
@@ -292,7 +279,8 @@ public class ProcessRegistry {
 	public static String generateProcessNamePostfix(Map<String, Set<RDFInstance>> procInput) {
 		return procInput.entrySet().stream()
 				.flatMap(entry -> entry.getValue().stream())
-				.map(inst -> inst.getName()).collect(Collectors.joining("-"));
+				.map(RDFElement::getName)
+				.collect(Collectors.joining("-"));
 	}
 
 	@Data

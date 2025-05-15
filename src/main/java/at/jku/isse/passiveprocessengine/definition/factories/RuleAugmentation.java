@@ -5,16 +5,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import at.jku.isse.designspace.rule.arl.evaluator.RuleDefinition;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
-import at.jku.isse.passiveprocessengine.definition.factories.RuleAugmentation.StepParameter;
 import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleDefinitionService;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,7 +30,7 @@ public class RuleAugmentation {
 	private RuleDefinitionService ruleFactory;
 	private RewriterFactory ruleRewriter;
 
-	public RuleAugmentation(StepDefinition sd, RDFInstanceType stepType, RuleDefinitionService ruleFactory, RewriterFactory ruleRewriter) {		
+	public RuleAugmentation(StepDefinition sd, RDFInstanceType stepType, RuleEnabledResolver ruleFactory, RewriterFactory ruleRewriter) {		
 		this.stepDef = sd;
 		this.stepType = stepType;
 		this.ruleFactory = ruleFactory;
@@ -62,7 +61,7 @@ public class RuleAugmentation {
 				} catch(Exception e) {
 					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage(), ProcessDefinitionError.Severity.ERROR));
 				}
-				var crt =  ruleFactory.createInstance(stepType, specId, arl);
+				ruleFactory.createInstance(stepType, specId, arl);
 				//TODO check if that needs to be stored, references anywhere
 			}
 		});
@@ -80,7 +79,7 @@ public class RuleAugmentation {
 				} catch(Exception e) {
 					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage(), ProcessDefinitionError.Severity.ERROR));
 				}
-				RuleDefinition crt =  ruleFactory.createInstance( stepType, specId, arl);
+				ruleFactory.createInstance( stepType, specId, arl);
 			}
 		});
 		stepDef.getCancelconditions().stream()
@@ -97,7 +96,7 @@ public class RuleAugmentation {
 				} catch(Exception e) {
 					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage(), ProcessDefinitionError.Severity.ERROR));
 				}
-				RuleDefinition crt =  ruleFactory.createInstance( stepType, specId, arl);
+				ruleFactory.createInstance( stepType, specId, arl);
 			}
 		});
 		stepDef.getActivationconditions().stream()
@@ -114,7 +113,7 @@ public class RuleAugmentation {
 				} catch(Exception e) {
 					errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting Constraint %s : %s", specId, arl), e.getMessage(), ProcessDefinitionError.Severity.ERROR));
 				}
-				RuleDefinition crt =  ruleFactory.createInstance( stepType, specId, arl);
+				ruleFactory.createInstance( stepType, specId, arl);
 			}
 		});
 
@@ -134,7 +133,7 @@ public class RuleAugmentation {
 					} catch(Exception e) {
 						errors.add(new ProcessDefinitionError(stepDef, String.format("Error aumenting QA Constraint %s : %s", spec.getConstraintId(), arl), e.getMessage(), ProcessDefinitionError.Severity.ERROR));
 					}
-					RuleDefinition crt =  ruleFactory.createInstance(stepType, specId, arl);
+					ruleFactory.createInstance(stepType, specId, arl);
 				}
 			});
 

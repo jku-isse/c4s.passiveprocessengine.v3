@@ -4,13 +4,13 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.rdfwrapper.events.PropertyChange;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RDFRuleResultWrapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ public class Commands {
 	public interface IdentifiableCmd {
     }
 
-	public static abstract class ProcessScopedCmd implements IdentifiableCmd{
+	public abstract static class ProcessScopedCmd implements IdentifiableCmd{
 
 
 		public abstract ProcessInstance getScope();
@@ -82,7 +82,7 @@ public class Commands {
 	@Data
 	public static class QAConstraintChangedCmd extends ProcessScopedCmd {
 		private final ProcessStep step;
-		private final RuleResult crule;
+		private final RDFRuleResultWrapper crule;
 		 private final boolean isFulfilled;
 
 		@Override
@@ -110,7 +110,7 @@ public class Commands {
 	@Data
 	public static class IOMappingConsistencyCmd extends ProcessScopedCmd {
 		private final ProcessStep step;
-		private final RuleResult crule;
+		private final RDFRuleResultWrapper crule;
 		private final boolean isInconsistent;
 		private final InputToOutputMapper ioMapper;
 
@@ -142,7 +142,7 @@ public class Commands {
     @Data
     public static class ConditionChangedCmd extends ProcessScopedCmd {
         private final ProcessStep step;
-        private final RuleResult ruleResult;
+        private final RDFRuleResultWrapper ruleResult;
         private final Conditions condition;
         private final boolean isFulfilled;
 		@Override

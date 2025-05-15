@@ -6,18 +6,17 @@ import java.util.List;
 
 import at.jku.isse.artifacteventstreaming.rule.RuleSchemaProvider;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.factories.RuleAugmentation.StepParameter;
-import at.jku.isse.passiveprocessengine.rdfwrapper.AbstractionMapper;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class RewriterFactory {
 
-	private final AbstractionMapper mapper;
+	private final RuleEnabledResolver mapper;
 	private final boolean doOverridingAnalysis;
 	private final RuleSchemaProvider ruleSchema;
 	
@@ -26,9 +25,9 @@ public class RewriterFactory {
 		return rewriter.rewriteConstraint(constraint, singleUsage, stepDef);
 	}
 
-	public List<ProcessDefinitionError> checkOverriding(ProcessDefinition processDefinition, RuleEnabledResolver context) {
+	public List<ProcessDefinitionError> checkOverriding(ProcessDefinition processDefinition) {
 		if (doOverridingAnalysis) {
-			ProcessOverridingAnalysis poa = new ProcessOverridingAnalysis(context);
+			ProcessOverridingAnalysis poa = new ProcessOverridingAnalysis(mapper);
 			return poa.beginAnalysis(processDefinition, new ArrayList<>());
 		} else
 			return Collections.emptyList();

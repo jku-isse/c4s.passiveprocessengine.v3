@@ -6,19 +6,18 @@ import java.util.Optional;
 import java.util.Set;
 
 import at.jku.isse.artifacteventstreaming.schemasupport.Cardinalities;
-import at.jku.isse.passiveprocessengine.core.BuildInType;
+import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
 import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.NodeToDomainResolver;
-import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFPropertyType.PrimitiveOrClassType;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
-import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleDefinitionService;
 import lombok.Data;
 
 
-public class SpecificProcessConfigType extends TypeProviderBase {
+public class SpecificProcessConfigType extends AbstractTypeProvider {
 	
 	private NodeToDomainResolver schemaRegistry;
 	private ProcessDefinition processDef;
@@ -34,7 +33,7 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 		this.ruleFactory = ruleFactory;
 	}
 
-	@Override
+
 	public void produceTypeProperties() {
 		String subtypeName = getSubtypeName();
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(subtypeName);
@@ -43,13 +42,13 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 			//schemaRegistry.registerTypeByName(thisType.get());
 			this.type = thisType.get();
 		} else {
-			type = schemaRegistry.createNewInstanceType(subtypeName, schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementType.typeId));
+			type = schemaRegistry.createNewInstanceType(subtypeName, schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementType.typeId).get());
 			//schemaRegistry.registerTypeByName(type);			
 							
-			type.createSinglePropertyType("processDefinition", schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessDefinitionType.typeId));
+			type.createSinglePropertyType("processDefinition", schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessDefinitionType.typeId).get().getAsPropertyType());
 			// augment config
 			Map<PropertySchemaDTO, Boolean> result = new HashMap<>();
-			props.forEach(prop -> result.put(prop, prop.addPropertyToType(type, schemaRegistry, schemaRegistry, ruleFactory)));
+			props.forEach(prop -> result.put(prop, prop.addPropertyToType(type, schemaRegistry, ruleFactory)));
 			
 		}									
 	}
@@ -66,16 +65,16 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 		Object defaultValue; // not supported yet
 		boolean isRepairable = true; // not supported yet
 
-		public RDFInstanceType getInstanceType(NodeToDomainResolver schemaRegistry) {
+		public PrimitiveOrClassType getInstanceType(NodeToDomainResolver schemaRegistry) {
 			switch (instanceType) {
-				case("STRING"): return BuildInType.STRING;
-				case("BOOLEAN"): return BuildInType.BOOLEAN;
-				case("DATE"): return BuildInType.DATE;
-				case("INTEGER"): return BuildInType.INTEGER;
-				case("REAL"): return BuildInType.FLOAT;
+				case("STRING"): return  schemaRegistry.getMetaschemata().getPrimitiveTypesFactory().getStringType();
+				case("BOOLEAN"): return schemaRegistry.getMetaschemata().getPrimitiveTypesFactory().getBooleanType();
+				case("DATE"): return schemaRegistry.getMetaschemata().getPrimitiveTypesFactory().getDateType();
+				case("INTEGER"): return schemaRegistry.getMetaschemata().getPrimitiveTypesFactory().getIntType();
+				case("REAL"): return schemaRegistry.getMetaschemata().getPrimitiveTypesFactory().getFloatType();
 				default:
 					// complex type, FQN needed
-					return schemaRegistry.findNonDeletedInstanceTypeByFQN(instanceType).orElse(null);
+					return schemaRegistry.findNonDeletedInstanceTypeByFQN(instanceType).map(el -> el.getAsPropertyType()).orElse(null);
 			}
 		}
 
@@ -91,16 +90,14 @@ public class SpecificProcessConfigType extends TypeProviderBase {
 			return (getInstanceType(schemaRegistry) != null && getCardinality() != null);
 		}
 
-		public boolean addPropertyToType(RDFInstanceType processConfig, DomainTypesRegistry factory, NodeToDomainResolver schemaRegistry, RuleDefinitionService ruleFactory) {
-			RDFInstanceType baseType = factory.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementType.typeId);
+		public boolean addPropertyToType(RDFInstanceType processConfig, NodeToDomainResolver schemaRegistry, RuleDefinitionService ruleFactory) {
+			RDFInstanceType baseType = schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementType.typeId).get();
 			
-			if (processConfig != null
-					&& factory != null
+			if (processConfig != null					
 					&& processConfig.isOfTypeOrAnySubtype(baseType)
 					&& isValid(schemaRegistry)
 					&& processConfig.getPropertyType(name) == null
 					) {
-
 				// TODO if map/set/list		
 				processConfig.createSinglePropertyType(name, getInstanceType(schemaRegistry));
 				if (!isRepairable()) {

@@ -12,9 +12,9 @@ import at.jku.isse.designspace.rule.arl.repair.RepairAction;
 import at.jku.isse.designspace.rule.arl.repair.RepairNode;
 import at.jku.isse.designspace.rule.arl.repair.RepairTreeFilter;
 import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
-import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RDFRuleResultWrapper;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -30,7 +30,7 @@ public class InputToOutputMapper {
 	
 	
 	@SuppressWarnings("unchecked")
-	public List<Events.ProcessChangedEvent> mapInputToOutputInStepScope(ProcessStep step, RuleResult ruleResult) {
+	public List<Events.ProcessChangedEvent> mapInputToOutputInStepScope(ProcessStep step, RDFRuleResultWrapper ruleResult) {
 		if (ruleResult.isConsistent()) {
 			log.info("MappingRule became consistent while request was queued "+ruleResult.toString());
 			return Collections.emptyList(); // nothing to do
@@ -69,19 +69,16 @@ public class InputToOutputMapper {
 		}
 	}
 
-	private static boolean _onlyAddOrRemoveOperator(RepairAction ra) {
-		return ra.getOperator().equals(Operator.ADD) || ra.getOperator().equals(Operator.REMOVE);
-	}
-
-	private static boolean _onlyChangesOutput(RepairAction ra) {
-		return ra.getProperty() != null && ra.getProperty().startsWith("out_");
-	}
-
     private static class OutputUpdateRepairTreeFilter extends RepairTreeFilter {
 		@Override
 		public boolean compliesTo(RepairAction repairAction) {
-			return _onlyAddOrRemoveOperator(repairAction) && _onlyChangesOutput(repairAction);
+			return onlyAddOrRemoveOperator(repairAction) && onlyChangesOutput(repairAction);
 		}
-
+		private static boolean onlyAddOrRemoveOperator(RepairAction ra) {
+			return ra.getOperator().equals(Operator.ADD) || ra.getOperator().equals(Operator.REMOVE);
+		}
+		private static boolean onlyChangesOutput(RepairAction ra) {
+			return ra.getProperty() != null && ra.getProperty().startsWith("out_");
+		}
     }
 }

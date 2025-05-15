@@ -5,7 +5,7 @@ import java.util.Optional;
 import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
+import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 
 public class DecisionNodeInstanceType extends AbstractTypeProvider {
@@ -44,7 +44,7 @@ public class DecisionNodeInstanceType extends AbstractTypeProvider {
 		type.createSinglePropertyType(CoreProperties.isInflowFulfilled.toString(), primitives.getBooleanType());
 		type.createSinglePropertyType(CoreProperties.hasPropagated.toString(), primitives.getBooleanType());
 		type.createSinglePropertyType(CoreProperties.dnd.toString(), 
-				schemaRegistry.findNonDeletedInstanceTypeByFQN(DecisionNodeDefinitionType.typeId)
+				schemaRegistry.findNonDeletedInstanceTypeByFQN(DecisionNodeDefinitionTypeFactory.typeId)
 				.map(vtype->vtype.getAsPropertyType())
 				.orElse(null));
 		type.createSetPropertyType(CoreProperties.inSteps.toString(), 

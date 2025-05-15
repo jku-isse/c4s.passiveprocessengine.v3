@@ -13,18 +13,29 @@ import at.jku.isse.designspace.rule.arl.evaluator.RuleDefinition;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
+import lombok.Getter;
 import lombok.NonNull;
-import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
+import at.jku.isse.passiveprocessengine.core.FactoryIndex;
 import at.jku.isse.passiveprocessengine.definition.factories.SpecificProcessInstanceTypesFactory;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType.CoreProperties;
-import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;;
+import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;;
 
 public class ProcessDefinition extends StepDefinition{
 
+	@Getter private FactoryIndex factoryIndex;
+	
 	public ProcessDefinition(@NonNull OntIndividual element, RDFInstanceType type, @NonNull NodeToDomainResolver resolver) {
 		super(element, type, resolver);
 	}
-
+	
+	public void injectFactoryIndex(FactoryIndex factoryIndex) {
+		this.factoryIndex = factoryIndex;
+	}
+	
 	@SuppressWarnings("unchecked")
 	public List<StepDefinition> getStepDefinitions() {
 		return getTypedProperty(CoreProperties.stepDefinitions.toString(), List.class);
@@ -113,7 +124,7 @@ public class ProcessDefinition extends StepDefinition{
 		
 		// delete configtype
 		this.getExpectedInput().entrySet().stream()
-		.filter(entry -> entry.getValue().isOfTypeOrAnySubtype(resolver.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementType.typeId)))
+		.filter(entry -> entry.getValue().isOfTypeOrAnySubtype(resolver.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementType.typeId).get()))
 		.forEach(configEntry -> {
 			RDFInstanceType procConfig = configEntry.getValue().getInstanceType(); // context.getConfigFactory().getOrCreateProcessSpecificSubtype(configEntry.getKey(), this);
 			procConfig.delete();
@@ -125,7 +136,7 @@ public class ProcessDefinition extends StepDefinition{
 			this.getPrematureTriggers().entrySet().stream()
 			.forEach(entry -> {
 				String name = SpecificProcessInstanceType.generatePrematureRuleName(entry.getKey(), this);
-				RuleDefinition crt = resolver.getRuleByNameAndContext(name, optThisType.get());//RuleDefinition.consistencyRuleTypeExists(ws,  name, thisType, entry.getValue());
+				var crt = ((RuleEnabledResolver)resolver).getRuleByNameAndContext(name, optThisType.get());//RuleDefinition.consistencyRuleTypeExists(ws,  name, thisType, entry.getValue());
 				if (crt != null) 
 					crt.delete();
 			});			
@@ -134,19 +145,19 @@ public class ProcessDefinition extends StepDefinition{
 		// some code duplication with StepDefiniton.deleteCascading() due to awkward naming, needs major engine overhaul
 		String overrideName = SpecificProcessInstanceType.getProcessName(this);
 		String stepDefName = SpecificProcessStepType.getProcessStepName(this);
-		RDFInstanceType instType = this.resolver.findNonDeletedInstanceTypeByFQN(stepDefName);
-		if (instType != null) {	
+		var instType = this.resolver.findNonDeletedInstanceTypeByFQN(stepDefName);
+		if (instType.isPresent()) {	
 			this.getActivationconditions().stream().forEach(spec -> { 
-				deleteRuleIfExists(instType, spec, Conditions.ACTIVATION, overrideName); //delete the rule 
+				deleteRuleIfExists(instType.get(), spec, Conditions.ACTIVATION, overrideName); //delete the rule 
 			});
 			this.getCancelconditions().stream().forEach(spec -> { 
-				deleteRuleIfExists(instType, spec, Conditions.CANCELATION, overrideName); //delete the rule 
+				deleteRuleIfExists(instType.get(), spec, Conditions.CANCELATION, overrideName); //delete the rule 
 			});
 			this.getPostconditions().stream().forEach(spec -> { 
-				deleteRuleIfExists(instType, spec, Conditions.POSTCONDITION, overrideName); //delete the rule 
+				deleteRuleIfExists(instType.get(), spec, Conditions.POSTCONDITION, overrideName); //delete the rule 
 			});
 			this.getPreconditions().stream().forEach(spec -> { 
-				deleteRuleIfExists(instType, spec, Conditions.PRECONDITION, overrideName); //delete the rule 
+				deleteRuleIfExists(instType.get(), spec, Conditions.PRECONDITION, overrideName); //delete the rule 
 			});
 		}	
 		super.deleteCascading();
@@ -154,7 +165,7 @@ public class ProcessDefinition extends StepDefinition{
 	
 	protected void deleteRuleIfExists(RDFInstanceType instType, ConstraintSpec spec, Conditions condition, String overrideName ) {
 		String name = SpecificProcessInstanceTypesFactory.CRD_PREFIX+condition+spec.getOrderIndex()+"_"+overrideName;
-		var crt = resolver.getRuleByNameAndContext(name, instType);
+		var crt = ((RuleEnabledResolver)resolver).getRuleByNameAndContext(name, instType);
 		if (crt != null) 
 			crt.delete();
 	}
@@ -174,7 +185,7 @@ public class ProcessDefinition extends StepDefinition{
 
 
 	public StepDefinition createAndAddStepDefinition(String stepId) {
-		StepDefinition sd = getProcessContext().getFactoryIndex().getStepDefinitionFactory().createInstance(stepId);
+		StepDefinition sd = factoryIndex.getStepDefinitionFactory().createInstance(stepId);
 				//StepDefinition.getInstance(stepId, ws); // any other initialization there
 		sd.setProcess(this);
 		this.addStepDefinition(sd);
@@ -182,7 +193,7 @@ public class ProcessDefinition extends StepDefinition{
 	}
 
 	public DecisionNodeDefinition createDecisionNodeDefinition(String dndId) {
-		DecisionNodeDefinition dnd =  getProcessContext().getFactoryIndex().getDecisionNodeDefinitionFactory().createInstance(dndId); // any other initialization there
+		DecisionNodeDefinition dnd = factoryIndex.getDecisionNodeDefinitionFactory().createInstance(dndId); // any other initialization there
 		dnd.setProcess(this);
 		this.addDecisionNodeDefinition(dnd);
 		return dnd;

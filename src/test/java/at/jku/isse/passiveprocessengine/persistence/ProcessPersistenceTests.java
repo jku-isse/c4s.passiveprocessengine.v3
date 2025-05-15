@@ -124,7 +124,7 @@ public class ProcessPersistenceTests {
 		instanceRepository.concludeTransaction();
 		instanceRepository.startWriteTransaction();
 
-		ProcessInstance procInstance = configBuilder.getContext().getFactoryIndex().getProcessInstanceFactory().getInstance(procDef, "TEST");
+		ProcessInstance procInstance = configBuilder.getContext().getFactoryIndex().getProcessInstanceFactory().getStepInstance(procDef, "TEST");
 		assert(procInstance != null);
 		configBuilder.getContext().getInstanceRepository().concludeTransaction();
 		configBuilder.getContext().getInstanceRepository().startWriteTransaction();
@@ -136,7 +136,7 @@ public class ProcessPersistenceTests {
 	}
 	
 	protected ProcessInstance instantiateDefaultProcess(@NonNull ProcessDefinition procDef,  RDFInstance... inputs) {		
-		ProcessInstance procInstance = configBuilder.getContext().getFactoryIndex().getProcessInstanceFactory().getInstance(procDef, "TEST");
+		ProcessInstance procInstance = configBuilder.getContext().getFactoryIndex().getProcessInstanceFactory().getStepInstance(procDef, "TEST");
 		assert(procInstance != null);
 		for (RDFInstance input : inputs) {
 			IOResponse resp = procInstance.addInput(TestDTOProcesses.JIRA_IN, input);

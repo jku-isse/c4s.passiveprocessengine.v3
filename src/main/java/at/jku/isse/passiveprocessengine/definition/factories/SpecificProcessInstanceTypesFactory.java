@@ -8,6 +8,7 @@ import at.jku.isse.designspace.rule.arl.evaluator.RuleDefinition;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RDFRuleDefinitionWrapper;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
@@ -18,6 +19,7 @@ import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,13 +35,13 @@ public class SpecificProcessInstanceTypesFactory {
 	public static final String CRD_QASPEC_PREFIX = "crd_qaspec_";
 
 	final RewriterFactory ruleService;
-	final RDFInstanceType procDefType;
-	final RuleEnabledResolver context;
+//	final RDFInstanceType procDefType;
+	@Getter final RuleEnabledResolver context;
 
 	public SpecificProcessInstanceTypesFactory(@NonNull RuleEnabledResolver context, @NonNull RewriterFactory ruleService, @NonNull RDFInstanceType procDefType ) {
 		this.context = context;
 		this.ruleService = ruleService;
-		this.procDefType = procDefType;
+//		this.procDefType = procDefType;
 	}
 		
 	/**
@@ -54,7 +56,7 @@ public class SpecificProcessInstanceTypesFactory {
 		processAsStepTypeProvider.produceTypeProperties();
 		SpecificProcessInstanceType typeProvider = new SpecificProcessInstanceType(getContext(), processDef);
 		typeProvider.produceTypeProperties();				
-		RDFInstanceType processInstanceType = getContext().findNonDeletedInstanceTypeByFQN(SpecificProcessInstanceType.getProcessName(processDef)); //) ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
+		RDFInstanceType processInstanceType = getContext().findNonDeletedInstanceTypeByFQN(SpecificProcessInstanceType.getProcessName(processDef)).get(); //) ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
 		//DecisionNodeInstance.getOrCreateCoreType(instance.workspace);
 		//List<ProcessException> subProcessExceptions = new ArrayList<>();
 		processDef.getStepDefinitions().stream().forEach(stepDef -> {
@@ -65,13 +67,13 @@ public class SpecificProcessInstanceTypesFactory {
 				// create the specific step type
 				SpecificProcessStepType stepTypeProvider = new SpecificProcessStepType(getContext(), stepDef, processInstanceType);
 				stepTypeProvider.produceTypeProperties();	
-				RDFInstanceType stepInstanceType = getContext().findNonDeletedInstanceTypeByFQN(SpecificProcessStepType.getProcessStepName(stepDef));
+				RDFInstanceType stepInstanceType = getContext().findNonDeletedInstanceTypeByFQN(SpecificProcessStepType.getProcessStepName(stepDef)).get();
 				stepDef.getInputToOutputMappingRules().entrySet().stream()
 				.forEach(entry -> {
 					if (entry.getValue() != null) {
 						String name = getDataMappingId(entry, stepDef);
 						String expression = completeDatamappingRule(entry.getKey(), entry.getValue());
-						RuleDefinition crt = getContext().getFactoryIndex().getRuleDefinitionFactory().createInstance(stepInstanceType, name, expression);
+						RDFRuleDefinitionWrapper crt = context.createInstance(stepInstanceType, name, expression);
 						if (crt == null) {
 							log.warn("Unknown reason for rule creation failure");
 						} else {
@@ -131,8 +133,8 @@ public class SpecificProcessInstanceTypesFactory {
 				log.error("Expected Rule for existing process not found: "+ruleId);
 				overallStatus.add(new ProcessDefinitionError(processDef, "Expected Premature Trigger Rule Not Found - Internal Data Corruption", ruleId, ProcessDefinitionError.Severity.ERROR));
 			} else
-				if (crt.hasRuleError())
-					overallStatus.add(new ProcessDefinitionError(processDef, String.format("Premature Trigger Rule % has an error", ruleId), crt.getRuleError(), ProcessDefinitionError.Severity.ERROR));
+				if (crt.getRuleDef().hasExpressionError())
+					overallStatus.add(new ProcessDefinitionError(processDef, String.format("Premature Trigger Rule % has an error", ruleId), crt.getRuleDef().getRuleError(), ProcessDefinitionError.Severity.ERROR));
 		});
 		processDef.getStepDefinitions().forEach(sd -> overallStatus.addAll( sd.checkConstraintValidity(processInstanceType)));
 		return overallStatus;

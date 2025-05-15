@@ -75,7 +75,7 @@ class InstanceTests extends DefinitionWrapperTests {
 		super.instanceRepository.concludeTransaction();
 		super.instanceRepository.startWriteTransaction();
 
-		ProcessInstance procInstance = configBuilder.getContext().getFactoryIndex().getProcessInstanceFactory().getInstance(procDef, "TEST");
+		ProcessInstance procInstance = configBuilder.getContext().getFactoryIndex().getProcessInstanceFactory().getStepInstance(procDef, "TEST");
 		assert(procInstance != null);
 		configBuilder.getContext().getInstanceRepository().concludeTransaction();
 		configBuilder.getContext().getInstanceRepository().startWriteTransaction();
@@ -87,7 +87,7 @@ class InstanceTests extends DefinitionWrapperTests {
 	}
 	
 	protected ProcessInstance instantiateDefaultProcess(@NonNull ProcessDefinition procDef,  RDFInstance... inputs) {		
-		ProcessInstance procInstance = configBuilder.getContext().getFactoryIndex().getProcessInstanceFactory().getInstance(procDef, "TEST");
+		ProcessInstance procInstance = configBuilder.getContext().getFactoryIndex().getProcessInstanceFactory().getStepInstance(procDef, "TEST");
 		assert(procInstance != null);
 		for (RDFInstance input : inputs) {
 			IOResponse resp = procInstance.addInput(TestDTOProcesses.JIRA_IN, input);

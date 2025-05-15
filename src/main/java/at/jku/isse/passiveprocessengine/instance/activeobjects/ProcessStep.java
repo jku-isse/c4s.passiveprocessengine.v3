@@ -12,9 +12,8 @@ import java.util.stream.Collectors;
 import com.github.oxo42.stateless4j.StateMachine;
 
 import at.jku.isse.designspace.rule.arl.evaluator.RuleDefinition;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFElement;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
-import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
-import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.factories.SpecificProcessInstanceTypesFactory;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle;
@@ -33,6 +32,8 @@ import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.events.PropertyChange;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RDFRuleResultWrapper;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -51,24 +52,24 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	protected void initState() {
 		if (this.getName().startsWith(StepDefinition.NOOPSTEP_PREFIX)) { // assumes/expects no pre/post cond and no qa
 			actualSM = StepLifecycle.buildActualStatemachineInState(State.COMPLETED);
-			instance.setSingleProperty(AbstractProcessStepType.CoreProperties.actualLifecycleState.toString(),actualSM.getState().toString());
+			setSingleProperty(AbstractProcessStepType.CoreProperties.actualLifecycleState.toString(),actualSM.getState().toString());
 			expectedSM = StepLifecycle.buildExpectedStatemachineInState(State.COMPLETED);
-			instance.setSingleProperty(AbstractProcessStepType.CoreProperties.expectedLifecycleState.toString(),expectedSM.getState().toString());
+			setSingleProperty(AbstractProcessStepType.CoreProperties.expectedLifecycleState.toString(),expectedSM.getState().toString());
 			priorQAfulfilled = true;
 		} else {
 
-			String actState = (String) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.actualLifecycleState.toString(), String.class);
+			String actState = getTypedProperty(AbstractProcessStepType.CoreProperties.actualLifecycleState.toString(), String.class);
 			if (actState == null) {
 				actualSM = StepLifecycle.buildActualStatemachineInState(State.AVAILABLE);
-				instance.setSingleProperty(AbstractProcessStepType.CoreProperties.actualLifecycleState.toString(),actualSM.getState().toString());
+				setSingleProperty(AbstractProcessStepType.CoreProperties.actualLifecycleState.toString(),actualSM.getState().toString());
 			} else { // state already set, now just init FSM
 				actualSM = StepLifecycle.buildActualStatemachineInState(State.valueOf(actState));
 			}
 
-			String expState = (String) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.expectedLifecycleState.toString(), String.class);
+			String expState = getTypedProperty(AbstractProcessStepType.CoreProperties.expectedLifecycleState.toString(), String.class);
 			if (expState == null) {
 				expectedSM = StepLifecycle.buildExpectedStatemachineInState(State.AVAILABLE);
-				instance.setSingleProperty(AbstractProcessStepType.CoreProperties.expectedLifecycleState.toString(),expectedSM.getState().toString());
+				setSingleProperty(AbstractProcessStepType.CoreProperties.expectedLifecycleState.toString(),expectedSM.getState().toString());
 			} else { // state already set, now just init FSM
 				expectedSM = StepLifecycle.buildExpectedStatemachineInState(State.valueOf(expState));
 			}
@@ -76,7 +77,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		}
 	}
 
-	public ProcessScopedCmd prepareRuleEvaluationChange(RuleResult cr, PropertyChange.Set op) {
+	public ProcessScopedCmd prepareRuleEvaluationChange(RDFRuleResultWrapper cr, PropertyChange.Set op) {
 		// now here we have to distinguish what this evaluation change implies
 		RuleDefinition crt = (RuleDefinition)cr.getInstanceType();
 		Conditions cond = determineCondition(crt);
@@ -91,10 +92,10 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				if (!Boolean.valueOf(op.getValue().toString())) { // an unfulfilled datamapping rules
 				// now we need to "repair" this, i.e., set the output accordingly
 					log.debug(String.format("Datamapping %s queued for repair", crt.getName()));
-					return new IOMappingConsistencyCmd(this, cr, true, getProcessContext().getIoMapper());
+					return new IOMappingConsistencyCmd(this, cr, true, getIoMapper());
 				} else {
 					log.debug(String.format("Datamapping %s now consistent", crt.getName()));
-					return new IOMappingConsistencyCmd(this, cr, false, getProcessContext().getIoMapper());
+					return new IOMappingConsistencyCmd(this, cr, false, getIoMapper());
 				}
 			} else if (crt.getName().startsWith(SpecificProcessInstanceTypesFactory.CRD_QASPEC_PREFIX) ) { // a qa constraint
 				log.debug(String.format("QA Constraint %s now %s ", crt.getName(), op.getValue() != null ? op.getValue().toString() : "NULL"));
@@ -131,14 +132,14 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				&& ( this.getActualLifecycleState().equals(State.ACTIVE)
 					|| this.getActualLifecycleState().equals(State.COMPLETED) )) {
 			//(if so, then do something about this)			
-			RDFInstance added = op.getInstance();
+			RDFElement added = op.getElement();
 			log.info(String.format("Step %s received late input %s %s", this.getName(), op.getName(), added.getName()  ));
 			// Note that the adding has already happened, thus there is nothing to report back, this is only for checking whether we need to do something else as well.
 		}
 		else if (op.getName().startsWith(SpecificProcessStepType.PREFIX_OUT)) { // if out added, establish if this is late output, then propagate further
 				//&& ( this.getActualLifecycleState().equals(State.COMPLETED) || isImmediateDataPropagationEnabled() ) ){
 			if (this.getActualLifecycleState().equals(State.COMPLETED)) {
-				RDFInstance added = op.getInstance();
+				RDFElement added = op.getElement();
 				log.info(String.format("Step %s received late output %s %s, queuing for propagation to successors", this.getName(), op.getName(), added.getName()  ));
 			}
 				// we should not just propagate, as the newly added output could be violating completion or qa constraints and we should not propagate the artifact just yet. -->
@@ -178,11 +179,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 
 
-	public List<Events.ProcessChangedEvent> processQAEvent(RuleResult cr, boolean fulfilled) {
+	public List<Events.ProcessChangedEvent> processQAEvent(RDFRuleResultWrapper cr, boolean fulfilled) {
 		String id = cr.getName();
 		//ConstraintWrapper cw = qaState.get(id);
 		//in one occasion found null instance in map, which should not happen!!!
-		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (RDFInstance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).get(id));
+		var cw = (ConstraintResultWrapper) getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).get(id);		
 		cw.setRuleResultIfEmpty(cr);
 		//cw.setEvalResult(fulfilled);
 		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
@@ -219,29 +220,29 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 
 	@SuppressWarnings("unchecked")
 	public Set<ConstraintResultWrapper> getQAstatus() {
-		return (Set<ConstraintResultWrapper>) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).values().stream()
-		.map(inst -> context.getWrappedInstance(ConstraintResultWrapper.class, (RDFInstance) inst))
+		return (Set<ConstraintResultWrapper>) getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).values().stream()
+		.map(ConstraintResultWrapper.class::cast)
 		.collect(Collectors.toSet());		
 	}
 
 	public boolean arePostCondFulfilled() {
-		return (boolean) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.processedPostCondFulfilled.toString(), Boolean.class);
+		return getTypedProperty(AbstractProcessStepType.CoreProperties.processedPostCondFulfilled.toString(), Boolean.class);
 	}
 
 	public boolean arePreCondFulfilled() {
-		return (boolean) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.processedPreCondFulfilled.toString(), Boolean.class);
+		return getTypedProperty(AbstractProcessStepType.CoreProperties.processedPreCondFulfilled.toString(), Boolean.class);
 	}
 
 	public boolean areCancelCondFulfilled() {
-		return (boolean) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.processedCancelCondFulfilled.toString(), Boolean.class);
+		return getTypedProperty(AbstractProcessStepType.CoreProperties.processedCancelCondFulfilled.toString(), Boolean.class);
 	}
 
 	public boolean areActivationCondFulfilled() {
-		return (boolean) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.processedActivationCondFulfilled.toString(), Boolean.class);
+		return getTypedProperty(AbstractProcessStepType.CoreProperties.processedActivationCondFulfilled.toString(), Boolean.class);
 	}
 
 	public boolean isWorkExpected() {
-		return (boolean) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.isWorkExpected.toString(), Boolean.class);
+		return getTypedProperty(AbstractProcessStepType.CoreProperties.isWorkExpected.toString(), Boolean.class);
 	}
 
 	public List<ProcessStep> isInUnsafeOperationModeDueTo() {
@@ -307,20 +308,20 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		// remove any lower-level instances this step is managing
 		// DNIs are deleted at process level, not managed here
 		//qaState.values().forEach(cw -> cw.deleteCascading());
-		instance.getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).values().stream()
-		.map(inst -> context.getWrappedInstance(ConstraintResultWrapper.class, (RDFInstance) inst))
+		getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).values().stream()
+		.map(ConstraintResultWrapper.class::cast)
 		.forEach(cw -> ((ConstraintResultWrapper)cw).deleteCascading());		
-		instance.getTypedProperty(AbstractProcessStepType.CoreProperties.preconditions.toString(), Map.class).values().stream()
-		.map(inst -> context.getWrappedInstance(ConstraintResultWrapper.class, (RDFInstance) inst))
+		getTypedProperty(AbstractProcessStepType.CoreProperties.preconditions.toString(), Map.class).values().stream()
+		.map(ConstraintResultWrapper.class::cast)
 		.forEach(cw -> ((ConstraintResultWrapper)cw).deleteCascading());
-		instance.getTypedProperty(AbstractProcessStepType.CoreProperties.postconditions.toString(), Map.class).values().stream()
-		.map(inst -> context.getWrappedInstance(ConstraintResultWrapper.class, (RDFInstance) inst))
+		getTypedProperty(AbstractProcessStepType.CoreProperties.postconditions.toString(), Map.class).values().stream()
+		.map(ConstraintResultWrapper.class::cast)
 		.forEach(cw -> ((ConstraintResultWrapper)cw).deleteCascading());
-		instance.getTypedProperty(AbstractProcessStepType.CoreProperties.activationconditions.toString(), Map.class).values().stream()
-		.map(inst -> context.getWrappedInstance(ConstraintResultWrapper.class, (RDFInstance) inst))
+		getTypedProperty(AbstractProcessStepType.CoreProperties.activationconditions.toString(), Map.class).values().stream()
+		.map(ConstraintResultWrapper.class::cast)
 		.forEach(cw -> ((ConstraintResultWrapper)cw).deleteCascading());
-		instance.getTypedProperty(AbstractProcessStepType.CoreProperties.cancelconditions.toString(), Map.class).values().stream()
-		.map(inst -> context.getWrappedInstance(ConstraintResultWrapper.class, (RDFInstance) inst))
+		getTypedProperty(AbstractProcessStepType.CoreProperties.cancelconditions.toString(), Map.class).values().stream()
+		.map(ConstraintResultWrapper.class::cast)
 		.forEach(cw -> ((ConstraintResultWrapper)cw).deleteCascading());
 		// we are not deleting input and output artifacts as we are just referencing them!
 		// finally delete self
@@ -329,7 +330,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 
 	@Override
 	public StepDefinition getDefinition() {
-		return  context.getWrappedInstance(StepDefinition.class, instance.getTypedProperty(AbstractProcessStepType.CoreProperties.stepDefinition.toString(), RDFInstance.class));
+		return getTypedProperty(AbstractProcessStepType.CoreProperties.stepDefinition.toString(), StepDefinition.class);
 	}
 
 	//only to be used by InterStepMapper or other internal mechanisms
@@ -339,7 +340,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			//if (instance.getInstanceType().getPropertyType(param).isAssignable(artifact)) {			
 			//Property<?> prop = instance.getProperty(param);
 			//if (prop.propertyType.isAssignable(artifact)) {
-				instance.getTypedProperty(param, Set.class).remove(artifact);
+				getTypedProperty(param, Set.class).remove(artifact);
 				return IOResponse.okResponse();
 			//} else {
 			//	String msg = String.format("Cannot remove input %s to %s with nonmatching artifact type %s of id % %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.id(), artifact.getName());
@@ -358,12 +359,12 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	public Set<RDFInstance> getInput(String inParam) {
 		String param = SpecificProcessStepType.PREFIX_IN+inParam;		
 		//SetProperty setP = instance.getPropertyAsSet(PREFIX_IN+param);
-		if (instance.getInstanceType().getPropertyType(param) == null) {
+		if (getInstanceType().getPropertyType(param) == null) {
 			//if (!instance.hasProperty("in_"+param))
 			log.error(String.format("Attempt to access non-existing input %s in Step %s.", param, this.getName()));
 			return Collections.emptySet();
 		} else {
-			return instance.getTypedProperty(param, Set.class);
+			return getTypedProperty(param, Set.class);
 		}
 	}
 
@@ -371,10 +372,10 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	public Responses.IOResponse addInput(String inParam, RDFInstance artifact) {		
 		if (getDefinition().getExpectedInput().containsKey(inParam)) {
 			String param = SpecificProcessStepType.PREFIX_IN+inParam;
-			if (instance.getInstanceType().getPropertyType(param).isAssignable(artifact)) {
+			if (getInstanceType().getPropertyType(param).isAssignable(artifact)) {
 			//Property<?> prop = instance.getProperty(PREFIX_IN+inParam);
 			//if (prop.propertyType.isAssignable(artifact)) {
-				instance.getTypedProperty(param, Set.class).add(artifact);
+				getTypedProperty(param, Set.class).add(artifact);
 				return IOResponse.okResponse();
 			} else {
 				String msg = String.format("Cannot add input %s to %s with nonmatching artifact type %s of id %s %s", inParam, this.getName(), artifact.getInstanceType().toString(), artifact.getId(), artifact.getName());
@@ -391,11 +392,11 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	@SuppressWarnings("unchecked")
 	public Set<RDFInstance> getOutput(String outParam) {
 		String param = SpecificProcessStepType.PREFIX_OUT+outParam;
-		if (instance.getInstanceType().getPropertyType(param) == null) {
+		if (getInstanceType().getPropertyType(param) == null) {
 			log.error(String.format("Attempt to access non-existing output %s in Step %s.", param, this.getName()));
 			return Collections.emptySet();
 		}
-		return instance.getTypedProperty(param, Set.class);
+		return getTypedProperty(param, Set.class);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -403,8 +404,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		if (getDefinition().getExpectedOutput().containsKey(outParam)) {
 			String param = SpecificProcessStepType.PREFIX_OUT+outParam;
 			//Property<?> prop = instance.getProperty();
-			if (instance.getInstanceType().getPropertyType(param).isAssignable(artifact)) {
-				instance.getTypedProperty(SpecificProcessStepType.PREFIX_OUT+param, Set.class).add(artifact);
+			if (getInstanceType().getPropertyType(param).isAssignable(artifact)) {
+				getTypedProperty(SpecificProcessStepType.PREFIX_OUT+param, Set.class).add(artifact);
 				return IOResponse.okResponse();
 			} else {
 				String msg = String.format("Cannot add outnput %s to %s with nonmatching artifact type %s of id % %s", param, this.getName(), artifact.getInstanceType().toString(), artifact.getId(), artifact.getName());
@@ -420,15 +421,15 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 
 	//only to be used by InterStepMapper or other internal mechanisms
 	public void removeOutput(String param, RDFInstance art) {
-		instance.getTypedProperty(SpecificProcessStepType.PREFIX_OUT+param, Set.class).remove(art);
+		getTypedProperty(SpecificProcessStepType.PREFIX_OUT+param, Set.class).remove(art);
 	}
 
 	public DecisionNodeInstance getInDNI() {
-		return context.getWrappedInstance(DecisionNodeInstance.class, instance.getTypedProperty(AbstractProcessStepType.CoreProperties.inDNI.toString(), RDFInstance.class));
+		return getTypedProperty(AbstractProcessStepType.CoreProperties.inDNI.toString(), DecisionNodeInstance.class);
 	}
 
 	public DecisionNodeInstance getOutDNI() {
-		return context.getWrappedInstance(DecisionNodeInstance.class, instance.getTypedProperty(AbstractProcessStepType.CoreProperties.outDNI.toString(), RDFInstance.class));
+		return getTypedProperty(AbstractProcessStepType.CoreProperties.outDNI.toString(), DecisionNodeInstance.class);
 	}
 
 	public State getExpectedLifecycleState() {
@@ -448,15 +449,15 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 //		int actualQA = instance.getPropertyAsMap(constraintProperty).values().size();
 //		if (expQA != actualQA)
 //			return false; // as long as the expected QA is not the actual number of QA checks, the eval cant be true;
-		return instance.getTypedProperty(constraintProperty, Map.class).values().stream()
-			.map(inst -> context.getWrappedInstance(ConstraintResultWrapper.class, (RDFInstance) inst))
+		return getTypedProperty(constraintProperty, Map.class).values().stream()
+			.map(ConstraintResultWrapper.class::cast)
 			.allMatch(cw -> ((ConstraintResultWrapper)cw).getEvalResult());
 	}
 
 	@SuppressWarnings("unchecked")
 	public Set<ConstraintResultWrapper> getConstraints(String constraintProperty) {
-		return (Set<ConstraintResultWrapper>) instance.getTypedProperty(constraintProperty, Map.class).values().stream()
-				.map(inst -> context.getWrappedInstance(ConstraintResultWrapper.class, (RDFInstance) inst))
+		return (Set<ConstraintResultWrapper>) getTypedProperty(constraintProperty, Map.class).values().stream()
+				.map(ConstraintResultWrapper.class::cast)
 				.filter(Objects::nonNull)
 				.map(ConstraintResultWrapper.class::cast)
 				.collect(Collectors.toSet());
@@ -464,7 +465,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 
 	public List<Events.ProcessChangedEvent> setWorkExpected(boolean isExpected) {
 		if (isWorkExpected() != isExpected ) {
-			instance.setSingleProperty(AbstractProcessStepType.CoreProperties.isWorkExpected.toString(), isExpected);
+			setSingleProperty(AbstractProcessStepType.CoreProperties.isWorkExpected.toString(), isExpected);
 				if (!isExpected) {
 					return trigger(Trigger.HALT);
 				}
@@ -511,10 +512,9 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		return events;
 	}
 
-	public List<Events.ProcessChangedEvent> processPostConditionsChange(RuleResult cr, boolean isfulfilled) {
+	public List<Events.ProcessChangedEvent> processPostConditionsChange(RDFRuleResultWrapper cr, boolean isfulfilled) {
 		String id = cr.getName();
-		var inst = (RDFInstance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.postconditions.toString(), Map.class).get(id);
-		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, inst);
+		var cw = (ConstraintResultWrapper) getTypedProperty(AbstractProcessStepType.CoreProperties.postconditions.toString(), Map.class).get(id);		
 		cw.setRuleResultIfEmpty(cr);
 		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.postconditions.toString());
@@ -530,7 +530,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			List<Events.ProcessChangedEvent> events = new LinkedList<>();
 			ProcessInstance pi = getParentProcessOrThisIfProcessElseNull();
 			events.add(new Events.ConditionFulfillmentChanged(pi, this, Conditions.POSTCONDITION, isfulfilled));
-			instance.setSingleProperty(AbstractProcessStepType.CoreProperties.processedPostCondFulfilled.toString(),isfulfilled);
+			setSingleProperty(AbstractProcessStepType.CoreProperties.processedPostCondFulfilled.toString(),isfulfilled);
 			if (isfulfilled && areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.qaState.toString()) && arePreCondFulfilled())
 				events.addAll(this.trigger(StepLifecycle.Trigger.MARK_COMPLETE)) ;
 			if (!isfulfilled && actualSM.isInState(State.COMPLETED)) // in canceled and nowork expected we dont care if no longer post conditions fulfilled, this is not a deviation,
@@ -547,10 +547,9 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	}
 
 
-	public List<Events.ProcessChangedEvent> processPreConditionsChange(RuleResult cr, boolean isfulfilled) {
+	public List<Events.ProcessChangedEvent> processPreConditionsChange(RDFRuleResultWrapper cr, boolean isfulfilled) {
 		String id = cr.getName();
-		var inst = (RDFInstance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.preconditions.toString(), Map.class).get(id);
-		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, inst);
+		var cw = (ConstraintResultWrapper) getTypedProperty(AbstractProcessStepType.CoreProperties.preconditions.toString(), Map.class).get(id);
 		cw.setRuleResultIfEmpty(cr);
 		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.preconditions.toString());
@@ -567,7 +566,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			List<Events.ProcessChangedEvent> events = new LinkedList<>();
 			ProcessInstance pi = getParentProcessOrThisIfProcessElseNull();
 			events.add(new Events.ConditionFulfillmentChanged(pi, this, Conditions.PRECONDITION, isfulfilled));
-			instance.setSingleProperty(AbstractProcessStepType.CoreProperties.processedPreCondFulfilled.toString(),isfulfilled);
+			setSingleProperty(AbstractProcessStepType.CoreProperties.processedPreCondFulfilled.toString(),isfulfilled);
 			if (isfulfilled)  {
 				events.addAll(this.trigger(StepLifecycle.Trigger.ENABLE)) ;
 				if (arePostCondFulfilled() && areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.qaState.toString()))
@@ -586,9 +585,9 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		return Collections.emptyList();
 	}
 
-	public List<Events.ProcessChangedEvent> processCancelConditionsChange(RuleResult cr, boolean isfulfilled) {
+	public List<Events.ProcessChangedEvent> processCancelConditionsChange(RDFRuleResultWrapper cr, boolean isfulfilled) {
 		String id = cr.getName();
-		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (RDFInstance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.cancelconditions.toString(), Map.class).get(id));
+		ConstraintResultWrapper cw = (ConstraintResultWrapper) getTypedProperty(AbstractProcessStepType.CoreProperties.cancelconditions.toString(), Map.class).get(id);
 		cw.setRuleResultIfEmpty(cr);
 		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.cancelconditions.toString());
@@ -605,7 +604,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			List<Events.ProcessChangedEvent> events = new LinkedList<>();
 			ProcessInstance pi = getParentProcessOrThisIfProcessElseNull();
 			events.add(new Events.ConditionFulfillmentChanged(pi, this, Conditions.CANCELATION, isfulfilled));
-			instance.setSingleProperty(AbstractProcessStepType.CoreProperties.processedCancelCondFulfilled.toString(),isfulfilled);
+			setSingleProperty(AbstractProcessStepType.CoreProperties.processedCancelCondFulfilled.toString(),isfulfilled);
 			if (isfulfilled)
 					events.addAll(trigger(Trigger.CANCEL));
 			else {
@@ -616,9 +615,9 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		return Collections.emptyList();
 	}
 
-	public List<Events.ProcessChangedEvent> processActivationConditionsChange(RuleResult cr, boolean isFulfilled) {
+	public List<Events.ProcessChangedEvent> processActivationConditionsChange(RDFRuleResultWrapper cr, boolean isFulfilled) {
 		String id = cr.getName();
-		ConstraintResultWrapper cw = context.getWrappedInstance(ConstraintResultWrapper.class, (RDFInstance) instance.getTypedProperty(AbstractProcessStepType.CoreProperties.activationconditions.toString(), Map.class).get(id));
+		ConstraintResultWrapper cw = (ConstraintResultWrapper) getTypedProperty(AbstractProcessStepType.CoreProperties.activationconditions.toString(), Map.class).get(id);
 		cw.setRuleResultIfEmpty(cr);
 		cw.setLastChanged(getParentProcessOrThisIfProcessElseNull().getCurrentTimestamp());
 		boolean newState = areConstraintsFulfilled(AbstractProcessStepType.CoreProperties.activationconditions.toString());
@@ -669,7 +668,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				actualSM.fire(event);
 			State actualLifecycleState = actualSM.getState();
 			if (actualLifecycleState != prevActualLifecycleState) { // state transition
-				instance.setSingleProperty(AbstractProcessStepType.CoreProperties.actualLifecycleState.toString(),actualSM.getState().toString());
+				setSingleProperty(AbstractProcessStepType.CoreProperties.actualLifecycleState.toString(),actualSM.getState().toString());
 				ProcessInstance pi = getParentProcessOrThisIfProcessElseNull();
 				events.add(new Events.StepStateTransitionEvent(pi, this, prevActualLifecycleState, actualLifecycleState, true));
 				events.addAll(triggerProcessTransitions());
@@ -692,7 +691,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 				expectedSM.fire(event);
 		}
 		if (expectedSM.getState() != prevExpState) { // state transition
-				instance.setSingleProperty(AbstractProcessStepType.CoreProperties.expectedLifecycleState.toString(),expectedSM.getState().toString());
+				setSingleProperty(AbstractProcessStepType.CoreProperties.expectedLifecycleState.toString(),expectedSM.getState().toString());
 				ProcessInstance pi = getParentProcessOrThisIfProcessElseNull();
 				events.add(new Events.StepStateTransitionEvent(pi, this, prevExpState, expectedSM.getState(), false));
 				switch(expectedSM.getState()) {
@@ -700,12 +699,12 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 					// handle deviation mitigation --> if actualSM==ACTIVE and expected transitions from Available to Enabled, then should continue to Active
 					if (actualSM.getState().equals(State.ACTIVE)) {
 						expectedSM.fire(Trigger.ACTIVATE);
-						instance.setSingleProperty(AbstractProcessStepType.CoreProperties.expectedLifecycleState.toString(),expectedSM.getState().toString());
+						setSingleProperty(AbstractProcessStepType.CoreProperties.expectedLifecycleState.toString(),expectedSM.getState().toString());
 						events.add(new Events.StepStateTransitionEvent(pi, this, State.ENABLED, expectedSM.getState(), false));
 						// same fore COMPLETED
 					} else if (actualSM.getState().equals(State.COMPLETED)) {
 						expectedSM.fire(Trigger.MARK_COMPLETE);
-						instance.setSingleProperty(AbstractProcessStepType.CoreProperties.expectedLifecycleState.toString(),expectedSM.getState().toString());
+						setSingleProperty(AbstractProcessStepType.CoreProperties.expectedLifecycleState.toString(),expectedSM.getState().toString());
 						events.add(new Events.StepStateTransitionEvent(pi, this, State.ENABLED, expectedSM.getState(), false));
 					//	tryProgress = true;
 					}
@@ -724,124 +723,6 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		else
 			return this.getProcess().signalChildStepStateChanged(this);
 	}
-
-//	@Deprecated
-//	public List<ProcessScopedCmd> ensureRuleToStateConsistency() {
-//		// ensure that the rule state is correctly reflected in the process step properties.
-//		// by checking every condition
-//		List<ProcessScopedCmd> inconsistencies = new LinkedList<>();
-//		if (this.getDefinition().getCondition(Conditions.PRECONDITION).isPresent()) {
-//			Optional<RuleResult> crOpt = this.getConditionStatus(Conditions.PRECONDITION);
-//			if (crOpt.isPresent()) {
-//				RuleResult cr = crOpt.get();
-//				if (cr.isConsistent() != this.arePreCondFulfilled())
-//					inconsistencies.add(new ConditionChangedCmd(this, cr, Conditions.PRECONDITION, cr.isConsistent()));
-//			}
-//		}
-//		if (this.getDefinition().getCondition(Conditions.POSTCONDITION).isPresent()) {
-//			Optional<RuleResult> crOpt = this.getConditionStatus(Conditions.POSTCONDITION);
-//			if (crOpt.isPresent()) {
-//				RuleResult cr = crOpt.get();
-//				if (cr.isConsistent() != this.arePostCondFulfilled())
-//					inconsistencies.add(new ConditionChangedCmd(this, cr, Conditions.POSTCONDITION, cr.isConsistent()));
-//			}
-//		}
-//		return inconsistencies;
-//	}
-
-//	@Deprecated
-//	public Optional<RuleResult> getConditionStatus(Conditions cond) {
-//		//FIXME: support for multi constraints
-//		SingleProperty prop = instance.getPropertyAsSingle(cond.toString());
-//		if (prop == null)
-//			return Optional.empty();
-//		else
-//			return Optional.ofNullable((RuleResult)prop.get());
-//	}
-
-//	public static List<ProcessDefinitionError> getConstraintValidityStatus(Workspace ws, StepDefinition td) {
-//		List<ProcessDefinitionError> errors = new LinkedList<>();
-//	//	Map<String, String> status = new HashMap<>();
-//		InstanceType instType = getOrCreateDesignSpaceInstanceType(ws, td);
-//		for (Conditions condition : Conditions.values()) {
-//			if (td.getCondition(condition).isPresent()) {
-//				String name = "crd_"+condition+"_"+instType.name();
-//				RuleDefinition crt = RuleDefinition.consistencyRuleTypeExists(ws,  name, instType, td.getCondition(condition).get());
-//				if (crt == null) {
-//					log.error("Expected Rule for existing process not found: "+name);
-//					errors.add(new ProcessDefinitionError(td, "Expected Constraint Not Found - Internal Data Corruption", name));
-//					//status.put(name, "Corrupt data - Expected Rule not found");
-//				} else {
-//					if (crt.hasRuleError())
-//						errors.add(new ProcessDefinitionError(td, String.format("Condition % has an error", condition), crt.ruleError()));
-//				}
-//			}
-//		}
-//		td.getInputToOutputMappingRules().entrySet().stream()
-//			.forEach(entry -> {
-//				String name = getDataMappingId(entry, td);
-//				String propName = CRD_DATAMAPPING_PREFIX+entry.getKey();
-//				InstanceType stepType = getOrCreateDesignSpaceInstanceType(ws, td);
-//				PropertyType ioPropType = stepType.getPropertyType(propName);
-//				InstanceType ruleType = ioPropType.referencedInstanceType();
-//				if (ruleType == null) 	{
-//					log.error("Expected Datamapping Rule for existing process not found: "+name);
-//					//status.put(name, "Corrupt data - Expected Datamapping Rule not found");
-//					errors.add(new ProcessDefinitionError(td, "Expected DataMapping Not Found - Internal Data Corruption", name));
-//				} else {
-//					RuleDefinition crt = (RuleDefinition)ruleType;
-//					if (crt.hasRuleError())
-//						errors.add(new ProcessDefinitionError(td, String.format("DataMapping % has an error", name), crt.ruleError()));
-//				}
-//			});
-//		//qa constraints:
-//		ProcessDefinition pd = td.getProcess() !=null ? td.getProcess() : (ProcessDefinition)td;
-//		td.getQAConstraints().stream()
-//			.forEach(spec -> {
-//				String specId = getQASpecId(spec, pd);
-//				RuleDefinition crt = RuleDefinition.consistencyRuleTypeExists(ws,  specId, instType, spec.getQaConstraintSpec());
-//				if (crt == null) {
-//					log.error("Expected Rule for existing process not found: "+specId);
-//					errors.add(new ProcessDefinitionError(td, "Expected QA Constraint Not Found - Internal Data Corruption", specId));
-//				} else
-//					if (crt.hasRuleError())
-//						errors.add(new ProcessDefinitionError(td, String.format("QA Constraint % has an error", specId), crt.ruleError()));
-//			});
-//		return errors;
-//	}
-
-//	public static InstanceType getOrCreateDesignSpaceCoreSchema(Workspace ws) {
-//		Optional<InstanceType> thisType = Optional.ofNullable(ws.TYPES_FOLDER.instanceTypeWithName(designspaceTypeId));
-//		if (thisType.isPresent())
-//			return thisType.get();
-//		else {
-//			InstanceType typeStep = ws.createInstanceType(ProcessStep.designspaceTypeId, ws.TYPES_FOLDER, ProcessInstanceScopedElement.getOrCreateDesignSpaceCoreSchema(ws));
-//			typeStep.createPropertyType(CoreProperties.stepDefinition.toString(), Cardinality.SINGLE, StepDefinition.getOrCreateDesignSpaceCoreSchema(ws));
-//			typeStep.createPropertyType(CoreProperties.inDNI.toString(), Cardinality.SINGLE, DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(ws));
-//			typeStep.createPropertyType(CoreProperties.outDNI.toString(), Cardinality.SINGLE, DecisionNodeInstance.getOrCreateDesignSpaceCoreSchema(ws));
-//			// FIXME: better realized via bidirectional properties
-//			typeStep.createPropertyType(CoreProperties.actualLifecycleState.toString(), Cardinality.SINGLE, Workspace.STRING);
-//			typeStep.createPropertyType(CoreProperties.expectedLifecycleState.toString(), Cardinality.SINGLE, Workspace.STRING);
-//
-//			typeStep.createPropertyType(CoreProperties.processedPreCondFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
-//			typeStep.createPropertyType(CoreProperties.processedPostCondFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
-//			typeStep.createPropertyType(CoreProperties.processedCancelCondFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
-//			typeStep.createPropertyType(CoreProperties.processedActivationCondFulfilled.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
-//			typeStep.createPropertyType(CoreProperties.isWorkExpected.toString(), Cardinality.SINGLE, Workspace.BOOLEAN);
-//			// opposable no longer possible as, we cant then set is for pre/post, etc
-//			typeStep.createPropertyType(CoreProperties.qaState.toString(), Cardinality.MAP,  ConstraintWrapper.getOrCreateDesignSpaceInstanceType(ws));
-//			//check if we need to set step parent on opposite end --> we do now set it upon instantiation
-//			typeStep.createPropertyType(CoreProperties.preconditions.toString(), Cardinality.MAP,  ConstraintWrapper.getOrCreateDesignSpaceInstanceType(ws));
-//			typeStep.createPropertyType(CoreProperties.postconditions.toString(), Cardinality.MAP,  ConstraintWrapper.getOrCreateDesignSpaceInstanceType(ws));
-//			typeStep.createPropertyType(CoreProperties.cancelconditions.toString(), Cardinality.MAP,  ConstraintWrapper.getOrCreateDesignSpaceInstanceType(ws));
-//			typeStep.createPropertyType(CoreProperties.activationconditions.toString(), Cardinality.MAP,  ConstraintWrapper.getOrCreateDesignSpaceInstanceType(ws));
-//
-//			return typeStep;
-//		}
-//	}
-
-	
-
 
 	@Override
 	public String toString() {
@@ -862,16 +743,13 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 		return "Step "+ getName() + " "+states+" "+input+" "+output+" "+cond+" [DNIs: "+inDNI+":"+outDNI+"] in Proc: " + process +" DS: " +getInstance().toString();
 	}
 
-
 	public static class CompareBySpecOrder  implements Comparator<ProcessStep> {
-
 		@Override
 		public int compare(ProcessStep o1, ProcessStep o2) {
 			if (o1 != null && o1.getDefinition() != null && o2 != null && o2.getDefinition() != null)
 				return o1.getDefinition().getSpecOrderIndex().compareTo(o2.getDefinition().getSpecOrderIndex());
 			else return 0;
 		}
-
 	}
 
 }

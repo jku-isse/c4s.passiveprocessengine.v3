@@ -1,7 +1,7 @@
 package at.jku.isse.passiveprocessengine.core;
 
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecTypeFactory;
-import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionType;
+import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionScopeType;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
@@ -53,7 +53,7 @@ public class ProcessEngineConfigurationBuilder {
 		ProcessDefinitionScopeType scopeTypeProvider = new ProcessDefinitionScopeType(schemaRegistry);		
 		ConstraintSpecTypeFactory specTypeProvider = new ConstraintSpecTypeFactory(schemaRegistry);		
 		MappingDefinitionTypeFactory mapTypeProvider = new MappingDefinitionTypeFactory(schemaRegistry);		
-		DecisionNodeDefinitionType dndTypeProvider = new DecisionNodeDefinitionType(schemaRegistry);		
+		DecisionNodeDefinitionTypeFactory dndTypeProvider = new DecisionNodeDefinitionTypeFactory(schemaRegistry);		
 		StepDefinitionTypeFactory stepTypeProvider = new StepDefinitionTypeFactory(schemaRegistry);		
 		ProcessDefinitionType processTypeProvider = new ProcessDefinitionType(schemaRegistry);
 		scopeTypeProvider.produceTypeProperties();

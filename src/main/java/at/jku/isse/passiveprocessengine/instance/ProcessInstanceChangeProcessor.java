@@ -13,10 +13,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFElement;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
-import at.jku.isse.passiveprocessengine.core.RuleResult;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
@@ -30,10 +29,11 @@ import at.jku.isse.passiveprocessengine.instance.messages.Commands.QAConstraintC
 import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
-import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.events.ChangeListener;
 import at.jku.isse.passiveprocessengine.rdfwrapper.events.PropertyChange;
 import at.jku.isse.passiveprocessengine.rdfwrapper.events.PropertyChange.Update;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RDFRuleResultWrapper;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,7 +52,7 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 	public ProcessInstanceChangeProcessor(RuleEnabledResolver context, EventDistributor distributor) {		
 		this.distributor = distributor;
 		this.context = context;
-		stepType = context.getSchemaRegistry().findNonDeletedInstanceTypeByFQN(AbstractProcessStepType.typeId);
+		stepType = context.findNonDeletedInstanceTypeByFQN(AbstractProcessStepType.typeId).get();
 		assert(stepType != null);
 	}
 
@@ -91,10 +91,10 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 	}
 
 	private Optional<ProcessScopedCmd> processPropertyUpdateAdd(PropertyChange.Add op) {		
-		RDFInstance element = op.getInstance();
+		RDFElement element = op.getElement();
 		if(	(op.getName().startsWith("in_") || op.getName().startsWith("out_"))
-				&& isOfStepType(op.getInstance()) ) {
-			ProcessStep step = context.getWrappedInstance(ProcessStep.class, element);	
+				&& isOfStepType(element) ) {
+			ProcessStep step = (ProcessStep) element;	
 			RDFInstance added = (RDFInstance) op.getValue();
 			log.debug(String.format("%s %s now also contains %s", step.getName(),
 					op.getName(),																
@@ -107,10 +107,10 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 	}
 
 	private Optional<ProcessScopedCmd> processPropertyUpdateRemove(PropertyChange.Remove op) {
-		RDFInstance element = op.getInstance();
+		RDFElement element = op.getElement();
 			if(	(op.getName().startsWith("in_") || op.getName().startsWith("out_"))
 				&& isOfStepType(element) ) {
-				ProcessStep step = context.getWrappedInstance(ProcessStep.class, element);
+				ProcessStep step = (ProcessStep) element;	
 				log.info(String.format("%s %s removed %s", step.getName(),
 																op.getName(),
 																op.getValue()
@@ -122,19 +122,12 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 	}
 
 	private Optional<ProcessScopedCmd> processPropertyUpdateSet(PropertyChange.Set op) {
-		RDFInstance element = op.getInstance();
-//		if (isOfStepType(element)) {
-//			if (!op.getName().startsWith("@")) {
-//				log.info(String.format("Step %s updated %s to %s", element.getName(),
-//					op.getName(),
-//					String.valueOf(op.getValue())
-//					));
-//			}
-//		} else 
-		if (op.getName().equals("ruleHasConsistentResult") && element instanceof RuleResult cr) {
+		RDFElement element = op.getElement();
+		if (op.getName().equals("ruleHasConsistentResult") && element instanceof RDFRuleResultWrapper cr) {
 			RDFInstance ruleContext = cr.getContextInstance();
 			if (isOfStepType(ruleContext)) { // rule belonging to a step, or process
-				ProcessStep step = getAsStepOrClass(ruleContext);
+				//ProcessStep step = getAsStepOrClass(ruleContext);
+				var step = (ProcessStep)ruleContext;
 				stats.incrementRuleUpdateEventCount();
 				ProcessScopedCmd effect = step.prepareRuleEvaluationChange(cr, op);
 				return Optional.ofNullable(effect);
@@ -143,7 +136,7 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 		return Optional.empty();
 	}
 
-	private boolean isOfStepType(RDFInstance instance) {
+	private boolean isOfStepType(RDFElement instance) {
 		if (instance == null) 
 			return false;
 		else {
@@ -152,12 +145,12 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 		}
 	}
 	
-	private ProcessStep getAsStepOrClass(RDFInstance instance) {
-		if (instance.getInstanceType().hasPropertyType(SpecificProcessInstanceType.CoreProperties.processDefinition.toString())) 
-			return context.getWrappedInstance(ProcessInstance.class, instance);
-		else
-			return context.getWrappedInstance(ProcessStep.class, instance);
-	}
+//	private ProcessStep getAsStepOrClass(RDFInstance instance) {
+//		if (instance.getInstanceType().hasPropertyType(SpecificProcessInstanceType.CoreProperties.processDefinition.toString())) 
+//			return context.getWrappedInstance(ProcessInstance.class, instance);
+//		else
+//			return context.getWrappedInstance(ProcessStep.class, instance);
+//	}
 
 	
 	protected void prepareQueueExecution(List<ProcessScopedCmd> mostRecentQueuedEffects) {
