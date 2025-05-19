@@ -9,11 +9,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.jena.ontapi.model.OntIndividual;
+
 import com.github.oxo42.stateless4j.StateMachine;
 
 import at.jku.isse.designspace.rule.arl.evaluator.RuleDefinition;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFElement;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.factories.SpecificProcessInstanceTypesFactory;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle;
@@ -34,20 +37,22 @@ import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.events.PropertyChange;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RDFRuleResultWrapper;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ProcessStep extends ProcessInstanceScopedElement{
 
-	private transient StateMachine<StepLifecycle.State, StepLifecycle.Trigger> actualSM;
-	private transient StateMachine<StepLifecycle.State, StepLifecycle.Trigger> expectedSM;
-
-	public ProcessStep(RDFInstance instance, RuleEnabledResolver context) {
-		super(instance, context);
+	private StateMachine<StepLifecycle.State, StepLifecycle.Trigger> actualSM;
+	private StateMachine<StepLifecycle.State, StepLifecycle.Trigger> expectedSM;
+	protected boolean priorQAfulfilled = false;
+	
+	public ProcessStep(@NonNull OntIndividual element, @NonNull RDFInstanceType type, @NonNull RuleEnabledResolver context) {
+		super(element, type, context);
 		initState();
 	}
 
-	protected transient boolean priorQAfulfilled = false;
+
 
 	protected void initState() {
 		if (this.getName().startsWith(StepDefinition.NOOPSTEP_PREFIX)) { // assumes/expects no pre/post cond and no qa

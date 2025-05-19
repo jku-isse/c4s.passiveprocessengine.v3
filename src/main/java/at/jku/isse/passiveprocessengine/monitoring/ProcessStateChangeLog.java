@@ -29,12 +29,12 @@ public class ProcessStateChangeLog implements IProcessEventHandler{
 		.filter(event -> event.getProcScope() != null) // wont handle process instance events
 		.forEach(event -> {
 			event.setTimestamp(timeStampProvider.getLastChangeTimeStamp());
-			List<ProcessChangedEvent> list = logs.computeIfAbsent(event.getProcScope().getInstance().getName(), k->new LinkedList<>() );
+			List<ProcessChangedEvent> list = logs.computeIfAbsent(event.getProcScope().getId(), k->new LinkedList<>() );
 			list.add(event);
 		});
 	}
 
-	public Map<String, List<ProcessChangedEvent>> logs = new HashMap<>();
+	public final Map<String, List<ProcessChangedEvent>> logs = new HashMap<>();
 
 	private static Gson gson = new GsonBuilder()
 			 .registerTypeAdapterFactory(new MonitoringMultiTypeAdapterFactory())

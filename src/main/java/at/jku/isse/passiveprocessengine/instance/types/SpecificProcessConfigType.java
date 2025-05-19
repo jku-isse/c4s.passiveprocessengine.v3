@@ -7,30 +7,27 @@ import java.util.Set;
 
 import at.jku.isse.artifacteventstreaming.schemasupport.Cardinalities;
 import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
-import at.jku.isse.passiveprocessengine.core.DomainTypesRegistry;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFPropertyType.PrimitiveOrClassType;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleDefinitionService;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import lombok.Data;
 
 
 public class SpecificProcessConfigType extends AbstractTypeProvider {
 	
-	private NodeToDomainResolver schemaRegistry;
 	private ProcessDefinition processDef;
 	private String prefix;
 	private Set<PropertySchemaDTO> props;
-	private RuleDefinitionService ruleFactory;
 	
-	public SpecificProcessConfigType(NodeToDomainResolver schemaRegistry, ProcessDefinition processDef, String prefix, Set<PropertySchemaDTO> props, RuleDefinitionService ruleFactory) {
+	public SpecificProcessConfigType(RuleEnabledResolver schemaRegistry, ProcessDefinition processDef, String prefix, Set<PropertySchemaDTO> props) {
 		super(schemaRegistry);
 		this.processDef = processDef;
 		this.prefix = prefix;
 		this.props = props;
-		this.ruleFactory = ruleFactory;
 	}
 
 
@@ -38,17 +35,17 @@ public class SpecificProcessConfigType extends AbstractTypeProvider {
 		String subtypeName = getSubtypeName();
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(subtypeName);
 		if (thisType.isPresent()) {
-			((RDFInstanceType) type).cacheSuperProperties();
+			type.cacheSuperProperties();
 			//schemaRegistry.registerTypeByName(thisType.get());
 			this.type = thisType.get();
 		} else {
 			type = schemaRegistry.createNewInstanceType(subtypeName, schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementType.typeId).get());
 			//schemaRegistry.registerTypeByName(type);			
 							
-			type.createSinglePropertyType("processDefinition", schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessDefinitionType.typeId).get().getAsPropertyType());
+			type.createSinglePropertyType("processDefinition", schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessDefinitionTypeFactory.typeId).get().getAsPropertyType());
 			// augment config
 			Map<PropertySchemaDTO, Boolean> result = new HashMap<>();
-			props.forEach(prop -> result.put(prop, prop.addPropertyToType(type, schemaRegistry, ruleFactory)));
+			props.forEach(prop -> result.put(prop, prop.addPropertyToType(type, schemaRegistry)));
 			
 		}									
 	}
@@ -90,7 +87,7 @@ public class SpecificProcessConfigType extends AbstractTypeProvider {
 			return (getInstanceType(schemaRegistry) != null && getCardinality() != null);
 		}
 
-		public boolean addPropertyToType(RDFInstanceType processConfig, NodeToDomainResolver schemaRegistry, RuleDefinitionService ruleFactory) {
+		public boolean addPropertyToType(RDFInstanceType processConfig, RuleEnabledResolver schemaRegistry) {
 			RDFInstanceType baseType = schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementType.typeId).get();
 			
 			if (processConfig != null					
@@ -101,7 +98,7 @@ public class SpecificProcessConfigType extends AbstractTypeProvider {
 				// TODO if map/set/list		
 				processConfig.createSinglePropertyType(name, getInstanceType(schemaRegistry));
 				if (!isRepairable()) {
-					ruleFactory.setPropertyRepairable(processConfig, name, isRepairable);
+					schemaRegistry.setPropertyRepairable(processConfig, name, isRepairable);
 				}
 				return true;
 			} else

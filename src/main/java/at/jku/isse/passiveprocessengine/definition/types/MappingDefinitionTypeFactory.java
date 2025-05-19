@@ -6,6 +6,7 @@ import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.MappingDefinition;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 
 public class MappingDefinitionTypeFactory  extends AbstractTypeProvider {
 
@@ -26,7 +27,7 @@ public class MappingDefinitionTypeFactory  extends AbstractTypeProvider {
 	
 	public static final String typeId = ProcessDefinitionScopeType.NS+"#"+MappingDefinitionTypeFactory.class.getSimpleName();
 	
-	public MappingDefinitionTypeFactory(NodeToDomainResolver schemaRegistry) {
+	public MappingDefinitionTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {			

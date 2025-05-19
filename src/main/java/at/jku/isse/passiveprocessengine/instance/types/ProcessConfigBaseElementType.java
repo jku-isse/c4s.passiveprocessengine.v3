@@ -5,6 +5,7 @@ import java.util.Optional;
 import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 
 
 public class ProcessConfigBaseElementType extends AbstractTypeProvider {
@@ -24,7 +25,7 @@ public class ProcessConfigBaseElementType extends AbstractTypeProvider {
 	} 
 	public static final String typeId = NS+"#"+"base";
 	
-	public ProcessConfigBaseElementType(NodeToDomainResolver schemaRegistry) {
+	public ProcessConfigBaseElementType(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {

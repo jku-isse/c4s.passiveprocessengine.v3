@@ -14,7 +14,7 @@ import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
@@ -35,13 +35,13 @@ public class SpecificProcessInstanceTypesFactory {
 	public static final String CRD_QASPEC_PREFIX = "crd_qaspec_";
 
 	final RewriterFactory ruleService;
-//	final RDFInstanceType procDefType;
 	@Getter final RuleEnabledResolver context;
 
-	public SpecificProcessInstanceTypesFactory(@NonNull RuleEnabledResolver context, @NonNull RewriterFactory ruleService, @NonNull RDFInstanceType procDefType ) {
+	
+	public SpecificProcessInstanceTypesFactory(@NonNull RuleEnabledResolver context, @NonNull RewriterFactory ruleService) {
 		this.context = context;
 		this.ruleService = ruleService;
-//		this.procDefType = procDefType;
+		
 	}
 		
 	/**
@@ -77,7 +77,7 @@ public class SpecificProcessInstanceTypesFactory {
 						if (crt == null) {
 							log.warn("Unknown reason for rule creation failure");
 						} else {
-							System.out.println("Created "+name);
+							log.debug("Created "+name);
 						}
 						// do we really need to create those properties? or is creating just the rules ok? probably not
 						//type.createPropertyType(CRD_DATAMAPPING_PREFIX+entry.getKey(), Cardinality.SINGLE, crt);
@@ -88,17 +88,15 @@ public class SpecificProcessInstanceTypesFactory {
 		errors.addAll(checkProcessStructure(processDef));
 		//getContext().getInstanceRepository().concludeTransaction(); //not needed for RDF based wrapper as we immediately check for errors
 		//				List<String> augmentationErrors = new LinkedList<>();
-		errors.addAll(new RuleAugmentation(processDef, processInstanceType, getContext().getFactoryIndex().getRuleDefinitionFactory(), ruleService).augmentAndCreateConditions());
+		errors.addAll(new RuleAugmentation(processDef, processInstanceType, context, ruleService).augmentAndCreateConditions());
 		processDef.getStepDefinitions().stream().forEach(stepDef -> {
 			errors.addAll(new RuleAugmentation(stepDef, 
-												getContext().findNonDeletedInstanceTypeByFQN(SpecificProcessStepType.getProcessStepName(stepDef)), 
-												getContext().getFactoryIndex().getRuleDefinitionFactory(), 
+												getContext().findNonDeletedInstanceTypeByFQN(SpecificProcessStepType.getProcessStepName(stepDef)).get(), 
+												context, 
 												ruleService)
 								.augmentAndCreateConditions());
 		});
 		errors.addAll(checkConstraintValidity(processDef, processInstanceType));
-		
-		errors.addAll(ruleService.checkOverriding(processDef, getContext()));
 		
 		if (errors.isEmpty() || errors.stream().allMatch(error -> !error.getSeverity().equals(ProcessDefinitionError.Severity.ERROR))) {
 			// now lets also create premature rules here, as we need the process to exist first
@@ -118,24 +116,11 @@ public class SpecificProcessInstanceTypesFactory {
 			log.info("Blocking newly added process due to constraint errors: "+processDef.getName());
 			processDef.setIsWithoutBlockingErrors(false);
 		}
-		//getContext().getInstanceRepository().concludeTransaction(); // persisting the blocking errors flag
 		return errors;
 	}
 
 	public List<ProcessDefinitionError> checkConstraintValidity(ProcessDefinition processDef, RDFInstanceType processInstanceType) {
 		List<ProcessDefinitionError> overallStatus = new LinkedList<>();				
-		//premature constraints:
-		processDef.getPrematureTriggers().entrySet().stream()
-		.forEach(entry -> {
-			String ruleId = SpecificProcessInstanceType.generatePrematureRuleName(entry.getKey(), processDef);
-			var crt = getContext().getRuleByNameAndContext(ruleId, processInstanceType); //.consistencyRuleTypeExists(ws,  ruleId, instType, entry.getValue());
-			if (crt == null) {
-				log.error("Expected Rule for existing process not found: "+ruleId);
-				overallStatus.add(new ProcessDefinitionError(processDef, "Expected Premature Trigger Rule Not Found - Internal Data Corruption", ruleId, ProcessDefinitionError.Severity.ERROR));
-			} else
-				if (crt.getRuleDef().hasExpressionError())
-					overallStatus.add(new ProcessDefinitionError(processDef, String.format("Premature Trigger Rule % has an error", ruleId), crt.getRuleDef().getRuleError(), ProcessDefinitionError.Severity.ERROR));
-		});
 		processDef.getStepDefinitions().forEach(sd -> overallStatus.addAll( sd.checkConstraintValidity(processInstanceType)));
 		return overallStatus;
 	}

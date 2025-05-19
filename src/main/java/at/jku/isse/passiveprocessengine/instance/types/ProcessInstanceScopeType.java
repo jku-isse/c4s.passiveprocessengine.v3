@@ -6,6 +6,7 @@ import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
 import at.jku.isse.passiveprocessengine.core.BaseNamespace;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
 
 public class ProcessInstanceScopeType extends AbstractTypeProvider {
@@ -26,7 +27,7 @@ public class ProcessInstanceScopeType extends AbstractTypeProvider {
 	
 	public static final String typeId = NS+"#"+ProcessInstanceScopedElement.class.getSimpleName();
 
-	public ProcessInstanceScopeType(NodeToDomainResolver schemaRegistry) {
+	public ProcessInstanceScopeType(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {			

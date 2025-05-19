@@ -1,6 +1,5 @@
 package at.jku.isse.passiveprocessengine.definition.activeobjects;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +17,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex;
 import at.jku.isse.passiveprocessengine.definition.factories.SpecificProcessInstanceTypesFactory;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType.CoreProperties;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionTypeFactory.CoreProperties;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
@@ -81,33 +80,6 @@ public class ProcessDefinition extends StepDefinition{
 				.findAny().orElse(null);
 	}
 
-	@SuppressWarnings("unchecked")
-	public void addPrematureTrigger(String stepName, String trigger) {
-		getTypedProperty(CoreProperties.prematureTriggers.toString(), Map.class).put(stepName, trigger);
-	}
-
-	@SuppressWarnings("unchecked")
-	public Map<String, String> getPrematureTriggers() {
-		return getTypedProperty(CoreProperties.prematureTriggers.toString(), Map.class);
-//		if (triggers != null) {
-//			return (Map<String,String>)triggers;
-//		} else return Collections.emptyMap();
-	}
-
-	public StepDefinition getStepDefinitionForPrematureConstraint(String constraintName) {
-		Map<?,?> triggers = getTypedProperty(CoreProperties.prematureTriggerMappings.toString(), Map.class);
-		if (triggers != null) {
-			@SuppressWarnings("unchecked")
-			String stepDefName =  (( Map<String, String>) triggers).get(constraintName);
-			return getStepDefinitionByName(stepDefName);
-		} else return null;
-	}
-
-	@SuppressWarnings("unchecked")
-	public void setPrematureConstraintNameStepDefinition(String constraintName, String stepDefinitionName) {
-		getTypedProperty(CoreProperties.prematureTriggerMappings.toString(), Map.class).put(constraintName, stepDefinitionName);
-	}
-
 	@Override
 	public void setDepthIndexRecursive(int indexToSet) {
 		super.setDepthIndexRecursive(indexToSet);
@@ -132,14 +104,7 @@ public class ProcessDefinition extends StepDefinition{
 		// wring instanceType: we need to get the dynamically generate Instance (the one that is used for the ProcessInstance)
 		String processDefName = SpecificProcessInstanceType.getProcessName(this);
 		var optThisType = this.resolver.findNonDeletedInstanceTypeByFQN(processDefName);
-		if (optThisType.isPresent()) {
-			this.getPrematureTriggers().entrySet().stream()
-			.forEach(entry -> {
-				String name = SpecificProcessInstanceType.generatePrematureRuleName(entry.getKey(), this);
-				var crt = ((RuleEnabledResolver)resolver).getRuleByNameAndContext(name, optThisType.get());//RuleDefinition.consistencyRuleTypeExists(ws,  name, thisType, entry.getValue());
-				if (crt != null) 
-					crt.delete();
-			});			
+		if (optThisType.isPresent()) {		
 			optThisType.get().delete();
 		}
 		// some code duplication with StepDefiniton.deleteCascading() due to awkward naming, needs major engine overhaul
@@ -197,22 +162,6 @@ public class ProcessDefinition extends StepDefinition{
 		dnd.setProcess(this);
 		this.addDecisionNodeDefinition(dnd);
 		return dnd;
-	}
-
-	public boolean isImmediateInstantiateAllStepsEnabled() {
-		return getTypedProperty(CoreProperties.isImmediateInstantiateAllSteps.toString(), Boolean.class, false);		
-	}
-
-	public void isImmediateInstantiateAllStepsEnabled(boolean isImmediateInstantiateAllStepsEnabled) {
-		setSingleProperty(CoreProperties.isImmediateInstantiateAllSteps.toString(), isImmediateInstantiateAllStepsEnabled);
-	}
-
-	public boolean isImmediateDataPropagationEnabled() {
-		return getTypedProperty(CoreProperties.isImmediateDataPropagationEnabled.toString(), Boolean.class, false);		
-	}
-
-	public void setImmediateDataPropagationEnabled(boolean isImmediateDataPropagationEnabled) {
-		setSingleProperty(CoreProperties.isImmediateDataPropagationEnabled.toString(), isImmediateDataPropagationEnabled);
 	}
 
 	public void setIsWithoutBlockingErrors(boolean isWithoutBlockingErrors) {

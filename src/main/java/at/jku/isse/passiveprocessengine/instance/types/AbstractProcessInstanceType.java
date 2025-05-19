@@ -6,6 +6,7 @@ import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 
 public class AbstractProcessInstanceType extends AbstractTypeProvider {
 
@@ -13,7 +14,7 @@ public class AbstractProcessInstanceType extends AbstractTypeProvider {
 		
 	public static final String typeId = NS+"#"+ProcessInstance.class.getSimpleName();
 
-	public AbstractProcessInstanceType(NodeToDomainResolver schemaRegistry) {
+	public AbstractProcessInstanceType(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {

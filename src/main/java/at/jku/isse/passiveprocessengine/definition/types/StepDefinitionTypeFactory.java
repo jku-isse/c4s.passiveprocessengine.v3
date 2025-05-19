@@ -6,6 +6,7 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFPropertyType.PrimitiveOrClassType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 
@@ -35,7 +36,7 @@ public class StepDefinitionTypeFactory extends AbstractTypeProvider {
 	
 	public static final String typeId = ProcessDefinitionScopeType.NS+"#"+StepDefinition.class.getSimpleName();
 
-	public StepDefinitionTypeFactory(NodeToDomainResolver schemaRegistry) {
+	public StepDefinitionTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {

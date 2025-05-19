@@ -104,23 +104,17 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 						events.addAll(this.getProcess().signalDNIChanged(this));
 					}
 			}
-		} else { //check if immediate downstream tasks should be instantiated
-			if (isImmediateInstantiateAllStepsEnabled()) {
+		} else { //check if immediate downstream tasks should be instantiated	
 				State exp = step.getExpectedLifecycleState();
 				if (exp.equals(State.ACTIVE) || exp.equals(State.ENABLED)) {
-					events.addAll(initiateDownstreamSteps(isImmediateDataPropagationEnabled()));
+					events.addAll(initiateDownstreamSteps(true));
 				}
-			}
-			// if a now completed step (that is not essential in an OR dni) has data propagation delayed until completion, then we wont trigger datapropagation so far and need to do it here
-			if (!isImmediateDataPropagationEnabled() && step.getActualLifecycleState().equals(State.COMPLETED)) {
-				checkAndExecuteDataMappings(this.getDefinition().getOutSteps().isEmpty(), false);
-			}
 		}
 		return events;
 	}
 
 	public List<Events.ProcessChangedEvent> signalPrevTaskDataChanged(ProcessStep prevTask) {
-		if (isImmediateDataPropagationEnabled() || prevTask.getActualLifecycleState().equals(State.COMPLETED)) {
+		if (prevTask.getActualLifecycleState().equals(State.COMPLETED)) {
 			//should we propagate now?
 			boolean isEndOfProcess = false;
 			if (this.getDefinition().getOutSteps().isEmpty() ) {
@@ -347,20 +341,6 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 			mapper = null;
 		}
 		super.deleteCascading();
-	}
-
-	private boolean isImmediateInstantiateAllStepsEnabled() {
-		if (getProcess() == null)
-			return false;
-		else
-			return getProcess().isImmediateInstantiateAllStepsEnabled();
-	}
-
-	private boolean isImmediateDataPropagationEnabled() {
-		if (getProcess() == null)
-			return false;
-		else
-			return getProcess().isImmediateDataPropagationEnabled();
 	}
 
 	public DecisionNodeInstance getScopeClosingDecisionNodeOrNull() {

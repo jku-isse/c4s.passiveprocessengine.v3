@@ -19,7 +19,7 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceError;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.factories.ProcessInstanceFactory;
@@ -45,7 +45,7 @@ public class ProcessRegistry {
 	public ProcessRegistry(RuleEnabledResolver context, FactoryIndex factoryIndex) {
 		this.context = context;
 		this.factoryIndex = factoryIndex;
-		var processDefinitionTypeOpt = context.findNonDeletedInstanceTypeByFQN(ProcessDefinitionType.typeId); // ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);				
+		var processDefinitionTypeOpt = context.findNonDeletedInstanceTypeByFQN(ProcessDefinitionTypeFactory.typeId); // ProcessDefinition.getOrCreateDesignSpaceCoreSchema(ws);				
 		var processInstanceTypeOpt = context.findNonDeletedInstanceTypeByFQN(AbstractProcessInstanceType.typeId); 		
 		if (processDefinitionTypeOpt.isEmpty() || processInstanceTypeOpt.isEmpty()) {
 			var msg = "Expected Basic Types for ProcessDefinition and/or ProcessInstance are null";
@@ -63,7 +63,7 @@ public class ProcessRegistry {
 		var allProcDefs = context.getAllInstancesOfTypeOrSubtype(processDefinitionType);
 		List<ProcessDefinition> defs = allProcDefs.stream()
 				.filter(inst -> !inst.isMarkedAsDeleted())
-				.filter(inst -> inst.getTypedProperty((ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString()), Boolean.class, false) || !onlyValid)
+				.filter(inst -> inst.getTypedProperty((ProcessDefinitionTypeFactory.CoreProperties.isWithoutBlockingErrors.toString()), Boolean.class, false) || !onlyValid)
 				.filter(inst -> inst.getName().equals(stringId))
 				.map(ProcessDefinition.class::cast) // the NodeToDomainResolver already creates the most specific java class type, here ProcessDefinition
 				.map(procDef -> { procDef.injectFactoryIndex(factoryIndex); return procDef; })
@@ -199,7 +199,7 @@ public class ProcessRegistry {
 		var allDefs =  context.getAllInstancesOfTypeOrSubtype(processDefinitionType);
 		return allDefs.stream() 
 				.filter(inst -> !inst.isMarkedAsDeleted())
-				.filter(inst -> inst.getTypedProperty(ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString(), Boolean.class, false) || !onlyValid)
+				.filter(inst -> inst.getTypedProperty(ProcessDefinitionTypeFactory.CoreProperties.isWithoutBlockingErrors.toString(), Boolean.class, false) || !onlyValid)
 				.map(ProcessDefinition.class::cast)
 				.collect(Collectors.toSet());
 	}

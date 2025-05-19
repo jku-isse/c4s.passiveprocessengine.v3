@@ -7,7 +7,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.jena.ontapi.model.OntIndividual;
+
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
@@ -16,17 +19,14 @@ import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Trigger;
 import at.jku.isse.passiveprocessengine.instance.factories.DecisionNodeInstanceFactory;
 import at.jku.isse.passiveprocessengine.instance.factories.ProcessInstanceFactory;
-import at.jku.isse.passiveprocessengine.instance.messages.Commands.PrematureStepTriggerCmd;
-import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
-import at.jku.isse.passiveprocessengine.rdfwrapper.events.PropertyChange;
-import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RDFRuleResultWrapper;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -37,8 +37,8 @@ public class ProcessInstance extends ProcessStep {
 	private ProcessInstanceFactory stepFactory;
 	private DecisionNodeInstanceFactory decisionNodeFactory;
 
-	public ProcessInstance(RDFInstance instance, RuleEnabledResolver context) {
-		super(instance, context);
+	public ProcessInstance(@NonNull OntIndividual element, @NonNull RDFInstanceType type, @NonNull RuleEnabledResolver context) {
+		super(element, type, context);
 		if (getCreatedAt() == null) { // truely null, otherwise just loading from persistance layer
 			setCreatedAt(getCurrentTimestamp());
 		}
@@ -69,20 +69,6 @@ public class ProcessInstance extends ProcessStep {
 	private void setCreatedAt(ZonedDateTime createdAt) {
 		setSingleProperty(SpecificProcessInstanceType.CoreProperties.createdAt.toString(), createdAt.toString());
 		this.createdAt = createdAt;
-	}
-
-	@Override
-	public ProcessScopedCmd prepareRuleEvaluationChange(RDFRuleResultWrapper ruleResult, PropertyChange.Set op) {
-		var crt = ruleResult.getEvalWrapper().getDefinition();
-		if (crt.getName().startsWith(SpecificProcessInstanceType.CRD_PREMATURETRIGGER_PREFIX) ) {
-			log.debug(String.format("Queuing execution of Premature Trigger of step %s , trigger is now %s ", crt.getName(), op.getValue().toString()));
-			StepDefinition sd = getDefinition().getStepDefinitionForPrematureConstraint(crt.getName());
-			if (this.getProcessSteps().stream().anyMatch(step -> step.getDefinition().equals(sd)))
-				return null; // as we already have that step instantiated, no need to create further cmds
-			else
-				return new PrematureStepTriggerCmd(sd, this, Boolean.valueOf(op.getValue().toString()));
-		} else
-			return super.prepareRuleEvaluationChange(ruleResult, op);
 	}
 
 	public ProcessStep createAndWireTask(StepDefinition sd) {
@@ -145,7 +131,7 @@ public class ProcessInstance extends ProcessStep {
 		if (isOk.getError() == null) {
 			// now see if we need to map this to first DNI - we assume all went well
 			getDecisionNodeInstances().stream()
-			.filter(dni -> this.isImmediateInstantiateAllStepsEnabled() || dni.getInSteps().size() == 0)
+			.filter(dni -> dni.getInSteps().isEmpty())
 			//when all steps are immediately enabled trigger all dnis to propagate, just to be on the safe side, we would actually only need to trigger those that obtain data from this param at process level
 			// otherwise just first
 			.forEach(dni -> {
@@ -284,20 +270,6 @@ public class ProcessInstance extends ProcessStep {
 			.filter(dni -> dni.getDefinition().getMappings().stream()
 					.anyMatch(md -> md.getFromStepType().equals(stepType) && md.getFromParameter().equals(output)))
 			.collect(Collectors.toSet());
-	}
-
-	public boolean isImmediateDataPropagationEnabled() {
-		if (getProcess() == null)
-			return getDefinition() != null ? getDefinition().isImmediateDataPropagationEnabled() : false;
-		else
-			return getProcess().isImmediateDataPropagationEnabled();
-	}
-
-	public boolean isImmediateInstantiateAllStepsEnabled() {
-		if (getProcess() == null)
-			return getDefinition() != null ? getDefinition().isImmediateInstantiateAllStepsEnabled() : false;
-		else
-			return getProcess().isImmediateInstantiateAllStepsEnabled();
 	}
 
 	@Override

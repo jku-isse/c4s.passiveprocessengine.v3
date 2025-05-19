@@ -26,11 +26,9 @@ public class ConstraintSpecTypeFactory extends AbstractTypeProvider {
 	}
 
 	public static final String typeId = ProcessDefinitionScopeType.NS+"#"+ConstraintSpecTypeFactory.class.getSimpleName();
-	private final RuleEnabledResolver schemaRegistry;
 	
 	public ConstraintSpecTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);
-		this.schemaRegistry = schemaRegistry;
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
 			this.type = thisType.get();

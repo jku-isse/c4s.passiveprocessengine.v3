@@ -4,6 +4,7 @@ import at.jku.isse.passiveprocessengine.definition.factories.SpecificProcessInst
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecTypeFactory;
 import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionTypeFactory;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.definition.types.StepDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.instance.factories.ConstraintResultWrapperFactory;
@@ -26,9 +27,9 @@ public class FactoryIndex {
 	final ConstraintSpecTypeFactory constraintFactory;
 	final DecisionNodeDefinitionTypeFactory decisionNodeDefinitionFactory;
 	final MappingDefinitionTypeFactory mappingDefinitionFactory;
-	final SpecificProcessInstanceTypesFactory processDefinitionFactory;
+	final SpecificProcessInstanceTypesFactory specificProcessDefinitionFactory;
 	final StepDefinitionTypeFactory stepDefinitionFactory;	
-
+	final ProcessDefinitionTypeFactory processDefinitionFactory;
 	final ProcessConfigFactory processConfigFactory;
 	
 	
@@ -46,13 +47,12 @@ public class FactoryIndex {
 				crwFactory,
 				dniFactory,
 				new ProcessInstanceFactory(context, dniFactory, crwFactory),				
-				
 				new ConstraintSpecTypeFactory(context),
 				dndFactory,
 				new MappingDefinitionTypeFactory(context),
 				new SpecificProcessInstanceTypesFactory(context, ruleRewriterFactory),
 				new StepDefinitionTypeFactory(context),
-				
+				new ProcessDefinitionTypeFactory(context),
 				new ProcessConfigFactory(context)
 				);
 	}

@@ -3,13 +3,12 @@ package at.jku.isse.passiveprocessengine.instance.types;
 import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
-import at.jku.isse.passiveprocessengine.core.InstanceWrapper;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
@@ -17,7 +16,7 @@ import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 
 public class SpecificProcessInstanceType extends AbstractTypeProvider {
 
-	public static enum CoreProperties {stepInstances, decisionNodeInstances, processDefinition, createdAt}
+	public enum CoreProperties {stepInstances, decisionNodeInstances, processDefinition, createdAt}
 
 	private final ProcessDefinition procDef;
 
@@ -25,7 +24,7 @@ public class SpecificProcessInstanceType extends AbstractTypeProvider {
 	public static final String typeId = ProcessInstance.class.getSimpleName();
 	
 		
-	public SpecificProcessInstanceType(NodeToDomainResolver schemaRegistry, ProcessDefinition procDef) {
+	public SpecificProcessInstanceType(RuleEnabledResolver schemaRegistry, ProcessDefinition procDef) {
 		super(schemaRegistry);
 		this.procDef = procDef;
 	}
@@ -36,14 +35,14 @@ public class SpecificProcessInstanceType extends AbstractTypeProvider {
 		if (thisType.isPresent()) {
 			//schemaRegistry.registerTypeByName(thisType.get());	
 			this.type = thisType.get();
-			((RDFInstanceType) type).cacheSuperProperties();
+			type.cacheSuperProperties();
 		} else {
 			String processAsTaskName = SpecificProcessStepType.getProcessStepName(procDef);
-			type = schemaRegistry.createNewInstanceType(processName, schemaRegistry.findNonDeletedInstanceTypeByFQN(processAsTaskName));
+			type = schemaRegistry.createNewInstanceType(processName, schemaRegistry.findNonDeletedInstanceTypeByFQN(processAsTaskName).get());
 			//schemaRegistry.registerTypeByName(type);		
-			type.createSinglePropertyType(SpecificProcessInstanceType.CoreProperties.processDefinition.toString(), schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessDefinitionType.typeId));
-			type.createSetPropertyType(SpecificProcessInstanceType.CoreProperties.stepInstances.toString(), schemaRegistry.findNonDeletedInstanceTypeByFQN(AbstractProcessStepType.typeId));
-			type.createSetPropertyType(SpecificProcessInstanceType.CoreProperties.decisionNodeInstances.toString(), schemaRegistry.findNonDeletedInstanceTypeByFQN(DecisionNodeInstanceType.typeId));
+			type.createSinglePropertyType(SpecificProcessInstanceType.CoreProperties.processDefinition.toString(), schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessDefinitionTypeFactory.typeId).get().getAsPropertyType());
+			type.createSetPropertyType(SpecificProcessInstanceType.CoreProperties.stepInstances.toString(), schemaRegistry.findNonDeletedInstanceTypeByFQN(AbstractProcessStepType.typeId).get().getAsPropertyType());
+			type.createSetPropertyType(SpecificProcessInstanceType.CoreProperties.decisionNodeInstances.toString(), schemaRegistry.findNonDeletedInstanceTypeByFQN(DecisionNodeInstanceType.typeId).get().getAsPropertyType());
 			type.createSinglePropertyType(SpecificProcessInstanceType.CoreProperties.createdAt.toString(), BuildInType.STRING);			
 		}
 

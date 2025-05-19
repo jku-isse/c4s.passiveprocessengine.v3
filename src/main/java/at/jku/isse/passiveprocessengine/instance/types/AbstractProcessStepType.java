@@ -5,6 +5,7 @@ import java.util.Optional;
 import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.definition.types.StepDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 
@@ -29,7 +30,7 @@ public class AbstractProcessStepType extends AbstractTypeProvider {
 
 	public static final String typeId = NS+"#"+ProcessStep.class.getSimpleName();
 
-	public AbstractProcessStepType(NodeToDomainResolver schemaRegistry) {
+	public AbstractProcessStepType(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {

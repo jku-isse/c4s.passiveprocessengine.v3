@@ -7,10 +7,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
-import at.jku.isse.passiveprocessengine.core.RuleEnabledResolver;
-import at.jku.isse.passiveprocessengine.core.NodeToDomainResolver;
-import at.jku.isse.passiveprocessengine.core.serialization.ConfigurablePropertyTypeAdapter;
-import at.jku.isse.passiveprocessengine.core.serialization.TypeAdapterRegistry;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecTypeFactory;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;

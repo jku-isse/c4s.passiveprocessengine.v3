@@ -4,9 +4,8 @@ import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecTypeFacto
 import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.definition.types.MappingDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionScopeType;
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionType;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.definition.types.StepDefinitionTypeFactory;
-import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
@@ -15,33 +14,22 @@ import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.CoreTypeFactory;
-import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleDefinitionService;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import lombok.Getter;
 
 @Getter
 public class ProcessEngineConfigurationBuilder {
 
-	final InstanceRepository instanceRepository;
 	final RuleEnabledResolver schemaRegistry;
 	final CoreTypeFactory coreTypeFactory;
-	
-	protected RuleEnabledResolver context;
 	protected InputToOutputMapper ioMapper;
 	
 	public ProcessEngineConfigurationBuilder(RuleEnabledResolver schemaRegistry
-			, InstanceRepository instanceRepository
-			, RepairTreeProvider ruleService
-			, RewriterFactory rewriterFactory
-			, RuleDefinitionService ruleFactory
-			, CoreTypeFactory coreTypeFactory
-			, RuleAnalysisService ruleAnalysisService) {
-		this.instanceRepository = instanceRepository;
-		this.schemaRegistry = schemaRegistry;
+			, CoreTypeFactory coreTypeFactory) {
 		this.coreTypeFactory = coreTypeFactory;
+		this.schemaRegistry = schemaRegistry;
 		initSchemaRegistry();
-		ioMapper = new InputToOutputMapper(ruleService);
-		initContext(rewriterFactory, ruleFactory, ruleService, ruleAnalysisService);
+		ioMapper = new InputToOutputMapper();
 	}
 	
 	private void initSchemaRegistry() {
@@ -55,14 +43,13 @@ public class ProcessEngineConfigurationBuilder {
 		MappingDefinitionTypeFactory mapTypeProvider = new MappingDefinitionTypeFactory(schemaRegistry);		
 		DecisionNodeDefinitionTypeFactory dndTypeProvider = new DecisionNodeDefinitionTypeFactory(schemaRegistry);		
 		StepDefinitionTypeFactory stepTypeProvider = new StepDefinitionTypeFactory(schemaRegistry);		
-		ProcessDefinitionType processTypeProvider = new ProcessDefinitionType(schemaRegistry);
+		ProcessDefinitionTypeFactory processTypeProvider = new ProcessDefinitionTypeFactory(schemaRegistry);
 		scopeTypeProvider.produceTypeProperties();
 		specTypeProvider.produceTypeProperties();
 		mapTypeProvider.produceTypeProperties();
 		dndTypeProvider.produceTypeProperties();
 		stepTypeProvider.produceTypeProperties();
 		processTypeProvider.produceTypeProperties();
-				
 		coreTypeFactory.getBaseArtifactType(); // ensure base type exists
 	}
 	
@@ -74,16 +61,12 @@ public class ProcessEngineConfigurationBuilder {
 		AbstractProcessStepType stepType = new AbstractProcessStepType(schemaRegistry);
 		AbstractProcessInstanceType processType = new AbstractProcessInstanceType(schemaRegistry);
 		scopeTypeProvider.produceTypeProperties();
-		constraintWrapperType.produceTypeProperties();
-		dniType.produceTypeProperties();
+		constraintWrapperType.produceTypeProperties(scopeTypeProvider);
+		dniType.produceTypeProperties(scopeTypeProvider);
 		stepType.produceTypeProperties();
 		processType.produceTypeProperties();
-		configTypeProvider.produceTypeProperties();
+		configTypeProvider.produceTypeProperties(scopeTypeProvider);
 	}
 	
-	private void initContext(RewriterFactory rewriterFactory, RuleDefinitionService ruleFactory, RepairTreeProvider repairTreeProvider, RuleAnalysisService ruleAnalysisService) {
-		context = new RuleEnabledResolver(instanceRepository, schemaRegistry, ioMapper, repairTreeProvider, ruleAnalysisService);
-		context.inject(FactoryIndex.build(context, rewriterFactory, ruleFactory));
-	}
 	
 }

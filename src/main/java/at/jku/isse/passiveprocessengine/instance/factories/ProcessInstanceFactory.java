@@ -64,15 +64,14 @@ public class ProcessInstanceFactory extends DomainFactory {
 				, pdef.getInstance());
 		this.initProcessStep(process, pdef, inDNI, outDNI);		
 		
-		if (process.isImmediateInstantiateAllStepsEnabled()) {
-			// instantiate all steps and thereby the DNIs
-			pdef.getStepDefinitions().stream().forEach(sd -> {
-				ProcessStep step = process.createAndWireTask(sd);
-				//step.getInDNI().tryDataPropagationToPrematurelyTriggeredTask(); no point in triggering as there is no input available at this stage
-			});
-		} // now also activate first
+		// instantiate all steps and thereby the DNIs
+		pdef.getStepDefinitions().stream().forEach(sd -> {
+			ProcessStep step = process.createAndWireTask(sd);
+			//step.getInDNI().tryDataPropagationToPrematurelyTriggeredTask(); no point in triggering as there is no input available at this stage
+		});
+		 // now also activate first
 		pdef.getDecisionNodeDefinitions().stream()
-			.filter(dnd -> dnd.getInSteps().size() == 0)
+			.filter(dnd -> dnd.getInSteps().isEmpty())
 			.forEach(dnd -> {
 				DecisionNodeInstance dni = process.getOrCreateDNI(dnd);
 				dni.signalStateChanged(process); //dni.tryActivationPropagation(); // to trigger instantiation of initial steps
@@ -81,9 +80,9 @@ public class ProcessInstanceFactory extends DomainFactory {
 	}
 	
 	public ProcessStep getStepInstance(@NonNull StepDefinition stepDef, @NonNull DecisionNodeInstance inDNI, @NonNull DecisionNodeInstance outDNI, @NonNull ProcessInstance scope) {
-		if (stepDef instanceof ProcessDefinition) { // we have a subprocess
+		if (stepDef instanceof ProcessDefinition subprocDef) { // we have a subprocess
 			// we delegate to ProcessInstance
-			return getSubprocessInstance((ProcessDefinition) stepDef, inDNI, outDNI, scope);
+			return getSubprocessInstance(subprocDef, inDNI, outDNI, scope);
 		} else {
 			String specificStepType = SpecificProcessStepType.getProcessStepName(stepDef);
 			RDFInstance instance = getContext().createInstance( stepDef.getName()+"-"+UUID.randomUUID()

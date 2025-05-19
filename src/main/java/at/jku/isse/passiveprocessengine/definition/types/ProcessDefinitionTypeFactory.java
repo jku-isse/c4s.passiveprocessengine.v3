@@ -6,14 +6,13 @@ import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 
-public class ProcessDefinitionType extends AbstractTypeProvider {
+public class ProcessDefinitionTypeFactory extends AbstractTypeProvider {
 
 	private static final String NS = ProcessDefinitionScopeType.NS+"/processdefinition#";	
 	
-	public enum CoreProperties {decisionNodeDefinitions, stepDefinitions, prematureTriggers, prematureTriggerMappings,
-	isImmediateDataPropagationEnabled,
-	isImmediateInstantiateAllSteps, isWithoutBlockingErrors
+	public enum CoreProperties {decisionNodeDefinitions, stepDefinitions, isWithoutBlockingErrors
 	;	
 		@Override
 		public String toString() {
@@ -25,9 +24,9 @@ public class ProcessDefinitionType extends AbstractTypeProvider {
 		}
 	}
 	
-	public static final String typeId = ProcessDefinitionScopeType.NS+"#"+ProcessDefinitionType.class.getSimpleName();
+	public static final String typeId = ProcessDefinitionScopeType.NS+"#"+ProcessDefinitionTypeFactory.class.getSimpleName();
 	
-	public ProcessDefinitionType(NodeToDomainResolver schemaRegistry) {
+	public ProcessDefinitionTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
@@ -48,10 +47,6 @@ public class ProcessDefinitionType extends AbstractTypeProvider {
 				schemaRegistry.findNonDeletedInstanceTypeByFQN(DecisionNodeDefinitionTypeFactory.typeId)
 				.map(vtype->vtype.getAsPropertyType())
 				.orElse(null));
-		type.createMapPropertyType(CoreProperties.prematureTriggers.toString(), primitives.getStringType());
-		type.createMapPropertyType(CoreProperties.prematureTriggerMappings.toString(),  primitives.getStringType());
-		type.createSinglePropertyType(CoreProperties.isImmediateDataPropagationEnabled.toString(), primitives.getBooleanType());
-		type.createSinglePropertyType(CoreProperties.isImmediateInstantiateAllSteps.toString(), primitives.getBooleanType());
 		type.createSinglePropertyType(CoreProperties.isWithoutBlockingErrors.toString(), primitives.getBooleanType());		
 
 	}
@@ -63,7 +58,7 @@ public class ProcessDefinitionType extends AbstractTypeProvider {
 	 */
 	public ProcessDefinition createInstance(String processId) {
 		ProcessDefinition instance = (ProcessDefinition) schemaRegistry.createInstance(processId, type);
-		instance.setSingleProperty(ProcessDefinitionType.CoreProperties.isWithoutBlockingErrors.toString(), false);
+		instance.setSingleProperty(ProcessDefinitionTypeFactory.CoreProperties.isWithoutBlockingErrors.toString(), false);
 		return instance;				
 	}
 

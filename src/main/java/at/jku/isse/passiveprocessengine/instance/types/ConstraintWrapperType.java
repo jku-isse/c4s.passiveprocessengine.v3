@@ -26,11 +26,8 @@ public class ConstraintWrapperType extends AbstractTypeProvider {
 	}
 	public static final String typeId = NS+"#"+ConstraintResultWrapper.class.getSimpleName();
 
-	
-	private final RuleEnabledResolver schemaRegistry;
 	public ConstraintWrapperType(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);
-		this.schemaRegistry = schemaRegistry;
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
 			this.type = thisType.get();

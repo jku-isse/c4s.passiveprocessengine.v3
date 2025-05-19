@@ -21,13 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 public class InputToOutputMapper {
 
 	private static RepairTreeFilter rtf = new OutputUpdateRepairTreeFilter();
-
-	private RepairTreeProvider ruleService;
-	
-	public InputToOutputMapper(RepairTreeProvider ruleService) {
-		this.ruleService = ruleService;
-	}
-	
 	
 	@SuppressWarnings("unchecked")
 	public List<Events.ProcessChangedEvent> mapInputToOutputInStepScope(ProcessStep step, RDFRuleResultWrapper ruleResult) {
@@ -36,7 +29,7 @@ public class InputToOutputMapper {
 			return Collections.emptyList(); // nothing to do
 		}
 
-		RepairNode repairTree = (RepairNode) ruleService.getRepairTree(ruleResult);
+		RepairNodeDTO repairTree = ruleResult.getEvalWrapper().getRepairTree();
 		rtf.filterRepairTree(repairTree);
 		//DONE: if there are (only) concrete repair actions (which should be the case with symmetric difference)
 

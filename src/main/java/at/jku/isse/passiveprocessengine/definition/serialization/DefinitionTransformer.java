@@ -8,6 +8,7 @@ import java.util.Optional;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
@@ -27,11 +28,11 @@ public class DefinitionTransformer {
 	public static final String CONFIG_KEY_doImmediateInstantiateAllSteps = "doImmediateInstantiateAllSteps";
 	
 	private final FactoryIndex factories;	
-	private final NodeToDomainResolver schemaRegistry;
+	private final RuleEnabledResolver schemaRegistry;
 	private final List<ProcessDefinitionError> errors = new LinkedList<>();
 	private final DTOs.Process rootProcDTO;		
 	
-	public DefinitionTransformer(DTOs.Process procDTO, FactoryIndex factories, NodeToDomainResolver schemaRegistry) {
+	public DefinitionTransformer(DTOs.Process procDTO, FactoryIndex factories, RuleEnabledResolver schemaRegistry) {
 		this.rootProcDTO = procDTO;	
 		this.factories = factories;
 		this.schemaRegistry = schemaRegistry;
@@ -45,18 +46,7 @@ public class DefinitionTransformer {
 		ProcessDefinition processDef = initProcessFromDTO(rootProcDTO, 0, isInStaging);		
 		
 		if (errors.isEmpty()) { //if there are type errors, we dont even try to create rules
-			boolean doGeneratePrematureRules = false;
-			if (Boolean.parseBoolean(rootProcDTO.getProcessConfig().getOrDefault(CONFIG_KEY_doGeneratePrematureRules, "false"))) {
-				doGeneratePrematureRules = true;
-			}
-			errors.addAll(factories.getProcessDefinitionFactory().initializeInstanceTypes(processDef,doGeneratePrematureRules));
-			
-			boolean doImmediatePropagate = !doGeneratePrematureRules;
-			processDef.setImmediateDataPropagationEnabled(doImmediatePropagate);
-			boolean doImmediateInstantiateAllSteps = false;
-			if (Boolean.parseBoolean(rootProcDTO.getProcessConfig().getOrDefault(CONFIG_KEY_doImmediateInstantiateAllSteps, "true")))
-				doImmediateInstantiateAllSteps = true;
-			processDef.isImmediateInstantiateAllStepsEnabled(doImmediateInstantiateAllSteps);
+			errors.addAll(factories.getSpecificProcessDefinitionFactory().initializeInstanceTypes(processDef));
 		} else {
 			processDef.setIsWithoutBlockingErrors(false);
 		}
@@ -82,8 +72,8 @@ public class DefinitionTransformer {
 		// then Steps
 		procDTO.getSteps().stream().forEach(stepDTO -> {
 			StepDefinition stepDefinition = null;
-			if (stepDTO instanceof DTOs.Process) { // a subprocess
-				stepDefinition = createSubprocess((DTOs.Process)stepDTO, procDTO, isInStaging);
+			if (stepDTO instanceof DTOs.Process subprocessDTO) { // a subprocess
+				stepDefinition = createSubprocess(subprocessDTO, procDTO, isInStaging);
 				stepDefinition.setProcess(processDefinition);
 				//FIXME: child process instance type will not point to this type of parent process instance type, for accessing any configuration
 				processDefinition.addStepDefinition(stepDefinition);
@@ -100,7 +90,7 @@ public class DefinitionTransformer {
 				DecisionNodeDefinition dnd = processDefinition.getDecisionNodeDefinitionByName(dn.getCode());
 				dn.getMapping().stream().forEach(m ->
 					dnd.addDataMappingDefinition(
-						factories.getMappingDefinitionFactory().getStepInstance(m.getFromStep(), m.getFromParam(), m.getToStep(), m.getToParam())) );
+						factories.getMappingDefinitionFactory().getInstance(m.getFromStep(), m.getFromParam(), m.getToStep(), m.getToParam(), processDefinition.getId())) );
 		});
 		// then process itself
 		initStepFromDTO(procDTO, processDefinition);
@@ -115,11 +105,11 @@ public class DefinitionTransformer {
 		procDTO.getConfigs().entrySet().stream().forEach(entry -> {
 			String configName = entry.getKey();		
 			
-			SpecificProcessConfigType configProvider = new SpecificProcessConfigType(schemaRegistry, processDefinition, configName, entry.getValue(), factories.getRuleDefinitionFactory());
+			SpecificProcessConfigType configProvider = new SpecificProcessConfigType(schemaRegistry, processDefinition, configName, entry.getValue());
 			// then add the properties if they dont exist yet
 			configProvider.produceTypeProperties();
 			
-			RDFInstanceType procConfig = typesFactory.findNonDeletedInstanceTypeByFQN(configProvider.getSubtypeName()); 
+			RDFInstanceType procConfig = schemaRegistry.findNonDeletedInstanceTypeByFQN(configProvider.getSubtypeName()).get(); 
 					//factories.getProcessConfigFactory().getOrCreateProcessSpecificSubtype(configName, processDefinition);
 			
 			//factories.getProcessConfigFactory().augmentConfig(entry.getValue(), procConfig);
@@ -243,33 +233,21 @@ public class DefinitionTransformer {
 			int pos = type.lastIndexOf('/');
 			type = pos > -1 ? type.substring(pos+1) : type;
 		}
-		Optional<RDFInstanceType> iType = Optional.ofNullable(schemaRegistry.findNonDeletedInstanceTypeByFQN(type));
+		Optional<RDFInstanceType> iType = schemaRegistry.findNonDeletedInstanceTypeByFQN(type);
 		if (iType.isEmpty()) {
 			errors.add(new ProcessDefinitionError(el, "Unknown Instance Type", "Input/Output definition "+param+" uses unknown instance type: "+type , ProcessDefinitionError.Severity.ERROR));
 			//throw new ProcessException("Process Description uses unknown instance type: "+type);
-			return BuildInType.METATYPE;
+			return schemaRegistry.resolveToType(schemaRegistry.getMetaschemata().getMetaElements().getMetaClass());
 		}
 		return iType.get();
 	}
-
-//	private static InstanceType searchInFolderAndBelow(String type, Folder toSearch) {
-//		return toSearch.instanceTypes().stream()
-//			.filter(iType -> iType.name().equals(type))
-//			.filter(iType -> !iType.isDeleted())
-//			.findAny().orElseGet(() -> {
-//				return toSearch.subfolders().stream()
-//						.map(folder -> searchInFolderAndBelow(type, folder))
-//						.filter(Objects::nonNull)
-//						.findAny().orElse(null);
-//			});
-//	}
 
 	public static DTOs.Process toDTO(ProcessDefinition processDefinition) {
 		DTOs.Process proc = Process.builder().build();
 		processDefinition.getStepDefinitions().stream().forEach(pStep -> {
 			DTOs.Step step = DTOs.Step.builder().build();
-			if (pStep instanceof ProcessDefinition) {
-				proc.getSteps().add(toDTO((ProcessDefinition) pStep));
+			if (pStep instanceof ProcessDefinition subprocDef) {
+				proc.getSteps().add(toDTO(subprocDef));
 			} else {
 				initDTOfromStep(step, pStep);
 				proc.getSteps().add(step);
