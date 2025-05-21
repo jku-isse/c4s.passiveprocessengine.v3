@@ -53,7 +53,14 @@ public class SpecificProcessStepType extends AbstractTypeProvider {
 			});
 			stepDef.getExpectedOutput().entrySet().stream()
 			.forEach(entry -> {
-				type.createSetPropertyType(PREFIX_OUT+entry.getKey(), entry.getValue());
+				var outProp = type.createSetPropertyType(PREFIX_OUT+entry.getKey(), entry.getValue().getAsPropertyType());
+				var derivingRule = schemaRegistry.getRuleRepo().getRuleBuilder()
+					.withContextType(type.getType())
+					.withDescription("DerivedOutput"+entry.getKey())
+					.withRuleTitle(type.getId()+"-DerivedOutput"+entry.getKey())
+					.withRuleExpression("TODO") //TODO: get mapping rule here
+					.forDerivedProperty(outProp.getProperty());
+				//TODO: check and log if deriving rule has errors
 			});
 			// DONE IN ProcessDefinitionschemaRegistry
 			//			stepDef.getInputToOutputMappingRules().entrySet().stream()
