@@ -53,16 +53,17 @@ class InstanceTests extends DefinitionWrapperTests {
 	void setup() throws Exception {
 		super.setup();
 		EventDistributor eventDistrib = new EventDistributor();
+		UsageMonitor usageMonitor = new UsageMonitor(new CurrentSystemTimeProvider(), ruleServiceWrapper);
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
 		eventDistrib.registerHandler(monitor);
-		ProcessInstanceChangeListener picp = new ProcessInstanceChangeProcessor(configBuilder.getContext(), eventDistrib);
+		ProcessInstanceChangeListener picp = new ProcessInstanceChangeProcessor(configBuilder.getContext(), eventDistrib, usageMonitor);
 		ChangeEventTransformer picpWrapper = super.dsSetup.getChangeEventTransformer();
 		picpWrapper.registerWithWorkspace(picp);
 		
 		artifactFactory = new TestArtifacts(super.instanceRepository, schemaReg);
 		procFactory = new TestDTOProcesses(artifactFactory);
 		typeJira = artifactFactory.getJiraInstanceType();
-		UsageMonitor usageMonitor = new UsageMonitor(new CurrentSystemTimeProvider(), ruleServiceWrapper);
+		
 		ExecutedRepairListenerImpl repairListener = new ExecutedRepairListenerImpl(usageMonitor, configBuilder.getContext());
 		ruleServiceWrapper.register(repairListener);
 		

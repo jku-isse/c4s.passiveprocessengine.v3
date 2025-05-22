@@ -49,4 +49,8 @@ public class ProcessStateChangeLog implements IProcessEventHandler{
 			return null;
 		}
 	}
+	
+	public String getAllEventLogsAsJson() {
+		return gson.toJson(logs);
+	}
 }

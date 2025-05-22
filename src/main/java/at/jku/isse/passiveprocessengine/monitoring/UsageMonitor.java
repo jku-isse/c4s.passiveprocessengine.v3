@@ -25,6 +25,7 @@ public class UsageMonitor {
 
 	public static enum UsageEvents {ProcessViewed, StepViewed, ConstraintViewed, GuidanceExecuted, ProcessDeleted, ProcessCreated}
 	public static enum LogProperties {rootProcessInstanceId, processInstanceId, processDefinitionId, stepDefinitionId, evalResult, guidanceSize, constraintId, repairTemplate, repairRank, originTime, eventType, userId}
+	public static enum ChangedArtLogProperties{ artId, property, operator, value}
 
 	public UsageMonitor(ITimeStampProvider timeProvider, RepairTreeProvider ruleService) {
 		this.timeProvider = timeProvider;
@@ -72,6 +73,15 @@ public class UsageMonitor {
 		List<StructuredArgument> args = getDefaultArguments(step.getProcess(), userId, UsageEvents.StepViewed.toString());
 		args.add(kv(LogProperties.stepDefinitionId.toString(), step.getDefinition().getName()));
 		monitor.info("Step viewed", args.toArray());
+	}
+	
+	public void processArtifactChanged(ProcessInstance proc, String artId, String property, String operation, String value) {
+		List<StructuredArgument> args = getDefaultArguments(proc, null, UsageEvents.StepViewed.toString());
+		args.add(kv(ChangedArtLogProperties.artId.toString(), artId));
+		args.add(kv(ChangedArtLogProperties.property.toString(), property));
+		args.add(kv(ChangedArtLogProperties.operator.toString(), operation));
+		args.add(kv(ChangedArtLogProperties.value.toString(), value));
+		monitor.info("Artifact changed", args.toArray());
 	}
 
 	public void constraintedViewed(ConstraintResultWrapper cw, String userId) { //if not fulfilled, implies that repairtree was loaded

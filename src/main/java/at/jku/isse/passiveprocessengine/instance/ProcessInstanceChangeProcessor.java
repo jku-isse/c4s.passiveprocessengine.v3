@@ -11,10 +11,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import at.jku.isse.passiveprocessengine.core.ProcessContext;
 import at.jku.isse.passiveprocessengine.core.ProcessInstanceChangeListener;
+import at.jku.isse.designspace.artifactconnector.core.repository.CoreTypeFactory;
 import at.jku.isse.passiveprocessengine.core.PPEInstance;
 import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
 import at.jku.isse.passiveprocessengine.core.PropertyChange;
@@ -32,6 +34,7 @@ import at.jku.isse.passiveprocessengine.instance.messages.Commands.PrematureStep
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.QAConstraintChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
+import at.jku.isse.passiveprocessengine.monitoring.UsageMonitor;
 import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import lombok.Data;
@@ -43,17 +46,25 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 	final EventDistributor distributor;
 	final ProcessContext context;
 	final PPEInstanceType stepType;
+	final PPEInstanceType artType;
+	final UsageMonitor usageMonitor;
+	
+	final Map<PPEInstance, ProcessStep> art2StepIndex = new ConcurrentHashMap<>();
+	
 	
 	//we queue commands and remove some that are undone when lazy fetching of artifacts results in different outcome
 	protected Map<String, Commands.ProcessScopedCmd> cmdQueue = Collections.synchronizedMap(new HashMap<>());
 
 	private EventStats stats = new EventStats();
 
-	public ProcessInstanceChangeProcessor(ProcessContext context, EventDistributor distributor) {		
+	public ProcessInstanceChangeProcessor(ProcessContext context, EventDistributor distributor, UsageMonitor usageMonitor) {		
 		this.distributor = distributor;
 		this.context = context;
+		this.usageMonitor = usageMonitor;
 		stepType = context.getSchemaRegistry().getType(ProcessStep.class);
 		assert(stepType != null);
+		artType = context.getSchemaRegistry().getTypeByName(CoreTypeFactory.BASE_TYPE_NAME);
+		assert(artType != null);
 	}
 
 	public EventStats getEventStatistics() {
@@ -75,7 +86,15 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 		//FIXME better approach than naming
 	}
 
+	private boolean isOfArtifactType(PPEInstance instance) {
+		if (instance == null) 
+			return false;
+		else
+			return instance.getInstanceType().isOfTypeOrAnySubtype(artType);			
+	}
 
+	
+	
 	private Optional<ProcessScopedCmd> processPropertyUpdateAdd(PropertyChange.Add op) {		
 		PPEInstance element = op.getInstance();
 		if(!op.getName().contains("/@")
@@ -87,26 +106,41 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 					op.getName(),																
 					added != null ? added.getName() : "NULL"
 					));
+			art2StepIndex.put(added, step);
 			stats.incrementIoAddEventCount();
 			return Optional.ofNullable(step.prepareIOAddEvent(op));
 		}		
+		if (art2StepIndex.containsKey(op.getInstance())) {
+			// change to a process related artifact
+			var step = art2StepIndex.get(op.getInstance());
+			var proc = step instanceof ProcessInstance ? (ProcessInstance)step : step.getProcess();
+			var value = op.getValue() instanceof PPEInstance ? ((PPEInstance)op.getValue()).getName() : String.valueOf(op.getValue());
+			usageMonitor.processArtifactChanged(proc, op.getInstance().getName(), op.getName(), "ADD", value);
+		}
 		return Optional.empty();
 	}
 
 	private Optional<ProcessScopedCmd> processPropertyUpdateRemove(PropertyChange.Remove op) {
 		PPEInstance element = op.getInstance();
-			if(!op.getName().contains("/@")  // ignore special properties  (e.g., usage in consistency rules, etc)
+		if(!op.getName().contains("/@")  // ignore special properties  (e.g., usage in consistency rules, etc)
 				&& (op.getName().startsWith("in_") || op.getName().startsWith("out_"))
 				&& isOfStepType(element) ) {
-				ProcessStep step = context.getWrappedInstance(ProcessStep.class, element);
-				log.info(String.format("%s %s removed something", step.getName(),
-																op.getName()
-															//	,op.indexOrKey()
-																));
-				stats.incrementIoRemoveEventCount();
-				return Optional.ofNullable(step.prepareIORemoveEvent(op));
-			}
-	//	}
+			ProcessStep step = context.getWrappedInstance(ProcessStep.class, element);
+			log.info(String.format("%s %s removed something", step.getName(),
+					op.getName()
+					//	,op.indexOrKey()
+					));
+			stats.incrementIoRemoveEventCount();
+			return Optional.ofNullable(step.prepareIORemoveEvent(op));
+		}
+		if (art2StepIndex.containsKey(op.getInstance())) {
+			// change to a process related artifact
+			var step = art2StepIndex.get(op.getInstance());
+			var proc = step instanceof ProcessInstance ? (ProcessInstance)step : step.getProcess();
+			var value = op.getValue() instanceof PPEInstance ? ((PPEInstance)op.getValue()).getName() : String.valueOf(op.getValue());
+			usageMonitor.processArtifactChanged(proc, op.getInstance().getName(), op.getName(), "REMOVE", value);
+		}
+		//	}
 		return Optional.empty();
 	}
 
@@ -128,6 +162,12 @@ public class ProcessInstanceChangeProcessor implements ProcessInstanceChangeList
 				ProcessScopedCmd effect = step.prepareRuleEvaluationChange(cr, op);
 				return Optional.ofNullable(effect);
 			}
+		} else if (art2StepIndex.containsKey(op.getInstance())) {
+			// change to a process related artifact
+			var step = art2StepIndex.get(op.getInstance());
+			var proc = step instanceof ProcessInstance ? (ProcessInstance)step : step.getProcess();
+			var value = op.getValue() instanceof PPEInstance ? ((PPEInstance)op.getValue()).getName() : String.valueOf(op.getValue());
+			usageMonitor.processArtifactChanged(proc, op.getInstance().getName(), op.getName(), "SET", value);
 		}
 		return Optional.empty();
 	}
