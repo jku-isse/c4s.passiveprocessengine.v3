@@ -21,7 +21,6 @@ import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ConditionChangedCmd;
-import at.jku.isse.passiveprocessengine.instance.messages.Commands.IOMappingConsistencyCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.OutputChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.PrematureStepTriggerCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
@@ -205,17 +204,6 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 				return cmd;})
 			.flatMap(cmd -> cmd.execute().stream())
 			.collect(Collectors.toList()));
-
-			// then execute datamappings
-			cmdEvents.addAll(relevantEffects.stream()
-				.filter(IOMappingConsistencyCmd.class::isInstance)
-				.map(IOMappingConsistencyCmd.class::cast)
-				.map(cmd -> {
-					stats.incrementIOMappingConsistencyCmdCount();
-					log.debug(String.format("Executing: %s", cmd.toString()));
-					return cmd;})
-				.flatMap(cmd -> cmd.execute().stream())
-				.collect(Collectors.toList()));
 
 			// then execute output change events
 			cmdEvents.addAll(relevantEffects.stream()

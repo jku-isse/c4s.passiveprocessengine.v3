@@ -17,16 +17,19 @@ import at.jku.isse.passiveprocessengine.instance.activeobjects.ConstraintResultW
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
+import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
+import at.jku.isse.passiveprocessengine.instance.types.ConstraintResultWrapperTypeFactory;
+import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceTypeFactory;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 
 public class ProcessInstanceFactory extends DomainFactory {
 						
-	private final DecisionNodeInstanceFactory dniFactory;
-	final ConstraintResultWrapperFactory crwFactory;
+	private final DecisionNodeInstanceTypeFactory dniFactory;
+	final ConstraintResultWrapperTypeFactory crwFactory;
 	
-	public ProcessInstanceFactory(RuleEnabledResolver context, DecisionNodeInstanceFactory dniFactory, ConstraintResultWrapperFactory crwFactory) {		
+	public ProcessInstanceFactory(RuleEnabledResolver context, DecisionNodeInstanceTypeFactory dniFactory, ConstraintResultWrapperTypeFactory crwFactory) {		
 		super(context);		
 		this.dniFactory = dniFactory;
 		this.crwFactory = crwFactory;
@@ -60,7 +63,7 @@ public class ProcessInstanceFactory extends DomainFactory {
 		
 		// init first DNI, there should be only one. Needs to be checked earlier with definition creation
 		// we assume consistent, correct specification/definition here
-		process.setSingleProperty(SpecificProcessInstanceType.CoreProperties.processDefinition.toString()
+		process.setSingleProperty(AbstractProcessInstanceType.CoreProperties.processDefinition.toString()
 				, pdef.getInstance());
 		this.initProcessStep(process, pdef, inDNI, outDNI);		
 		

@@ -10,13 +10,14 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RDFRuleDefinitionWrapper;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
+import at.jku.isse.passiveprocessengine.rules.RewriterFactory;
 import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionTypeFactory;
-import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
+import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeTypeFactory;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 import lombok.Getter;
@@ -35,13 +36,14 @@ public class SpecificProcessInstanceTypesFactory {
 	public static final String CRD_QASPEC_PREFIX = "crd_qaspec_";
 
 	final RewriterFactory ruleService;
+	final ProcessInstanceScopeTypeFactory scopeFactory;
 	@Getter final RuleEnabledResolver context;
 
 	
-	public SpecificProcessInstanceTypesFactory(@NonNull RuleEnabledResolver context, @NonNull RewriterFactory ruleService) {
+	public SpecificProcessInstanceTypesFactory(@NonNull RuleEnabledResolver context, @NonNull RewriterFactory ruleService, @NonNull ProcessInstanceScopeTypeFactory scopeFactory) {
 		this.context = context;
 		this.ruleService = ruleService;
-		
+		this.scopeFactory = scopeFactory;
 	}
 		
 	/**
@@ -52,46 +54,27 @@ public class SpecificProcessInstanceTypesFactory {
 	 */
 	public List<ProcessDefinitionError> initializeInstanceTypes(ProcessDefinition processDef) {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
-		SpecificProcessStepType processAsStepTypeProvider = new SpecificProcessStepType(getContext(), processDef);
+		SpecificProcessStepType processAsStepTypeProvider = new SpecificProcessStepType(context, processDef, scopeFactory);
 		processAsStepTypeProvider.produceTypeProperties();
-		SpecificProcessInstanceType typeProvider = new SpecificProcessInstanceType(getContext(), processDef);
+		SpecificProcessInstanceType typeProvider = new SpecificProcessInstanceType(context, processDef);
 		typeProvider.produceTypeProperties();				
-		RDFInstanceType processInstanceType = getContext().findNonDeletedInstanceTypeByFQN(SpecificProcessInstanceType.getProcessName(processDef)).get(); //) ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
-		//DecisionNodeInstance.getOrCreateCoreType(instance.workspace);
-		//List<ProcessException> subProcessExceptions = new ArrayList<>();
+		RDFInstanceType processInstanceType = context.findNonDeletedInstanceTypeByFQN(SpecificProcessInstanceType.getProcessName(processDef)).get(); //) ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
+
 		processDef.getStepDefinitions().stream().forEach(stepDef -> {
 			if (stepDef instanceof ProcessDefinition procDef) {
 				log.debug("Skipping creation of Datamapping Rule for Subprocess Step: "+stepDef.getName());
 				errors.addAll(initializeInstanceTypes(procDef));
 			} else {
 				// create the specific step type
-				SpecificProcessStepType stepTypeProvider = new SpecificProcessStepType(getContext(), stepDef, processInstanceType);
-				stepTypeProvider.produceTypeProperties();	
-				RDFInstanceType stepInstanceType = getContext().findNonDeletedInstanceTypeByFQN(SpecificProcessStepType.getProcessStepName(stepDef)).get();
-				stepDef.getInputToOutputMappingRules().entrySet().stream()
-				.forEach(entry -> {
-					if (entry.getValue() != null) {
-						String name = getDataMappingId(entry, stepDef);
-						String expression = completeDatamappingRule(entry.getKey(), entry.getValue());
-						RDFRuleDefinitionWrapper crt = context.createInstance(stepInstanceType, name, expression);
-						if (crt == null) {
-							log.warn("Unknown reason for rule creation failure");
-						} else {
-							log.debug("Created "+name);
-						}
-						// do we really need to create those properties? or is creating just the rules ok? probably not
-						//type.createPropertyType(CRD_DATAMAPPING_PREFIX+entry.getKey(), Cardinality.SINGLE, crt);
-					}
-				});				 					
+				SpecificProcessStepType stepTypeProvider = new SpecificProcessStepType(context, stepDef, processInstanceType, scopeFactory);
+				stepTypeProvider.produceTypeProperties();			
 			}
 		});
 		errors.addAll(checkProcessStructure(processDef));
-		//getContext().getInstanceRepository().concludeTransaction(); //not needed for RDF based wrapper as we immediately check for errors
-		//				List<String> augmentationErrors = new LinkedList<>();
 		errors.addAll(new RuleAugmentation(processDef, processInstanceType, context, ruleService).augmentAndCreateConditions());
 		processDef.getStepDefinitions().stream().forEach(stepDef -> {
 			errors.addAll(new RuleAugmentation(stepDef, 
-												getContext().findNonDeletedInstanceTypeByFQN(SpecificProcessStepType.getProcessStepName(stepDef)).get(), 
+												context.findNonDeletedInstanceTypeByFQN(SpecificProcessStepType.getProcessStepName(stepDef)).get(), 
 												context, 
 												ruleService)
 								.augmentAndCreateConditions());
@@ -99,18 +82,6 @@ public class SpecificProcessInstanceTypesFactory {
 		errors.addAll(checkConstraintValidity(processDef, processInstanceType));
 		
 		if (errors.isEmpty() || errors.stream().allMatch(error -> !error.getSeverity().equals(ProcessDefinitionError.Severity.ERROR))) {
-			// now lets also create premature rules here, as we need the process to exist first
-	//		if (doGeneratePrematureDetectionConstraints) {
-	//			new PrematureTriggerGenerator(ws, this).generatePrematureConstraints();
-	//			context.getInstanceRepository().concludeTransaction();
-	//		}
-			// even if there are augementation errors, these were due to unsupported constructs in the constraint during augmentation, but the constraints are ok,
-			// thus we store and run the process, but report back that augmentation didn;t work.
-			//					if (!augmentationErrors.isEmpty()) {
-			//						ProcessException pex = new ProcessException("Constraint Augmentation unsuccessful, but continuing nevertheless without augmentation.");
-			//						pex.setErrorMessages(augmentationErrors);
-			//						throw pex;
-			//					}
 			processDef.setIsWithoutBlockingErrors(true);
 		} else {
 			log.info("Blocking newly added process due to constraint errors: "+processDef.getName());
@@ -149,14 +120,6 @@ public class SpecificProcessInstanceTypesFactory {
 		processDef.getDecisionNodeDefinitions().stream()
 			.forEach(dnd -> status.addAll(dnd.checkDecisionNodeStructureValidity()));
 		return status;
-	}
-
-	private String completeDatamappingRule(String param, String rule) {
-		return rule
-				+"\r\n"
-				+"->asSet()\r\n"
-				+"->symmetricDifference(self.out_"+param+")\r\n"
-				+"->size() = 0";
 	}
 
 	public static String getDataMappingId(Map.Entry<String,String> ioMapping, StepDefinition sd) {

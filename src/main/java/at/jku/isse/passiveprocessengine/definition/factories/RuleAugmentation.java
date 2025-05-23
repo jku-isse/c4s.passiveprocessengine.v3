@@ -10,10 +10,10 @@ import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
-import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleDefinitionService;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
+import at.jku.isse.passiveprocessengine.rules.RewriterFactory;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 

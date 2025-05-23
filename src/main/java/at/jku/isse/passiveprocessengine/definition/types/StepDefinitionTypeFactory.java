@@ -12,7 +12,7 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 
 public class StepDefinitionTypeFactory extends AbstractTypeProvider {
 
-	private static final String NS = ProcessDefinitionScopeType.NS+"/stepdefinition#";
+	private static final String NS = ProcessDefinitionScopeTypeFactory.NS+"/stepdefinition#";
 	
 	public enum CoreProperties {		
 		expectedInput,
@@ -34,7 +34,7 @@ public class StepDefinitionTypeFactory extends AbstractTypeProvider {
 		}
 	}
 	
-	public static final String typeId = ProcessDefinitionScopeType.NS+"#"+StepDefinition.class.getSimpleName();
+	public static final String typeId = ProcessDefinitionScopeTypeFactory.NS+"#"+StepDefinition.class.getSimpleName();
 
 	public StepDefinitionTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);
@@ -42,7 +42,7 @@ public class StepDefinitionTypeFactory extends AbstractTypeProvider {
 		if (thisType.isPresent()) {
 			this.type = thisType.get();
 		} else {
-			this.type = schemaRegistry.createNewInstanceType(typeId,  schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessDefinitionScopeType.typeId).orElse(null));
+			this.type = schemaRegistry.createNewInstanceType(typeId,  schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessDefinitionScopeTypeFactory.typeId).orElse(null));
 		}
 		metaElements.registerInstanceSpecificClass(typeId, StepDefinition.class);
 	}
@@ -53,25 +53,25 @@ public class StepDefinitionTypeFactory extends AbstractTypeProvider {
 		type.createSetPropertyType(CoreProperties.qaConstraints.toString(), 
 				schemaRegistry.findNonDeletedInstanceTypeByFQN(ConstraintSpecTypeFactory.typeId)
 				.map(vtype->vtype.getAsPropertyType())
-				.orElse(null));
+				.orElseThrow());
 		type.createMapPropertyType(CoreProperties.expectedInput.toString(),  PrimitiveOrClassType.fromRDFNode(metaElements.getMetaClass()));
 		type.createMapPropertyType(CoreProperties.expectedOutput.toString(),  PrimitiveOrClassType.fromRDFNode(metaElements.getMetaClass()));
 		type.createSetPropertyType(CoreProperties.preconditions.toString(), 
 				schemaRegistry.findNonDeletedInstanceTypeByFQN(ConstraintSpecTypeFactory.typeId)
 				.map(vtype->vtype.getAsPropertyType())
-				.orElse(null));
+				.orElseThrow());
 		type.createSetPropertyType(CoreProperties.postconditions.toString(), 
 				schemaRegistry.findNonDeletedInstanceTypeByFQN(ConstraintSpecTypeFactory.typeId)
 				.map(vtype->vtype.getAsPropertyType())
-				.orElse(null));
+				.orElseThrow());
 		type.createSetPropertyType(CoreProperties.cancelconditions.toString(), 
 				schemaRegistry.findNonDeletedInstanceTypeByFQN(ConstraintSpecTypeFactory.typeId)
 				.map(vtype->vtype.getAsPropertyType())
-				.orElse(null));
+				.orElseThrow());
 		type.createSetPropertyType(CoreProperties.activationconditions.toString(), 
 				schemaRegistry.findNonDeletedInstanceTypeByFQN(ConstraintSpecTypeFactory.typeId)
 				.map(vtype->vtype.getAsPropertyType())
-				.orElse(null));
+				.orElseThrow());
 		type.createSinglePropertyType(CoreProperties.inDND.toString(), primitives.getStringType());
 		type.createSinglePropertyType(CoreProperties.outDND.toString(), primitives.getStringType());
 		type.createMapPropertyType((CoreProperties.ioMappingRules.toString()), primitives.getStringType());

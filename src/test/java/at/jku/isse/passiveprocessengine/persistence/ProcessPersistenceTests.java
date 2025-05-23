@@ -21,10 +21,9 @@ import at.jku.isse.artifacteventstreaming.api.Branch;
 import at.jku.isse.artifacteventstreaming.api.BranchStateUpdater;
 import at.jku.isse.passiveprocessengine.core.InstanceRepository;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
-import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
+import at.jku.isse.passiveprocessengine.definition.registry.DTOs;
+import at.jku.isse.passiveprocessengine.definition.registry.DefinitionTransformer;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
-import at.jku.isse.passiveprocessengine.designspace.RewriterFactory;
 import at.jku.isse.passiveprocessengine.demo.TestDTOProcesses;
 import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
@@ -39,6 +38,7 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.config.RDFWrapperTestSetup;
 import at.jku.isse.passiveprocessengine.rdfwrapper.events.ChangeEventTransformer;
 import at.jku.isse.passiveprocessengine.rdfwrapper.events.ChangeListener;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEvaluationService;
+import at.jku.isse.passiveprocessengine.rules.RewriterFactory;
 import lombok.NonNull;
 
 public class ProcessPersistenceTests {

@@ -24,7 +24,6 @@ import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Trigger;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ConditionChangedCmd;
-import at.jku.isse.passiveprocessengine.instance.messages.Commands.IOMappingConsistencyCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.OutputChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.QAConstraintChangedCmd;
@@ -91,20 +90,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			log.debug(String.format("Step %s has %s evaluate to %s", this.getName(), cond, value));
 			return new ConditionChangedCmd(this, cr, cond, Boolean.valueOf(op.getValue().toString()));
 		} else {
-		// if premature conditions, then delegate to process instance, resp often will need to be on process level anyway
-			// input to putput mappings
-			if (crt.getName().startsWith(SpecificProcessInstanceTypesFactory.CRD_DATAMAPPING_PREFIX) ) {
-				if (!Boolean.valueOf(op.getValue().toString())) { // an unfulfilled datamapping rules
-				// now we need to "repair" this, i.e., set the output accordingly
-					log.debug(String.format("Datamapping %s queued for repair", crt.getName()));
-					return new IOMappingConsistencyCmd(this, cr, true, getIoMapper());
-				} else {
-					log.debug(String.format("Datamapping %s now consistent", crt.getName()));
-					return new IOMappingConsistencyCmd(this, cr, false, getIoMapper());
-				}
-			} else if (crt.getName().startsWith(SpecificProcessInstanceTypesFactory.CRD_QASPEC_PREFIX) ) { // a qa constraint
+			if (crt.getName().startsWith(SpecificProcessInstanceTypesFactory.CRD_QASPEC_PREFIX) ) { // a qa constraint
 				log.debug(String.format("QA Constraint %s now %s ", crt.getName(), op.getValue() != null ? op.getValue().toString() : "NULL"));
-				//processQAEvent(cr, op); Boolean.parseBoolean(op.value().toString())
 				return op.getValue() != null ? new QAConstraintChangedCmd(this, cr, Boolean.parseBoolean(op.getValue().toString())) :
 					new QAConstraintChangedCmd(this, cr, true);
 			}	else

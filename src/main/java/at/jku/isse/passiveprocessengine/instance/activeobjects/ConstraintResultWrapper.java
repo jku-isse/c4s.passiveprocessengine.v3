@@ -9,7 +9,7 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RDFRuleResultWrapper;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
-import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType.CoreProperties;
+import at.jku.isse.passiveprocessengine.instance.types.ConstraintResultWrapperTypeFactory.CoreProperties;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,13 +23,13 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 	}
 
 	public  RDFRuleResultWrapper getRuleResult() {
-		return getTypedProperty(CoreProperties.crule.toString(), RDFRuleResultWrapper.class);
+		return getTypedProperty(CoreProperties.ruleResult.toString(), RDFRuleResultWrapper.class);
 	}
 
 	protected void setRuleResultIfEmpty(RDFRuleResultWrapper cr) {
 		var prevRuleResult = getRuleResult();
 		if (prevRuleResult == null) {
-			setSingleProperty(CoreProperties.crule.toString(), cr);
+			setSingleProperty(CoreProperties.ruleResult.toString(), cr);
 		}
 	}
 
@@ -65,12 +65,12 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 	}
 
 	public ConstraintSpec getConstraintSpec() {
-		return getTypedProperty(CoreProperties.qaSpec.toString(), ConstraintSpec.class);		
+		return getTypedProperty(CoreProperties.constraintSpec.toString(), ConstraintSpec.class);		
 	}
 
 	//Not to be called directly, only public for factory access
 	public void setSpec(ConstraintSpec qaSpec) {
-		setSingleProperty(CoreProperties.qaSpec.toString(), qaSpec.getInstance());
+		setSingleProperty(CoreProperties.constraintSpec.toString(), qaSpec.getInstance());
 	}
 
 	public ProcessStep getParentStep() {

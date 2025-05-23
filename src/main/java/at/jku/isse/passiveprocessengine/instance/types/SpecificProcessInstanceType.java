@@ -16,8 +16,6 @@ import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 
 public class SpecificProcessInstanceType extends AbstractTypeProvider {
 
-	public enum CoreProperties {stepInstances, decisionNodeInstances, processDefinition, createdAt}
-
 	private final ProcessDefinition procDef;
 
 	public static final String CRD_PREMATURETRIGGER_PREFIX = "crd_prematuretrigger_";
@@ -32,18 +30,14 @@ public class SpecificProcessInstanceType extends AbstractTypeProvider {
 	public void produceTypeProperties() {
 		String processName = getProcessName(procDef);
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(processName);
-		if (thisType.isPresent()) {
-			//schemaRegistry.registerTypeByName(thisType.get());	
+		if (thisType.isPresent()) {	
 			this.type = thisType.get();
 			type.cacheSuperProperties();
 		} else {
 			String processAsTaskName = SpecificProcessStepType.getProcessStepName(procDef);
 			type = schemaRegistry.createNewInstanceType(processName, schemaRegistry.findNonDeletedInstanceTypeByFQN(processAsTaskName).get());
-			//schemaRegistry.registerTypeByName(type);		
-			type.createSinglePropertyType(SpecificProcessInstanceType.CoreProperties.processDefinition.toString(), schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessDefinitionTypeFactory.typeId).get().getAsPropertyType());
-			type.createSetPropertyType(SpecificProcessInstanceType.CoreProperties.stepInstances.toString(), schemaRegistry.findNonDeletedInstanceTypeByFQN(AbstractProcessStepType.typeId).get().getAsPropertyType());
-			type.createSetPropertyType(SpecificProcessInstanceType.CoreProperties.decisionNodeInstances.toString(), schemaRegistry.findNonDeletedInstanceTypeByFQN(DecisionNodeInstanceType.typeId).get().getAsPropertyType());
-			type.createSinglePropertyType(SpecificProcessInstanceType.CoreProperties.createdAt.toString(), BuildInType.STRING);			
+	
+					
 		}
 
 	}			

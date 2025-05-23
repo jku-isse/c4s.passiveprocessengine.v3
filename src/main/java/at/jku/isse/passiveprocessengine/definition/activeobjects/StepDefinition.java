@@ -100,47 +100,26 @@ public class StepDefinition extends ProcessDefinitionScopedElement {
 //		} else return Collections.emptySet();
 	}
 
-//	@SuppressWarnings("unchecked")
-//	@Deprecated(forRemoval = true)
-//	public void setCondition(Conditions condition, String ruleAsString) {
-//		ConstraintSpec constraint = getProcessContext().getFactoryIndex().getConstraintFactory().createInstance(condition, condition+"0", ruleAsString, ruleAsString, 0, false);
-//		switch(condition) {
-//		case ACTIVATION:
-//			 getTypedProperty(ProcessStepDefinitionType.CoreProperties.activationconditions.toString(), Set.class).add(constraint.getInstance());
-//			break;
-//		case CANCELATION:
-//			 getTypedProperty(ProcessStepDefinitionType.CoreProperties.cancelconditions.toString(), Set.class).add(constraint.getInstance());
-//			break;
-//		case POSTCONDITION:
-//			 getTypedProperty(ProcessStepDefinitionType.CoreProperties.postconditions.toString(), Set.class).add(constraint.getInstance());
-//			break;
-//		case PRECONDITION:
-//			 getTypedProperty(ProcessStepDefinitionType.CoreProperties.preconditions.toString(), Set.class).add(constraint.getInstance());
-//			break;
-//		default:
-//			break;
-//
-//		}
-//	}
+
 
 	@SuppressWarnings("unchecked")
 	public void addPrecondition(ConstraintSpec spec) {
-		 getTypedProperty(StepDefinitionTypeFactory.CoreProperties.preconditions.toString(), Set.class).add(spec.getInstance());
+		 getTypedProperty(StepDefinitionTypeFactory.CoreProperties.preconditions.toString(), Set.class).add(spec);
 	}
 
 	@SuppressWarnings("unchecked")
 	public void addPostcondition(ConstraintSpec spec) {
-		 getTypedProperty(StepDefinitionTypeFactory.CoreProperties.postconditions.toString(), Set.class).add(spec.getInstance());
+		 getTypedProperty(StepDefinitionTypeFactory.CoreProperties.postconditions.toString(), Set.class).add(spec);
 	}
 
 	@SuppressWarnings("unchecked")
 	public void addCancelcondition(ConstraintSpec spec) {
-		 getTypedProperty(StepDefinitionTypeFactory.CoreProperties.cancelconditions.toString(), Set.class).add(spec.getInstance());
+		 getTypedProperty(StepDefinitionTypeFactory.CoreProperties.cancelconditions.toString(), Set.class).add(spec);
 	}
 
 	@SuppressWarnings("unchecked")
 	public void addActivationcondition(ConstraintSpec spec) {
-		 getTypedProperty(StepDefinitionTypeFactory.CoreProperties.activationconditions.toString(), Set.class).add(spec.getInstance());
+		 getTypedProperty(StepDefinitionTypeFactory.CoreProperties.activationconditions.toString(), Set.class).add(spec);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -156,7 +135,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement {
 
 	@SuppressWarnings("unchecked")
 	public void addQAConstraint(ConstraintSpec spec) {
-		 getTypedProperty(StepDefinitionTypeFactory.CoreProperties.qaConstraints.toString(), Set.class).add(spec.getInstance());
+		 getTypedProperty(StepDefinitionTypeFactory.CoreProperties.qaConstraints.toString(), Set.class).add(spec);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -283,6 +262,7 @@ public class StepDefinition extends ProcessDefinitionScopedElement {
 
 	public List<ProcessDefinitionError> checkConstraintValidity(RDFInstanceType processInstType) {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
+		
 		var instTypeOpt = this.resolver.findNonDeletedInstanceTypeByFQN(this.getId()); // we now use the same URI for instance at definition level and type level for process instances
 		
 		//InstanceType instType = this. getInstanceType(); //ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstType);

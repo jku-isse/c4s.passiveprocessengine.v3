@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.definition.serialization;
+package at.jku.isse.passiveprocessengine.definition.registry;
 
 import java.util.Collections;
 import java.util.Comparator;

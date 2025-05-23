@@ -5,35 +5,31 @@ import java.util.Optional;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
-import at.jku.isse.passiveprocessengine.core.NodeToDomainResolver;
-import at.jku.isse.passiveprocessengine.core.TypeProviderBase;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
-import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import lombok.NonNull;
 
 public class SpecificProcessStepType extends AbstractTypeProvider {
 
-//	public static enum CoreProperties {actualLifecycleState, expectedLifecycleState, stepDefinition, inDNI, outDNI, qaState,
-//	preconditions, postconditions, cancelconditions, activationconditions,
-//	processedPreCondFulfilled, processedPostCondFulfilled, processedCancelCondFulfilled, processedActivationCondFulfilled, isWorkExpected}
-
 	private final StepDefinition stepDef;
 	private final RDFInstanceType processType;
-
+	private final ProcessInstanceScopeTypeFactory scopeFactory;
+	
 	public static final String PREFIX_OUT = "out_";
 	public static final String PREFIX_IN = "in_";
 
 		
-	public SpecificProcessStepType(RuleEnabledResolver schemaRegistry, StepDefinition stepDef, @NonNull RDFInstanceType processType) {
+	public SpecificProcessStepType(RuleEnabledResolver schemaRegistry, StepDefinition stepDef, @NonNull RDFInstanceType processType, ProcessInstanceScopeTypeFactory scopeFactory) {
 		super(schemaRegistry);
 		this.stepDef = stepDef;
 		this.processType = processType;
+		this.scopeFactory = scopeFactory;
 	}
 	
-	public SpecificProcessStepType(RuleEnabledResolver schemaRegistry, StepDefinition stepDef) {
+	public SpecificProcessStepType(RuleEnabledResolver schemaRegistry, StepDefinition stepDef, ProcessInstanceScopeTypeFactory scopeFactory) {
 		super(schemaRegistry);
 		this.stepDef = stepDef;	
 		this.processType = null;
+		this.scopeFactory = scopeFactory;
 	}
 	
 	public void produceTypeProperties() {
@@ -49,7 +45,7 @@ public class SpecificProcessStepType extends AbstractTypeProvider {
 
 			stepDef.getExpectedInput().entrySet().stream()
 			.forEach(entry -> {
-				type.createSetPropertyType(PREFIX_IN+entry.getKey(), entry.getValue());
+				type.createSetPropertyType(PREFIX_IN+entry.getKey(), entry.getValue().getAsPropertyType());
 			});
 			stepDef.getExpectedOutput().entrySet().stream()
 			.forEach(entry -> {
@@ -73,12 +69,12 @@ public class SpecificProcessStepType extends AbstractTypeProvider {
 //			});
 			// override process property type to actual process so we can access its config when needed
 			if (processType != null) {
-				if (type.getPropertyType(ProcessInstanceScopeType.CoreProperties.process.toString()) == null)
-					type.createSinglePropertyType(ProcessInstanceScopeType.CoreProperties.process.toString(), processType.getAsPropertyType());
+				if (type.getPropertyType(ProcessInstanceScopeTypeFactory.CoreProperties.process.toString()) == null)
+					type.createSinglePropertyType(ProcessInstanceScopeTypeFactory.CoreProperties.process.toString(), processType.getAsPropertyType());
 				//else
 				//typeStep.getPropertyType(ProcessInstanceScopedElement.CoreProperties.process.toString()).setInstanceType(processType);
 			} else {
-				ProcessInstanceScopeType.addGenericProcessProperty(type);
+				scopeFactory.addGenericProcessProperty(type);
 			}
 			this.type = type;
 		}

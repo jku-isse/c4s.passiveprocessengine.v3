@@ -8,7 +8,7 @@ import lombok.NonNull;
 import org.apache.jena.ontapi.model.OntIndividual;
 
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
-import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeType;
+import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeTypeFactory;
 
 public abstract class ProcessInstanceScopedElement extends RDFInstance {
 
@@ -17,11 +17,11 @@ public abstract class ProcessInstanceScopedElement extends RDFInstance {
 	}
 
 	public void setProcess(ProcessInstance pi) {
-		setSingleProperty(ProcessInstanceScopeType.CoreProperties.process.toString(), pi.getInstance());
+		setSingleProperty(ProcessInstanceScopeTypeFactory.CoreProperties.process.toString(), pi.getInstance());
 	}
 
 	public ProcessInstance getProcess() {
-		return (ProcessInstance) getTypedProperty(ProcessInstanceScopeType.CoreProperties.process.toString(), RDFInstance.class);		
+		return (ProcessInstance) getTypedProperty(ProcessInstanceScopeTypeFactory.CoreProperties.process.toString(), RDFInstance.class);		
 	}
 	
 	public void deleteCascading() {

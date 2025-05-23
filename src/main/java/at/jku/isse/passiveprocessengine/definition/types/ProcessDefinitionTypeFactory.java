@@ -10,7 +10,7 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 
 public class ProcessDefinitionTypeFactory extends AbstractTypeProvider {
 
-	private static final String NS = ProcessDefinitionScopeType.NS+"/processdefinition#";	
+	private static final String NS = ProcessDefinitionScopeTypeFactory.NS+"/processdefinition#";	
 	
 	public enum CoreProperties {decisionNodeDefinitions, stepDefinitions, isWithoutBlockingErrors
 	;	
@@ -24,10 +24,14 @@ public class ProcessDefinitionTypeFactory extends AbstractTypeProvider {
 		}
 	}
 	
-	public static final String typeId = ProcessDefinitionScopeType.NS+"#"+ProcessDefinitionTypeFactory.class.getSimpleName();
+	public static final String typeId = ProcessDefinitionScopeTypeFactory.NS+"#"+ProcessDefinitionTypeFactory.class.getSimpleName();
+	private StepDefinitionTypeFactory stepTypeProvider;
+	private DecisionNodeDefinitionTypeFactory dndTypeProvider;
 	
-	public ProcessDefinitionTypeFactory(RuleEnabledResolver schemaRegistry) {
+	public ProcessDefinitionTypeFactory(RuleEnabledResolver schemaRegistry, StepDefinitionTypeFactory stepTypeProvider, DecisionNodeDefinitionTypeFactory dndTypeProvider) {
 		super(schemaRegistry);
+		this.stepTypeProvider = stepTypeProvider;
+		this.dndTypeProvider = dndTypeProvider;
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {
 			this.type = thisType.get();
@@ -42,11 +46,11 @@ public class ProcessDefinitionTypeFactory extends AbstractTypeProvider {
 		type.createListPropertyType(CoreProperties.stepDefinitions.toString(),
 				schemaRegistry.findNonDeletedInstanceTypeByFQN(StepDefinitionTypeFactory.typeId)
 				.map(vtype->vtype.getAsPropertyType())
-				.orElse(null));
+				.orElseThrow());
 		type.createSetPropertyType(CoreProperties.decisionNodeDefinitions.toString(),  
 				schemaRegistry.findNonDeletedInstanceTypeByFQN(DecisionNodeDefinitionTypeFactory.typeId)
 				.map(vtype->vtype.getAsPropertyType())
-				.orElse(null));
+				.orElseThrow());
 		type.createSinglePropertyType(CoreProperties.isWithoutBlockingErrors.toString(), primitives.getBooleanType());		
 
 	}
@@ -58,6 +62,7 @@ public class ProcessDefinitionTypeFactory extends AbstractTypeProvider {
 	 */
 	public ProcessDefinition createInstance(String processId) {
 		ProcessDefinition instance = (ProcessDefinition) schemaRegistry.createInstance(processId, type);
+		instance.injectFactories(stepTypeProvider, dndTypeProvider);
 		instance.setSingleProperty(ProcessDefinitionTypeFactory.CoreProperties.isWithoutBlockingErrors.toString(), false);
 		return instance;				
 	}

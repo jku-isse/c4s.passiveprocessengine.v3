@@ -39,7 +39,7 @@ public class SpecificProcessConfigType extends AbstractTypeProvider {
 			//schemaRegistry.registerTypeByName(thisType.get());
 			this.type = thisType.get();
 		} else {
-			type = schemaRegistry.createNewInstanceType(subtypeName, schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementType.typeId).get());
+			type = schemaRegistry.createNewInstanceType(subtypeName, schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementTypeFactory.typeId).get());
 			//schemaRegistry.registerTypeByName(type);			
 							
 			type.createSinglePropertyType("processDefinition", schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessDefinitionTypeFactory.typeId).get().getAsPropertyType());
@@ -88,7 +88,7 @@ public class SpecificProcessConfigType extends AbstractTypeProvider {
 		}
 
 		public boolean addPropertyToType(RDFInstanceType processConfig, RuleEnabledResolver schemaRegistry) {
-			RDFInstanceType baseType = schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementType.typeId).get();
+			RDFInstanceType baseType = schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementTypeFactory.typeId).get();
 			
 			if (processConfig != null					
 					&& processConfig.isOfTypeOrAnySubtype(baseType)

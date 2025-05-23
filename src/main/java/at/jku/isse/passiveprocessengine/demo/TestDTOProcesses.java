@@ -5,10 +5,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition.InFlowType;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Constraint;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.DecisionNode;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Step;
+import at.jku.isse.passiveprocessengine.definition.registry.DTOs;
+import at.jku.isse.passiveprocessengine.definition.registry.DTOs.Constraint;
+import at.jku.isse.passiveprocessengine.definition.registry.DTOs.DecisionNode;
+import at.jku.isse.passiveprocessengine.definition.registry.DTOs.Step;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 
 public class TestDTOProcesses {

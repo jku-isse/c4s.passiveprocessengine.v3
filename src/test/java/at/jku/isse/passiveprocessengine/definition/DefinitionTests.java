@@ -4,26 +4,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import java.net.URISyntaxException;
 
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs;
-import at.jku.isse.passiveprocessengine.definition.serialization.DefinitionTransformer;
-import at.jku.isse.passiveprocessengine.definition.serialization.JsonDefinitionSerializer;
+import at.jku.isse.passiveprocessengine.definition.registry.DTOs;
+import at.jku.isse.passiveprocessengine.definition.registry.DefinitionTransformer;
+import at.jku.isse.passiveprocessengine.definition.registry.JsonDefinitionSerializer;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.demo.TestDTOProcesses;
-import at.jku.isse.passiveprocessengine.wrappers.InstanceWrapperTests;
+import at.jku.isse.passiveprocessengine.wrappers.DefinitionWrapperTests;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-class DefinitionTests extends InstanceWrapperTests {
+class DefinitionTests extends DefinitionWrapperTests {
 
 	TestDTOProcesses procFactory;
 	DTOs.Process procDTO;
@@ -33,15 +29,14 @@ class DefinitionTests extends InstanceWrapperTests {
 	static JsonDefinitionSerializer json = new JsonDefinitionSerializer();
 	
 	@Override
-	@BeforeEach
-	public
-	void setup() {
+	@BeforeAll
+	public void setup() throws URISyntaxException {
 		super.setup();
-		artifactFactory = new TestArtifacts(instanceRepository, schemaReg);
+		artifactFactory = new TestArtifacts(schemaReg);
 		procFactory = new TestDTOProcesses(artifactFactory);
 		procDTO = procFactory.getSimpleDTOSubprocess();
 		procDTO.calculateDecisionNodeDepthIndex(1);
-		transformer = new DefinitionTransformer(procDTO, configBuilder.getContext().getFactoryIndex(), schemaReg);
+		transformer = new DefinitionTransformer(procDTO, configBuilder.getFactoryIndex(), schemaReg);
 		procDef = transformer.fromDTO(false);
 	}
 
@@ -117,7 +112,7 @@ class DefinitionTests extends InstanceWrapperTests {
 		String jsonFromDirectDTO = json.toJson(procDTO);
 		DTOs.Process procDTOfromJson = json.fromJson(jsonFromDirectDTO);
 		procDef.deleteCascading();
-		transformer = new DefinitionTransformer(procDTOfromJson, configBuilder.getContext().getFactoryIndex(), schemaReg);
+		transformer = new DefinitionTransformer(procDTOfromJson, configBuilder.getFactoryIndex(), schemaReg);
 		procDef = transformer.fromDTO(false);
 		
 		assert(typeJira != null);

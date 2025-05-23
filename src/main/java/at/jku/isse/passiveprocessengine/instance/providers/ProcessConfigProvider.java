@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
+import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementTypeFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.artifactprovider.ArtifactIdentifier;
 import at.jku.isse.passiveprocessengine.rdfwrapper.artifactprovider.FetchResponse;
 import at.jku.isse.passiveprocessengine.rdfwrapper.artifactprovider.FetchResponse.ErrorResponse;
@@ -35,12 +35,12 @@ public class ProcessConfigProvider implements IArtifactProvider {
 	
 	@Override
 	public RDFInstanceType getDefaultArtifactInstanceType() {
-		return schemaReg.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementType.typeId).orElse(null);
+		return schemaReg.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementTypeFactory.typeId).orElse(null);
 	}
 
 	@Override
 	public Set<RDFInstanceType> getProvidedArtifactInstanceTypes() {
-		var type = schemaReg.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementType.typeId);
+		var type = schemaReg.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementTypeFactory.typeId);
 		if (type.isEmpty()) 
 			return Collections.emptySet();
 		else 

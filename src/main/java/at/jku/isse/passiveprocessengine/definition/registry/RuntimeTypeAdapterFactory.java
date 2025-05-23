@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.definition.serialization;
+package at.jku.isse.passiveprocessengine.definition.registry;
 
 /*
  * Copyright (C) 2011 Google Inc.

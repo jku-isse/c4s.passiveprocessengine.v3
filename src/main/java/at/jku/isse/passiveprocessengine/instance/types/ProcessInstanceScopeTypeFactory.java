@@ -9,7 +9,7 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
 
-public class ProcessInstanceScopeType extends AbstractTypeProvider {
+public class ProcessInstanceScopeTypeFactory extends AbstractTypeProvider {
 
 	public static final String NS = BaseNamespace.NS+"/instances";
 	
@@ -27,7 +27,7 @@ public class ProcessInstanceScopeType extends AbstractTypeProvider {
 	
 	public static final String typeId = NS+"#"+ProcessInstanceScopedElement.class.getSimpleName();
 
-	public ProcessInstanceScopeType(RuleEnabledResolver schemaRegistry) {
+	public ProcessInstanceScopeTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);
 		Optional<RDFInstanceType> thisType = schemaRegistry.findNonDeletedInstanceTypeByFQN(typeId);
 		if (thisType.isPresent()) {			
@@ -43,8 +43,8 @@ public class ProcessInstanceScopeType extends AbstractTypeProvider {
 	
 	public void addGenericProcessProperty(RDFInstanceType instType) {
 		instType.cacheSuperProperties();
-		if (instType.getPropertyType(ProcessInstanceScopeType.CoreProperties.process.toString()) == null) {
-			instType.createSinglePropertyType(ProcessInstanceScopeType.CoreProperties.process.toString(), type.getAsPropertyType());			
+		if (instType.getPropertyType(ProcessInstanceScopeTypeFactory.CoreProperties.process.toString()) == null) {
+			instType.createSinglePropertyType(ProcessInstanceScopeTypeFactory.CoreProperties.process.toString(), type.getAsPropertyType());			
 		}
 	}
 }

@@ -17,22 +17,27 @@ import lombok.Getter;
 import lombok.NonNull;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex;
 import at.jku.isse.passiveprocessengine.definition.factories.SpecificProcessInstanceTypesFactory;
+import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionTypeFactory.CoreProperties;
+import at.jku.isse.passiveprocessengine.definition.types.StepDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
-import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementType;
+import at.jku.isse.passiveprocessengine.instance.types.ProcessConfigBaseElementTypeFactory;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;;
 
 public class ProcessDefinition extends StepDefinition{
 
-	@Getter private FactoryIndex factoryIndex;
+	private DecisionNodeDefinitionTypeFactory dndFactory;
+	private StepDefinitionTypeFactory stepDefFactory;
+	
 	
 	public ProcessDefinition(@NonNull OntIndividual element, RDFInstanceType type, @NonNull NodeToDomainResolver resolver) {
 		super(element, type, resolver);
 	}
 	
-	public void injectFactoryIndex(FactoryIndex factoryIndex) {
-		this.factoryIndex = factoryIndex;
+	public void injectFactories(StepDefinitionTypeFactory stepDefFactory, DecisionNodeDefinitionTypeFactory dndFactory) {
+		this.dndFactory = dndFactory;
+		this.stepDefFactory = stepDefFactory;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -49,7 +54,7 @@ public class ProcessDefinition extends StepDefinition{
 
 	@SuppressWarnings("unchecked")
 	public void addStepDefinition(StepDefinition step) {
-		getTypedProperty(CoreProperties.stepDefinitions.toString(), List.class).add(step.getInstance());
+		getTypedProperty(CoreProperties.stepDefinitions.toString(), List.class).add(step);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -65,12 +70,12 @@ public class ProcessDefinition extends StepDefinition{
 
 	@SuppressWarnings("unchecked")
 	public void addDecisionNodeDefinition(DecisionNodeDefinition dnd) {
-		getTypedProperty(CoreProperties.decisionNodeDefinitions.toString(), Set.class).add(dnd.getInstance());
+		getTypedProperty(CoreProperties.decisionNodeDefinitions.toString(), Set.class).add(dnd);
 	}
 
-	public DecisionNodeDefinition getDecisionNodeDefinitionByName(String name) {
+	public DecisionNodeDefinition getDecisionNodeDefinitionByName(String localName) {
 		return getDecisionNodeDefinitions().stream()
-		.filter(dnd -> dnd.getName().equals(name))
+		.filter(dnd -> dnd.getName().equals(localName))
 		.findAny().orElse(null);
 	}
 
@@ -91,12 +96,12 @@ public class ProcessDefinition extends StepDefinition{
 
 	@Override
 	public void deleteCascading() {
-		getDecisionNodeDefinitions().forEach(dnd -> dnd.deleteCascading());
+		getDecisionNodeDefinitions().stream().forEach(dnd -> dnd.deleteCascading());
 		getStepDefinitions().forEach(sd -> sd.deleteCascading());
 		
 		// delete configtype
 		this.getExpectedInput().entrySet().stream()
-		.filter(entry -> entry.getValue().isOfTypeOrAnySubtype(resolver.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementType.typeId).get()))
+		.filter(entry -> entry.getValue().isOfTypeOrAnySubtype(resolver.findNonDeletedInstanceTypeByFQN(ProcessConfigBaseElementTypeFactory.typeId).get()))
 		.forEach(configEntry -> {
 			RDFInstanceType procConfig = configEntry.getValue().getInstanceType(); // context.getConfigFactory().getOrCreateProcessSpecificSubtype(configEntry.getKey(), this);
 			procConfig.delete();
@@ -150,7 +155,7 @@ public class ProcessDefinition extends StepDefinition{
 
 
 	public StepDefinition createAndAddStepDefinition(String stepId) {
-		StepDefinition sd = factoryIndex.getStepDefinitionFactory().createInstance(stepId);
+		StepDefinition sd = stepDefFactory.createInstance(stepId);
 				//StepDefinition.getInstance(stepId, ws); // any other initialization there
 		sd.setProcess(this);
 		this.addStepDefinition(sd);
@@ -158,7 +163,7 @@ public class ProcessDefinition extends StepDefinition{
 	}
 
 	public DecisionNodeDefinition createDecisionNodeDefinition(String dndId) {
-		DecisionNodeDefinition dnd = factoryIndex.getDecisionNodeDefinitionFactory().createInstance(dndId); // any other initialization there
+		DecisionNodeDefinition dnd = dndFactory.createInstance(dndId); // any other initialization there
 		dnd.setProcess(this);
 		this.addDecisionNodeDefinition(dnd);
 		return dnd;

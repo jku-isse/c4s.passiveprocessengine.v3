@@ -44,7 +44,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 				return dnd;
 			else {
 				DecisionNodeDefinition closingDnd = determineScopeClosingDN();
-				setSingleProperty(CoreProperties.closingDN.toString(), closingDnd.getInstance());
+				setSingleProperty(CoreProperties.closingDN.toString(), closingDnd);
 				return closingDnd;
 			}
 		}
@@ -66,7 +66,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 					Set<DecisionNodeDefinition> nextNextStepOutDNs = nextStepOutDNs.stream().map(nextDN -> nextDN.getScopeClosingDecisionNodeOrNull()).collect(Collectors.toSet());
 					nextStepOutDNs = nextNextStepOutDNs;
 				}
-				assert(nextStepOutDNs.size() > 0);
+				assert(!nextStepOutDNs.isEmpty());
 			}
 			return sameDepthNodes.iterator().next();
 		}
@@ -74,17 +74,17 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 
 	@SuppressWarnings("unchecked")
 	protected void addInStep(StepDefinition sd) {
-		getTypedProperty(CoreProperties.inSteps.toString(), Set.class).add(sd.getInstance());
+		getTypedProperty(CoreProperties.inSteps.toString(), Set.class).add(sd);
 	}
 
 	@SuppressWarnings("unchecked")
 	protected void addOutStep(StepDefinition sd) {
-		getTypedProperty(CoreProperties.outSteps.toString(), Set.class).add(sd.getInstance());
+		getTypedProperty(CoreProperties.outSteps.toString(), Set.class).add(sd);
 	}
 
 	@SuppressWarnings("unchecked")
 	public void addDataMappingDefinition(MappingDefinition md) {
-		getTypedProperty(CoreProperties.dataMappingDefinitions.toString(), Set.class).add(md.getInstance());
+		getTypedProperty(CoreProperties.dataMappingDefinitions.toString(), Set.class).add(md);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -127,7 +127,7 @@ public class DecisionNodeDefinition extends ProcessDefinitionScopedElement {
 
 	@Override
 	public void deleteCascading() {
-		this.getMappings().forEach(md -> md.deleteCascading());
+		this.getMappings().stream().forEach(md -> md.deleteCascading());
 		// no instanceType for DNI to delete, all processes use the same one.
 		super.deleteCascading();
 	}

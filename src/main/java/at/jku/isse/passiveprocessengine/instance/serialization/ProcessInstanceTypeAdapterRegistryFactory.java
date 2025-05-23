@@ -10,9 +10,9 @@ import java.util.Set;
 import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecTypeFactory;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessInstanceType;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
-import at.jku.isse.passiveprocessengine.instance.types.ConstraintWrapperType;
-import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
-import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeType;
+import at.jku.isse.passiveprocessengine.instance.types.ConstraintResultWrapperTypeFactory;
+import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceTypeFactory;
+import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeTypeFactory;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.CoreTypeFactory;
 
@@ -44,13 +44,13 @@ public class ProcessInstanceTypeAdapterRegistryFactory {
 				new ConfigurablePropertyTypeAdapter(typeAdapterRegistry 
 						, getShallowDecisionNodeProperties()
 						, Collections.emptySet())
-				, schemaReg.findNonDeletedInstanceTypeByFQN(DecisionNodeInstanceType.typeId));
+				, schemaReg.findNonDeletedInstanceTypeByFQN(DecisionNodeInstanceTypeFactory.typeId));
 		// constraint wrapper - only deep
 		typeAdapterRegistry.registerTypeAdapter(
 				new ConfigurablePropertyTypeAdapter(typeAdapterRegistry 
 						, Collections.emptySet()
 						, getDeepProcessWrapperProperties() )
-				, schemaReg.findNonDeletedInstanceTypeByFQN(ConstraintWrapperType.typeId));
+				, schemaReg.findNonDeletedInstanceTypeByFQN(ConstraintResultWrapperTypeFactory.typeId));
 		// constraint spec, wrapper needs spec as there the actual constraint is described, wrapper could be also shallow
 		typeAdapterRegistry.registerTypeAdapter(
 				new ConfigurablePropertyTypeAdapter(typeAdapterRegistry 
@@ -106,28 +106,28 @@ public class ProcessInstanceTypeAdapterRegistryFactory {
 	
 	/* only needed when used standalone outside of process json*/
 	private static Set<String> getShallowProcessScopeProperties() {
-		return Set.of(ProcessInstanceScopeType.CoreProperties.process.toString()
+		return Set.of(ProcessInstanceScopeTypeFactory.CoreProperties.process.toString()
 				);
 	}
 	
 	private static Set<String> getShallowDecisionNodeProperties() {
-		return Arrays.asList(DecisionNodeInstanceType.CoreProperties.values()).stream()
+		return Arrays.asList(DecisionNodeInstanceTypeFactory.CoreProperties.values()).stream()
 				.map(prop -> prop.toString())
 				.collect(toSet());
 	}
 	
 	private static Set<String> getDeepProcessWrapperProperties() {
-		return Set.of(ConstraintWrapperType.CoreProperties.qaSpec.toString()
-				,ConstraintWrapperType.CoreProperties.lastChanged.toString()
-				,ConstraintWrapperType.CoreProperties.isOverriden.toString()
-				,ConstraintWrapperType.CoreProperties.overrideValue.toString()
-				,ConstraintWrapperType.CoreProperties.overrideReason.toString()
+		return Set.of(ConstraintResultWrapperTypeFactory.CoreProperties.constraintSpec.toString()
+				,ConstraintResultWrapperTypeFactory.CoreProperties.lastChanged.toString()
+				,ConstraintResultWrapperTypeFactory.CoreProperties.isOverriden.toString()
+				,ConstraintResultWrapperTypeFactory.CoreProperties.overrideValue.toString()
+				,ConstraintResultWrapperTypeFactory.CoreProperties.overrideReason.toString()
 				);
 	}
 	
 	/* only needed when used standalone outside of process json*/
 	private static Set<String> getShallowProcessWrapperProperties() {
-		return Set.of(ConstraintWrapperType.CoreProperties.parentStep.toString());
+		return Set.of(ConstraintResultWrapperTypeFactory.CoreProperties.parentStep.toString());
 	}
 	
 	private static Set<String> getShallowConstraintSpecProperties() {

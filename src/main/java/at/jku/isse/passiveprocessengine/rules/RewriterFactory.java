@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.designspace;
+package at.jku.isse.passiveprocessengine.rules;
 
 import java.util.List;
 

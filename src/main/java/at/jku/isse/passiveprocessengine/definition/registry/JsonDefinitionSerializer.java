@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.definition.serialization;
+package at.jku.isse.passiveprocessengine.definition.registry;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

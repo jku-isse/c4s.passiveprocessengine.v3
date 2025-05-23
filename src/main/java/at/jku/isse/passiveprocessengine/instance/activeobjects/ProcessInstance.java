@@ -17,13 +17,14 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Trigger;
-import at.jku.isse.passiveprocessengine.instance.factories.DecisionNodeInstanceFactory;
 import at.jku.isse.passiveprocessengine.instance.factories.ProcessInstanceFactory;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
+import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessInstanceType.CoreProperties;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
+import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceTypeFactory;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import lombok.NonNull;
@@ -35,7 +36,7 @@ public class ProcessInstance extends ProcessStep {
 
 	protected ZonedDateTime createdAt;
 	private ProcessInstanceFactory stepFactory;
-	private DecisionNodeInstanceFactory decisionNodeFactory;
+	private DecisionNodeInstanceTypeFactory decisionNodeFactory;
 
 	public ProcessInstance(@NonNull OntIndividual element, @NonNull RDFInstanceType type, @NonNull RuleEnabledResolver context) {
 		super(element, type, context);
@@ -45,7 +46,7 @@ public class ProcessInstance extends ProcessStep {
 	}
 
 	// only to be used by factory
-	public void inject(ProcessInstanceFactory stepFactory, DecisionNodeInstanceFactory decisionNodeFactory) {
+	public void inject(ProcessInstanceFactory stepFactory, DecisionNodeInstanceTypeFactory decisionNodeFactory) {
 		this.stepFactory = stepFactory;
 		this.decisionNodeFactory = decisionNodeFactory;
 	}
@@ -56,7 +57,7 @@ public class ProcessInstance extends ProcessStep {
 
 	public ZonedDateTime getCreatedAt() {
 		if (createdAt == null) { // load from DS
-			String last = getTypedProperty(SpecificProcessInstanceType.CoreProperties.createdAt.toString(), String.class);
+			String last = getTypedProperty(CoreProperties.createdAt.toString(), String.class);
 			if (last != null && last.length() > 0 ) {
 				createdAt = ZonedDateTime.parse(last);
 			} else {
@@ -67,7 +68,7 @@ public class ProcessInstance extends ProcessStep {
 	}
 
 	private void setCreatedAt(ZonedDateTime createdAt) {
-		setSingleProperty(SpecificProcessInstanceType.CoreProperties.createdAt.toString(), createdAt.toString());
+		setSingleProperty(CoreProperties.createdAt.toString(), createdAt.toString());
 		this.createdAt = createdAt;
 	}
 
@@ -98,7 +99,7 @@ public class ProcessInstance extends ProcessStep {
 
 	@Override
 	public ProcessDefinition getDefinition() {
-		return getTypedProperty(SpecificProcessInstanceType.CoreProperties.processDefinition.toString(), ProcessDefinition.class);		
+		return getTypedProperty(CoreProperties.processDefinition.toString(), ProcessDefinition.class);		
 	}
 
 	@Override
@@ -234,11 +235,11 @@ public class ProcessInstance extends ProcessStep {
 	private void addProcessStep(ProcessStep step) {
 		assert(step != null);
 		assert(step.getInstance() != null);
-		getTypedProperty(SpecificProcessInstanceType.CoreProperties.stepInstances.toString(), Set.class).add(step.getInstance());
+		getTypedProperty(CoreProperties.stepInstances.toString(), Set.class).add(step.getInstance());
 	}
 
 	public Set<ProcessStep> getProcessSteps() {
-		Set<?> stepList = getTypedProperty(SpecificProcessInstanceType.CoreProperties.stepInstances.toString(), Set.class);
+		Set<?> stepList = getTypedProperty(CoreProperties.stepInstances.toString(), Set.class);
 		if (stepList != null) {
 			return stepList.stream()
 //					.map(inst -> getProcessContext().getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((RDFInstance) inst), (RDFInstance) inst))
@@ -250,7 +251,7 @@ public class ProcessInstance extends ProcessStep {
 	}
 
 	public Set<DecisionNodeInstance> getDecisionNodeInstances() {
-		Set<?> dniSet = getTypedProperty(SpecificProcessInstanceType.CoreProperties.decisionNodeInstances.toString(), Set.class);
+		Set<?> dniSet = getTypedProperty(CoreProperties.decisionNodeInstances.toString(), Set.class);
 		if (dniSet != null ) {
 			return dniSet.stream()
 					.map(DecisionNodeInstance.class::cast)					
@@ -261,7 +262,7 @@ public class ProcessInstance extends ProcessStep {
 
 	@SuppressWarnings("unchecked")
 	private void addDecisionNodeInstance(DecisionNodeInstance dni) {
-		getTypedProperty(SpecificProcessInstanceType.CoreProperties.decisionNodeInstances.toString(), Set.class).add(dni.getInstance());
+		getTypedProperty(CoreProperties.decisionNodeInstances.toString(), Set.class).add(dni.getInstance());
 	}
 
 	public Set<DecisionNodeInstance> getInstantiatedDNIsHavingStepsOutputAsInput(ProcessStep step, String output) {

@@ -18,7 +18,7 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDef
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.State;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
-import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceType;
+import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceTypeFactory;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,35 +35,35 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 
 	@Override
 	public DecisionNodeDefinition getDefinition() {
-		return getTypedProperty(DecisionNodeInstanceType.CoreProperties.dnd.toString(), DecisionNodeDefinition.class);
+		return getTypedProperty(DecisionNodeInstanceTypeFactory.CoreProperties.dnd.toString(), DecisionNodeDefinition.class);
 	}
 
 	private void setInflowFulfilled(boolean isFulfilled) {
 		//if (isInflowFulfilled() != isFulfilled) // a change -> not necessary, is done internally anyway
-		setSingleProperty(DecisionNodeInstanceType.CoreProperties.isInflowFulfilled.toString(), isFulfilled);
+		setSingleProperty(DecisionNodeInstanceTypeFactory.CoreProperties.isInflowFulfilled.toString(), isFulfilled);
 	}
 
 	public boolean isInflowFulfilled() {
-		return getTypedProperty(DecisionNodeInstanceType.CoreProperties.isInflowFulfilled.toString(), Boolean.class,  false);
+		return getTypedProperty(DecisionNodeInstanceTypeFactory.CoreProperties.isInflowFulfilled.toString(), Boolean.class,  false);
 	}
 
 	private void setHasPropagated() {
-		setSingleProperty(DecisionNodeInstanceType.CoreProperties.hasPropagated.toString(), true);
+		setSingleProperty(DecisionNodeInstanceTypeFactory.CoreProperties.hasPropagated.toString(), true);
 	}
 
 	public boolean hasPropagated() {
-		return getTypedProperty(DecisionNodeInstanceType.CoreProperties.hasPropagated.toString(), Boolean.class, false);
+		return getTypedProperty(DecisionNodeInstanceTypeFactory.CoreProperties.hasPropagated.toString(), Boolean.class, false);
 	}
 
 	// not to be used outside of ProcessStepInstanceFactory
 	@SuppressWarnings("unchecked")
 	public void addOutStep(ProcessStep step) {
-		getTypedProperty(DecisionNodeInstanceType.CoreProperties.outSteps.toString(), Set.class).add(step.getInstance());
+		getTypedProperty(DecisionNodeInstanceTypeFactory.CoreProperties.outSteps.toString(), Set.class).add(step.getInstance());
 	}
 
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getOutSteps() {
-		return getTypedProperty(DecisionNodeInstanceType.CoreProperties.outSteps.toString(), Set.class);
+		return getTypedProperty(DecisionNodeInstanceTypeFactory.CoreProperties.outSteps.toString(), Set.class);
 //				.stream()
 //			.map(inst -> getProcessContext().getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((RDFInstance) inst), (RDFInstance)inst))
 //			.collect(Collectors.toSet());
@@ -71,12 +71,12 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 
 	@SuppressWarnings("unchecked")
 	public void addInStep(ProcessStep step) {
-		getTypedProperty(DecisionNodeInstanceType.CoreProperties.inSteps.toString(), Set.class).add(step.getInstance());
+		getTypedProperty(DecisionNodeInstanceTypeFactory.CoreProperties.inSteps.toString(), Set.class).add(step.getInstance());
 	}
 
 	@SuppressWarnings("unchecked")
 	public Set<ProcessStep> getInSteps() {
-		return getTypedProperty(DecisionNodeInstanceType.CoreProperties.inSteps.toString(), Set.class);
+		return getTypedProperty(DecisionNodeInstanceTypeFactory.CoreProperties.inSteps.toString(), Set.class);
 //				.stream()
 //			.map(inst -> getProcessContext().getWrappedInstance(SpecificProcessInstanceType.getMostSpecializedClass((RDFInstance) inst), (RDFInstance)inst))
 //			.collect(Collectors.toSet());
@@ -347,12 +347,12 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 		if (this.getOutSteps().isEmpty())
 			return null;
 		else {
-			DecisionNodeInstance dnd = getTypedProperty(DecisionNodeInstanceType.CoreProperties.closingDN.toString(), DecisionNodeInstance.class);
+			DecisionNodeInstance dnd = getTypedProperty(DecisionNodeInstanceTypeFactory.CoreProperties.closingDN.toString(), DecisionNodeInstance.class);
 			if (dnd != null)
 				return dnd;
 			else {
 				DecisionNodeInstance closingDnd = determineScopeClosingDN();
-				setSingleProperty(DecisionNodeInstanceType.CoreProperties.closingDN.toString(), closingDnd.getInstance());
+				setSingleProperty(DecisionNodeInstanceTypeFactory.CoreProperties.closingDN.toString(), closingDnd.getInstance());
 				return closingDnd;
 			}
 		}

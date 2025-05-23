@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.definition.serialization;
+package at.jku.isse.passiveprocessengine.definition.registry;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 
-import at.jku.isse.passiveprocessengine.definition.serialization.ProcessRegistry.ProcessDeployResult;
+import at.jku.isse.passiveprocessengine.definition.registry.ProcessRegistry.ProcessDeployResult;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

@@ -3,7 +3,7 @@ package at.jku.isse.passiveprocessengine.definition.activeobjects;
 
 import org.apache.jena.ontapi.model.OntIndividual;
 
-import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionScopeType;
+import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionScopeTypeFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
@@ -18,19 +18,19 @@ public abstract class ProcessDefinitionScopedElement extends RDFInstance {
 	}
 
 	public void setProcess(ProcessDefinition pi) {
-		setSingleProperty(ProcessDefinitionScopeType.CoreProperties.processDefinition.toString(), pi.getInstance());
+		setSingleProperty(ProcessDefinitionScopeTypeFactory.CoreProperties.processDefinition.toString(), pi);
 	}
 
 	public void setProcOrderIndex(int index) {
-		setSingleProperty(ProcessDefinitionScopeType.CoreProperties.orderIndex.toString(), index);
+		setSingleProperty(ProcessDefinitionScopeTypeFactory.CoreProperties.orderIndex.toString(), index);
 	}
 
 	public Integer getProcOrderIndex() {
-		return getTypedProperty(ProcessDefinitionScopeType.CoreProperties.orderIndex.toString(), Integer.class, -1);
+		return getTypedProperty(ProcessDefinitionScopeTypeFactory.CoreProperties.orderIndex.toString(), Integer.class, -1);
 	}
 
 	public ProcessDefinition getProcess() {
-		return getTypedProperty(ProcessDefinitionScopeType.CoreProperties.processDefinition.toString(), ProcessDefinition.class);		
+		return getTypedProperty(ProcessDefinitionScopeTypeFactory.CoreProperties.processDefinition.toString(), ProcessDefinition.class);		
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.designspace;
+package at.jku.isse.passiveprocessengine.rules;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -107,12 +107,12 @@ public class ConstraintRewriter {
 				// we assume, only inparams are used in datamapping, i.e., we dont derive some output and then derive additional output from that!
 				// and rewrite, then return
 				String fullPath = ensureUniqueVarNames(navPath, ruleContext);
-				DataSource thisDS = new DataSource(step, outParam.getName(), at.jku.isse.passiveprocessengine.designspace.ConstraintRewriter.DataSource.IoType.stepIn, fullPath);
+				DataSource thisDS = new DataSource(step, outParam.getName(), at.jku.isse.passiveprocessengine.rules.ConstraintRewriter.DataSource.IoType.stepIn, fullPath);
 				return thisDS;
 			//}
 		}
 		// otherwise keep this outparam
-		return new DataSource(step, outParam.getName(), at.jku.isse.passiveprocessengine.designspace.ConstraintRewriter.DataSource.IoType.stepOut, "self.out_"+outParam.getName());
+		return new DataSource(step, outParam.getName(), at.jku.isse.passiveprocessengine.rules.ConstraintRewriter.DataSource.IoType.stepOut, "self.out_"+outParam.getName());
 	}
 	
 

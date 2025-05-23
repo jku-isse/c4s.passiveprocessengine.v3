@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.definition.serialization;
+package at.jku.isse.passiveprocessengine.definition.registry;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -15,8 +15,8 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDef
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Constraint;
-import at.jku.isse.passiveprocessengine.definition.serialization.DTOs.Process;
+import at.jku.isse.passiveprocessengine.definition.registry.DTOs.Constraint;
+import at.jku.isse.passiveprocessengine.definition.registry.DTOs.Process;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessConfigType;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +46,7 @@ public class DefinitionTransformer {
 		ProcessDefinition processDef = initProcessFromDTO(rootProcDTO, 0, isInStaging);		
 		
 		if (errors.isEmpty()) { //if there are type errors, we dont even try to create rules
-			errors.addAll(factories.getSpecificProcessDefinitionFactory().initializeInstanceTypes(processDef));
+			errors.addAll(factories.getSpecificProcessInstanceFactory().initializeInstanceTypes(processDef));
 		} else {
 			processDef.setIsWithoutBlockingErrors(false);
 		}
@@ -226,13 +226,6 @@ public class DefinitionTransformer {
 	}
 	
 	private RDFInstanceType resolveInstanceType(String type, ProcessDefinitionScopedElement el, String param) {
-		// search in types folder and below for type
-		// InstanceType iType = // this returns also deleted types ws.debugInstanceTypeFindByName(type);
-		//InstanceType iType = searchInFolderAndBelow(type, ws.TYPES_FOLDER); // we no longer search in folders, we expect exact name
-		if (!type.startsWith("http")) {				
-			int pos = type.lastIndexOf('/');
-			type = pos > -1 ? type.substring(pos+1) : type;
-		}
 		Optional<RDFInstanceType> iType = schemaRegistry.findNonDeletedInstanceTypeByFQN(type);
 		if (iType.isEmpty()) {
 			errors.add(new ProcessDefinitionError(el, "Unknown Instance Type", "Input/Output definition "+param+" uses unknown instance type: "+type , ProcessDefinitionError.Severity.ERROR));

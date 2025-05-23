@@ -12,7 +12,7 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDef
 
 public class DecisionNodeDefinitionTypeFactory extends AbstractTypeProvider {
 
-	private static final String NS = ProcessDefinitionScopeType.NS+"/decisionnodedefinition#";
+	private static final String NS = ProcessDefinitionScopeTypeFactory.NS+"/decisionnodedefinition#";
 	
 	public enum CoreProperties {inFlowType, dataMappingDefinitions, inSteps, outSteps, hierarchyDepth, closingDN
 		;
@@ -27,7 +27,7 @@ public class DecisionNodeDefinitionTypeFactory extends AbstractTypeProvider {
 		}	
 	}
 	
-	public static final String typeId = ProcessDefinitionScopeType.NS+"#"+DecisionNodeDefinition.class.getSimpleName();
+	public static final String typeId = ProcessDefinitionScopeTypeFactory.NS+"#"+DecisionNodeDefinition.class.getSimpleName();
 
 	public DecisionNodeDefinitionTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);
@@ -35,7 +35,7 @@ public class DecisionNodeDefinitionTypeFactory extends AbstractTypeProvider {
 		if (thisType.isPresent()) {
 			this.type = thisType.get();
 		} else {
-			this.type = schemaRegistry.createNewInstanceType(typeId,  schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessDefinitionScopeType.typeId).orElse(null));
+			this.type = schemaRegistry.createNewInstanceType(typeId,  schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessDefinitionScopeTypeFactory.typeId).orElseThrow());
 		}
 		metaElements.registerInstanceSpecificClass(typeId, DecisionNodeDefinition.class);
 	}
@@ -47,15 +47,15 @@ public class DecisionNodeDefinitionTypeFactory extends AbstractTypeProvider {
 		type.createSetPropertyType(CoreProperties.inSteps.toString(), 
 				schemaRegistry.findNonDeletedInstanceTypeByFQN(StepDefinitionTypeFactory.typeId)
 				.map(vtype->vtype.getAsPropertyType())
-				.orElse(null));
+				.orElseThrow());
 		type.createSetPropertyType(CoreProperties.outSteps.toString(),  
 				schemaRegistry.findNonDeletedInstanceTypeByFQN(StepDefinitionTypeFactory.typeId)
 				.map(vtype->vtype.getAsPropertyType())
-				.orElse(null));
+				.orElseThrow());
 		type.createSetPropertyType(CoreProperties.dataMappingDefinitions.toString(),  
 				schemaRegistry.findNonDeletedInstanceTypeByFQN(MappingDefinitionTypeFactory.typeId)
 				.map(vtype->vtype.getAsPropertyType())
-				.orElse(null));
+				.orElseThrow());
 		type.createSinglePropertyType((CoreProperties.hierarchyDepth.toString()),  primitives.getIntType());
 		type.createSinglePropertyType(CoreProperties.closingDN.toString(), type.getAsPropertyType());
 		

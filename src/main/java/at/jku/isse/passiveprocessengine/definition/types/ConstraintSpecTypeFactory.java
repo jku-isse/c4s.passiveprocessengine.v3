@@ -11,7 +11,7 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 
 public class ConstraintSpecTypeFactory extends AbstractTypeProvider {
 
-	private static final String NS = ProcessDefinitionScopeType.NS+"/constraintdefinition#";
+	private static final String NS = ProcessDefinitionScopeTypeFactory.NS+"/constraintdefinition#";
 	
 	public enum CoreProperties {constraintSpec, augmentedSpec, humanReadableDescription, constraintSpecOrderIndex, isOverridable, ruleType, conditionsType;
 			
@@ -25,7 +25,7 @@ public class ConstraintSpecTypeFactory extends AbstractTypeProvider {
 		}
 	}
 
-	public static final String typeId = ProcessDefinitionScopeType.NS+"#"+ConstraintSpecTypeFactory.class.getSimpleName();
+	public static final String typeId = ProcessDefinitionScopeTypeFactory.NS+"#"+ConstraintSpecTypeFactory.class.getSimpleName();
 	
 	public ConstraintSpecTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);
@@ -33,7 +33,7 @@ public class ConstraintSpecTypeFactory extends AbstractTypeProvider {
 		if (thisType.isPresent()) {
 			this.type = thisType.get();
 		} else {
-			this.type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessDefinitionScopeType.typeId).orElse(null));						
+			this.type = schemaRegistry.createNewInstanceType(typeId, schemaRegistry.findNonDeletedInstanceTypeByFQN(ProcessDefinitionScopeTypeFactory.typeId).orElse(null));						
 		}
 		metaElements.registerInstanceSpecificClass(typeId, ConstraintSpec.class);
 	}
@@ -51,7 +51,7 @@ public class ConstraintSpecTypeFactory extends AbstractTypeProvider {
 		type.createSinglePropertyType(CoreProperties.ruleType.toString(),  
 				schemaRegistry.findNonDeletedInstanceTypeByFQN(schemaRegistry.getRuleSchema().getDefinitionType().getURI())
 								.map(vtype->vtype.getAsPropertyType())
-								.orElse(null));
+								.orElseThrow());
 		type.createSinglePropertyType(CoreProperties.conditionsType.toString(),  primitives.getStringType());
 		
 	}

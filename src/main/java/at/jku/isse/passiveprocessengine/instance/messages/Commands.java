@@ -5,7 +5,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
-import at.jku.isse.passiveprocessengine.instance.InputToOutputMapper;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
@@ -103,38 +102,6 @@ public class Commands {
 		@Override
 		public String getId() {
 			return "QAConstraintChangedCmd [" +step.getName()+crule.getInstanceType().getName();
-		}
-	}
-
-	@EqualsAndHashCode(callSuper=false)
-	@Data
-	public static class IOMappingConsistencyCmd extends ProcessScopedCmd {
-		private final ProcessStep step;
-		private final RDFRuleResultWrapper crule;
-		private final boolean isInconsistent;
-		private final InputToOutputMapper ioMapper;
-
-		@Override
-		public List<Events.ProcessChangedEvent> execute() {
-			if (isInconsistent)
-				return ioMapper.mapInputToOutputInStepScope(step, crule);
-			else // nothing to do
-				return Collections.emptyList();
-		}
-
-		@Override
-		public String toString() {
-			return "IOMappingConsistencyCmd [" + step.getDefinition().getName() + " " + crule.getInstanceType().getName() + "]";
-		}
-
-		@Override
-		public ProcessInstance getScope() {
-			return step.getProcess();
-		}
-
-		@Override
-		public String getId() {
-			return "IOMappingConsistencyCmd [" +step.getName()+crule.getInstanceType().getName();
 		}
 	}
 

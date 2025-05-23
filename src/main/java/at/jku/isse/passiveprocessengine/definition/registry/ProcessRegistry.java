@@ -1,4 +1,4 @@
-package at.jku.isse.passiveprocessengine.definition.serialization;
+package at.jku.isse.passiveprocessengine.definition.registry;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
@@ -66,7 +66,8 @@ public class ProcessRegistry {
 				.filter(inst -> inst.getTypedProperty((ProcessDefinitionTypeFactory.CoreProperties.isWithoutBlockingErrors.toString()), Boolean.class, false) || !onlyValid)
 				.filter(inst -> inst.getName().equals(stringId))
 				.map(ProcessDefinition.class::cast) // the NodeToDomainResolver already creates the most specific java class type, here ProcessDefinition
-				.map(procDef -> { procDef.injectFactoryIndex(factoryIndex); return procDef; })
+				.map(procDef -> { procDef.injectFactories(factoryIndex.getStepDefinitionFactory()
+						, factoryIndex.getDecisionNodeDefinitionFactory()); return procDef; })
 				.toList();
 		if (defs.isEmpty())
 			return Optional.empty();
