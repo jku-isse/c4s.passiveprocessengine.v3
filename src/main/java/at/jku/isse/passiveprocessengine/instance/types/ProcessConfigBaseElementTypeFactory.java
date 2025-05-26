@@ -25,7 +25,7 @@ public class ProcessConfigBaseElementTypeFactory extends AbstractTypeProvider {
 			return NS+name();
 		}	
 	} 
-	public static final String typeId = NS+"#"+"base";
+	public static final String typeId = NS+"#"+"Base";
 	
 	public ProcessConfigBaseElementTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);

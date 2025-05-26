@@ -13,6 +13,7 @@ import org.apache.jena.ontapi.model.OntIndividual;
 
 import com.github.oxo42.stateless4j.StateMachine;
 
+import at.jku.isse.artifacteventstreaming.rule.definition.RDFRuleDefinition;
 import at.jku.isse.designspace.rule.arl.evaluator.RuleDefinition;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFElement;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
@@ -26,7 +27,6 @@ import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Trigger;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ConditionChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.OutputChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
-import at.jku.isse.passiveprocessengine.instance.messages.Commands.QAConstraintChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import at.jku.isse.passiveprocessengine.instance.messages.Events.ProcessChangedEvent;
 import at.jku.isse.passiveprocessengine.instance.messages.Responses;
@@ -83,56 +83,39 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 
 	public ProcessScopedCmd prepareRuleEvaluationChange(RDFRuleResultWrapper cr, PropertyChange.Set op) {
 		// now here we have to distinguish what this evaluation change implies
-		RuleDefinition crt = (RuleDefinition)cr.getInstanceType();
-		Conditions cond = determineCondition(crt);
+		var crt = cr.getEvalWrapper().getDefinition();
+		Conditions cond = SpecificProcessInstanceTypesFactory.getConditionFromURI(crt.getRuleDefinition().getURI());
 		if (cond != null ) {
 			String value = op.getValue() != null ? op.getValue().toString() : "NULL";
-			log.debug(String.format("Step %s has %s evaluate to %s", this.getName(), cond, value));
+			log.debug(String.format("Step %s has %s condition evaluate to %s", this.getName(), cond, value));
 			return new ConditionChangedCmd(this, cr, cond, Boolean.valueOf(op.getValue().toString()));
 		} else {
-			if (crt.getName().startsWith(SpecificProcessInstanceTypesFactory.CRD_QASPEC_PREFIX) ) { // a qa constraint
-				log.debug(String.format("QA Constraint %s now %s ", crt.getName(), op.getValue() != null ? op.getValue().toString() : "NULL"));
-				return op.getValue() != null ? new QAConstraintChangedCmd(this, cr, Boolean.parseBoolean(op.getValue().toString())) :
-					new QAConstraintChangedCmd(this, cr, true);
-			}	else
+//			if (crt.getName().startsWith(SpecificProcessInstanceTypesFactory.CRD_QASPEC_PREFIX) ) { // a qa constraint
+//				log.debug(String.format("QA Constraint %s now %s ", crt.getName(), op.getValue() != null ? op.getValue().toString() : "NULL"));
+//				return op.getValue() != null ? new QAConstraintChangedCmd(this, cr, Boolean.parseBoolean(op.getValue().toString())) :
+//					new QAConstraintChangedCmd(this, cr, true);
+//			}	else
 				log.debug(String.format("Step %s has rule %s evaluate to %s", this.getName(), crt.getName(), op.getValue().toString()));
 		}
 		return null;
 	}
 
-	private Conditions determineCondition(RuleDefinition crt) {
-		 //FIXME better matching needed
-		if (crt.getName().startsWith(SpecificProcessInstanceTypesFactory.CRD_PREFIX+Conditions.PRECONDITION.toString()))
-			return Conditions.PRECONDITION;
-		else if (crt.getName().startsWith(SpecificProcessInstanceTypesFactory.CRD_PREFIX+Conditions.POSTCONDITION.toString()))
-			return Conditions.POSTCONDITION;
-		else if (crt.getName().startsWith(SpecificProcessInstanceTypesFactory.CRD_PREFIX+Conditions.ACTIVATION.toString()))
-			return Conditions.ACTIVATION;
-		else if (crt.getName().startsWith(SpecificProcessInstanceTypesFactory.CRD_PREFIX+Conditions.CANCELATION.toString()))
-			return Conditions.CANCELATION;
-		else {
-			if (!crt.getName().startsWith(SpecificProcessInstanceTypesFactory.CRD_DATAMAPPING_PREFIX) && !crt.getName().startsWith(SpecificProcessInstanceTypesFactory.CRD_QASPEC_PREFIX))
-					log.error("Unknown consistency rule: "+crt.getName());
-			return null;
-		}
-	}
-
 
 	public ProcessScopedCmd prepareIOAddEvent(PropertyChange.Add op) { //List<Events.ProcessChangedEvent>
 		// if in added, establish if this resembles unexpected late input
-		if (op.getName().startsWith(SpecificProcessStepType.PREFIX_IN)
+		if (op.getPropertyURI().getFragment().startsWith(SpecificProcessStepType.PREFIX_IN)
 				&& ( this.getActualLifecycleState().equals(State.ACTIVE)
 					|| this.getActualLifecycleState().equals(State.COMPLETED) )) {
 			//(if so, then do something about this)			
 			RDFElement added = op.getElement();
-			log.info(String.format("Step %s received late input %s %s", this.getName(), op.getName(), added.getName()  ));
+			log.info(String.format("Step %s received late input %s %s", this.getName(), op.getPropertyURI(), added.getName()  ));
 			// Note that the adding has already happened, thus there is nothing to report back, this is only for checking whether we need to do something else as well.
 		}
-		else if (op.getName().startsWith(SpecificProcessStepType.PREFIX_OUT)) { // if out added, establish if this is late output, then propagate further
+		else if (op.getPropertyURI().getFragment().startsWith(SpecificProcessStepType.PREFIX_OUT)) { // if out added, establish if this is late output, then propagate further
 				//&& ( this.getActualLifecycleState().equals(State.COMPLETED) || isImmediateDataPropagationEnabled() ) ){
 			if (this.getActualLifecycleState().equals(State.COMPLETED)) {
 				RDFElement added = op.getElement();
-				log.info(String.format("Step %s received late output %s %s, queuing for propagation to successors", this.getName(), op.getName(), added.getName()  ));
+				log.info(String.format("Step %s received late output %s %s, queuing for propagation to successors", this.getName(), op.getPropertyURI(), added.getName()  ));
 			}
 				// we should not just propagate, as the newly added output could be violating completion or qa constraints and we should not propagate the artifact just yet. -->
 			// return a potential propagation cause Command, that is later checked again, whether it is still valid.
@@ -146,17 +129,17 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 
 	public ProcessScopedCmd prepareIORemoveEvent(PropertyChange.Remove op) { //List<Events.ProcessChangedEvent>
 		// if in removed, establish if this resembles unexpected late removeal
-		if (op.getName().startsWith(SpecificProcessStepType.PREFIX_IN)
+		if (op.getPropertyURI().getFragment().startsWith(SpecificProcessStepType.PREFIX_IN)
 				&& ( this.getActualLifecycleState().equals(State.ACTIVE)
 					|| this.getActualLifecycleState().equals(State.COMPLETED) )) {
 			//(if so, then do something about this)
-			log.info(String.format("Step %s had some input removed from %s after step start", this.getName(), op.getName()));
+			log.info(String.format("Step %s had some input removed from %s after step start", this.getName(), op.getPropertyURI()));
 		}
-		else if (op.getName().startsWith(SpecificProcessStepType.PREFIX_OUT)) { // if out removed, establish if this is late output removal, then propagate further
+		else if (op.getPropertyURI().getFragment().startsWith(SpecificProcessStepType.PREFIX_OUT)) { // if out removed, establish if this is late output removal, then propagate further
 				//&& ( this.getActualLifecycleState().equals(State.COMPLETED) || isImmediateDataPropagationEnabled() ) ){
 
 			if (this.getActualLifecycleState().equals(State.COMPLETED)) {
-				log.debug(String.format("Step %s had some output removed from %s after step completion, queuing for propagation to successors", this.getName(), op.getName()));
+				log.debug(String.format("Step %s had some output removed from %s after step completion, queuing for propagation to successors", this.getName(), op.getPropertyURI()));
 			}
 			// we should not just propagate, as the newly added output could be violating completion or qa constraints and we should not propagate the artifact just yet. -->
 			// return a potential propagation cause Command, that is later checked again, whether it is still valid.

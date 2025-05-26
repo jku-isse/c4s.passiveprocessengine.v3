@@ -24,7 +24,7 @@ public class ProcessDefinitionScopeTypeFactory extends AbstractTypeProvider {
 		}	
 	}
 	
-	public static final String typeId = NS+"#"+ProcessDefinitionScopeTypeFactory.class.getSimpleName();
+	public static final String typeId = NS+"#ProcessDefinitionScope";
 		
 	public ProcessDefinitionScopeTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);

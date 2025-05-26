@@ -3,6 +3,7 @@ package at.jku.isse.passiveprocessengine.definition.activeobjects;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -107,38 +108,27 @@ public class ProcessDefinition extends StepDefinition{
 			procConfig.delete();
 		});
 		// wring instanceType: we need to get the dynamically generate Instance (the one that is used for the ProcessInstance)
-		String processDefName = SpecificProcessInstanceType.getProcessName(this);
-		var optThisType = this.resolver.findNonDeletedInstanceTypeByFQN(processDefName);
+		//String processDefName = SpecificProcessInstanceType.getProcessDefinitionURI(this);
+		var optThisType = this.resolver.findNonDeletedInstanceTypeByFQN(this.getId());
 		if (optThisType.isPresent()) {		
 			optThisType.get().delete();
 		}
-		// some code duplication with StepDefiniton.deleteCascading() due to awkward naming, needs major engine overhaul
-		String overrideName = SpecificProcessInstanceType.getProcessName(this);
-		String stepDefName = SpecificProcessStepType.getProcessStepName(this);
-		var instType = this.resolver.findNonDeletedInstanceTypeByFQN(stepDefName);
-		if (instType.isPresent()) {	
-			this.getActivationconditions().stream().forEach(spec -> { 
-				deleteRuleIfExists(instType.get(), spec, Conditions.ACTIVATION, overrideName); //delete the rule 
-			});
-			this.getCancelconditions().stream().forEach(spec -> { 
-				deleteRuleIfExists(instType.get(), spec, Conditions.CANCELATION, overrideName); //delete the rule 
-			});
-			this.getPostconditions().stream().forEach(spec -> { 
-				deleteRuleIfExists(instType.get(), spec, Conditions.POSTCONDITION, overrideName); //delete the rule 
-			});
-			this.getPreconditions().stream().forEach(spec -> { 
-				deleteRuleIfExists(instType.get(), spec, Conditions.PRECONDITION, overrideName); //delete the rule 
-			});
-		}	
+		this.getActivationconditions().stream().map(spec -> spec.getRuleDefinition()).filter(Objects::nonNull).forEach(def -> def.delete());
+		this.getCancelconditions().stream().map(spec -> spec.getRuleDefinition()).filter(Objects::nonNull).forEach(def -> def.delete());
+		this.getPostconditions().stream().map(spec -> spec.getRuleDefinition()).filter(Objects::nonNull).forEach(def -> def.delete());
+		this.getPreconditions().stream().map(spec -> spec.getRuleDefinition()).filter(Objects::nonNull).forEach(def -> def.delete());
+		this.getQAConstraints().stream().map(spec -> spec.getRuleDefinition()).filter(Objects::nonNull).forEach(def -> def.delete());
+		this.getDerivedOutputPropertyRules().stream().forEach(def -> def.delete());	
+		
 		super.deleteCascading();
 	}
 	
-	protected void deleteRuleIfExists(RDFInstanceType instType, ConstraintSpec spec, Conditions condition, String overrideName ) {
-		String name = SpecificProcessInstanceTypesFactory.CRD_PREFIX+condition+spec.getOrderIndex()+"_"+overrideName;
-		var crt = ((RuleEnabledResolver)resolver).getRuleByNameAndContext(name, instType);
-		if (crt != null) 
-			crt.delete();
-	}
+//	protected void deleteRuleIfExists(RDFInstanceType instType, ConstraintSpec spec, Conditions condition, String overrideName ) {
+//		String name = SpecificProcessInstanceTypesFactory.CRD_PREFIX+condition+spec.getOrderIndex()+"_"+overrideName;
+//		var crt = ((RuleEnabledResolver)resolver).getRuleByNameAndContext(name, instType);
+//		if (crt != null) 
+//			crt.delete();
+//	}
 
 	
 	

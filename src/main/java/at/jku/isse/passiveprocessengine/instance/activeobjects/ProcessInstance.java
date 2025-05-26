@@ -58,7 +58,7 @@ public class ProcessInstance extends ProcessStep {
 	public ZonedDateTime getCreatedAt() {
 		if (createdAt == null) { // load from DS
 			String last = getTypedProperty(CoreProperties.createdAt.toString(), String.class);
-			if (last != null && last.length() > 0 ) {
+			if (last != null && !last.isEmpty() ) {
 				createdAt = ZonedDateTime.parse(last);
 			} else {
 				return null;
@@ -75,7 +75,7 @@ public class ProcessInstance extends ProcessStep {
 	public ProcessStep createAndWireTask(StepDefinition sd) {
     	DecisionNodeInstance inDNI = getOrCreateDNI(sd.getInDND());
     	DecisionNodeInstance outDNI = getOrCreateDNI(sd.getOutDND());
-    	if (getProcessSteps().stream().noneMatch(t -> t.getDefinition().getName().equals(sd.getName()))) {
+    	if (getProcessSteps().stream().noneMatch(t -> t.getDefinition().getName().equals(sd.getName()))) { // match via localName
         	ProcessStep step = stepFactory.getStepInstance(sd, inDNI, outDNI, this);
         	//step.setProcess(this);
         	if (step != null) {
@@ -90,7 +90,7 @@ public class ProcessInstance extends ProcessStep {
     public DecisionNodeInstance getOrCreateDNI(DecisionNodeDefinition dnd) {
     	return this.getDecisionNodeInstances().stream()
     	.filter(dni -> dni.getDefinition().equals(dnd))
-    	.findAny().orElseGet(() -> { DecisionNodeInstance dni = decisionNodeFactory.getInstance(dnd);
+    	.findAny().orElseGet(() -> { DecisionNodeInstance dni = decisionNodeFactory.getInstance(dnd, this);
     				dni.setProcess(this);
     				this.addDecisionNodeInstance(dni);
     				return dni;

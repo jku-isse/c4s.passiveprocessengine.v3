@@ -1,5 +1,6 @@
 package at.jku.isse.passiveprocessengine;
 
+import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 
 public class TestUtils {
@@ -62,6 +63,25 @@ public class TestUtils {
 //			}
 //		});
 //	}
+	
+	
+	public static void printProcessDefinition(ProcessDefinition proc) {
+		printProcessDefinition(proc, " ");
+	}
+	
+	public static void printProcessDefinition(ProcessDefinition def, String prefix) {
+		System.out.println(prefix+def.toString());
+		String nextIndent = "  "+prefix;
+		def.getStepDefinitions().stream().forEach(step -> {
+			if (step instanceof ProcessDefinition subproc) {
+				printProcessDefinition(subproc, nextIndent);
+			} else {
+				System.out.println(nextIndent+step.toString());
+			}
+		});
+		def.getDecisionNodeDefinitions().stream().forEach(dnd -> System.out.println(nextIndent+dnd.toString()));
+	}
+	
 	
 	public static void printFullProcessToLog(ProcessInstance proc) {
 		printProcessToLog(proc, " ");

@@ -24,7 +24,7 @@ public class AbstractProcessInstanceType extends AbstractTypeProvider {
 		}
 	}
 		
-	public static final String typeId = NS+"#"+ProcessInstance.class.getSimpleName();
+	public static final String typeId = NS+"#ProcessInstance";
 
 	public AbstractProcessInstanceType(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);

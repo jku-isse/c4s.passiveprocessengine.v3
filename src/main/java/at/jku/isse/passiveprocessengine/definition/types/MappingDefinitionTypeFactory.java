@@ -10,7 +10,7 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 
 public class MappingDefinitionTypeFactory  extends AbstractTypeProvider {
 
-	private static final String NS = ProcessDefinitionScopeTypeFactory.NS+"/mappingdefinition#";
+	private static final String NS = ProcessDefinitionScopeTypeFactory.NS+"/mappingdefinition";
 	
 	public enum CoreProperties {fromStepType, fromParameter, toStepType, toParameter, flowDir
 		;
@@ -25,7 +25,7 @@ public class MappingDefinitionTypeFactory  extends AbstractTypeProvider {
 		}
 	}
 	
-	public static final String typeId = ProcessDefinitionScopeTypeFactory.NS+"#"+MappingDefinitionTypeFactory.class.getSimpleName();
+	public static final String typeId = ProcessDefinitionScopeTypeFactory.NS+"#MappingDefinition";
 	
 	public MappingDefinitionTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);

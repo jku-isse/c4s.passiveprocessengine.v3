@@ -4,14 +4,12 @@ import java.util.Optional;
 
 import at.jku.isse.passiveprocessengine.core.AbstractTypeProvider;
 import at.jku.isse.passiveprocessengine.core.BaseNamespace;
-import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstanceScopedElement;
 
 public class ProcessInstanceScopeTypeFactory extends AbstractTypeProvider {
 
-	public static final String NS = BaseNamespace.NS+"/instances";
+	public static final String NS = BaseNamespace.NS+"/runtime";
 	
 	public enum CoreProperties {process
 		;
@@ -25,7 +23,7 @@ public class ProcessInstanceScopeTypeFactory extends AbstractTypeProvider {
 		}
 	}
 	
-	public static final String typeId = NS+"#"+ProcessInstanceScopedElement.class.getSimpleName();
+	public static final String typeId = NS+"#ProcessInstanceScope";
 
 	public ProcessInstanceScopeTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);

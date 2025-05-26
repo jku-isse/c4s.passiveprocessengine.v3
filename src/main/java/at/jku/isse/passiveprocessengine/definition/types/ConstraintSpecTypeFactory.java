@@ -25,7 +25,7 @@ public class ConstraintSpecTypeFactory extends AbstractTypeProvider {
 		}
 	}
 
-	public static final String typeId = ProcessDefinitionScopeTypeFactory.NS+"#"+ConstraintSpecTypeFactory.class.getSimpleName();
+	public static final String typeId = ProcessDefinitionScopeTypeFactory.NS+"#ConstraintSpec";
 	
 	public ConstraintSpecTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);

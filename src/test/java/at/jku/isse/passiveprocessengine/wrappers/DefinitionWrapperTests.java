@@ -39,7 +39,7 @@ public class DefinitionWrapperTests {
 	public static final String REPOURI = "http://ppetests";
 	
 	protected ProcessEngineConfigurationBuilder configBuilder;
-	private  InMemoryEventStreamingSetupFactory wrapperFactory;
+	protected InMemoryEventStreamingSetupFactory wrapperFactory;
 	protected RuleEnabledResolver schemaReg;
 	protected PrimitiveTypesFactory primitives;
 	

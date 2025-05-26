@@ -165,7 +165,7 @@ public class ProcessRegistry {
 		Map<String, Map<String, Set<RDFInstance>>> prevProcInput = new HashMap<>();
 
 		// we actually dont need to find the process definition type, but the specific process instance type declaration
-		var specProcDefTypeOpt = context.findNonDeletedInstanceTypeByFQN(SpecificProcessInstanceType.getProcessName(pDef));
+		var specProcDefTypeOpt = context.findNonDeletedInstanceTypeByFQN(pDef.getId());
 		if (specProcDefTypeOpt.isPresent()) {					
 			context.getAllInstancesOfTypeOrSubtype(specProcDefTypeOpt.get()).stream()
 			.filter(inst -> !inst.isMarkedAsDeleted())
@@ -207,7 +207,7 @@ public class ProcessRegistry {
 
 	public boolean existsProcess(ProcessDefinition processDef, Map<String, Set<RDFInstance>> input) {
 		var namePostfix = generateProcessNamePostfix(input);
-		var id = ProcessInstanceFactory.generateId(processDef, namePostfix);
+		var id = ProcessInstanceFactory.generateProcessId(processDef, namePostfix);
 		return this.getProcessByName(id) != null;
 	}
 	

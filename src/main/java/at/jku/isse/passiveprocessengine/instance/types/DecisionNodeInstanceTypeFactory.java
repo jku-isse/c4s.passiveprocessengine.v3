@@ -11,6 +11,7 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.types.DecisionNodeDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
+import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 
 public class DecisionNodeInstanceTypeFactory extends AbstractTypeProvider {
 
@@ -29,7 +30,7 @@ public class DecisionNodeInstanceTypeFactory extends AbstractTypeProvider {
 		}
 	}
 
-	public static final String typeId = NS+"#"+DecisionNodeInstance.class.getSimpleName();
+	public static final String typeId = NS+"#DecisionNodeInstance";
 	
 	public DecisionNodeInstanceTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);
@@ -64,8 +65,12 @@ public class DecisionNodeInstanceTypeFactory extends AbstractTypeProvider {
 		processInstanceScopeType.addGenericProcessProperty(type);
 	}	
 	
-	public DecisionNodeInstance getInstance(DecisionNodeDefinition dnd) {				
-		RDFInstance instance = schemaRegistry.createInstance(dnd.getName()+"_"+UUID.randomUUID()
+	public DecisionNodeInstance getInstance(DecisionNodeDefinition dnd, ProcessInstance scope) {			
+		var base = scope.getInstance().getNameSpace();
+		var procName = scope.getInstance().getLocalName();
+		var id = base + "/" + procName + "/dni#" + dnd.getName();
+		
+		RDFInstance instance = schemaRegistry.createInstance(id
 			, schemaRegistry.findNonDeletedInstanceTypeByFQN(DecisionNodeInstanceTypeFactory.typeId).orElseThrow());
 		DecisionNodeInstance dni = (DecisionNodeInstance) instance;
 

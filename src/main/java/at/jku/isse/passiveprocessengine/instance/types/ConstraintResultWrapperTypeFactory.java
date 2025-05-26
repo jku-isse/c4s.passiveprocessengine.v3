@@ -29,7 +29,7 @@ public class ConstraintResultWrapperTypeFactory extends AbstractTypeProvider {
 			return NS+name();
 		}	
 	}
-	public static final String typeId = NS+"#"+ConstraintResultWrapper.class.getSimpleName();
+	public static final String typeId = NS+"#ConstraintResult";
 
 	public ConstraintResultWrapperTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);

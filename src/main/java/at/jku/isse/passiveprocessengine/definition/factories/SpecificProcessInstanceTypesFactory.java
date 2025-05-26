@@ -1,8 +1,11 @@
 package at.jku.isse.passiveprocessengine.definition.factories;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.jena.ext.xerces.util.URI;
 
 import at.jku.isse.designspace.rule.arl.evaluator.RuleDefinition;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
@@ -15,6 +18,7 @@ import at.jku.isse.passiveprocessengine.definition.ProcessDefinitionError;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ConstraintSpec;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.registry.DTOs.Constraint;
 import at.jku.isse.passiveprocessengine.definition.types.ProcessDefinitionTypeFactory;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeTypeFactory;
@@ -31,9 +35,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class SpecificProcessInstanceTypesFactory {
 
-	public static final String CRD_PREFIX = "crd_";
-	public static final String CRD_DATAMAPPING_PREFIX = "crd_datamapping_";
-	public static final String CRD_QASPEC_PREFIX = "crd_qaspec_";
+//	public static final String CRD_PREFIX = "crd_";
+//	public static final String CRD_DATAMAPPING_PREFIX = "crd_datamapping_";
+//	public static final String CRD_QASPEC_PREFIX = "crd_qaspec_";
 
 	final RewriterFactory ruleService;
 	final ProcessInstanceScopeTypeFactory scopeFactory;
@@ -54,11 +58,9 @@ public class SpecificProcessInstanceTypesFactory {
 	 */
 	public List<ProcessDefinitionError> initializeInstanceTypes(ProcessDefinition processDef) {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
-		SpecificProcessStepType processAsStepTypeProvider = new SpecificProcessStepType(context, processDef, scopeFactory);
-		processAsStepTypeProvider.produceTypeProperties();
-		SpecificProcessInstanceType typeProvider = new SpecificProcessInstanceType(context, processDef);
+		SpecificProcessInstanceType typeProvider = new SpecificProcessInstanceType(context, processDef, scopeFactory);
 		typeProvider.produceTypeProperties();				
-		RDFInstanceType processInstanceType = context.findNonDeletedInstanceTypeByFQN(SpecificProcessInstanceType.getProcessName(processDef)).get(); //) ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
+		RDFInstanceType processInstanceType = typeProvider.getType();  //context.findNonDeletedInstanceTypeByFQN(SpecificProcessInstanceType.getProcessDefinitionURI(processDef)).get(); //) ProcessInstance.getOrCreateDesignSpaceInstanceType(instance.workspace, this);
 
 		processDef.getStepDefinitions().stream().forEach(stepDef -> {
 			if (stepDef instanceof ProcessDefinition procDef) {
@@ -66,7 +68,7 @@ public class SpecificProcessInstanceTypesFactory {
 				errors.addAll(initializeInstanceTypes(procDef));
 			} else {
 				// create the specific step type
-				SpecificProcessStepType stepTypeProvider = new SpecificProcessStepType(context, stepDef, processInstanceType, scopeFactory);
+				SpecificProcessStepType stepTypeProvider = new SpecificProcessStepType(context, stepDef, processInstanceType);
 				stepTypeProvider.produceTypeProperties();			
 			}
 		});
@@ -74,12 +76,12 @@ public class SpecificProcessInstanceTypesFactory {
 		errors.addAll(new RuleAugmentation(processDef, processInstanceType, context, ruleService).augmentAndCreateConditions());
 		processDef.getStepDefinitions().stream().forEach(stepDef -> {
 			errors.addAll(new RuleAugmentation(stepDef, 
-												context.findNonDeletedInstanceTypeByFQN(SpecificProcessStepType.getProcessStepName(stepDef)).get(), 
+												context.findNonDeletedInstanceTypeByFQN(stepDef.getId()).get(), //the stepDef individual as a type/class/type
 												context, 
 												ruleService)
 								.augmentAndCreateConditions());
 		});
-		errors.addAll(checkConstraintValidity(processDef, processInstanceType));
+		errors.addAll(checkConstraintValidity(processDef));
 		
 		if (errors.isEmpty() || errors.stream().allMatch(error -> !error.getSeverity().equals(ProcessDefinitionError.Severity.ERROR))) {
 			processDef.setIsWithoutBlockingErrors(true);
@@ -90,9 +92,9 @@ public class SpecificProcessInstanceTypesFactory {
 		return errors;
 	}
 
-	public List<ProcessDefinitionError> checkConstraintValidity(ProcessDefinition processDef, RDFInstanceType processInstanceType) {
+	public List<ProcessDefinitionError> checkConstraintValidity(ProcessDefinition processDef) {
 		List<ProcessDefinitionError> overallStatus = new LinkedList<>();				
-		processDef.getStepDefinitions().forEach(sd -> overallStatus.addAll( sd.checkConstraintValidity(processInstanceType)));
+		processDef.getStepDefinitions().forEach(sd -> overallStatus.addAll( sd.checkConstraintValidity()));
 		return overallStatus;
 	}
 
@@ -122,21 +124,63 @@ public class SpecificProcessInstanceTypesFactory {
 		return status;
 	}
 
-	public static String getDataMappingId(Map.Entry<String,String> ioMapping, StepDefinition sd) {
-		String procId = sd.getProcess() != null ? sd.getProcess().getName() : "";
-		return CRD_DATAMAPPING_PREFIX+ioMapping.getKey()+"_"+sd.getName()+"_"+procId;
+//	public static String getDataMappingId(Map.Entry<String,String> ioMapping, StepDefinition sd) {
+//		String procId = sd.getProcess() != null ? sd.getProcess().getName() : "";
+//		return CRD_DATAMAPPING_PREFIX+ioMapping.getKey()+"_"+sd.getName()+"_"+procId;
+//	}
+
+
+//	public static String getConstraintName(Conditions condition, RDFInstanceType stepType) {
+//		return getConstraintName(condition, 0, stepType);
+//	}
+//
+//	public static String getConstraintName(Conditions condition, int specOrderIndex, RDFInstanceType stepType) {
+//		return CRD_PREFIX+condition+specOrderIndex+"_"+stepType.getName();
+//	}
+	
+	public static String getRuleURI(ConstraintSpec forSpec) {
+		return forSpec.getId()+"_rule";
 	}
 
-
-	public static String getConstraintName(Conditions condition, RDFInstanceType stepType) {
-		return getConstraintName(condition, 0, stepType);
+	public static String getDerivedPropertyRuleURI(String propertyURI) {
+		return propertyURI+"_derivingRule";
 	}
-
-	public static String getConstraintName(Conditions condition, int specOrderIndex, RDFInstanceType stepType) {
-		return CRD_PREFIX+condition+specOrderIndex+"_"+stepType.getName();
+	
+//	public static String getQASpecId(ConstraintSpec spec, ProcessDefinition processContext) {
+//		return CRD_QASPEC_PREFIX+spec.getConstraintId()+"_"+processContext.getName(); ,,,
+//	}
+	
+	public static String getProcessDefinitionURI(@NonNull String localName) {
+		return ProcessInstanceScopeTypeFactory.NS+"#"+localName;
 	}
-
-	public static String getQASpecId(ConstraintSpec spec, ProcessDefinition processContext) {
-		return CRD_QASPEC_PREFIX+spec.getConstraintId()+"_"+processContext.getName();
+	
+	public static String getProcessStepTypeURI(@NonNull ProcessDefinition process, @NonNull String localStepName) {
+		String ns = process.getInstance().getNameSpace();
+		String procName = process.getInstance().getLocalName();
+		return ns.substring(0, ns.length()-1)+"/"+procName+"#"+localStepName;
+	}
+	
+	public static String getDecisionNodeDefinitionURI(@NonNull ProcessDefinition process, @NonNull String localDndName) {
+		String ns = process.getInstance().getNameSpace();
+		String procName = process.getInstance().getLocalName();
+		return ns.substring(0, ns.length()-1)+"/"+procName+"#"+localDndName;
+	}
+	
+	public static String getSpecURI(@NonNull Conditions conditions, @NonNull String constraintCode, @NonNull StepDefinition step) {
+		String ns= step.getInstance().getNameSpace();
+		String stepName = step.getName();
+		return ns.substring(0, ns.length()-1)+"/"+stepName+"/"+conditions.toString() + "#" +constraintCode;
+	}
+	
+	public static Conditions getConditionFromURI(@NonNull String uri) {
+		var fragPos = uri.lastIndexOf("#");
+		if (fragPos == -1) return null;
+		var baseURI = uri.substring(0, fragPos);
+		var lastPathPos = baseURI.lastIndexOf("/");
+		if (lastPathPos == -1) return null;
+		var lastPath = baseURI.substring(lastPathPos);
+		return Conditions.valueOf(lastPath);
 	}
 }
+
+

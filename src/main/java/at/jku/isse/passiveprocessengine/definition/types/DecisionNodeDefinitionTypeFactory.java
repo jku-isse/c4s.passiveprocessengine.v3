@@ -27,7 +27,7 @@ public class DecisionNodeDefinitionTypeFactory extends AbstractTypeProvider {
 		}	
 	}
 	
-	public static final String typeId = ProcessDefinitionScopeTypeFactory.NS+"#"+DecisionNodeDefinition.class.getSimpleName();
+	public static final String typeId = ProcessDefinitionScopeTypeFactory.NS+"#DecisionNodeDefinition";
 
 	public DecisionNodeDefinitionTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);

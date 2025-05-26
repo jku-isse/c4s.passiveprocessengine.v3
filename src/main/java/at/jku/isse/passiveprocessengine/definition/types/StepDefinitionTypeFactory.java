@@ -21,7 +21,8 @@ public class StepDefinitionTypeFactory extends AbstractTypeProvider {
 		preconditions, postconditions, cancelconditions, activationconditions,
 		qaConstraints,
 		inDND, outDND, specOrderIndex, html_url, description,
-		stepHierarchyDepth
+		stepHierarchyDepth,
+		derivedPropertyRules
 		;
 	
 		@Override
@@ -34,7 +35,7 @@ public class StepDefinitionTypeFactory extends AbstractTypeProvider {
 		}
 	}
 	
-	public static final String typeId = ProcessDefinitionScopeTypeFactory.NS+"#"+StepDefinition.class.getSimpleName();
+	public static final String typeId = ProcessDefinitionScopeTypeFactory.NS+"#StepDefinition";
 
 	public StepDefinitionTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);
@@ -79,7 +80,11 @@ public class StepDefinitionTypeFactory extends AbstractTypeProvider {
 		type.createSinglePropertyType((CoreProperties.stepHierarchyDepth.toString()), primitives.getIntType());
 		type.createSinglePropertyType((CoreProperties.html_url.toString()), primitives.getStringType());
 		type.createSinglePropertyType((CoreProperties.description.toString()), primitives.getStringType());
-
+		// to store references to the created mapping rules
+		type.createSetPropertyType(CoreProperties.derivedPropertyRules.toString(),  
+				schemaRegistry.findNonDeletedInstanceTypeByFQN(schemaRegistry.getRuleSchema().getDefinitionType().getURI())
+				.map(vtype->vtype.getAsPropertyType())
+				.orElseThrow());
 	}
 	
 	public StepDefinition createInstance(String stepId) {

@@ -24,7 +24,7 @@ public class ProcessDefinitionTypeFactory extends AbstractTypeProvider {
 		}
 	}
 	
-	public static final String typeId = ProcessDefinitionScopeTypeFactory.NS+"#"+ProcessDefinitionTypeFactory.class.getSimpleName();
+	public static final String typeId = ProcessDefinitionScopeTypeFactory.NS+"#ProcessDefinition";
 	private StepDefinitionTypeFactory stepTypeProvider;
 	private DecisionNodeDefinitionTypeFactory dndTypeProvider;
 	

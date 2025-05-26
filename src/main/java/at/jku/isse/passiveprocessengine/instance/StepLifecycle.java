@@ -9,10 +9,10 @@ import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 
 public class StepLifecycle {
 
-	public static enum Conditions { PRECONDITION, POSTCONDITION, ACTIVATION, CANCELATION, DATAMAPPING, QA }
+	public enum Conditions { PRECONDITION, POSTCONDITION, ACTIVATION, CANCELATION, DATAMAPPING, QA }
 
 	// see as inspiration: https://docs.camunda.org/manual/7.4/reference/cmmn11/concepts/lifecycle/#task-stage-lifecycle
-	public static enum State {
+	public enum State {
 		AVAILABLE, // not used yet
 		ENABLED, // input sufficient and preconditions fulfilled to be worked on, thus we would recommend this task, respectively expect to oberve work on it
 		ACTIVE, // explicitly set by user after recommendation, or observed work output
@@ -22,21 +22,21 @@ public class StepLifecycle {
 		SUPERSTATE_ENDED
 	}
 
-	public static enum InputState {
+	public enum InputState {
 		INPUT_UNKNOWN, // not yet checked
 		INPUT_MISSING, // no input available so far,
 		INPUT_PARTIAL, // no enough input available so far
 		INPUT_SUFFICIENT // all required input available
 	}
 
-	public static enum OutputState {
+	public enum OutputState {
 		OUTPUT_UNKNOWN, // not yet checked
 		OUTPUT_MISSING, // no output available so far,
 		OUTPUT_PARTIAL, // no enough output available so far
 		OUTPUT_SUFFICIENT // all required output available
 	}
 
-	public static enum Trigger {
+	public enum Trigger {
 		ENABLE,
 		ACTIVATE,
 		CANCEL,
@@ -54,8 +54,8 @@ public class StepLifecycle {
 	private static StateMachineConfig<State, Trigger> smcExpected;
 	private static StateMachineConfig<State, Trigger> smcActual;
 
-	public static TriggerWithParameters1<ProcessStep, Trigger> uncancel = new TriggerWithParameters1<>(Trigger.UNCANCEL, ProcessStep.class);
-	public static TriggerWithParameters1<ProcessStep, Trigger> unhalt= new TriggerWithParameters1<>(Trigger.UNHALT, ProcessStep.class);
+	public static final TriggerWithParameters1<ProcessStep, Trigger> uncancel = new TriggerWithParameters1<>(Trigger.UNCANCEL, ProcessStep.class);
+	public static final TriggerWithParameters1<ProcessStep, Trigger> unhalt= new TriggerWithParameters1<>(Trigger.UNHALT, ProcessStep.class);
 
 
 	public static StateMachineConfig<State, Trigger> getExpectedStateMachineConfig() {

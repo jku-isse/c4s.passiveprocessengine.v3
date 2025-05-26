@@ -259,61 +259,64 @@ public class StepDefinition extends ProcessDefinitionScopedElement {
 	{
 		return getTypedProperty(StepDefinitionTypeFactory.CoreProperties.description.toString(), String.class, "");
 	}
+	
+	public Set<RDFRuleDefinitionWrapper> getDerivedOutputPropertyRules() {
+		return getTypedProperty(StepDefinitionTypeFactory.CoreProperties.derivedPropertyRules.toString(), Set.class, Collections.emptySet());
+	}
 
-	public List<ProcessDefinitionError> checkConstraintValidity(RDFInstanceType processInstType) {
+	public List<ProcessDefinitionError> checkConstraintValidity() {
 		List<ProcessDefinitionError> errors = new LinkedList<>();
 		
-		var instTypeOpt = this.resolver.findNonDeletedInstanceTypeByFQN(this.getId()); // we now use the same URI for instance at definition level and type level for process instances
-		
-		//InstanceType instType = this. getInstanceType(); //ProcessStep.getOrCreateDesignSpaceInstanceType(ws, this, processInstType);
-		instTypeOpt.ifPresentOrElse(instType -> {
-			this.getActivationconditions().stream().forEach(spec -> checkConstraintExists(instType, spec, Conditions.ACTIVATION, errors));
-			this.getCancelconditions().stream().forEach(spec -> checkConstraintExists(instType, spec, Conditions.CANCELATION, errors));
-			this.getPostconditions().stream().forEach(spec -> checkConstraintExists(instType, spec, Conditions.POSTCONDITION, errors));
-			this.getPreconditions().stream().forEach(spec -> checkConstraintExists(instType, spec, Conditions.PRECONDITION, errors));
+			this.getActivationconditions().stream().forEach(spec -> checkConstraintExists(spec, Conditions.ACTIVATION, errors));
+			this.getCancelconditions().stream().forEach(spec -> checkConstraintExists(spec, Conditions.CANCELATION, errors));
+			this.getPostconditions().stream().forEach(spec -> checkConstraintExists(spec, Conditions.POSTCONDITION, errors));
+			this.getPreconditions().stream().forEach(spec -> checkConstraintExists(spec, Conditions.PRECONDITION, errors));
 		
 		// we dont need to check InputToOutput rule for subprocesses as these should produce the output internally/below in their childsteps
 		// hence dont check, unless there are no child steps.
-		if (this instanceof ProcessDefinition processDefinition && processDefinition.getStepDefinitions().size() > 0) {
+		if (this instanceof ProcessDefinition processDefinition && !processDefinition.getStepDefinitions().isEmpty()) {
 			log.debug("Skipping checking of Datamapping Rule for Subprocess Step: "+this.getName());
 		} else {
 			this.getInputToOutputMappingRules().entrySet().stream()
 			.forEach(entry -> {
-				String name = SpecificProcessInstanceTypesFactory.getDataMappingId(entry, this);				
-				RDFRuleDefinitionWrapper ruleType = ((RuleEnabledResolver)resolver).getRuleByNameAndContext(name, instType);
-				if (ruleType == null) 	{
-					log.error("Expected Datamapping Rule for existing process not found: "+name);
+				var outPropName = SpecificProcessStepType.PREFIX_OUT+entry.getKey();
+				var thisAsType = resolver.findNonDeletedInstanceTypeByFQN(this.getId()).get();
+				var predicate = thisAsType.getPropertyType(outPropName);
+				if (predicate == null) {
+					log.error("Expected Out Property not found: "+outPropName+" in process step "+this.getName());
 					//status.put(name, "Corrupt data - Expected Datamapping Rule not found");
-					errors.add(new ProcessDefinitionError(this, "Expected DataMapping Not Found - Internal Data Corruption", name, ProcessDefinitionError.Severity.ERROR));
+					errors.add(new ProcessDefinitionError(this, "Expected Out Property not found", outPropName, ProcessDefinitionError.Severity.ERROR));
 				} else {
-					if (ruleType.getRuleDef().hasExpressionError())
-						errors.add(new ProcessDefinitionError(this, String.format("DataMapping %s has an error", name), ruleType.getRuleDef().getExpressionError(), ProcessDefinitionError.Severity.ERROR));
+				
+				var ruleId = SpecificProcessInstanceTypesFactory.getDerivedPropertyRuleURI(predicate.getProperty().getURI());				
+				var foundOpt = this.getDerivedOutputPropertyRules().stream()
+							.filter(rule -> rule.getRuleDef().getRuleDefinition().getURI().equals(ruleId))
+							.findAny();
+				if (foundOpt.isEmpty()) 	{
+					log.error("Expected Datamapping Rule for existing process not found: "+ruleId);
+					//status.put(name, "Corrupt data - Expected Datamapping Rule not found");
+					errors.add(new ProcessDefinitionError(this, "Expected DataMapping Not Found - Internal Data Corruption", ruleId, ProcessDefinitionError.Severity.ERROR));
+				} else {
+					if (foundOpt.get().getRuleDef().hasExpressionError())
+						errors.add(new ProcessDefinitionError(this, String.format("DataMapping %s has an error", ruleId), foundOpt.get().getRuleDef().getExpressionError(), ProcessDefinitionError.Severity.ERROR));
+				}
 				}
 			});
 		}
 		//qa constraints:
-		ProcessDefinition pd = this.getProcess() !=null ? this.getProcess() : (ProcessDefinition)this;
+		//ProcessDefinition pd = this.getProcess() !=null ? this.getProcess() : (ProcessDefinition)this;
 		this.getQAConstraints().stream()
-			.forEach(spec -> {
-				String specId = SpecificProcessInstanceTypesFactory.getQASpecId(spec, pd);
-				RDFRuleDefinitionWrapper crt = ((RuleEnabledResolver)resolver).getRuleByNameAndContext(specId, instType);//RuleDefinition.RuleDefinitionExists(ws,  specId, instType, spec.getQaConstraintSpec());
-				if (crt == null) {
-					log.error("Expected Rule for existing process not found: "+specId);
-					errors.add(new ProcessDefinitionError(this, "Expected QA Constraint Not Found - Internal Data Corruption", specId, ProcessDefinitionError.Severity.ERROR));
-				} else
-					if (crt.getRuleDef().hasExpressionError())
-						errors.add(new ProcessDefinitionError(this, String.format("QA Constraint %s has an error", specId), crt.getRuleDef().getExpressionError(), ProcessDefinitionError.Severity.ERROR));
-			});
-		}, () -> log.error("Could not obtain type for: "+this.getId()));
+			.forEach(spec -> checkConstraintExists(spec, Conditions.PRECONDITION, errors));
 		return errors;
 	}
 
-	private void checkConstraintExists(RDFInstanceType instType, ConstraintSpec spec, Conditions condition, List<ProcessDefinitionError> errors) {
-		String name = SpecificProcessInstanceTypesFactory.getConstraintName(condition, spec.getOrderIndex(), instType);
-		RDFRuleDefinitionWrapper crt = ((RuleEnabledResolver)resolver).getRuleByNameAndContext(name, instType);
+	private void checkConstraintExists(ConstraintSpec spec, Conditions condition, List<ProcessDefinitionError> errors) {
+//		String name = SpecificProcessInstanceTypesFactory.getConstraintName(condition, spec.getOrderIndex(), instType);
+//		RDFRuleDefinitionWrapper crt = ((RuleEnabledResolver)resolver).getRuleByNameAndContext(name, instType);
+		var crt = spec.getRuleDefinition();
 		if (crt == null) {
-			log.error("Expected Rule for existing process not found: "+name);
-			errors.add(new ProcessDefinitionError(this, "Expected Constraint Not Found - Internal Data Corruption", name, ProcessDefinitionError.Severity.ERROR));
+			log.error("Expected Rule for existing process not found: "+spec.getId());
+			errors.add(new ProcessDefinitionError(this, "Expected Constraint Not Found - Internal Data Corruption", spec.getId(), ProcessDefinitionError.Severity.ERROR));
 		} else {
 			if (crt.getRuleDef().hasExpressionError())
 				errors.add(new ProcessDefinitionError(this, String.format("Condition %s has an error", spec.getName()), crt.getRuleDef().getExpressionError(), ProcessDefinitionError.Severity.ERROR));
@@ -345,8 +348,9 @@ public class StepDefinition extends ProcessDefinitionScopedElement {
 	}
 
 	private void deleteRuleIfExists(RDFInstanceType instType, ConstraintSpec spec, Conditions condition ) {
-		String name = SpecificProcessInstanceTypesFactory.getConstraintName(condition, spec.getOrderIndex(), instType);
-		RDFRuleDefinitionWrapper crt = ((RuleEnabledResolver)resolver).getRuleByNameAndContext(name, instType);
+//		String name = SpecificProcessInstanceTypesFactory.getConstraintName(condition, spec.getOrderIndex(), instType);
+//		RDFRuleDefinitionWrapper crt = ((RuleEnabledResolver)resolver).getRuleByNameAndContext(name, instType);
+		var crt = spec.getRuleDefinition();
 		if (crt != null) 
 			crt.delete();
 	}
@@ -354,8 +358,8 @@ public class StepDefinition extends ProcessDefinitionScopedElement {
 	@Override
 	public void deleteCascading() {
 		// wring instanceType: we need to get the dynamically generate InstanceType (the one that is used for the ProcessStep)
-		String stepDefName = SpecificProcessStepType.getProcessStepName(this);
-		var instTypeOpt = this.resolver.findNonDeletedInstanceTypeByFQN(stepDefName);
+	//	String stepDefName = SpecificProcessStepType.getProcessStepName(this);
+		var instTypeOpt = this.resolver.findNonDeletedInstanceTypeByFQN(this.getId());
 		instTypeOpt.ifPresent(instType -> { 
 			this.getActivationconditions().stream().forEach(spec -> { deleteRuleIfExists(instType, spec, Conditions.ACTIVATION); //delete the rule 
 				spec.deleteCascading(); // delete the rule spec!
@@ -369,22 +373,13 @@ public class StepDefinition extends ProcessDefinitionScopedElement {
 			this.getPreconditions().stream().forEach(spec -> { deleteRuleIfExists(instType, spec, Conditions.PRECONDITION); //delete the rule 
 				spec.deleteCascading(); // delete the rule spec!
 			});
-
-			this.getInputToOutputMappingRules().entrySet().stream()
-			.forEach(entry -> {
-				String name = SpecificProcessInstanceTypesFactory.getDataMappingId(entry, this);
-				RDFRuleDefinitionWrapper crt = ((RuleEnabledResolver)resolver).getRuleByNameAndContext(name, instType);
-				if (crt != null) crt.delete();
-			});
+			// deleted derived property rules
+			this.getDerivedOutputPropertyRules().stream().forEach(def -> def.delete());	
 			//delete qa constraints:
 			ProcessDefinition pd = this.getProcess() !=null ? this.getProcess() : (ProcessDefinition)this;
 			this.getQAConstraints().stream()
-			.forEach(spec -> {
-				String specId = SpecificProcessInstanceTypesFactory.getQASpecId(spec, pd);
-				RDFRuleDefinitionWrapper crt = ((RuleEnabledResolver)resolver).getRuleByNameAndContext(specId, instType);
-				if (crt != null) 
-					crt.delete();
-				spec.deleteCascading();
+			.forEach(spec -> { deleteRuleIfExists(instType, spec, Conditions.PRECONDITION); //delete the rule 
+				spec.deleteCascading(); // delete the rule spec!
 			});
 			instType.delete();
 		}); // else // we never go around creating that step instance type probably due to errors in the definition
@@ -392,7 +387,16 @@ public class StepDefinition extends ProcessDefinitionScopedElement {
 	}
 
 
-	
+	@Override
+	public String toString() {
+		return "StepDefinition [getExpectedInput()=" + getExpectedInput() + ", getExpectedOutput()="
+				+ getExpectedOutput() + ", getPreconditions()=" + getPreconditions() + ", getPostconditions()="
+				+ getPostconditions() + ", getCancelconditions()=" + getCancelconditions()
+				+ ", getActivationconditions()=" + getActivationconditions() + ", getQAConstraints()="
+				+ getQAConstraints() + ", getInputToOutputMappingRules()=" + getInputToOutputMappingRules()
+				+ ", getDerivedOutputPropertyRules()=" + getDerivedOutputPropertyRules() + "]";
+	}
+
 
 
 

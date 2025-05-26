@@ -15,7 +15,8 @@ public class AbstractProcessStepType extends AbstractTypeProvider {
 	
 	public enum CoreProperties {actualLifecycleState, expectedLifecycleState, stepDefinition, inDNI, outDNI, qaState,
 		preconditions, postconditions, cancelconditions, activationconditions,
-		processedPreCondFulfilled, processedPostCondFulfilled, processedCancelCondFulfilled, processedActivationCondFulfilled, isWorkExpected
+		processedPreCondFulfilled, processedPostCondFulfilled, processedCancelCondFulfilled, processedActivationCondFulfilled, 
+		isWorkExpected
 		;
 		
 		@Override
@@ -28,7 +29,7 @@ public class AbstractProcessStepType extends AbstractTypeProvider {
 		}
 	}
 
-	public static final String typeId = NS+"#"+ProcessStep.class.getSimpleName();
+	public static final String typeId = NS+"#ProcessStep";
 
 	public AbstractProcessStepType(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);
@@ -85,5 +86,6 @@ public class AbstractProcessStepType extends AbstractTypeProvider {
 				schemaRegistry.findNonDeletedInstanceTypeByFQN(ConstraintResultWrapperTypeFactory.typeId)
 				.map(vtype->vtype.getAsPropertyType())
 				.orElseThrow());
+
 	}
 }

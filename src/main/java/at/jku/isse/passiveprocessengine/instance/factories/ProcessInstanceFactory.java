@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.UUID;
 
+import at.jku.isse.passiveprocessengine.core.BaseNamespace;
 import at.jku.isse.passiveprocessengine.core.FactoryIndex.DomainFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
@@ -25,7 +26,9 @@ import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceTy
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 
 public class ProcessInstanceFactory extends DomainFactory {
-						
+		
+	public static final String NS = BaseNamespace.NS+"/instance";
+	
 	private final DecisionNodeInstanceTypeFactory dniFactory;
 	final ConstraintResultWrapperTypeFactory crwFactory;
 	
@@ -35,14 +38,12 @@ public class ProcessInstanceFactory extends DomainFactory {
 		this.crwFactory = crwFactory;
 	}
 	
-	public static String generateId(ProcessDefinition processDef, String namePostfix) {
-		return processDef.getName()+"-"+namePostfix;
-	}
+
 	
 	public ProcessInstance getInstance(ProcessDefinition processDef, String namePostfix) {
 		//TODO: not to create duplicate process instances somehow	
-		RDFInstance instance = getContext().createInstance(generateId(processDef, namePostfix)
-				, getContext().findNonDeletedInstanceTypeByFQN(SpecificProcessInstanceType.getProcessName(processDef)).get());
+		RDFInstance instance = getContext().createInstance(generateProcessId(processDef, namePostfix)
+				, getContext().findNonDeletedInstanceTypeByFQN(processDef.getId()).get());
 		ProcessInstance process = (ProcessInstance) instance;
 		process.inject(this, dniFactory);
 		init(process, processDef, null, null);
@@ -50,8 +51,8 @@ public class ProcessInstanceFactory extends DomainFactory {
 	}
 
 	public ProcessInstance getSubprocessInstance(ProcessDefinition subprocessDef, DecisionNodeInstance inDNI, DecisionNodeInstance outDNI, ProcessInstance scope) {
-		RDFInstance instance = getContext().createInstance(generateId(subprocessDef, UUID.randomUUID().toString())
-			, getContext().findNonDeletedInstanceTypeByFQN(SpecificProcessInstanceType.getProcessName(subprocessDef)).get());
+		RDFInstance instance = getContext().createInstance(generateProcessId(subprocessDef, UUID.randomUUID().toString())
+			, getContext().findNonDeletedInstanceTypeByFQN(subprocessDef.getId()).get());
 		ProcessInstance process = (ProcessInstance) instance;
 		process.setProcess(scope);
 		process.inject(this, dniFactory);
@@ -87,9 +88,9 @@ public class ProcessInstanceFactory extends DomainFactory {
 			// we delegate to ProcessInstance
 			return getSubprocessInstance(subprocDef, inDNI, outDNI, scope);
 		} else {
-			String specificStepType = SpecificProcessStepType.getProcessStepName(stepDef);
-			RDFInstance instance = getContext().createInstance( stepDef.getName()+"-"+UUID.randomUUID()
-				, getContext().findNonDeletedInstanceTypeByFQN(specificStepType).get());
+			String specificStepName = generateStepId(stepDef, scope); 
+			RDFInstance instance = getContext().createInstance( specificStepName
+				, getContext().findNonDeletedInstanceTypeByFQN(stepDef.getId()).get());
 			ProcessStep step = (ProcessStep) instance;
 			step.setProcess(scope);
 			initProcessStep(step, stepDef, inDNI, outDNI);
@@ -131,38 +132,38 @@ public class ProcessInstanceFactory extends DomainFactory {
 		ProcessDefinition pd = sd.getProcess() !=null ? sd.getProcess() : (ProcessDefinition)sd;
 		sd.getQAConstraints().stream()
 		.forEach(spec -> {
-			String qid = SpecificProcessInstanceTypesFactory.getQASpecId(spec, pd);
+			//String qid = SpecificProcessInstanceTypesFactory.getQASpecId(spec, pd);
 			ConstraintResultWrapper cw = crwFactory.createInstance(spec, ZonedDateTime.now(), step, getParentProcessOrThisIfProcessElseNull(step));			
-			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).put(qid, cw.getInstance());
+			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).put(spec.getId(), cw.getInstance());
 		});
 		// init of multi constraint wrappers:
 		sd.getPostconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.POSTCONDITION, spec.getOrderIndex(), step.getInstanceType());
+			//String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.POSTCONDITION, spec.getOrderIndex(), step.getInstanceType());
 			ConstraintResultWrapper cw = crwFactory.createInstance(spec, ZonedDateTime.now(), step, getParentProcessOrThisIfProcessElseNull(step));
-			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.postconditions.toString(), Map.class).put(specId, cw.getInstance());
+			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.postconditions.toString(), Map.class).put(spec.getId(), cw.getInstance());
 		});
 		sd.getPreconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.PRECONDITION, spec.getOrderIndex(), step.getInstanceType());
+			//String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.PRECONDITION, spec.getOrderIndex(), step.getInstanceType());
 			ConstraintResultWrapper cw = crwFactory.createInstance(spec, ZonedDateTime.now(), step, getParentProcessOrThisIfProcessElseNull(step));
-			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.preconditions.toString(), Map.class).put(specId, cw.getInstance());
+			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.preconditions.toString(), Map.class).put(spec.getId(), cw.getInstance());
 		});
 		sd.getCancelconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.CANCELATION, spec.getOrderIndex(), step.getInstanceType());
+			//String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.CANCELATION, spec.getOrderIndex(), step.getInstanceType());
 			ConstraintResultWrapper cw = crwFactory.createInstance(spec, ZonedDateTime.now(), step, getParentProcessOrThisIfProcessElseNull(step));
-			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.cancelconditions.toString(), Map.class).put(specId, cw.getInstance());
+			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.cancelconditions.toString(), Map.class).put(spec.getId(), cw.getInstance());
 		});
 		sd.getActivationconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
-			String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.ACTIVATION, spec.getOrderIndex(), step.getInstanceType());
+			//String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.ACTIVATION, spec.getOrderIndex(), step.getInstanceType());
 			ConstraintResultWrapper cw = crwFactory.createInstance(spec, ZonedDateTime.now(), step, getParentProcessOrThisIfProcessElseNull(step));
-			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.activationconditions.toString(), Map.class).put(specId, cw.getInstance());
+			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.activationconditions.toString(), Map.class).put(spec.getId(), cw.getInstance());
 		});
 	}
 	
@@ -170,4 +171,21 @@ public class ProcessInstanceFactory extends DomainFactory {
 		return step.getProcess() != null ? step.getProcess() : (ProcessInstance)step; //ugly hack if this is a process without parent
 	}
 
+	public static String generateProcessId(ProcessDefinition processDef, String namePostfix) {		
+		return NS+generateProcessNameHierarchy(processDef)+"#"+namePostfix;
+	}
+	
+	private static String generateProcessNameHierarchy(ProcessDefinition procDef) {
+		if (procDef.getProcess() == null) {
+			return "/"+procDef.getName();
+		} else {
+			return generateProcessNameHierarchy(procDef.getProcess())+"/"+procDef.getName();
+		}
+	}
+	
+	private static String generateStepId(StepDefinition processStep, ProcessInstance procInst) {
+		String ns = procInst.getInstance().getNameSpace();
+		String procName = procInst.getInstance().getLocalName();
+		return ns.substring(0, ns.length()-1) + "/" + procName + "/step#" + processStep.getName();
+	}
 }

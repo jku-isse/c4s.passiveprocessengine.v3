@@ -4,6 +4,7 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.PrimitiveTypesFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.metaschema.MetaElementFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
+import lombok.Getter;
 
 
 public abstract class AbstractTypeProvider {
@@ -11,7 +12,7 @@ public abstract class AbstractTypeProvider {
 	protected final RuleEnabledResolver schemaRegistry;
 	protected final PrimitiveTypesFactory primitives;
 	protected final MetaElementFactory metaElements;
-	protected RDFInstanceType type;
+	@Getter protected RDFInstanceType type;
 	
 	protected AbstractTypeProvider(RuleEnabledResolver schemaRegistry) {
 		super();

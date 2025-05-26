@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.passiveprocessengine.TestUtils;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
@@ -19,13 +20,13 @@ import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
 import at.jku.isse.passiveprocessengine.demo.TestDTOProcesses;
 import at.jku.isse.passiveprocessengine.wrappers.DefinitionWrapperTests;
 
-class DefinitionTests extends DefinitionWrapperTests {
+public class DefinitionTests extends DefinitionWrapperTests {
 
-	TestDTOProcesses procFactory;
+	protected TestDTOProcesses procFactory;
 	DTOs.Process procDTO;
-	TestArtifacts artifactFactory;
+	protected TestArtifacts artifactFactory;
 	ProcessDefinition procDef;
-	DefinitionTransformer transformer;
+	protected DefinitionTransformer transformer;
 	static JsonDefinitionSerializer json = new JsonDefinitionSerializer();
 	
 	@Override
@@ -43,7 +44,8 @@ class DefinitionTests extends DefinitionWrapperTests {
 	@Test
 	void testObtainSimpleProcess() {		
 		assertNotNull(procDef);
-		transformer.getErrors().stream().forEach(err -> System.out.println(err.toString()));		
+		transformer.getErrors().stream().forEach(err -> System.out.println(err));		
+		//TestUtils.printProcessDefinition(procDef);
 		assert(transformer.getErrors().isEmpty());
 	}
 	

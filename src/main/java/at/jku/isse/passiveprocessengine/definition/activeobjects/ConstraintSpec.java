@@ -8,6 +8,7 @@ import at.jku.isse.passiveprocessengine.definition.types.ConstraintSpecTypeFacto
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RDFRuleDefinitionWrapper;
 import lombok.NonNull;
 
 public class ConstraintSpec extends  ProcessDefinitionScopedElement{
@@ -49,6 +50,9 @@ public class ConstraintSpec extends  ProcessDefinitionScopedElement{
 		return Conditions.valueOf(getTypedProperty(CoreProperties.conditionsType.toString(), String.class));
 	}
 
+	public RDFRuleDefinitionWrapper getRuleDefinition() {
+		return getTypedProperty(CoreProperties.ruleType.toString(), RDFRuleDefinitionWrapper.class);
+	}
 	
 	public static final Comparator<ConstraintSpec> COMPARATOR_BY_ORDERINDEX = new Comparator<>() {
 	@Override

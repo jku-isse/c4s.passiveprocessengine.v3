@@ -16,18 +16,19 @@ import java.util.stream.Collectors;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFElement;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.artifacteventstreaming.rule.RuleSchemaFactory;
+import at.jku.isse.artifacteventstreaming.rule.definition.RuleDefinitionFactory;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ConditionChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.OutputChangedCmd;
-import at.jku.isse.passiveprocessengine.instance.messages.Commands.PrematureStepTriggerCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.Commands.ProcessScopedCmd;
-import at.jku.isse.passiveprocessengine.instance.messages.Commands.QAConstraintChangedCmd;
 import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
 import at.jku.isse.passiveprocessengine.instance.messages.Events;
 import at.jku.isse.passiveprocessengine.instance.types.AbstractProcessStepType;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessStepType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.events.ChangeListener;
 import at.jku.isse.passiveprocessengine.rdfwrapper.events.PropertyChange;
 import at.jku.isse.passiveprocessengine.rdfwrapper.events.PropertyChange.Update;
@@ -91,12 +92,13 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 
 	private Optional<ProcessScopedCmd> processPropertyUpdateAdd(PropertyChange.Add op) {		
 		RDFElement element = op.getElement();
-		if(	(op.getName().startsWith("in_") || op.getName().startsWith("out_"))
+		if(	(op.getPropertyURI().getFragment().startsWith(SpecificProcessStepType.PREFIX_IN) 
+				|| op.getPropertyURI().getFragment().startsWith(SpecificProcessStepType.PREFIX_OUT))
 				&& isOfStepType(element) ) {
 			ProcessStep step = (ProcessStep) element;	
 			RDFInstance added = (RDFInstance) op.getValue();
 			log.debug(String.format("%s %s now also contains %s", step.getName(),
-					op.getName(),																
+					op.getPropertyURI(),																
 					added != null ? added.getName() : "NULL"
 					));
 			stats.incrementIoAddEventCount();
@@ -107,11 +109,12 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 
 	private Optional<ProcessScopedCmd> processPropertyUpdateRemove(PropertyChange.Remove op) {
 		RDFElement element = op.getElement();
-			if(	(op.getName().startsWith("in_") || op.getName().startsWith("out_"))
+			if(	(op.getPropertyURI().getFragment().startsWith(SpecificProcessStepType.PREFIX_IN) 
+					|| op.getPropertyURI().getFragment().startsWith(SpecificProcessStepType.PREFIX_OUT))
 				&& isOfStepType(element) ) {
 				ProcessStep step = (ProcessStep) element;	
 				log.info(String.format("%s %s removed %s", step.getName(),
-																op.getName(),
+																op.getPropertyURI(),
 																op.getValue()
 																));
 				stats.incrementIoRemoveEventCount();
@@ -122,7 +125,7 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 
 	private Optional<ProcessScopedCmd> processPropertyUpdateSet(PropertyChange.Set op) {
 		RDFElement element = op.getElement();
-		if (op.getName().equals("ruleHasConsistentResult") && element instanceof RDFRuleResultWrapper cr) {
+		if (op.getPropertyURI().equals(RuleSchemaFactory.ruleHasConsistentResultURI) && element instanceof RDFRuleResultWrapper cr) {
 			RDFInstance ruleContext = cr.getContextInstance();
 			if (isOfStepType(ruleContext)) { // rule belonging to a step, or process
 				//ProcessStep step = getAsStepOrClass(ruleContext);
@@ -169,18 +172,7 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 		// but first we should check if we need to load lazy fetched artifacts that might override/undo the queuedEffects
 		if (!relevantEffects.isEmpty()) {
 			List<Events.ProcessChangedEvent> cmdEvents = new LinkedList<>();
-			// qa not fulfilled
-			cmdEvents.addAll(relevantEffects.stream()
-			.filter(QAConstraintChangedCmd.class::isInstance)
-			.map(QAConstraintChangedCmd.class::cast)
-			.filter(cmd -> !cmd.isFulfilled())
-			.map(cmd -> {
-				stats.incrementNegQAConstraintChangedCmdCount();
-				log.debug(String.format("Executing: %s", cmd.toString()));
-				return cmd;})
-			.flatMap(cmd -> cmd.execute().stream())
-			.collect(Collectors.toList()));
-
+			
 			// first sort them to apply them in a sensible order, e.g., preconditions fulfilled before postconditions
 			cmdEvents.addAll(relevantEffects.stream()
 				.filter(ConditionChangedCmd.class::isInstance)
@@ -191,19 +183,7 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 					log.debug(String.format("Executing: %s", cmd.toString()));
 					return cmd;})
 				.flatMap(cmd -> cmd.execute().stream())
-				.collect(Collectors.toList()));
-
-			// if QA is fulfilled
-			cmdEvents.addAll(relevantEffects.stream()
-			.filter(QAConstraintChangedCmd.class::isInstance)
-			.map(QAConstraintChangedCmd.class::cast)
-			.filter(cmd -> cmd.isFulfilled())
-			.map(cmd -> {
-				stats.incrementPosQAConstraintChangedCmdCount();
-				log.debug(String.format("Executing: %s", cmd.toString()));
-				return cmd;})
-			.flatMap(cmd -> cmd.execute().stream())
-			.collect(Collectors.toList()));
+				.toList());
 
 			// then execute output change events
 			cmdEvents.addAll(relevantEffects.stream()
@@ -214,18 +194,7 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 						log.debug(String.format("Executing: %s", cmd.toString()));
 						return cmd;})
 					.flatMap(cmd -> cmd.execute().stream())
-					.collect(Collectors.toList()));
-
-			// then execute premature step triggers
-			cmdEvents.addAll(relevantEffects.stream()
-					.filter(PrematureStepTriggerCmd.class::isInstance)
-					.map(PrematureStepTriggerCmd.class::cast)
-					.map(cmd -> {
-						stats.incrementPrematureStepTriggerCmdCount();
-						log.debug(String.format("Executing: %s", cmd.toString()));
-						return cmd;})
-					.flatMap(cmd -> cmd.execute().stream())
-					.collect(Collectors.toList()));
+					.toList());
 
 			stats.incrementProcessEventCountBy(cmdEvents.size());
 
@@ -269,9 +238,11 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 		private int getAssignedValue(Conditions cond, boolean fulfilled) {
 			// we need to ensure that we first signal a failure of conditions, before a fulfillment to avoid activation propagation that needs to be undone thereafter
 			//TODO: support also no work expected
-			// now sort by state transition: 0 canceled -> 1 noWorkExpected
-			// 										-> 3 preFulfilled(false) 							-> 5 active -> 6 postFulfilled(true)
-			//	but		-> 2 postFulfilled(false) 							->  4 prefulfilled(true) 	--> 5 active
+			// now sort by state transition:
+			//  0 canceled -> 1 noWorkExpected 2 QAcond (false)
+			// 															-> 3 preFulfilled(false) 							-> 5 active -> 6 postFulfilled(true) -> 6 QAcond (true)
+			//	but							-> 2 postFulfilled(false) 							->  4 prefulfilled(true) 	--> 5 active
+			// whether unfulfilled QA or post go first does not matter, similar whether fulfilled QA or Post go first, neither.
 			switch(cond) {
 			case CANCELATION:
 				return 0;
@@ -283,6 +254,9 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 			case PRECONDITION:
 				if (fulfilled) return 4;
 				else return 3;
+			case QA:
+				if (fulfilled) return 6;
+				else return 2;
 			default:
 				return 10;
 			}

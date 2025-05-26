@@ -15,10 +15,12 @@ import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDef
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinitionScopedElement;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.StepDefinition;
+import at.jku.isse.passiveprocessengine.definition.factories.SpecificProcessInstanceTypesFactory;
 import at.jku.isse.passiveprocessengine.definition.registry.DTOs.Constraint;
 import at.jku.isse.passiveprocessengine.definition.registry.DTOs.Process;
 import at.jku.isse.passiveprocessengine.instance.StepLifecycle.Conditions;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessConfigType;
+import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -54,7 +56,7 @@ public class DefinitionTransformer {
 	}
 
 	private ProcessDefinition initProcessFromDTO(DTOs.Process procDTO, int depth, boolean isInStaging) {
-		ProcessDefinition processDefinition = factories.getProcessDefinitionFactory().createInstance(procDTO.getCode());
+		ProcessDefinition processDefinition = factories.getProcessDefinitionFactory().createInstance(SpecificProcessInstanceTypesFactory.getProcessDefinitionURI(procDTO.getCode()));
 		if (!isInStaging) {
 			cleanStagingRewriting(procDTO);
 		}
@@ -62,7 +64,7 @@ public class DefinitionTransformer {
 
 		// first DNDs
 		procDTO.getDns().stream().forEach(dn -> {
-			DecisionNodeDefinition dnd = processDefinition.createDecisionNodeDefinition(dn.getCode());
+			DecisionNodeDefinition dnd = processDefinition.createDecisionNodeDefinition(SpecificProcessInstanceTypesFactory.getDecisionNodeDefinitionURI(processDefinition,dn.getCode()));
 			dnd.setInflowType(dn.getInflowType());
 			// we need to set the mappings only later, in case there are subprocesses which update the mapping name
 //			dn.getMapping().stream().forEach(m ->
@@ -78,10 +80,10 @@ public class DefinitionTransformer {
 				//FIXME: child process instance type will not point to this type of parent process instance type, for accessing any configuration
 				processDefinition.addStepDefinition(stepDefinition);
 			} else {
-				stepDefinition = processDefinition.createAndAddStepDefinition(stepDTO.getCode());
+				stepDefinition = processDefinition.createAndAddStepDefinition(SpecificProcessInstanceTypesFactory.getProcessStepTypeURI(processDefinition, stepDTO.getCode()));
 				initStepFromDTO(stepDTO, stepDefinition);
 			}
-			stepDefinition.setInDND(processDefinition.getDecisionNodeDefinitionByName(stepDTO.getInDNDid()));
+			stepDefinition.setInDND(processDefinition.getDecisionNodeDefinitionByName(stepDTO.getInDNDid())); // byName is fine here as we are in the context of a single process
 			stepDefinition.setOutDND(processDefinition.getDecisionNodeDefinitionByName(stepDTO.getOutDNDid()));
 		});
 		//then create the DND mappings
@@ -177,7 +179,7 @@ public class DefinitionTransformer {
 		stepDTO.getConditions().entrySet().stream().forEach(entry -> {
 			entry.getValue().stream().forEach(constraint -> {
 				// constraint code cannot be used as id here, as usually unique only local per DTO.Process
-				var specId = createSpecId(entry.getKey(), constraint, step);
+				var specId = SpecificProcessInstanceTypesFactory.getSpecURI(entry.getKey(), ""+constraint.getSpecOrderIndex(), step);
 				ConstraintSpec spec = factories.getConstraintFactory().createInstance(entry.getKey(), specId, constraint.getArlRule(), constraint.getDescription(), constraint.getSpecOrderIndex(), constraint.isOverridable());
 				if (step instanceof ProcessDefinition procDef) {
 					spec.setProcess(procDef);
@@ -207,7 +209,7 @@ public class DefinitionTransformer {
 		});
 		stepDTO.getIoMapping().entrySet().stream().forEach(entry -> step.addInputToOutputMappingRule(entry.getKey(),  trimLegacyIOMappingRule(entry.getValue())));
 		stepDTO.getQaConstraints().stream().forEach(constraint -> {
-			var specId = createSpecId(Conditions.QA, constraint, step);
+			var specId = SpecificProcessInstanceTypesFactory.getSpecURI(Conditions.QA, ""+constraint.getSpecOrderIndex(), step);
 			ConstraintSpec spec = factories.getConstraintFactory().createInstance(Conditions.QA, specId, constraint.getArlRule(), constraint.getDescription(), constraint.getSpecOrderIndex(), constraint.isOverridable());
 			if (step instanceof ProcessDefinition procDef) {
 				spec.setProcess(procDef);
@@ -220,10 +222,7 @@ public class DefinitionTransformer {
 		step.setDescription(stepDTO.getDescription());
 	}
 
-	private String createSpecId(Conditions conditions, Constraint constraint, StepDefinition step) {
-		var procId = step.getProcess() != null ? step.getProcess().getName() : "ROOT";
-		return conditions + constraint.getCode() + step.getName() + procId;
-	}
+
 	
 	private RDFInstanceType resolveInstanceType(String type, ProcessDefinitionScopedElement el, String param) {
 		Optional<RDFInstanceType> iType = schemaRegistry.findNonDeletedInstanceTypeByFQN(type);
@@ -330,7 +329,7 @@ public class DefinitionTransformer {
 	}
 
 	private static String trimLegacyIOMappingRule(String ruleString) {
-		int posLegacySymDiff = stripForComparison(ruleString).indexOf("asSet()symmetricDifference(self.out");
+		int posLegacySymDiff = stripForComparison(ruleString).indexOf("symmetricDifference(self.out");
 		if (posLegacySymDiff > 0) {
 			return ruleString.substring(0, posLegacySymDiff);
 		} else

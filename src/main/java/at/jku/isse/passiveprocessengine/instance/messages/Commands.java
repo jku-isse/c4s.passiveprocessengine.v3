@@ -29,81 +29,81 @@ public class Commands {
 		public abstract String getId();
 	}
 
-    @Slf4j
-	@Data
-	public static class PrematureStepTriggerCmd extends ProcessScopedCmd {
-		private final StepDefinition sd;
-		private final ProcessInstance procInst;
-		private final boolean isFulfilled;
+//    @Slf4j
+//	@Data
+//	public static class PrematureStepTriggerCmd extends ProcessScopedCmd {
+//		private final StepDefinition sd;
+//		private final ProcessInstance procInst;
+//		private final boolean isFulfilled;
+//
+//		@Override
+//		public List<Events.ProcessChangedEvent> execute() {
+//			if (isFulfilled) {
+//				if (getScope().getProcessSteps().stream().noneMatch(t -> t.getDefinition().getName().equals(sd.getName()))) {
+//					ProcessStep step = getScope().createAndWireTask(sd);
+//					if (step != null) {
+//						// set more precise inputs (or from further distance) --> DNI will use input from further away if defined so in the inter-step data mappings
+//						//: trigger correct step transitions --> adding input will result in proper constraint evaluation and hence step status
+//						List<Events.ProcessChangedEvent> events = new LinkedList<>();
+//						events.addAll(step.getInDNI().doDataPropagationToPrematurelyTriggeredTask());
+//						events.addAll(step.setActivationConditionsFulfilled(true));
+//						return events;
+//					} else {
+//						log.warn(String.format("No step created while trying to execute premature invocation of %s in %s ", sd.getName(), procInst.getName()));
+//						return Collections.emptyList();
+//					}
+//				} else { // nothing to do
+//					log.debug(String.format("No need to execute premature invocation of %s in %s as step exists in the mean time", sd.getName(), procInst.getName()));
+//					return Collections.emptyList();
+//				}
+//			} // nothing to do
+//				return Collections.emptyList();
+//		}
+//
+//		@Override
+//		public ProcessInstance getScope() {
+//			return procInst;
+//		}
+//
+//		@Override
+//		public String toString() {
+//			return "PrematureStepTriggerCmd [" + sd.getName() + " in "+procInst.getName()+" premature triggered: " + isFulfilled
+//					+ "]";
+//		}
+//
+//		@Override
+//		public String getId() {
+//			return "PrematureStepTriggerCmd [" +procInst.getName()+sd.getName();
+//		}
+//	}
 
-		@Override
-		public List<Events.ProcessChangedEvent> execute() {
-			if (isFulfilled) {
-				if (getScope().getProcessSteps().stream().noneMatch(t -> t.getDefinition().getName().equals(sd.getName()))) {
-					ProcessStep step = getScope().createAndWireTask(sd);
-					if (step != null) {
-						// set more precise inputs (or from further distance) --> DNI will use input from further away if defined so in the inter-step data mappings
-						//: trigger correct step transitions --> adding input will result in proper constraint evaluation and hence step status
-						List<Events.ProcessChangedEvent> events = new LinkedList<>();
-						events.addAll(step.getInDNI().doDataPropagationToPrematurelyTriggeredTask());
-						events.addAll(step.setActivationConditionsFulfilled(true));
-						return events;
-					} else {
-						log.warn(String.format("No step created while trying to execute premature invocation of %s in %s ", sd.getName(), procInst.getName()));
-						return Collections.emptyList();
-					}
-				} else { // nothing to do
-					log.debug(String.format("No need to execute premature invocation of %s in %s as step exists in the mean time", sd.getName(), procInst.getName()));
-					return Collections.emptyList();
-				}
-			} // nothing to do
-				return Collections.emptyList();
-		}
-
-		@Override
-		public ProcessInstance getScope() {
-			return procInst;
-		}
-
-		@Override
-		public String toString() {
-			return "PrematureStepTriggerCmd [" + sd.getName() + " in "+procInst.getName()+" premature triggered: " + isFulfilled
-					+ "]";
-		}
-
-		@Override
-		public String getId() {
-			return "PrematureStepTriggerCmd [" +procInst.getName()+sd.getName();
-		}
-	}
-
-	@EqualsAndHashCode(callSuper=false)
-	@Data
-	public static class QAConstraintChangedCmd extends ProcessScopedCmd {
-		private final ProcessStep step;
-		private final RDFRuleResultWrapper crule;
-		 private final boolean isFulfilled;
-
-		@Override
-		public List<Events.ProcessChangedEvent> execute() {
-			return step.processQAEvent(crule, isFulfilled);
-		}
-
-		@Override
-		public String toString() {
-			return "QAConstraintChangedCmd [" + step.getDefinition().getName() + " " + crule.getInstanceType().getName() +":"+ isFulfilled + "]";
-		}
-
-		@Override
-		public ProcessInstance getScope() {
-			return step.getProcess();
-		}
-
-		@Override
-		public String getId() {
-			return "QAConstraintChangedCmd [" +step.getName()+crule.getInstanceType().getName();
-		}
-	}
+//	@EqualsAndHashCode(callSuper=false)
+//	@Data
+//	public static class QAConstraintChangedCmd extends ProcessScopedCmd {
+//		private final ProcessStep step;
+//		private final RDFRuleResultWrapper crule;
+//		 private final boolean isFulfilled;
+//
+//		@Override
+//		public List<Events.ProcessChangedEvent> execute() {
+//			return step.processQAEvent(crule, isFulfilled);
+//		}
+//
+//		@Override
+//		public String toString() {
+//			return "QAConstraintChangedCmd [" + step.getDefinition().getName() + " " + crule.getInstanceType().getName() +":"+ isFulfilled + "]";
+//		}
+//
+//		@Override
+//		public ProcessInstance getScope() {
+//			return step.getProcess();
+//		}
+//
+//		@Override
+//		public String getId() {
+//			return "QAConstraintChangedCmd [" +step.getName()+crule.getInstanceType().getName();
+//		}
+//	}
 
 	@EqualsAndHashCode(callSuper=false)
     @Data
@@ -123,7 +123,9 @@ public class Commands {
 				return step.processPostConditionsChange(ruleResult, isFulfilled);
 			case PRECONDITION:
 				return step.processPreConditionsChange(ruleResult, isFulfilled);
-			default:
+			case QA:
+				return step.processQAEvent(ruleResult, isFulfilled);
+			default:				
 				return Collections.emptyList();
 			}
 
@@ -152,12 +154,12 @@ public class Commands {
 
 		@Override
 		public List<Events.ProcessChangedEvent> execute() {
-			return step.processOutputChangedCmd(change.getName().substring(4));
+			return step.processOutputChangedCmd(change.getPropertyURI().getFragment().substring(4));
 		}
 
 		@Override
 		public String toString() {
-			return "OutputChangedCmd [" + step.getDefinition().getName() + " " + change.getName() + "]";
+			return "OutputChangedCmd [" + step.getDefinition().getName() + " " + change.getPropertyURI() + "]";
 		}
 
 		@Override
@@ -167,7 +169,7 @@ public class Commands {
 
 		@Override
 		public String getId() {
-			return "OutputChangedCmd [" +step.getName()+change.getName();
+			return "OutputChangedCmd [" +step.getName()+change.getPropertyURI();
 		}
 	}
 
