@@ -207,7 +207,7 @@ public class DefinitionTransformer {
 				}
 			});
 		});
-		stepDTO.getIoMapping().entrySet().stream().forEach(entry -> step.addInputToOutputMappingRule(entry.getKey(),  trimLegacyIOMappingRule(entry.getValue())));
+		stepDTO.getIoMapping().entrySet().stream().forEach(entry -> step.addInputToOutputMappingRule(entry.getKey(),  entry.getValue()));
 		stepDTO.getQaConstraints().stream().forEach(constraint -> {
 			var specId = SpecificProcessInstanceTypesFactory.getSpecURI(Conditions.QA, ""+constraint.getSpecOrderIndex(), step);
 			ConstraintSpec spec = factories.getConstraintFactory().createInstance(Conditions.QA, specId, constraint.getArlRule(), constraint.getDescription(), constraint.getSpecOrderIndex(), constraint.isOverridable());
@@ -328,13 +328,13 @@ public class DefinitionTransformer {
 		});
 	}
 
-	private static String trimLegacyIOMappingRule(String ruleString) {
-		int posLegacySymDiff = stripForComparison(ruleString).indexOf("symmetricDifference(self.out");
-		if (posLegacySymDiff > 0) {
-			return ruleString.substring(0, posLegacySymDiff);
-		} else
-			return ruleString;
-	}
+//	private static String trimLegacyIOMappingRule(String ruleString) {
+//		int posLegacySymDiff = stripForComparison(ruleString).indexOf("symmetricDifference(self.out");
+//		if (posLegacySymDiff > 0) {
+//			return ruleString.substring(0, posLegacySymDiff);
+//		} else
+//			return ruleString;
+//	}
 
 	public static String stripForComparison(String arl) {
 		return arl

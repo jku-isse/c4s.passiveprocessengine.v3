@@ -15,11 +15,11 @@ public class ProcessInstanceScopeTypeFactory extends AbstractTypeProvider {
 		;
 		@Override
 		public String toString() {
-			return NS+name();
+			return NS+"#"+name();
 		}
 		
 		public String getURI() {
-			return NS+name();
+			return NS+"#"+name();
 		}
 	}
 	
@@ -40,9 +40,9 @@ public class ProcessInstanceScopeTypeFactory extends AbstractTypeProvider {
 	}
 	
 	public void addGenericProcessProperty(RDFInstanceType instType) {
-		instType.cacheSuperProperties();
 		if (instType.getPropertyType(ProcessInstanceScopeTypeFactory.CoreProperties.process.toString()) == null) {
 			instType.createSinglePropertyType(ProcessInstanceScopeTypeFactory.CoreProperties.process.toString(), type.getAsPropertyType());			
 		}
+		instType.cacheSuperProperties();
 	}
 }

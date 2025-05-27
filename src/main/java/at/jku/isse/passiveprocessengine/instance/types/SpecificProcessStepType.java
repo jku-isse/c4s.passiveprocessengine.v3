@@ -72,6 +72,7 @@ public class SpecificProcessStepType extends AbstractTypeProvider {
 			//} else {
 			//	scopeFactory.addGenericProcessProperty(type);
 			//}
+			type.cacheSuperProperties();
 		}
 		metaElements.registerInstanceSpecificClass(type.getId(), ProcessStep.class);
 	}

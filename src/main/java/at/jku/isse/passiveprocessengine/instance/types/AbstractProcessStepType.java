@@ -11,7 +11,7 @@ import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 
 public class AbstractProcessStepType extends AbstractTypeProvider {
 
-	private static final String NS = ProcessInstanceScopeTypeFactory.NS+"/abstractstep";
+	private static final String NS = ProcessInstanceScopeTypeFactory.NS+"/abstractstep#";
 	
 	public enum CoreProperties {actualLifecycleState, expectedLifecycleState, stepDefinition, inDNI, outDNI, qaState,
 		preconditions, postconditions, cancelconditions, activationconditions,
@@ -29,7 +29,7 @@ public class AbstractProcessStepType extends AbstractTypeProvider {
 		}
 	}
 
-	public static final String typeId = NS+"#ProcessStep";
+	public static final String typeId = ProcessInstanceScopeTypeFactory.NS+"#ProcessStep";
 
 	public AbstractProcessStepType(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);

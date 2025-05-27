@@ -58,6 +58,7 @@ class InstanceTests extends DefinitionTests {
 	
 	protected ProcessDefinition getDefinition(DTOs.Process procDTO) {		
 		procDTO.calculateDecisionNodeDepthIndex(1);
+		transformer = new DefinitionTransformer(procDTO, configBuilder.getFactoryIndex(), schemaReg);
 		ProcessDefinition procDef = transformer.fromDTO(false);
 		assert(procDef != null);
 		transformer.getErrors().stream().forEach(err -> System.out.println(err.toString()));		

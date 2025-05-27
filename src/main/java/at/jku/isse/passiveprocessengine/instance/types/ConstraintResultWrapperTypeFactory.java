@@ -15,7 +15,7 @@ import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessStep;
 
 public class ConstraintResultWrapperTypeFactory extends AbstractTypeProvider {
 	
-	private static final String NS = ProcessInstanceScopeTypeFactory.NS+"/constraint";	
+	private static final String NS = ProcessInstanceScopeTypeFactory.NS+"/constraint#";	
 	
 	public enum CoreProperties {constraintSpec, lastChanged, ruleResult, parentStep, isOverriden, overrideValue, overrideReason
 		;
@@ -29,7 +29,7 @@ public class ConstraintResultWrapperTypeFactory extends AbstractTypeProvider {
 			return NS+name();
 		}	
 	}
-	public static final String typeId = NS+"#ConstraintResult";
+	public static final String typeId = ProcessInstanceScopeTypeFactory.NS+"#ConstraintResult";
 
 	public ConstraintResultWrapperTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);

@@ -389,12 +389,19 @@ public class StepDefinition extends ProcessDefinitionScopedElement {
 
 	@Override
 	public String toString() {
-		return "StepDefinition [getExpectedInput()=" + getExpectedInput() + ", getExpectedOutput()="
-				+ getExpectedOutput() + ", getPreconditions()=" + getPreconditions() + ", getPostconditions()="
-				+ getPostconditions() + ", getCancelconditions()=" + getCancelconditions()
-				+ ", getActivationconditions()=" + getActivationconditions() + ", getQAConstraints()="
-				+ getQAConstraints() + ", getInputToOutputMappingRules()=" + getInputToOutputMappingRules()
-				+ ", getDerivedOutputPropertyRules()=" + getDerivedOutputPropertyRules() + "]";
+		StringBuffer sb = new StringBuffer();
+		sb.append(" "+this.getId()+"\r\n");
+
+		getExpectedInput().entrySet().stream().map(entry -> " IN: "+entry.getKey()+": "+entry.getValue().getName()+"\r\n").forEach(sb::append);
+		getExpectedOutput().entrySet().stream().map(entry -> " OUT: "+entry.getKey()+": "+entry.getValue().getName()+"\r\n").forEach(sb::append);		
+		
+		sb.append(" Constraints \r\n");
+		getPreconditions().stream().map(spec -> " PRE:  "+spec.getConstraintSpec()+"\r\n").forEach(sb::append);
+		getPostconditions().stream().map(spec -> " POST: "+spec.getConstraintSpec()+"\r\n").forEach(sb::append);
+		getCancelconditions().stream().map(spec -> " CANCEL: "+spec.getConstraintSpec()+"\r\n").forEach(sb::append);
+		getQAConstraints().stream().map(spec -> " QA: "+spec.getConstraintSpec()+"\r\n").forEach(sb::append);
+		
+		return "StepDefinition "+sb.toString();
 	}
 
 

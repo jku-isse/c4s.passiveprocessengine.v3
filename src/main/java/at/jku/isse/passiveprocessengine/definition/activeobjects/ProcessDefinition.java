@@ -186,5 +186,14 @@ public class ProcessDefinition extends StepDefinition{
 		});
 	}
 
+	@Override
+	public String toString() {
+		StringBuffer sb = new StringBuffer();		
+		getStepDefinitions().stream().map(step -> step.toString()).forEach(stepstr -> sb.append(stepstr+"\r\n"));		
+		getDecisionNodeDefinitions().stream().map(dnd -> dnd.toString()).forEach(str -> sb.append(str+"\r\n"));
+				
+		return String.format("ProcessDefinition %s \r\n %s", this.getId(),  sb.toString());
+	}
 
+	
 }

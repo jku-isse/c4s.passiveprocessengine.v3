@@ -15,7 +15,7 @@ import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
 
 public class DecisionNodeInstanceTypeFactory extends AbstractTypeProvider {
 
-	private static final String NS = ProcessInstanceScopeTypeFactory.NS+"/dni";
+	private static final String NS = ProcessInstanceScopeTypeFactory.NS+"/dni#";
 	
 	public enum CoreProperties {isInflowFulfilled, hasPropagated, dnd, inSteps, outSteps, closingDN
 		;
@@ -30,7 +30,7 @@ public class DecisionNodeInstanceTypeFactory extends AbstractTypeProvider {
 		}
 	}
 
-	public static final String typeId = NS+"#DecisionNodeInstance";
+	public static final String typeId = ProcessInstanceScopeTypeFactory.NS+"#DecisionNodeInstance";
 	
 	public DecisionNodeInstanceTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);

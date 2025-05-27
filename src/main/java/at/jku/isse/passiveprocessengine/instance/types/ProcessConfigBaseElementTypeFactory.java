@@ -12,7 +12,7 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 
 public class ProcessConfigBaseElementTypeFactory extends AbstractTypeProvider {
 
-	private static final String NS = ProcessInstanceScopeTypeFactory.NS+"/config";
+	private static final String NS = ProcessInstanceScopeTypeFactory.NS+"/config#";
 	
 	public enum CoreProperties {description;
 		
@@ -25,7 +25,7 @@ public class ProcessConfigBaseElementTypeFactory extends AbstractTypeProvider {
 			return NS+name();
 		}	
 	} 
-	public static final String typeId = NS+"#"+"Base";
+	public static final String typeId = ProcessInstanceScopeTypeFactory.NS+"#"+"ConfigBase";
 	
 	public ProcessConfigBaseElementTypeFactory(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);

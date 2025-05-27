@@ -10,7 +10,7 @@ import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 
 public class AbstractProcessInstanceType extends AbstractTypeProvider {
 
-	private static final String NS = ProcessInstanceScopeTypeFactory.NS+"/abstractprocess";
+	private static final String NS = ProcessInstanceScopeTypeFactory.NS+"/abstractprocess#";
 	
 	public enum CoreProperties {stepInstances, decisionNodeInstances, processDefinition, createdAt;
 		
@@ -24,7 +24,7 @@ public class AbstractProcessInstanceType extends AbstractTypeProvider {
 		}
 	}
 		
-	public static final String typeId = NS+"#ProcessInstance";
+	public static final String typeId = ProcessInstanceScopeTypeFactory.NS+"#ProcessInstance";
 
 	public AbstractProcessInstanceType(RuleEnabledResolver schemaRegistry) {
 		super(schemaRegistry);

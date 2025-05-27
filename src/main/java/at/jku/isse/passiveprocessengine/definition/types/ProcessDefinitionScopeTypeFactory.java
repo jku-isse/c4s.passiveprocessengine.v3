@@ -16,11 +16,11 @@ public class ProcessDefinitionScopeTypeFactory extends AbstractTypeProvider {
 		;
 		@Override
 		public String toString() {
-			return NS+name();
+			return NS+"#"+name();
 		}
 		
 		public String getURI() {
-			return NS+name();
+			return NS+"#"+name();
 		}	
 	}
 	
