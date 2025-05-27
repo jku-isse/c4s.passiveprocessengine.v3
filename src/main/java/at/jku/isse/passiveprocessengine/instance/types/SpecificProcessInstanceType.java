@@ -38,6 +38,7 @@ public class SpecificProcessInstanceType extends AbstractTypeProvider {
 		} else {
 			//String processAsTaskName = SpecificProcessStepType.getProcessStepName(procDef);
 			type = schemaRegistry.createNewInstanceType(procDef.getId(), schemaRegistry.findNonDeletedInstanceTypeByFQN(AbstractProcessInstanceType.typeId).get());
+			type.cacheSuperProperties();
 			procDef.getExpectedInput().entrySet().stream()
 			.forEach(entry -> {
 				type.createSetPropertyType(SpecificProcessStepType.PREFIX_IN+entry.getKey(), entry.getValue().getAsPropertyType());
@@ -46,7 +47,7 @@ public class SpecificProcessInstanceType extends AbstractTypeProvider {
 			.forEach(entry -> {
 				type.createSetPropertyType(SpecificProcessStepType.PREFIX_OUT+entry.getKey(), entry.getValue().getAsPropertyType());
 			}); // no derived property here, as the result/output comes from the process' steps
-			scopeFactory.addGenericProcessProperty(type);
+			//scopeFactory.addGenericProcessProperty(type);
 		}
 		metaElements.registerInstanceSpecificClass(type.getId(), ProcessInstance.class);
 	}			

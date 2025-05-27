@@ -44,7 +44,7 @@ public class DefinitionWrapperTests {
 	protected PrimitiveTypesFactory primitives;
 	
 	@BeforeAll
-	public void setup() throws URISyntaxException {
+	public void setup() throws Exception {
 		wrapperFactory = new InMemoryEventStreamingSetupFactory.FactoryBuilder()
 				.withBranchName("main")
 				.withRepoURI(new URI(REPOURI)).build();

@@ -41,7 +41,7 @@ public class ProcessConfigBaseElementTypeFactory extends AbstractTypeProvider {
 		type.cacheSuperProperties();	
 		type.createSinglePropertyType(CoreProperties.description.toString(), primitives.getStringType());		
 		
-		processInstanceScopeType.addGenericProcessProperty(type);
+		//processInstanceScopeType.addGenericProcessProperty(type);
 	}
 	
 	public RDFInstance createConfigInstance(String name, RDFInstanceType configSubType) {

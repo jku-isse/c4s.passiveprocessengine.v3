@@ -143,7 +143,7 @@ public class TestDTOProcesses {
 		sd1.getOutput().put(JIRA_OUT, typeJira.getId());
 		buildAndIncludeCondition(sd1, Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 		buildAndIncludeCondition(sd1, Conditions.POSTCONDITION,"self.in_jiraIn->size() = 1 and self.in_jiraIn->forAll( issue | issue.state = 'Closed')");
-		sd1.getIoMapping().put(JIRA_OUT, "self.in_jiraIn");//->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
+		sd1.getIoMapping().put(JIRA_OUT, "self.in_jiraIn.asSet()");//->forAll(artIn | self.out_jiraOut->exists(artOut  | artOut = artIn)) and self.out_jiraOut->forAll(artOut2 | self.in_jiraIn->exists(artIn2  | artOut2 = artIn2))"); // ensures both sets are identical in content
 		sd1.setInDNDid(DND_SUB_START);
 		sd1.setOutDNDid(DND_SUB_END);
 		procD.getSteps().add(sd1);
@@ -205,12 +205,18 @@ public class TestDTOProcesses {
 		Step sd1 = buildAndIncludeStep(SD1, procD);
 		buildJiraInput(JIRA_IN, sd1);
 		buildJiraOutput(JIRA_OUT, sd1);
+//		sd1.getIoMapping().put(JIRA_OUT,
+//			"self.in_jiraIn"
+//				+ "->asList()"
+//				+ "->first()"
+//				+ "->asType(<"+jiraFQN+">)"
+//						+ ".requirements.asSet()");
+		
 		sd1.getIoMapping().put(JIRA_OUT,
-			"self.in_jiraIn"
-				+ "->asList()"
-				+ "->first()"
-				+ "->asType(<"+jiraFQN+">)"
-						+ ".requirements");
+				"self.in_jiraIn"
+					+ "->any()"
+					+ "->asType(<"+jiraFQN+">)"
+							+ ".requirements.asSet()");
 		
 		buildAndIncludeCondition(sd1, Conditions.PRECONDITION, "self.in_jiraIn->size() = 1");
 		buildAndIncludeCondition(sd1, Conditions.POSTCONDITION,"self.out_jiraOut->size() = self.in_jiraIn->asList()->first()->asType(<"+jiraFQN+">).requirements->size()");

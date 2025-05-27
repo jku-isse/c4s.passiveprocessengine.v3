@@ -125,7 +125,7 @@ public class ProcessInstanceChangeProcessor implements ChangeListener {
 
 	private Optional<ProcessScopedCmd> processPropertyUpdateSet(PropertyChange.Set op) {
 		RDFElement element = op.getElement();
-		if (op.getPropertyURI().equals(RuleSchemaFactory.ruleHasConsistentResultURI) && element instanceof RDFRuleResultWrapper cr) {
+		if (op.getPropertyURI().toString().equals(RuleSchemaFactory.ruleHasConsistentResultURI) && element instanceof RDFRuleResultWrapper cr) {
 			RDFInstance ruleContext = cr.getContextInstance();
 			if (isOfStepType(ruleContext)) { // rule belonging to a step, or process
 				//ProcessStep step = getAsStepOrClass(ruleContext);

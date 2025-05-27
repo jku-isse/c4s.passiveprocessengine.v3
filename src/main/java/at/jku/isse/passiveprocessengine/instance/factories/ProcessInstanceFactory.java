@@ -64,8 +64,7 @@ public class ProcessInstanceFactory extends DomainFactory {
 		
 		// init first DNI, there should be only one. Needs to be checked earlier with definition creation
 		// we assume consistent, correct specification/definition here
-		process.setSingleProperty(AbstractProcessInstanceType.CoreProperties.processDefinition.toString()
-				, pdef.getInstance());
+		process.setSingleProperty(AbstractProcessInstanceType.CoreProperties.processDefinition.toString(), pdef);
 		this.initProcessStep(process, pdef, inDNI, outDNI);		
 		
 		// instantiate all steps and thereby the DNIs
@@ -93,6 +92,7 @@ public class ProcessInstanceFactory extends DomainFactory {
 				, getContext().findNonDeletedInstanceTypeByFQN(stepDef.getId()).get());
 			ProcessStep step = (ProcessStep) instance;
 			step.setProcess(scope);
+			
 			initProcessStep(step, stepDef, inDNI, outDNI);
 			return step;
 		}
@@ -114,13 +114,13 @@ public class ProcessInstanceFactory extends DomainFactory {
 		instance.setSingleProperty(AbstractProcessStepType.CoreProperties.processedCancelCondFulfilled.toString(),false);
 		instance.setSingleProperty(AbstractProcessStepType.CoreProperties.processedActivationCondFulfilled.toString(),false);
 
-		instance.setSingleProperty(AbstractProcessStepType.CoreProperties.stepDefinition.toString(),sd.getInstance());
+		instance.setSingleProperty(AbstractProcessStepType.CoreProperties.stepDefinition.toString(),sd);
 		if (inDNI != null) {
-			instance.setSingleProperty(AbstractProcessStepType.CoreProperties.inDNI.toString(),inDNI.getInstance());
+			instance.setSingleProperty(AbstractProcessStepType.CoreProperties.inDNI.toString(),inDNI);
 			inDNI.addOutStep(step);
 		}
 		if (outDNI != null) {
-			instance.setSingleProperty(AbstractProcessStepType.CoreProperties.outDNI.toString(),outDNI.getInstance());
+			instance.setSingleProperty(AbstractProcessStepType.CoreProperties.outDNI.toString(),outDNI);
 			outDNI.addInStep(step);
 		}
 		// only if no input and no preconditions --> automatically go into enabled, (if there is input, then there needs to be a precondition checking for presence of input)
@@ -134,7 +134,7 @@ public class ProcessInstanceFactory extends DomainFactory {
 		.forEach(spec -> {
 			//String qid = SpecificProcessInstanceTypesFactory.getQASpecId(spec, pd);
 			ConstraintResultWrapper cw = crwFactory.createInstance(spec, ZonedDateTime.now(), step, getParentProcessOrThisIfProcessElseNull(step));			
-			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).put(spec.getId(), cw.getInstance());
+			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.qaState.toString(), Map.class).put(SpecificProcessInstanceTypesFactory.getRuleURI(spec), cw);
 		});
 		// init of multi constraint wrappers:
 		sd.getPostconditions().stream()
@@ -142,28 +142,28 @@ public class ProcessInstanceFactory extends DomainFactory {
 		.forEach(spec -> {
 			//String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.POSTCONDITION, spec.getOrderIndex(), step.getInstanceType());
 			ConstraintResultWrapper cw = crwFactory.createInstance(spec, ZonedDateTime.now(), step, getParentProcessOrThisIfProcessElseNull(step));
-			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.postconditions.toString(), Map.class).put(spec.getId(), cw.getInstance());
+			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.postconditions.toString(), Map.class).put(SpecificProcessInstanceTypesFactory.getRuleURI(spec), cw);
 		});
 		sd.getPreconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
 			//String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.PRECONDITION, spec.getOrderIndex(), step.getInstanceType());
 			ConstraintResultWrapper cw = crwFactory.createInstance(spec, ZonedDateTime.now(), step, getParentProcessOrThisIfProcessElseNull(step));
-			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.preconditions.toString(), Map.class).put(spec.getId(), cw.getInstance());
+			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.preconditions.toString(), Map.class).put(SpecificProcessInstanceTypesFactory.getRuleURI(spec), cw);
 		});
 		sd.getCancelconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
 			//String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.CANCELATION, spec.getOrderIndex(), step.getInstanceType());
 			ConstraintResultWrapper cw = crwFactory.createInstance(spec, ZonedDateTime.now(), step, getParentProcessOrThisIfProcessElseNull(step));
-			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.cancelconditions.toString(), Map.class).put(spec.getId(), cw.getInstance());
+			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.cancelconditions.toString(), Map.class).put(SpecificProcessInstanceTypesFactory.getRuleURI(spec), cw);
 		});
 		sd.getActivationconditions().stream()
 		.sorted(ConstraintSpec.COMPARATOR_BY_ORDERINDEX)
 		.forEach(spec -> {
 			//String specId = SpecificProcessInstanceTypesFactory.getConstraintName(Conditions.ACTIVATION, spec.getOrderIndex(), step.getInstanceType());
 			ConstraintResultWrapper cw = crwFactory.createInstance(spec, ZonedDateTime.now(), step, getParentProcessOrThisIfProcessElseNull(step));
-			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.activationconditions.toString(), Map.class).put(spec.getId(), cw.getInstance());
+			instance.getTypedProperty(AbstractProcessStepType.CoreProperties.activationconditions.toString(), Map.class).put(SpecificProcessInstanceTypesFactory.getRuleURI(spec), cw); //we use the uri of the rule definition as the lookup id
 		});
 	}
 	

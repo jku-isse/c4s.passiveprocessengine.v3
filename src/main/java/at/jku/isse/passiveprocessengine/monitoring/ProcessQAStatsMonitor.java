@@ -127,7 +127,7 @@ public class ProcessQAStatsMonitor implements IProcessEventHandler {
 			return Collections.emptySet();
 
 		Set<ProcessStep> downstream = new HashSet<>();
-		root.getOutDNI().getOutSteps().forEach(step -> {
+		root.getOutDNI().getOutSteps().stream().forEach(step -> {
 			downstream.add(step);
 			downstream.addAll(getAllRelevantDownstreamSteps(step));
 			});

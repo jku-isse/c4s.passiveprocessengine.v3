@@ -63,14 +63,16 @@ public class ConstraintResultWrapperTypeFactory extends AbstractTypeProvider {
 		type.createSinglePropertyType(CoreProperties.overrideReason.toString(), primitives.getStringType());
 
 		// so ugly:
-		processInstanceScopeType.addGenericProcessProperty(type);
+		//processInstanceScopeType.addGenericProcessProperty(type);
 	}
 
 	/**
 	 * assuming that process has unique name across all processes and qaSpec has unique name within that process' definition
 	 * */
 	public static String generateId(ConstraintSpec qaSpec, ProcessInstance proc) {
-		return qaSpec.getName()+"-"+proc.getName(); 
+		var ns = proc.getInstance().getNameSpace();
+		var procName = proc.getInstance().getLocalName();
+		return ns.substring(0, ns.length()-1) + "/" + procName + "/constraintresultwrapper#"+qaSpec.getInstance().getLocalName();		
 	}
 	
 	public ConstraintResultWrapper createInstance(ConstraintSpec qaSpec, ZonedDateTime lastChanged, ProcessStep owningStep, ProcessInstance proc) {
@@ -78,7 +80,7 @@ public class ConstraintResultWrapperTypeFactory extends AbstractTypeProvider {
 		RDFInstance inst = schemaRegistry.createInstance(id, schemaRegistry.findNonDeletedInstanceTypeByFQN(ConstraintResultWrapperTypeFactory.typeId)
 				.orElseThrow());
 		ConstraintResultWrapper cw = (ConstraintResultWrapper)inst;
-		cw.setSingleProperty(ConstraintResultWrapperTypeFactory.CoreProperties.parentStep.toString(), owningStep.getInstance());
+		cw.setSingleProperty(ConstraintResultWrapperTypeFactory.CoreProperties.parentStep.toString(), owningStep);
 		cw.setSpec(qaSpec);
 		cw.setLastChanged(lastChanged);
 		cw.setProcess(proc);

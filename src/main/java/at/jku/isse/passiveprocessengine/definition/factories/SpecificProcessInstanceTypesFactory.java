@@ -169,7 +169,7 @@ public class SpecificProcessInstanceTypesFactory {
 	public static String getSpecURI(@NonNull Conditions conditions, @NonNull String constraintCode, @NonNull StepDefinition step) {
 		String ns= step.getInstance().getNameSpace();
 		String stepName = step.getName();
-		return ns.substring(0, ns.length()-1)+"/"+stepName+"/"+conditions.toString() + "#" +constraintCode;
+		return ns.substring(0, ns.length()-1)+"/"+stepName+"/"+conditions.toString() +"#"+conditions.toString() + constraintCode;
 	}
 	
 	public static Conditions getConditionFromURI(@NonNull String uri) {
@@ -178,7 +178,7 @@ public class SpecificProcessInstanceTypesFactory {
 		var baseURI = uri.substring(0, fragPos);
 		var lastPathPos = baseURI.lastIndexOf("/");
 		if (lastPathPos == -1) return null;
-		var lastPath = baseURI.substring(lastPathPos);
+		var lastPath = baseURI.substring(lastPathPos+1);
 		return Conditions.valueOf(lastPath);
 	}
 }

@@ -36,13 +36,17 @@ public class ProcessInstanceScopeTypeFactory extends AbstractTypeProvider {
 	}	
 	
 	public void produceTypeProperties() {
-		//type.createPropertyType(CoreProperties.process.toString(), Cardinality.SINGLE, typeStep); needs to be add in individual subclasses in order to be able to refine it					
+		//type.createPropertyType(CoreProperties.process.toString(), Cardinality.SINGLE, typeStep); needs to be add in individual subclasses in order to be able to refine it
+		type.createSinglePropertyType(ProcessInstanceScopeTypeFactory.CoreProperties.process.toString(), 
+				schemaRegistry.findNonDeletedInstanceTypeByFQN(AbstractProcessInstanceType.typeId)
+				.orElseThrow().getAsPropertyType()
+				);	
 	}
 	
-	public void addGenericProcessProperty(RDFInstanceType instType) {
-		if (instType.getPropertyType(ProcessInstanceScopeTypeFactory.CoreProperties.process.toString()) == null) {
-			instType.createSinglePropertyType(ProcessInstanceScopeTypeFactory.CoreProperties.process.toString(), type.getAsPropertyType());			
-		}
-		instType.cacheSuperProperties();
-	}
+//	public void addGenericProcessProperty(RDFInstanceType instType) {
+//		if (instType.getPropertyType(ProcessInstanceScopeTypeFactory.CoreProperties.process.toString()) == null) {
+//			instType.createSinglePropertyType(ProcessInstanceScopeTypeFactory.CoreProperties.process.toString(), type.getAsPropertyType());			
+//		}
+//		instType.cacheSuperProperties();
+//	}
 }

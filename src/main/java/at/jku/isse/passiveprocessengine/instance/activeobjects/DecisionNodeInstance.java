@@ -58,7 +58,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	// not to be used outside of ProcessStepInstanceFactory
 	@SuppressWarnings("unchecked")
 	public void addOutStep(ProcessStep step) {
-		getTypedProperty(DecisionNodeInstanceTypeFactory.CoreProperties.outSteps.toString(), Set.class).add(step.getInstance());
+		getTypedProperty(DecisionNodeInstanceTypeFactory.CoreProperties.outSteps.toString(), Set.class).add(step);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -71,7 +71,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 
 	@SuppressWarnings("unchecked")
 	public void addInStep(ProcessStep step) {
-		getTypedProperty(DecisionNodeInstanceTypeFactory.CoreProperties.inSteps.toString(), Set.class).add(step.getInstance());
+		getTypedProperty(DecisionNodeInstanceTypeFactory.CoreProperties.inSteps.toString(), Set.class).add(step);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -352,7 +352,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 				return dnd;
 			else {
 				DecisionNodeInstance closingDnd = determineScopeClosingDN();
-				setSingleProperty(DecisionNodeInstanceTypeFactory.CoreProperties.closingDN.toString(), closingDnd.getInstance());
+				setSingleProperty(DecisionNodeInstanceTypeFactory.CoreProperties.closingDN.toString(), closingDnd);
 				return closingDnd;
 			}
 		}

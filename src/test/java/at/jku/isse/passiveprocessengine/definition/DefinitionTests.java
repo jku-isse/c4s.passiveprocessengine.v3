@@ -31,7 +31,7 @@ public class DefinitionTests extends DefinitionWrapperTests {
 	
 	@Override
 	@BeforeAll
-	public void setup() throws URISyntaxException {
+	public void setup() throws Exception {
 		super.setup();
 		artifactFactory = new TestArtifacts(schemaReg);
 		procFactory = new TestDTOProcesses(artifactFactory);

@@ -17,7 +17,7 @@ public abstract class ProcessInstanceScopedElement extends RDFInstance {
 	}
 
 	public void setProcess(ProcessInstance pi) {
-		setSingleProperty(ProcessInstanceScopeTypeFactory.CoreProperties.process.toString(), pi.getInstance());
+		setSingleProperty(ProcessInstanceScopeTypeFactory.CoreProperties.process.toString(), pi);
 	}
 
 	public ProcessInstance getProcess() {

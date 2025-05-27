@@ -70,7 +70,7 @@ public class ConstraintResultWrapper extends ProcessInstanceScopedElement {
 
 	//Not to be called directly, only public for factory access
 	public void setSpec(ConstraintSpec qaSpec) {
-		setSingleProperty(CoreProperties.constraintSpec.toString(), qaSpec.getInstance());
+		setSingleProperty(CoreProperties.constraintSpec.toString(), qaSpec);
 	}
 
 	public ProcessStep getParentStep() {

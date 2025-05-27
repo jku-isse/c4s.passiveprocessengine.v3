@@ -111,7 +111,7 @@ public class RuleAugmentation {
 			} catch(Exception e) {
 				errors.add(new ProcessDefinitionError(stepDef, String.format(ERROR_AUMENTING_CONSTRAINT_TEMPLATE, specId, arl), e.getMessage(), ProcessDefinitionError.Severity.ERROR));
 			}
-			var wrapper = ruleFactory.createInstance(stepType, specId, arl);
+			var wrapper = ruleFactory.createInstance(stepType, specId, arl, spec.getName());
 			spec.setSingleProperty(ConstraintSpecTypeFactory.CoreProperties.ruleType.toString(), wrapper);
 		}
 	}

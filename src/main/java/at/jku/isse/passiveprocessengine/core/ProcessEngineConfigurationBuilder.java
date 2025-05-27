@@ -40,7 +40,7 @@ public class ProcessEngineConfigurationBuilder {
 		MappingDefinitionTypeFactory mapTypeProvider = new MappingDefinitionTypeFactory(schemaRegistry);		
 		DecisionNodeDefinitionTypeFactory dndTypeProvider = new DecisionNodeDefinitionTypeFactory(schemaRegistry);		
 		StepDefinitionTypeFactory stepTypeProvider = new StepDefinitionTypeFactory(schemaRegistry);		
-		ProcessDefinitionTypeFactory processTypeProvider = new ProcessDefinitionTypeFactory(schemaRegistry, stepTypeProvider, dndTypeProvider);
+		ProcessDefinitionTypeFactory processTypeProvider = new ProcessDefinitionTypeFactory(schemaRegistry, stepTypeProvider, dndTypeProvider);		
 		scopeTypeProvider.produceTypeProperties();
 		specTypeProvider.produceTypeProperties();
 		mapTypeProvider.produceTypeProperties();

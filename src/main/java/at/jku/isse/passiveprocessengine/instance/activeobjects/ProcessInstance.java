@@ -88,9 +88,11 @@ public class ProcessInstance extends ProcessStep {
 
 	// only to be used by factory
     public DecisionNodeInstance getOrCreateDNI(DecisionNodeDefinition dnd) {
-    	return this.getDecisionNodeInstances().stream()
+    	var dnis = this.getDecisionNodeInstances();
+    	return dnis.stream()
     	.filter(dni -> dni.getDefinition().equals(dnd))
-    	.findAny().orElseGet(() -> { DecisionNodeInstance dni = decisionNodeFactory.getInstance(dnd, this);
+    	.findAny().orElseGet(() -> { 
+    		DecisionNodeInstance dni = decisionNodeFactory.getInstance(dnd, this);
     				dni.setProcess(this);
     				this.addDecisionNodeInstance(dni);
     				return dni;
@@ -235,7 +237,7 @@ public class ProcessInstance extends ProcessStep {
 	private void addProcessStep(ProcessStep step) {
 		assert(step != null);
 		assert(step.getInstance() != null);
-		getTypedProperty(CoreProperties.stepInstances.toString(), Set.class).add(step.getInstance());
+		getTypedProperty(CoreProperties.stepInstances.toString(), Set.class).add(step);
 	}
 
 	public Set<ProcessStep> getProcessSteps() {
@@ -262,7 +264,7 @@ public class ProcessInstance extends ProcessStep {
 
 	@SuppressWarnings("unchecked")
 	private void addDecisionNodeInstance(DecisionNodeInstance dni) {
-		getTypedProperty(CoreProperties.decisionNodeInstances.toString(), Set.class).add(dni.getInstance());
+		getTypedProperty(CoreProperties.decisionNodeInstances.toString(), Set.class).add(dni);
 	}
 
 	public Set<DecisionNodeInstance> getInstantiatedDNIsHavingStepsOutputAsInput(ProcessStep step, String output) {

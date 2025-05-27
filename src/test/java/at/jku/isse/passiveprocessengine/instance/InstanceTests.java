@@ -9,6 +9,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+import at.jku.isse.artifacteventstreaming.api.exceptions.BranchConfigurationException;
+import at.jku.isse.artifacteventstreaming.api.exceptions.PersistenceException;
 import at.jku.isse.passiveprocessengine.definition.DefinitionTests;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.registry.DTOs;
@@ -42,7 +44,7 @@ class InstanceTests extends DefinitionTests {
 	@Override
 	@BeforeAll
 	public
-	void setup() throws URISyntaxException {
+	void setup() throws Exception {
 		super.setup();
 		EventDistributor eventDistrib = new EventDistributor();
 		monitor = new ProcessQAStatsMonitor(new CurrentSystemTimeProvider());
@@ -51,6 +53,7 @@ class InstanceTests extends DefinitionTests {
 		ChangeEventTransformer picpWrapper = wrapperFactory.getChangeEventTransformer();
 		picpWrapper.registerWithBranch(picp);
 		typeJira = artifactFactory.getJiraInstanceType();
+		super.wrapperFactory.signalExternalSetupComplete();
 		//UsageMonitor usageMonitor = new UsageMonitor(new CurrentSystemTimeProvider(), ruleServiceWrapper);
 		//ExecutedRepairListenerImpl repairListener = new ExecutedRepairListenerImpl(usageMonitor, configBuilder.getContext());
 		//ruleServiceWrapper.register(repairListener);					
@@ -107,7 +110,7 @@ class InstanceTests extends DefinitionTests {
 	}
 	
 	@Test
-	void testComplexDataMappingUpdateToProperty() throws ProcessException {
+	void testComplexDataMappingUpdateToProperty() {
 		
 		RDFInstance jiraB =  artifactFactory.getJiraInstance("jiraB");
 		RDFInstance jiraC = artifactFactory.getJiraInstance("jiraC");

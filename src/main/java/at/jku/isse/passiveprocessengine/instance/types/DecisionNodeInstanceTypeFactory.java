@@ -62,19 +62,19 @@ public class DecisionNodeInstanceTypeFactory extends AbstractTypeProvider {
 				.orElse(null));
 		type.createSinglePropertyType(CoreProperties.closingDN.toString(), type.getAsPropertyType());
 
-		processInstanceScopeType.addGenericProcessProperty(type);
+		//processInstanceScopeType.addGenericProcessProperty(type);
 	}	
 	
 	public DecisionNodeInstance getInstance(DecisionNodeDefinition dnd, ProcessInstance scope) {			
-		var base = scope.getInstance().getNameSpace();
+		var ns = scope.getInstance().getNameSpace();
 		var procName = scope.getInstance().getLocalName();
-		var id = base + "/" + procName + "/dni#" + dnd.getName();
+		var id = ns.substring(0, ns.length()-1) + "/" + procName + "/dni#" + dnd.getName();
 		
 		RDFInstance instance = schemaRegistry.createInstance(id
 			, schemaRegistry.findNonDeletedInstanceTypeByFQN(DecisionNodeInstanceTypeFactory.typeId).orElseThrow());
 		DecisionNodeInstance dni = (DecisionNodeInstance) instance;
 
-		instance.setSingleProperty(DecisionNodeInstanceTypeFactory.CoreProperties.dnd.toString(),dnd.getInstance());
+		instance.setSingleProperty(DecisionNodeInstanceTypeFactory.CoreProperties.dnd.toString(),dnd);
 		instance.setSingleProperty(DecisionNodeInstanceTypeFactory.CoreProperties.hasPropagated.toString(),false);
 		instance.setSingleProperty(DecisionNodeInstanceTypeFactory.CoreProperties.isInflowFulfilled.toString(), false);
 		return dni;
