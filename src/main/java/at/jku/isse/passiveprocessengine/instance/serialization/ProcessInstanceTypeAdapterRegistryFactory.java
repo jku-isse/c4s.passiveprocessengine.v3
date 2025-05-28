@@ -15,13 +15,14 @@ import at.jku.isse.passiveprocessengine.instance.types.DecisionNodeInstanceTypeF
 import at.jku.isse.passiveprocessengine.instance.types.ProcessInstanceScopeTypeFactory;
 import at.jku.isse.passiveprocessengine.instance.types.SpecificProcessInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.CoreTypeFactory;
+import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
 
 public class ProcessInstanceTypeAdapterRegistryFactory {
 
 	
-	public static TypeAdapterRegistry buildRegistry(RuleEnabledResolver context) {
+	public static TypeAdapterRegistry buildRegistry(RuleEnabledResolver schemaReg) {
 		// we need the context as only then can we be sure to have the process definition and instance base types initialized
-		NodeToDomainResolver schemaReg = context.getSchemaRegistry();
+		
 		
 		TypeAdapterRegistry typeAdapterRegistry = new TypeAdapterRegistry();
 		
@@ -30,52 +31,52 @@ public class ProcessInstanceTypeAdapterRegistryFactory {
 				new StepTypeAdapter(typeAdapterRegistry 
 						, concat(getShallowProcessInstanceProperties().stream(), getShallowProcessStepProperties().stream()).collect(toSet())
 						, concat(getDeepProcessInstanceProperties().stream(), getDeepProcessStepProperties().stream()).collect(toSet())
-						, context)
-				, schemaReg.findNonDeletedInstanceTypeByFQN(AbstractProcessInstanceType.typeId));
+						, schemaReg)
+				, schemaReg.findNonDeletedInstanceTypeByFQN(AbstractProcessInstanceType.typeId).orElseThrow());
 		// process step
 		typeAdapterRegistry.registerTypeAdapter(
 				new StepTypeAdapter(typeAdapterRegistry 
 						, getShallowProcessStepProperties()
 						, getDeepProcessStepProperties()
-						, context)
-				, schemaReg.findNonDeletedInstanceTypeByFQN(AbstractProcessStepType.typeId));
+						, schemaReg)
+				, schemaReg.findNonDeletedInstanceTypeByFQN(AbstractProcessStepType.typeId).orElseThrow());
 		// decision node - only shallow
 		typeAdapterRegistry.registerTypeAdapter(
 				new ConfigurablePropertyTypeAdapter(typeAdapterRegistry 
 						, getShallowDecisionNodeProperties()
 						, Collections.emptySet())
-				, schemaReg.findNonDeletedInstanceTypeByFQN(DecisionNodeInstanceTypeFactory.typeId));
+				, schemaReg.findNonDeletedInstanceTypeByFQN(DecisionNodeInstanceTypeFactory.typeId).orElseThrow());
 		// constraint wrapper - only deep
 		typeAdapterRegistry.registerTypeAdapter(
 				new ConfigurablePropertyTypeAdapter(typeAdapterRegistry 
 						, Collections.emptySet()
 						, getDeepProcessWrapperProperties() )
-				, schemaReg.findNonDeletedInstanceTypeByFQN(ConstraintResultWrapperTypeFactory.typeId));
+				, schemaReg.findNonDeletedInstanceTypeByFQN(ConstraintResultWrapperTypeFactory.typeId).orElseThrow());
 		// constraint spec, wrapper needs spec as there the actual constraint is described, wrapper could be also shallow
 		typeAdapterRegistry.registerTypeAdapter(
 				new ConfigurablePropertyTypeAdapter(typeAdapterRegistry 
 						, getShallowConstraintSpecProperties()
 						, Collections.emptySet())
-				, schemaReg.findNonDeletedInstanceTypeByFQN(ConstraintSpecTypeFactory.typeId));
+				, schemaReg.findNonDeletedInstanceTypeByFQN(ConstraintSpecTypeFactory.typeId).orElseThrow());
 		// Artifacts minimal info - only shallow
 		typeAdapterRegistry.registerTypeAdapter(
 				new ConfigurablePropertyTypeAdapter(typeAdapterRegistry 
 						, getShallowArtifactProperties()
 						, Collections.emptySet())
-				, schemaReg.findNonDeletedInstanceTypeByFQN(CoreTypeFactory.BASE_TYPE_URI));
+				, schemaReg.findNonDeletedInstanceTypeByFQN(CoreTypeFactory.BASE_TYPE_URI).orElseThrow());
 		
 		return typeAdapterRegistry;
 	}
 	
 	private static Set<String> getDeepProcessInstanceProperties() {
-		return Set.of(SpecificProcessInstanceType.CoreProperties.createdAt.toString() 
-				,SpecificProcessInstanceType.CoreProperties.stepInstances.toString()
-				,SpecificProcessInstanceType.CoreProperties.decisionNodeInstances.toString()
+		return Set.of(AbstractProcessInstanceType.CoreProperties.createdAt.toString() 
+				,AbstractProcessInstanceType.CoreProperties.stepInstances.toString()
+				,AbstractProcessInstanceType.CoreProperties.decisionNodeInstances.toString()
 				);
 	}
 	
 	private static Set<String> getShallowProcessInstanceProperties() {
-		return Set.of(SpecificProcessInstanceType.CoreProperties.processDefinition.toString()
+		return Set.of(AbstractProcessInstanceType.CoreProperties.processDefinition.toString()
 				);
 	}
 	

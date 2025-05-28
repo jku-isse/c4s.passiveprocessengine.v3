@@ -5,7 +5,7 @@ import java.io.IOException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonWriter;
 
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -14,9 +14,9 @@ public class DeepPropertyGsonWriter extends ShallowPropertyGsonWriter {
 	private final TypeAdapterRegistry registry;
 
 	@Override
-	protected void writeInstanceValue(PPEInstance instance, JsonWriter writer) throws IOException {
+	protected void writeInstanceValue(RDFInstance instance, JsonWriter writer) throws IOException {
 		
-		TypeAdapter<PPEInstance> adapter = registry.getTypeAdapterOrDefault(instance.getInstanceType());
+		TypeAdapter<RDFInstance> adapter = registry.getTypeAdapterOrDefault(instance.getInstanceType());
 		adapter.write(writer, instance);
 	}
 	

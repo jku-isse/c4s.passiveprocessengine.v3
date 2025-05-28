@@ -10,13 +10,12 @@ import java.util.Set;
 
 import com.google.gson.stream.JsonWriter;
 
-import at.jku.isse.passiveprocessengine.core.BuildInType;
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType.PPEPropertyType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFPropertyType;
 
 public class ShallowPropertyGsonWriter {
 
-	public void writeProperty(PPEPropertyType propType, PPEInstance instance, JsonWriter writer) throws IOException {
+	public void writeProperty(RDFPropertyType propType, RDFInstance instance, JsonWriter writer) throws IOException {
 		writer.name(propType.getName());
 		switch(propType.getCardinality()) {
 		case LIST:
@@ -36,44 +35,44 @@ public class ShallowPropertyGsonWriter {
 		}
 	}
 	
-	private void writeMapProperty(PPEPropertyType propType, @SuppressWarnings("rawtypes") Map<String, ?> map, JsonWriter writer) throws IOException {
+	private void writeMapProperty(RDFPropertyType propType, @SuppressWarnings("rawtypes") Map<String, ?> map, JsonWriter writer) throws IOException {
 		writer.beginObject();
-		boolean isAtomic = BuildInType.isAtomicType(propType.getInstanceType());
+		boolean isAtomic = propType.getValueType().isPrimitiveType();
 		for (Entry<String, ?> entry : map.entrySet()) {
 			writer.name(entry.getKey());
 			if (isAtomic) {
 				writer.value(Objects.toString(entry.getValue()));
 			} else {
-				writeInstanceValue((PPEInstance)entry.getValue(), writer);
+				writeInstanceValue((RDFInstance)entry.getValue(), writer);
 			}
 		};
 		writer.endObject();
 	}
 	
-	private void writeCollectionProperty(PPEPropertyType propType, @SuppressWarnings("rawtypes") Collection collection, JsonWriter writer) throws IOException {
+	private void writeCollectionProperty(RDFPropertyType propType, @SuppressWarnings("rawtypes") Collection collection, JsonWriter writer) throws IOException {
 		writer.beginArray();
-		if (BuildInType.isAtomicType(propType.getInstanceType()) ) {
+		if (propType.getValueType().isPrimitiveType() ) {
 			for(Object value : collection) {
 				writer.value(Objects.toString(value));
 			}
 		} else {
 			for(Object value : collection) {
-				writeInstanceValue((PPEInstance)value, writer);
+				writeInstanceValue((RDFInstance)value, writer);
 			}
 		}
 		writer.endArray();
 	}
 	
-	private void writeSingleProperty(PPEPropertyType propType, PPEInstance instance, JsonWriter writer) throws IOException {
-		if (BuildInType.isAtomicType(propType.getInstanceType()) ) {
+	private void writeSingleProperty(RDFPropertyType propType, RDFInstance instance, JsonWriter writer) throws IOException {
+		if (propType.getValueType().isPrimitiveType() ) {
 			Object value = instance.getTypedProperty(propType.getName(), Object.class);
 			writer.value(Objects.toString(value));
 		} else {
-			writeInstanceValue(instance.getTypedProperty(propType.getName(), PPEInstance.class), writer);
+			writeInstanceValue(instance.getTypedProperty(propType.getName(), RDFInstance.class), writer);
 		}
 	}
 	
-	protected void writeInstanceValue(PPEInstance instance, JsonWriter writer) throws IOException {
+	protected void writeInstanceValue(RDFInstance instance, JsonWriter writer) throws IOException {
 		if (instance == null) {
 			writer.nullValue();
 		} else {

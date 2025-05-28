@@ -6,18 +6,20 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 
-public class DefaultShallowTypeAdapter extends TypeAdapter<PPEInstance>{
+
+
+public class DefaultShallowTypeAdapter extends TypeAdapter<RDFInstance>{
 
 	protected final ShallowPropertyGsonWriter propertyWriter = new ShallowPropertyGsonWriter();
 
 	@Override
-	public void write(JsonWriter out, PPEInstance value) throws IOException {
+	public void write(JsonWriter out, RDFInstance value) throws IOException {
 		out.beginObject();
 		writeThisInstance(value, out);
-		PPEInstanceType type = value.getInstanceType();
+		RDFInstanceType type = value.getInstanceType();
 		type.getPropertyNamesIncludingSuperClasses().stream()
 		.map(propName -> type.getPropertyType(propName))
 		.forEach(propType -> {
@@ -31,11 +33,11 @@ public class DefaultShallowTypeAdapter extends TypeAdapter<PPEInstance>{
 	}
 
 	@Override
-	public PPEInstance read(JsonReader in) throws IOException {
-		throw new RuntimeException("PPEInstance can only be serialized but not deserialized");
+	public RDFInstance read(JsonReader in) throws IOException {
+		throw new RuntimeException("RDFInstance can only be serialized but not deserialized");
 	}
 	
-	protected void writeThisInstance(PPEInstance instance, JsonWriter writer) throws IOException {
+	protected void writeThisInstance(RDFInstance instance, JsonWriter writer) throws IOException {
 	      writer.name("internalId"); 
 	      writer.value(instance.getId()); 
 	      writer.name("name"); 

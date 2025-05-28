@@ -5,21 +5,22 @@ import java.util.Map;
 
 import com.google.gson.TypeAdapter;
 
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+
 
 public class TypeAdapterRegistry {
 
 	
-	private final Map<PPEInstanceType, TypeAdapter<PPEInstance>> registry = new HashMap<>();
-	private final TypeAdapter<PPEInstance> defaultAdapter = new DefaultShallowTypeAdapter();
+	private final Map<RDFInstanceType, TypeAdapter<RDFInstance>> registry = new HashMap<>();
+	private final TypeAdapter<RDFInstance> defaultAdapter = new DefaultShallowTypeAdapter();
 	
-	public void registerTypeAdapter(TypeAdapter<PPEInstance> adapter, PPEInstanceType type) {
+	public void registerTypeAdapter(TypeAdapter<RDFInstance> adapter, RDFInstanceType type) {
 		registry.put(type, adapter);
 	}
 	
-	public TypeAdapter<PPEInstance> getTypeAdapterOrDefault(PPEInstanceType type) {
-		TypeAdapter<PPEInstance> adapter = registry.get(type);
+	public TypeAdapter<RDFInstance> getTypeAdapterOrDefault(RDFInstanceType type) {
+		TypeAdapter<RDFInstance> adapter = registry.get(type);
 		while (adapter == null && type.getParentType() != null) {
 			adapter = registry.get(type.getParentType());
 			type = type.getParentType(); // prep for next iteration

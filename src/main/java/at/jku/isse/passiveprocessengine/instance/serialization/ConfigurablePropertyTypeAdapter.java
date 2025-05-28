@@ -5,8 +5,10 @@ import java.util.Set;
 
 import com.google.gson.stream.JsonWriter;
 
-import at.jku.isse.passiveprocessengine.core.PPEInstance;
-import at.jku.isse.passiveprocessengine.core.PPEInstanceType;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
+
+
 
 public class ConfigurablePropertyTypeAdapter extends DefaultShallowTypeAdapter{
 
@@ -23,10 +25,10 @@ public class ConfigurablePropertyTypeAdapter extends DefaultShallowTypeAdapter{
 	}
 
 	@Override
-	public void write(JsonWriter out, PPEInstance value) throws IOException {
+	public void write(JsonWriter out, RDFInstance value) throws IOException {
 		out.beginObject();
 		writeThisInstance(value, out);
-		PPEInstanceType type = value.getInstanceType();
+		RDFInstanceType type = value.getInstanceType();
 		type.getPropertyNamesIncludingSuperClasses().stream()
 		.filter(propName -> propertiesToSerializeShallow.contains(propName) 
 				|| propertiesToSerializeDeep.contains(propName))
