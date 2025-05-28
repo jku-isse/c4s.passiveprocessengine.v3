@@ -380,7 +380,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 			String param = SpecificProcessStepType.PREFIX_OUT+outParam;
 			//Property<?> prop = instance.getProperty();
 			if (getInstanceType().getPropertyType(param).isAssignable(artifact)) {
-				getTypedProperty(SpecificProcessStepType.PREFIX_OUT+param, Set.class).add(artifact);
+				getTypedProperty(param, Set.class).add(artifact);
 				return IOResponse.okResponse();
 			} else {
 				String msg = String.format("Cannot add outnput %s to %s with nonmatching artifact type %s of id % %s", param, this.getName(), artifact.getInstanceType().toString(), artifact.getId(), artifact.getName());

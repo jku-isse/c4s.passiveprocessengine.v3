@@ -53,7 +53,7 @@ public class ProcessRegistry {
 			throw new RuntimeException(msg);
 		} else {
 			processDefinitionType = processDefinitionTypeOpt.get();
-			processInstanceType = processDefinitionTypeOpt.get();
+			processInstanceType = processInstanceTypeOpt.get();
 		}		
 		context.getAllNonDeletedInstanceTypes().stream().forEach(itype -> log.debug(String.format("Available instance type %s ", itype.getName())));
 		loadPersistedProcesses();

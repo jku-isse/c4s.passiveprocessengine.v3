@@ -147,7 +147,7 @@ public class InterStepDataMapper {
 		// first get the source
 		process.getProcessSteps().stream()
 		.filter(wft -> wft.getDefinition().getName().equals(mdef.getFromStepType()) )
-		.filter(wft -> isPremature || (wft.getExpectedLifecycleState().equals(State.COMPLETED) &&  wft.getActualLifecycleState().equals(State.COMPLETED))) // we only map data for tasks that are indeed completed or we map for a premature step
+	//	.filter(wft -> isPremature || (wft.getExpectedLifecycleState().equals(State.COMPLETED) &&  wft.getActualLifecycleState().equals(State.COMPLETED))) // we only map data for tasks that are indeed completed or we map for a premature step
 		.filter(Objects::nonNull)
 		.findFirst().ifPresentOrElse( wft -> { if (isEndOfProcess)
 												templateEM.setDirection(FlowDir.outToOut);

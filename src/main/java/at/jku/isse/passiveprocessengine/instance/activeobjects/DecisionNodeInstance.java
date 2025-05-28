@@ -114,7 +114,7 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 	}
 
 	public List<Events.ProcessChangedEvent> signalPrevTaskDataChanged(ProcessStep prevTask) {
-		if (prevTask.getActualLifecycleState().equals(State.COMPLETED)) {
+		//if (prevTask.getActualLifecycleState().equals(State.COMPLETED)) {
 			//should we propagate now?
 			boolean isEndOfProcess = false;
 			if (this.getDefinition().getOutSteps().isEmpty() ) {
@@ -122,8 +122,8 @@ public class DecisionNodeInstance extends ProcessInstanceScopedElement {
 				isEndOfProcess = true;
 			}
 			return checkAndExecuteDataMappings(isEndOfProcess, false);// we just check everything, not too expensive as mappings are typically few.
-		}
-		return Collections.emptyList();
+		//}
+		//return Collections.emptyList();
 	}
 
 	private boolean updateInConditionsFullfilledAndCheckIfHasChanged() {

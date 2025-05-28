@@ -49,7 +49,7 @@ public class ProcessStepStats {
 		.forEach(check -> {
 			if (check.getRuleResult() == null)
 				qaConstraintsUnevaluatedAtSomeTime.add(check.getConstraintSpec().getConstraintId());
-			if (!check.getRuleResult().isConsistent())
+			else if (!check.getRuleResult().isConsistent())
 				qaConstraintsUnfulfilledAtSomeTime.add(check.getConstraintSpec().getConstraintId());
 			else
 				qaConstraintsFulfilledAtSomeTime.add(check.getConstraintSpec().getConstraintId());
@@ -62,7 +62,7 @@ public class ProcessStepStats {
 		.forEach(check -> {
 			if (check.getRuleResult() == null)
 				qaConstraintsUnevaluatedAtStepCompletion.add(check.getConstraintSpec().getConstraintId());
-			if (!check.getRuleResult().isConsistent())
+			else if (!check.getRuleResult().isConsistent())
 				qaConstraintsUnfulfilledAtStepCompletion.add(check.getConstraintSpec().getConstraintId());
 			else
 				qaConstraintsFulfilledAtStepCompletion.add(check.getConstraintSpec().getConstraintId());
