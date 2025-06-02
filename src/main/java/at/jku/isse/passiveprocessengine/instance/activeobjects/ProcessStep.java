@@ -15,6 +15,7 @@ import com.github.oxo42.stateless4j.StateMachine;
 
 import at.jku.isse.artifacteventstreaming.rule.definition.RDFRuleDefinition;
 import at.jku.isse.designspace.rule.arl.evaluator.RuleDefinition;
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFElement;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
@@ -46,7 +47,7 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 	private StateMachine<StepLifecycle.State, StepLifecycle.Trigger> expectedSM;
 	protected boolean priorQAfulfilled = false;
 	
-	public ProcessStep(@NonNull OntIndividual element, @NonNull RDFInstanceType type, @NonNull RuleEnabledResolver context) {
+	public ProcessStep(@NonNull OntIndividual element, @NonNull RDFInstanceType type, @NonNull NodeToDomainResolver context) {
 		super(element, type, context);
 		initState();
 	}

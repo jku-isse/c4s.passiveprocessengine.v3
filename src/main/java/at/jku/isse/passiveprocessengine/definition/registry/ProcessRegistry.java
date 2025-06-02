@@ -64,7 +64,7 @@ public class ProcessRegistry {
 		List<ProcessDefinition> defs = allProcDefs.stream()
 				.filter(inst -> !inst.isMarkedAsDeleted())
 				.filter(inst -> inst.getTypedProperty((ProcessDefinitionTypeFactory.CoreProperties.isWithoutBlockingErrors.toString()), Boolean.class, false) || !onlyValid)
-				.filter(inst -> inst.getName().equals(stringId))
+				.filter(inst -> inst.getId().equals(stringId))
 				.map(ProcessDefinition.class::cast) // the NodeToDomainResolver already creates the most specific java class type, here ProcessDefinition
 				.map(procDef -> { procDef.injectFactories(factoryIndex.getStepDefinitionFactory()
 						, factoryIndex.getDecisionNodeDefinitionFactory()); return procDef; })
@@ -184,8 +184,9 @@ public class ProcessRegistry {
 		return prevProcInput;
 	}
 
-	public void removeProcessDefinition(String name) {
-		getProcessDefinition(name, true).ifPresent(pdef -> {
+	public void removeProcessDefinition(String id) {
+		getProcessDefinition(id, false).ifPresent(pdef -> {
+			this.removeAllProcessInstancesOfProcessDefinition(pdef);
 			pdef.deleteCascading();
 		});
 	}

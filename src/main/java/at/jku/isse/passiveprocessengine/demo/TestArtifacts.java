@@ -50,6 +50,13 @@ public class TestArtifacts {
 	}
 
 	public RDFInstance getJiraInstance(String name, RDFInstance... reqs) {
+		// clear any preexisting ones
+		var uri = NodeToDomainResolver.BASE_NS+name;
+		var instOpt = schemaRegistry.findInstanceById(uri);
+		if (instOpt.isPresent()) {
+			instOpt.get().delete();
+		}
+		
 		RDFInstance jira = schemaRegistry.createInstance(name, getJiraInstanceType());
 		jira.setSingleProperty(CoreTypeFactory.URL_URI,"http://localhost:7171/home");
 		jira.setSingleProperty(CoreTypeFactory.EXTERNAL_TYPE_URI,"none");

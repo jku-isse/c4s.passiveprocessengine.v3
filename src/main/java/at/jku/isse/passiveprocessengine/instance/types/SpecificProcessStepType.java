@@ -42,7 +42,7 @@ public class SpecificProcessStepType extends AbstractTypeProvider {
 		} else {
 			//RDFInstanceType type = processType == null ? 
 			//	schemaRegistry.createNewInstanceType(stepName, schemaRegistry.findNonDeletedInstanceTypeByFQN(AbstractProcessInstanceType.typeId).get()) :			
-			type = schemaRegistry.createNewInstanceType(stepDef.getId(), schemaRegistry.findNonDeletedInstanceTypeByFQN(AbstractProcessStepType.typeId).get());			
+			type = schemaRegistry.createNewInstanceType(stepDef.getId(), schemaRegistry.findNonDeletedInstanceTypeByFQN(AbstractProcessStepType.typeId).orElseThrow());			
 			
 			stepDef.getExpectedInput().entrySet().stream()
 			.forEach(entry -> {

@@ -4,10 +4,12 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import org.apache.jena.ontapi.model.OntIndividual;
 
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFElement;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RDFRuleDefinitionWrapper;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
@@ -357,33 +359,21 @@ public class StepDefinition extends ProcessDefinitionScopedElement {
 
 	@Override
 	public void deleteCascading() {
-		// wring instanceType: we need to get the dynamically generate InstanceType (the one that is used for the ProcessStep)
-	//	String stepDefName = SpecificProcessStepType.getProcessStepName(this);
-		var instTypeOpt = this.resolver.findNonDeletedInstanceTypeByFQN(this.getId());
-		instTypeOpt.ifPresent(instType -> { 
-			this.getActivationconditions().stream().forEach(spec -> { deleteRuleIfExists(instType, spec, Conditions.ACTIVATION); //delete the rule 
-				spec.deleteCascading(); // delete the rule spec!
-			});
-			this.getCancelconditions().stream().forEach(spec -> { deleteRuleIfExists(instType, spec, Conditions.CANCELATION); //delete the rule 
-				spec.deleteCascading(); // delete the rule spec!
-			});
-			this.getPostconditions().stream().forEach(spec -> { deleteRuleIfExists(instType, spec, Conditions.POSTCONDITION); //delete the rule 
-				spec.deleteCascading(); // delete the rule spec!
-			});
-			this.getPreconditions().stream().forEach(spec -> { deleteRuleIfExists(instType, spec, Conditions.PRECONDITION); //delete the rule 
-				spec.deleteCascading(); // delete the rule spec!
-			});
-			// deleted derived property rules
-			this.getDerivedOutputPropertyRules().stream().forEach(def -> def.delete());	
-			//delete qa constraints:
-			ProcessDefinition pd = this.getProcess() !=null ? this.getProcess() : (ProcessDefinition)this;
-			this.getQAConstraints().stream()
-			.forEach(spec -> { deleteRuleIfExists(instType, spec, Conditions.PRECONDITION); //delete the rule 
-				spec.deleteCascading(); // delete the rule spec!
-			});
-			instType.delete();
-		}); // else // we never go around creating that step instance type probably due to errors in the definition
-		super.deleteCascading();
+		// due to steps being an instance and a type, we have to avoid the usual deletion chain and break the abstraction levels, hence careful here!!!
+		resolver.getMetaschemata().getMetaElements().unregisterInstanceSpecificClass(this.getId());
+		//first remove this as an instance
+		resolver.removeInstanceFromIndex(this);
+		this.getDerivedOutputPropertyRules().stream().forEach(RDFElement::delete);	
+		this.getActivationconditions().stream().forEach(ConstraintSpec::deleteCascading);
+		this.getCancelconditions().stream().forEach(ConstraintSpec::deleteCascading);
+		this.getPostconditions().stream().forEach(ConstraintSpec::deleteCascading);
+		this.getPreconditions().stream().forEach(ConstraintSpec::deleteCascading);
+		this.getQAConstraints().stream().forEach(ConstraintSpec::deleteCascading);
+		super.removeCollectionProperties();
+		var optThisType = this.resolver.findNonDeletedInstanceTypeByFQN(this.getId());
+		if (optThisType.isPresent()) {		//then remove this as a type
+			optThisType.get().delete();
+		}
 	}
 
 

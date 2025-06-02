@@ -11,6 +11,7 @@ import org.apache.jena.ontapi.model.OntIndividual;
 
 import at.jku.isse.designspace.rule.arl.evaluator.RuleDefinition;
 import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFElement;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEnabledResolver;
@@ -91,7 +92,7 @@ public class ProcessDefinition extends StepDefinition{
 		super.setDepthIndexRecursive(indexToSet);
 		// make sure we also update the child process steps
 		// find first DNI
-		DecisionNodeDefinition startDND = this.getDecisionNodeDefinitions().stream().filter(dnd -> dnd.getInSteps().isEmpty()).findFirst().get();
+		DecisionNodeDefinition startDND = this.getDecisionNodeDefinitions().stream().filter(dnd -> dnd.getInSteps().isEmpty()).findFirst().orElseThrow();
 		startDND.setDepthIndexRecursive(indexToSet+1);
 	}
 
@@ -109,18 +110,9 @@ public class ProcessDefinition extends StepDefinition{
 		});
 		// wring instanceType: we need to get the dynamically generate Instance (the one that is used for the ProcessInstance)
 		//String processDefName = SpecificProcessInstanceType.getProcessDefinitionURI(this);
-		var optThisType = this.resolver.findNonDeletedInstanceTypeByFQN(this.getId());
-		if (optThisType.isPresent()) {		
-			optThisType.get().delete();
-		}
-		this.getActivationconditions().stream().map(spec -> spec.getRuleDefinition()).filter(Objects::nonNull).forEach(def -> def.delete());
-		this.getCancelconditions().stream().map(spec -> spec.getRuleDefinition()).filter(Objects::nonNull).forEach(def -> def.delete());
-		this.getPostconditions().stream().map(spec -> spec.getRuleDefinition()).filter(Objects::nonNull).forEach(def -> def.delete());
-		this.getPreconditions().stream().map(spec -> spec.getRuleDefinition()).filter(Objects::nonNull).forEach(def -> def.delete());
-		this.getQAConstraints().stream().map(spec -> spec.getRuleDefinition()).filter(Objects::nonNull).forEach(def -> def.delete());
-		this.getDerivedOutputPropertyRules().stream().forEach(def -> def.delete());	
-		
 		super.deleteCascading();
+		
+		//element.removeProperties();
 	}
 	
 //	protected void deleteRuleIfExists(RDFInstanceType instType, ConstraintSpec spec, Conditions condition, String overrideName ) {

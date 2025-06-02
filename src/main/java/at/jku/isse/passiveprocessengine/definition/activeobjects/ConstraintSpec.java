@@ -13,7 +13,6 @@ import lombok.NonNull;
 
 public class ConstraintSpec extends  ProcessDefinitionScopedElement{
 
-
 	public ConstraintSpec(@NonNull OntIndividual element, RDFInstanceType type, @NonNull NodeToDomainResolver resolver) {
 		super(element, type, resolver);
 	}
@@ -52,6 +51,15 @@ public class ConstraintSpec extends  ProcessDefinitionScopedElement{
 
 	public RDFRuleDefinitionWrapper getRuleDefinition() {
 		return getTypedProperty(CoreProperties.ruleType.toString(), RDFRuleDefinitionWrapper.class);
+	}
+	
+	@Override
+	public void deleteCascading() {
+		var rule = getRuleDefinition();
+		if (rule != null) {
+			rule.delete();
+		}
+		super.deleteCascading();
 	}
 	
 	public static final Comparator<ConstraintSpec> COMPARATOR_BY_ORDERINDEX = new Comparator<>() {

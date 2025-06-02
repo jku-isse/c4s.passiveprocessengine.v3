@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.apache.jena.ontapi.model.OntIndividual;
 
+import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.DecisionNodeDefinition;
@@ -38,7 +39,7 @@ public class ProcessInstance extends ProcessStep {
 	private ProcessInstanceFactory stepFactory;
 	private DecisionNodeInstanceTypeFactory decisionNodeFactory;
 
-	public ProcessInstance(@NonNull OntIndividual element, @NonNull RDFInstanceType type, @NonNull RuleEnabledResolver context) {
+	public ProcessInstance(@NonNull OntIndividual element, @NonNull RDFInstanceType type, @NonNull NodeToDomainResolver context) {
 		super(element, type, context);
 		if (getCreatedAt() == null) { // truely null, otherwise just loading from persistance layer
 			setCreatedAt(getCurrentTimestamp());

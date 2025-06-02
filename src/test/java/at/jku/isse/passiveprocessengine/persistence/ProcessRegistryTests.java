@@ -1,180 +1,185 @@
 package at.jku.isse.passiveprocessengine.persistence;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.jena.ontapi.OntModelFactory;
-import org.apache.jena.ontapi.OntSpecification;
-import org.apache.jena.ontapi.model.OntModel;
-import org.apache.jena.query.ReadWrite;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
-import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
-import at.jku.isse.passiveprocessengine.core.ProcessEngineConfigurationBuilder;
-import at.jku.isse.passiveprocessengine.core.RepairTreeProvider;
-import at.jku.isse.passiveprocessengine.core.RuleAnalysisService;
-import at.jku.isse.passiveprocessengine.core.NodeToDomainResolver;
-import at.jku.isse.artifacteventstreaming.api.Branch;
-import at.jku.isse.artifacteventstreaming.api.BranchStateUpdater;
-import at.jku.isse.passiveprocessengine.core.InstanceRepository;
-import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
-import at.jku.isse.passiveprocessengine.definition.registry.DTOs;
-import at.jku.isse.passiveprocessengine.definition.registry.DefinitionTransformer;
-import at.jku.isse.passiveprocessengine.definition.registry.ProcessRegistry;
-import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
+import at.jku.isse.passiveprocessengine.TestPPERuntime;
+import at.jku.isse.passiveprocessengine.TestUtils;
 import at.jku.isse.passiveprocessengine.demo.TestDTOProcesses;
-import at.jku.isse.passiveprocessengine.instance.ProcessInstanceChangeProcessor;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.DecisionNodeInstance;
-import at.jku.isse.passiveprocessengine.instance.activeobjects.ProcessInstance;
-import at.jku.isse.passiveprocessengine.instance.messages.EventDistributor;
-import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
-import at.jku.isse.passiveprocessengine.monitoring.CurrentSystemTimeProvider;
-import at.jku.isse.passiveprocessengine.monitoring.ProcessQAStatsMonitor;
-import at.jku.isse.passiveprocessengine.rdfwrapper.AbstractionMapper;
-import at.jku.isse.passiveprocessengine.rdfwrapper.NodeToDomainResolver;
-import at.jku.isse.passiveprocessengine.rdfwrapper.config.RDFWrapperTestSetup;
-import at.jku.isse.passiveprocessengine.rdfwrapper.events.ChangeEventTransformer;
-import at.jku.isse.passiveprocessengine.rdfwrapper.events.ChangeListener;
-import at.jku.isse.passiveprocessengine.rdfwrapper.rule.RuleEvaluationService;
-import at.jku.isse.passiveprocessengine.rules.RewriterFactory;
-import lombok.NonNull;
+import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 
 public class ProcessRegistryTests extends ProcessPersistenceTests {
-
-	protected ProcessRegistry procReg;
-
-	@Override 
-	public void setup() throws Exception{
-		super.setup();
-		instanceRepository.startReadTransaction();
-		procReg = new ProcessRegistry(context);
-		instanceRepository.concludeTransaction();
-	}
 	
-	@Test
-	void testCreatingAndRegisterProcessDefinition() throws Exception {		
-		RDFWrapperTestSetup.resetPersistence(); //
-		setup(); // manual as we otherwise cant reset data
-		instanceRepository.startWriteTransaction();
-								
-		var deployResult = procReg.createProcessDefinitionIfNotExisting(procFactory.getSimple2StepProcessDefinition());
-		instanceRepository.concludeTransaction();
-		instanceRepository.startReadTransaction();
-		
-		System.out.println("BranchModel has size: "+branch.getModel().size());
-		assertEquals(0, deployResult.getDefinitionErrors().size());
-		assertEquals(0, deployResult.getInstanceErrors().size());
-		
-	}
 	
 	
 	@Test
-	void testLoadingAndRetrieveProcessDefinition() throws Exception {
-		RDFWrapperTestSetup.resetPersistence(); 
-		setup(); // manual as we otherwise cant reset data
-		startWrite();
-		System.out.println("Size before registration: "+branch.getModel().size());			
-		var deployResult = procReg.createProcessDefinitionIfNotExisting(procFactory.getSimple2StepProcessDefinition());		
-		instanceRepository.concludeTransaction();
-		instanceRepository.startWriteTransaction();
-		System.out.println("Size after registration: "+branch.getModel().size());
-		var defs = procReg.getAllDefinitions(true);
-		procReg.removeProcessDefinition(deployResult.getProcDef().getName());
-		instanceRepository.concludeTransaction();
-		instanceRepository.startReadTransaction();
-		System.out.println("Size after removal: "+branch.getModel().size());
+	void testCreatingRegisterAndDeleteProcessDefinition() throws Exception {		
 		
+		var initModel = OntModelFactory.createModel();
+		
+		runtime.startWrite();
+		System.out.println("Size before initial adding: "+runtime.branch.getModel().size());
+		initModel.add(runtime.branch.getModel());
+		var initialSize = runtime.branch.getModel().size();
+		System.out.println("BranchModel has size: "+initialSize);
+		
+		var result = runtime.getProcReg().createProcessDefinitionIfNotExisting(runtime.procFactory.getSimple2StepProcessDefinition());
+		assertTrue(result.getDefinitionErrors().isEmpty());
+		assertEquals(0, result.getDefinitionErrors().size());
+		assertEquals(0, result.getInstanceErrors().size());
+		var procDefURI = result.getProcDef().getId();
+		runtime.conclude();
+	
+		// reload data
+		runtime = TestPPERuntime.buildPersistentButNoEventDBRuntime();
+		runtime.startWrite();
+		System.out.println("Size before re-registration: "+runtime.branch.getModel().size());			
+		var procDef = runtime.getProcReg().getProcessDefinition(procDefURI, true);
+		assertNotNull(procDef);
+
+		System.out.println("Size after re-registration: "+runtime.branch.getModel().size());
+		var defs = runtime.getProcReg().getAllDefinitions(true);
 		assertEquals(1, defs.size());
+		runtime.getProcReg().removeProcessDefinition(procDefURI);
+		runtime.conclude();
+		runtime.startRead();
+		var finalSize = runtime.branch.getModel().size();
+		System.out.println("Size after removal: "+finalSize);
 		
+		if (initialSize != finalSize) {
+			TestUtils.printDiff(initModel, runtime.branch.getModel(), true);
+		}
+		
+		defs = runtime.getProcReg().getAllDefinitions(true);
+		assertEquals(initialSize, finalSize);
+		assertEquals(0, defs.size());
+		runtime.conclude();
 	}
 	
 	@Test
-	void testCreatingAndRegisterAndDeleteProcessDefinition() throws Exception {		
-		RDFWrapperTestSetup.resetPersistence(); //
-		setup(); // manual as we otherwise cant reset data
-		startWrite();
-		var modelBegin = OntModelFactory.createModel( OntSpecification.OWL2_DL_MEM_BUILTIN_RDFS_INF );
-		modelBegin.add(branch.getModel());
-		var sizeBegin = branch.getModel().size();
-		//deploy						
-		var process = procFactory.getSimple2StepProcessDefinition();
-		var deployResult = procReg.createProcessDefinitionIfNotExisting(process);
-		conclude();
+	void testCreatingRegisterAndDeleteProcessInstance() throws Exception {		
 		
-		startWrite();
-		System.out.println("BranchModel has size: "+branch.getModel().size());
-		assertEquals(0, deployResult.getDefinitionErrors().size());
-		assertEquals(0, deployResult.getInstanceErrors().size());
-		// remove
-		var procDef = procReg.getProcessDefinition(process.getCode(), true);
-		assertNotNull(procDef);
+		var initModel = OntModelFactory.createModel();
 		
-		procReg.removeProcessDefinition(process.getCode());
-		var sizeEnd = branch.getModel().size();
-		conclude();
-		if (sizeEnd != sizeBegin) {
-			printDiff(branch.getModel(), modelBegin);
+		runtime.startWrite();
+		RDFInstance jiraB =  runtime.artifactFactory.getJiraInstance("jiraB");
+		RDFInstance jiraC = runtime.artifactFactory.getJiraInstance("jiraC");		
+		RDFInstance jiraA = runtime.artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
+		
+		
+		var result = runtime.getProcReg().createProcessDefinitionIfNotExisting(runtime.procFactory.getSimple2StepProcessDefinition());
+		assertTrue(result.getDefinitionErrors().isEmpty());
+		assertEquals(0, result.getDefinitionErrors().size());
+		assertEquals(0, result.getInstanceErrors().size());
+		
+		System.out.println("Size before initial adding: "+runtime.branch.getModel().size());
+		initModel.add(runtime.branch.getModel());
+		var initialSize = runtime.branch.getModel().size();
+		System.out.println("BranchModel has size: "+initialSize);
+		
+		// create the process instance
+		var procResult = runtime.getProcReg().instantiateProcess(result.getProcDef(), Map.of(TestDTOProcesses.JIRA_IN, Set.of(jiraA)));
+		assertEquals(0, procResult.getValue().size());
+		assertNotNull(procResult.getKey());
+		var procId = procResult.getKey().getId();
+		runtime.conclude();
+		runtime.startRead();
+		System.out.println("Size before reloading: "+runtime.branch.getModel().size());	
+		runtime.conclude();
+		
+		// reload data
+		runtime = TestPPERuntime.buildPersistentButNoEventDBRuntime();
+		runtime.startWrite();
+		System.out.println("Size after reloading: "+runtime.branch.getModel().size());
+		var procs = runtime.getProcReg().getProcessInstances().stream().toList();
+		assertEquals(1, procs.size());
+		assertEquals(procId, procs.get(0).getId());
+		procs.get(0).printProcessToConsole(" ");
+		System.out.println("Size after process refetching: "+runtime.branch.getModel().size());
+		
+		runtime.getProcReg().removeProcessByName(procs.get(0).getName());
+		runtime.conclude(); //we need to let the rule engine clean up first before comparing model content
+		
+		runtime.startRead();
+		var finalSize = runtime.branch.getModel().size();
+		System.out.println("Size after removal: "+finalSize);
+		if (initialSize != finalSize) {
+			TestUtils.printDiff(initModel, runtime.branch.getModel(), true);
 		}
-		assertEquals(sizeBegin, sizeEnd);
+		procs = runtime.getProcReg().getProcessInstances().stream().toList();
+		assertEquals(0, procs.size());
+		runtime.conclude();
 	}
 	
-	@Test
-	void testCreatingAndRegisterAndDeleteProcessDefinitionWithNewInstances() throws Exception {		
-		RDFWrapperTestSetup.resetPersistence(); //
-		setup(); // manual as we otherwise cant reset data
-		startWrite();
-		var modelBegin = OntModelFactory.createModel( OntSpecification.OWL2_DL_MEM_BUILTIN_RDFS_INF );
-		modelBegin.add(branch.getModel());
-		var sizeBegin = branch.getModel().size();
-		//deploy						
-		var process = procFactory.getSimple2StepProcessDefinition();
-		var deployResult = procReg.createProcessDefinitionIfNotExisting(process);
-		var sizeMiddle = branch.getModel().size();
-		var modelMiddle = OntModelFactory.createModel( OntSpecification.OWL2_DL_MEM_BUILTIN_RDFS_INF );
-		modelMiddle.add(branch.getModel());
-		conclude();
-		
-		RDFWrapperTestSetup.prepareForPersistedReloadWithoutDataRemoval();
-		setup();
-		startWrite();
-		var sizeMiddleReloaded = branch.getModel().size();
-		if (sizeMiddleReloaded != sizeMiddle) {
-			printDiff(branch.getModel(), modelMiddle);
-		}
-		assertEquals(sizeMiddle, sizeMiddleReloaded);
-		var defList = procReg.getAllDefinitionIDs(true);
-		assertEquals(1, defList.size());
-		
-		var procDef = procReg.getProcessDefinition(process.getCode(), true);
-		assertNotNull(procDef);
-		
 
+	@Test
+	void testCreatingRegisterAndDeleteProcessDefinitionWithProcessInstance() throws Exception {		
 		
-		procReg.removeProcessDefinition(process.getCode());
-		var sizeEnd = branch.getModel().size();
-		conclude();
-		if (sizeEnd != sizeBegin) {
-			printDiff(branch.getModel(), modelBegin);
+		var initModel = OntModelFactory.createModel();
+		
+		runtime.startWrite();
+		RDFInstance jiraB =  runtime.artifactFactory.getJiraInstance("jiraB");
+		RDFInstance jiraC = runtime.artifactFactory.getJiraInstance("jiraC");		
+		RDFInstance jiraA = runtime.artifactFactory.getJiraInstance("jiraA", jiraB, jiraC);
+		System.out.println("Size before initial adding: "+runtime.branch.getModel().size());
+		initModel.add(runtime.branch.getModel());
+		var initialSize = runtime.branch.getModel().size();
+		System.out.println("BranchModel has size: "+initialSize);
+		
+		var result = runtime.getProcReg().createProcessDefinitionIfNotExisting(runtime.procFactory.getSimple2StepProcessDefinition());
+		assertTrue(result.getDefinitionErrors().isEmpty());
+		assertEquals(0, result.getDefinitionErrors().size());
+		assertEquals(0, result.getInstanceErrors().size());
+		var procDefURI = result.getProcDef().getId();
+		// create the process instance
+		
+		
+		var procResult = runtime.getProcReg().instantiateProcess(result.getProcDef(), Map.of(TestDTOProcesses.JIRA_IN, Set.of(jiraA)));
+		assertEquals(0, procResult.getValue().size());
+		assertNotNull(procResult.getKey());
+		var procId = procResult.getKey().getId();
+		runtime.conclude();
+	
+		// reload data
+		runtime = TestPPERuntime.buildPersistentButNoEventDBRuntime();
+		runtime.startWrite();
+		System.out.println("Size before re-registration: "+runtime.branch.getModel().size());			
+		var procDef = runtime.getProcReg().getProcessDefinition(procDefURI, true);
+		assertNotNull(procDef);
+
+		System.out.println("Size after re-registration: "+runtime.branch.getModel().size());
+		var defs = runtime.getProcReg().getAllDefinitions(true);
+		assertEquals(1, defs.size());
+		var procs = runtime.getProcReg().getProcessInstances().stream().toList();
+		assertEquals(1, procs.size());
+		assertEquals(procId, procs.get(0).getId());
+		procs.get(0).printProcessToConsole(" ");
+		System.out.println("Size after process refetching: "+runtime.branch.getModel().size());
+		
+		runtime.getProcReg().removeProcessDefinition(procDefURI);
+		runtime.conclude();
+		runtime.startRead();
+		var finalSize = runtime.branch.getModel().size();
+		System.out.println("Size after removal: "+finalSize);
+		
+		if (initialSize != finalSize) {
+			TestUtils.printDiff(initModel, runtime.branch.getModel(), true);
 		}
-		assertEquals(sizeBegin, sizeEnd);
+		
+		defs = runtime.getProcReg().getAllDefinitions(true);
+		assertEquals(initialSize, finalSize);
+		assertEquals(0, defs.size());
+		runtime.conclude();
 	}
 	
-	
-	private void printDiff(OntModel modelBegin, OntModel model) {
-		startRead();
-		var modelDiff = model.size() > modelBegin.size() 
-				? model.difference(modelBegin) 
-				: modelBegin.difference(model);
-		RDFDataMgr.write(System.out, modelDiff, Lang.TURTLE) ;
-		conclude();
-	}
+
 	
 	
 }
