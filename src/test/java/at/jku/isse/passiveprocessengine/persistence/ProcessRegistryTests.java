@@ -104,7 +104,7 @@ public class ProcessRegistryTests extends ProcessPersistenceTests {
 		procs.get(0).printProcessToConsole(" ");
 		System.out.println("Size after process refetching: "+runtime.branch.getModel().size());
 		
-		runtime.getProcReg().removeProcessByName(procs.get(0).getName());
+		runtime.getProcReg().removeProcessById(procs.get(0).getName());
 		runtime.conclude(); //we need to let the rule engine clean up first before comparing model content
 		
 		runtime.startRead();

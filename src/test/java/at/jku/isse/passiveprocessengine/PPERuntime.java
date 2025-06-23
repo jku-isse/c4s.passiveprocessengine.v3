@@ -29,7 +29,7 @@ public class PPERuntime {
 	public PPERuntime(AbstractEventStreamingSetup branchWrapper) {
 		super();
 		this.wrapperFactory = branchWrapper;
-		
+		//branchWrapper.getBranch().getDataset().begin(TxnType.WRITE);
 		schemaReg = wrapperFactory.getResolver();
 		primitives = schemaReg.getMetaschemata().getPrimitiveTypesFactory();
 		configBuilder = new ProcessEngineConfigurationBuilder(
@@ -42,6 +42,8 @@ public class PPERuntime {
 		picp = new ProcessInstanceChangeProcessor(schemaReg, eventDistrib);
 		ChangeEventTransformer picpWrapper = wrapperFactory.getChangeEventTransformer();
 		picpWrapper.registerWithBranch(picp);
+		//branchWrapper.getBranch().getDataset().commit();
+		//branchWrapper.getBranch().getDataset().close();
 	}
 
 	public void signalSetupComplete() throws PersistenceException, BranchConfigurationException {

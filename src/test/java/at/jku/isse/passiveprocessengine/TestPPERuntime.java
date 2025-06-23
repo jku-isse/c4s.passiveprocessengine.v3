@@ -4,12 +4,15 @@ import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.jena.ontapi.OntModelFactory;
 import org.apache.jena.ontapi.model.OntModel;
 
 import at.jku.isse.artifacteventstreaming.api.Branch;
+import at.jku.isse.artifacteventstreaming.api.exceptions.BranchConfigurationException;
+import at.jku.isse.artifacteventstreaming.api.exceptions.PersistenceException;
 import at.jku.isse.passiveprocessengine.definition.activeobjects.ProcessDefinition;
 import at.jku.isse.passiveprocessengine.definition.registry.DTOs;
 import at.jku.isse.passiveprocessengine.demo.TestArtifacts;
@@ -19,6 +22,7 @@ import at.jku.isse.passiveprocessengine.instance.messages.Responses.IOResponse;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstance;
 import at.jku.isse.passiveprocessengine.rdfwrapper.RDFInstanceType;
 import at.jku.isse.passiveprocessengine.rdfwrapper.config.AbstractEventStreamingSetup;
+import at.jku.isse.passiveprocessengine.rdfwrapper.config.FrontendEventStreamingWrapperFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.config.InMemoryEventStreamingSetupFactory;
 import at.jku.isse.passiveprocessengine.rdfwrapper.config.PersistedEventStreamingSetupFactory;
 
@@ -92,5 +96,33 @@ public class TestPPERuntime extends PPERuntime {
 		runtime.loadedModelCopy.add(runtime.branch.getModel());
 		runtime.conclude();
 		return runtime;
+	}
+	
+	public static TestPPERuntime buildWithProvidedStreamingFactory(AbstractEventStreamingSetup streamingFactory) throws Exception {
+		var runtime = new TestPPERuntime(streamingFactory);
+		runtime.signalSetupComplete();
+		runtime.startRead();
+		runtime.loadedModelCopy.add(runtime.branch.getModel());
+		runtime.conclude();
+		return runtime;
+	}
+	
+	public static List<TestPPERuntime> buildBackendAndFrontEndInMemoryRuntime() throws Exception {
+		var backendWrapperFactory = new InMemoryEventStreamingSetupFactory.FactoryBuilder()
+				.withBranchName("backend")
+				.withRepoURI(new URI(REPOURI)).build();
+		var frontendWrapperFactory = new FrontendEventStreamingWrapperFactory.FactoryBuilder(backendWrapperFactory).build();
+		
+		var frontendRuntime = new TestPPERuntime(frontendWrapperFactory);
+		frontendRuntime.signalSetupComplete();
+		frontendRuntime.loadedModelCopy.add(frontendRuntime.branch.getModel());
+		
+		var backendRuntime = new TestPPERuntime(backendWrapperFactory);
+		backendRuntime.signalSetupComplete();
+		backendRuntime.startRead();
+		backendRuntime.loadedModelCopy.add(backendRuntime.branch.getModel());
+		backendRuntime.conclude();
+		
+		return List.of(backendRuntime, frontendRuntime);
 	}
 }
