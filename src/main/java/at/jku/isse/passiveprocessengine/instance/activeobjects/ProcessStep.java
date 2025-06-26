@@ -427,7 +427,8 @@ public class ProcessStep extends ProcessInstanceScopedElement{
 //			return false; // as long as the expected QA is not the actual number of QA checks, the eval cant be true;
 		return getTypedProperty(constraintProperty, Map.class).values().stream()
 			.map(ConstraintResultWrapper.class::cast)
-			.allMatch(cw -> ((ConstraintResultWrapper)cw).getEvalResult());
+			.map(cw -> cw != null && ((ConstraintResultWrapper)cw).getEvalResult())
+			.allMatch(bool -> true);
 	}
 
 	@SuppressWarnings("unchecked")
